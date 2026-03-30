@@ -73,3 +73,15 @@ Git:
 - dev/[name]: Nhánh làm việc riêng của từng người.
 - fix/[name]: Nhánh fix bug hoặc cải thiện.
 ```
+
+## 6. Quy Tắc Khai Báo Interface (Binding Rules)
+
+Việc sử dụng Interface là **bắt buộc** để đảm bảo tính lỏng lẻo (Loosely Coupled).
+
+* **Vị trí khai báo:** Tất cả các lệnh `$this->app->bind` hoặc `singleton` phải nằm trong method `register()` của từng `ModuleServiceProvider`.
+* **Repository Binding:** Mỗi Repository phải có một Interface tương ứng.
+    * *Ví dụ:* `UserRepositoryInterface` -> `UserRepository`.
+* **Service Binding:** Chỉ cần bind Interface cho các Service có tính chất "Public" (được gọi từ module khác). Các Internal Service không nhất thiết phải có Interface nếu chỉ dùng nội bộ.
+* **Cấm gọi Class trực tiếp:** Trong Constructor của Controller hoặc Service, tuyệt đối không Type-hint Class thực thi (Concrete Class). Phải luôn Type-hint Interface.
+    * *Sai:* `public function __construct(UserRepository $repo)`
+    * *Đúng:* `public function __construct(UserRepositoryInterface $repo)`
