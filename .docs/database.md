@@ -44,14 +44,6 @@
 1: Verify_Register (Xác thực đăng ký)
 2: Verify_Forgot_Password (Xác thực quên mật khẩu)
 ```
-
-### AuthProvider
-```
-1: Phone
-2: Email
-3: Google
-4: Apple
-```
 ### Gender
 ```
 1: Nam
@@ -118,24 +110,21 @@
 
     # cấu trúc
     - id (unsigned bigint auto increment)
-    - phone (varchar(50), nullable) - Số điện thoại
+    - phone (varchar(50), not null) -- Số điện thoại
     - email (varchar(255), nullable) - Email
-    - auth_provider (unsigned tinyint, not null) - Provider đăng nhập, lưu trữ trong AuthProvider
     - is_verified (boolean default false) - Trạng thái xác thực
-    - provider_id (varchar(255), nullable) - ID của người dùng trên provider
+    - google_id (varchar(255), nullable) - ID của người dùng trên provider Google
+    - apple_id (varchar(255), nullable) - ID của người dùng trên provider Apple
     - password (varchar(255), not null) - Mật khẩu, phải được mã hóa
     - role (unsigned tinyint, not null) - Vai trò, lưu trữ trong UserRole
-    - is_active (boolean default true) - Trạng thái hoạt động
     - created_at (timestamp) - Thời gian tạo
     - updated_at (timestamp) - Thời gian cập nhật
     - deleted_at (timestamp, nullable) - Thời gian xóa (soft delete)
 
     # index
-    - UNIQUE (phone) WHERE phone IS NOT NULL
+    - UNIQUE (phone)
     - UNIQUE (email) WHERE email IS NOT NULL
-    - UNIQUE (auth_provider, provider_id) WHERE provider_id IS NOT NULL
     - INDEX (role)
-    - INDEX (is_active)
 ```
 
 ## user_otp
