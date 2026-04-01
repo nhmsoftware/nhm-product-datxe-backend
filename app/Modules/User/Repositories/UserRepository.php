@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Repositories;
 
+use App\Core\Repository\BaseRepository;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\CustomerProfile;
 use App\Modules\User\Model\Enums\UserOtpType;
@@ -11,18 +12,20 @@ use App\Modules\User\Model\User;
 use App\Modules\User\Model\UserDevice;
 use App\Modules\User\Model\UserOtp;
 
-final class UserRepository implements UserRepositoryInterface
+class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
-    // ─── User ─────────────────────────────────────────────────────
-
-    public function findById(int $id): ?User
+    public function getModel()
     {
-        return User::find($id);
+       return User::class;
     }
 
     public function findByPhone(string $phone): ?User
     {
-        return User::where('phone', $phone)->first();
+        return $this->query()
+            ->where('phone', $phone)
+            ->where('is_verified', true)
+            ->withTrashed()
+            ->first();
     }
 
     public function existsByPhone(string $phone): bool
@@ -88,4 +91,6 @@ final class UserRepository implements UserRepositoryInterface
     {
         $otp->increment('attempts');
     }
+
+
 }

@@ -58,7 +58,11 @@ abstract class BaseService
                     Logging::error("[{$context}] Service Error: ".$e->getMessage(), $e);
                 }
 
-                return ServiceReturn::error($e->getMessage(), $e);
+                return ServiceReturn::error(
+                    message: $e->getMessage(),
+                    exception: $e,
+                    code: $e->getCode(),
+                );
             }
 
             if ($returnCatchCallback) {
@@ -66,13 +70,21 @@ abstract class BaseService
                 // Đảm bảo kết quả luôn là ServiceReturn
                 return $catchResult instanceof ServiceReturn
                     ? $catchResult
-                    : ServiceReturn::error('Có lỗi xảy ra. Vui lòng thử lại sau.');
+                    : ServiceReturn::error(
+                        message: 'Có lỗi xảy ra. Vui lòng thử lại sau.',
+                        exception: $e,
+                        code: 500,
+                    );
             }
 
             // Lỗi hệ thống nghiêm trọng
             Logging::error("[{$context}] Critical Error: ".$e->getMessage(), $e);
 
-            return ServiceReturn::error('Có lỗi xảy ra. Vui lòng thử lại sau.');
+            return ServiceReturn::error(
+                message: 'Có lỗi xảy ra. Vui lòng thử lại sau.',
+                exception: $e,
+                code: 500,
+            );
         }
     }
 

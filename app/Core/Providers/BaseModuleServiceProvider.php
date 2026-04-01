@@ -40,8 +40,8 @@ abstract class BaseModuleServiceProvider extends ServiceProvider
         $moduleName = strtolower($this->getModuleName());
         $path = app_path("Modules/{$this->getModuleName()}/Routes/api.php");
         if (file_exists($path)) {
-            Route::prefix("api/{$moduleName}") // VD: api/ride, api/wallet
-            ->middleware('api')
+            Route::prefix("api") // VD: api/ride, api/wallet
+                ->middleware('api')
                 ->as("{$moduleName}.")         // VD: route('ride.store')
                 ->namespace($this->getControllerNamespace()) // Quan trọng để nhận diện Controller
                 ->group($path);
