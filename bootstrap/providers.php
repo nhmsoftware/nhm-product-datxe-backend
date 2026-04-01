@@ -1,7 +1,7 @@
 <?php
 
-use App\Modules\User\Providers\UserServiceProvider;
 use App\Providers\AppServiceProvider;
+use Modules\User\Infrastructure\Providers\UserServiceProvider;
 
 return [
     AppServiceProvider::class,
