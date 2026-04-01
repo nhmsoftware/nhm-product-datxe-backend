@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Route;
 | Middleware: throttle xem config/app.php
 */
 
+Route::post('v1/auth/send-otp', [AuthController::class, 'sendOtp'])
+    ->name('auth.send-otp');
+
 Route::prefix('api/auth')->group(function () {
 
     // ── Public routes ─────────────────────────────────────────

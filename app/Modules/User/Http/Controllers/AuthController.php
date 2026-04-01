@@ -4,42 +4,37 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Http\Controllers;
 
+use App\Core\Controller\BaseController;
 use App\Modules\User\Http\Requests\Auth\LoginRequest;
 use App\Modules\User\Http\Requests\Auth\RegisterRequest;
 use App\Modules\User\Http\Requests\Auth\SendOtpRequest;
 use App\Modules\User\Http\Requests\Auth\VerifyOtpRequest;
 use App\Modules\User\Http\Resources\AuthResource;
 use App\Modules\User\Http\Resources\UserResource;
+use App\Modules\User\Interfaces\AuthServiceInterface;
+use App\Modules\User\Model\Enums\UserOtpType;
 use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Services\Auth\LoginData;
-use App\Modules\User\Services\Auth\LoginService;
-use App\Modules\User\Services\Auth\LogoutService;
 use App\Modules\User\Services\Auth\RegisterData;
-use App\Modules\User\Services\Auth\RegisterService;
 use App\Modules\User\Services\Auth\SendOtpData;
-use App\Modules\User\Services\Auth\SendOtpService;
 use App\Modules\User\Services\Auth\VerifyOtpData;
-use App\Modules\User\Services\Auth\VerifyOtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
 use OpenApi\Attributes as OA;
 
-class AuthController extends Controller
+class AuthController extends BaseController
 {
     public function __construct(
-        private readonly RegisterService  $registerService,
-        private readonly LoginService     $loginService,
-        private readonly LogoutService    $logoutService,
-        private readonly SendOtpService   $sendOtpService,
-        private readonly VerifyOtpService $verifyOtpService,
+        protected AuthServiceInterface $authService,
+//        private readonly RegisterService  $registerService,
+//        private readonly LoginService     $loginService,
+//        private readonly LogoutService    $logoutService,
+//        private readonly SendOtpService   $sendOtpService,
+//        private readonly VerifyOtpService $verifyOtpService,
     ) {}
 
-    // ─────────────────────────────────────────────────────────────
-    // POST /api/auth/send-otp
-    // ─────────────────────────────────────────────────────────────
     #[OA\Post(
-        path: '/api/auth/send-otp',
+        path: 'api/v1/auth/send-otp',
         summary: 'Gửi mã OTP',
         requestBody: new OA\RequestBody(
             required: true,
@@ -60,16 +55,27 @@ class AuthController extends Controller
     )]
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
-        $this->sendOtpService->handle(
-            SendOtpData::fromArray([
-                ...$request->validated(),
-                'ip_address' => $request->ip(),
-            ])
+        $data = $request->validated();
+
+        $result = $this->authService->sendOtp(
+            phone: $data['phone'],
+            type: UserOtpType::from($data['type']),
         );
 
-        return response()->json([
-            'message' => 'Mã OTP đã được gửi tới số điện thoại của bạn.',
-        ]);
+        if ($result->isError()){
+            return $this->sendError(
+                message: $result->getMessage(),
+                code: $result->getCode(),
+            );
+        }
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: [
+                /// ....
+            ],
+            message: $result->getMessage(),
+        );
+
     }
 
     // ─────────────────────────────────────────────────────────────

@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Http\Requests\Auth;
 
+use App\Modules\User\Model\Enums\UserOtpType;
 use Illuminate\Foundation\Http\FormRequest;
-use Modules\User\Domain\Enums\UserOtpType;
+use Illuminate\Validation\Rule;
 
 class SendOtpRequest extends FormRequest
 {
@@ -13,11 +14,9 @@ class SendOtpRequest extends FormRequest
 
     public function rules(): array
     {
-        $validTypes = implode(',', array_column(UserOtpType::cases(), 'value'));
-
         return [
             'phone' => ['required', 'string', 'regex:/^0[3-9]\d{8}$/'],
-            'type'  => ['required', 'integer', "in:{$validTypes}"],
+            'type'  => ['required', 'integer', Rule::enum(UserOtpType::class)],
         ];
     }
 
@@ -27,7 +26,7 @@ class SendOtpRequest extends FormRequest
             'phone.required' => 'Số điện thoại không được để trống.',
             'phone.regex'    => 'Số điện thoại không đúng định dạng.',
             'type.required'  => 'Loại OTP không được để trống.',
-            'type.in'        => 'Loại OTP không hợp lệ.',
+            'type.enum'        => 'Loại OTP không hợp lệ.',
         ];
     }
 }

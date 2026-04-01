@@ -10,13 +10,10 @@ use App\Modules\User\Model\Enums\UserOtpType;
 
 interface UserRepositoryInterface
 {
-    public function findById(int $id): ?User;
-
     public function findByPhone(string $phone): ?User;
 
     public function existsByPhone(string $phone): bool;
 
-    public function create(array $data): User;
 
     public function createCustomerProfile(int $userId, array $data): void;
 

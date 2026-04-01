@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Services\Auth;
 
+use App\Core\Services\BaseService;
 use App\Modules\User\Exceptions\OtpExpiredException;
 use App\Modules\User\Exceptions\OtpInvalidException;
 use App\Modules\User\Exceptions\OtpTooManyAttemptsException;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use Illuminate\Support\Facades\Hash;
 
-final class VerifyOtpService
+final class VerifyOtpService extends BaseService
 {
     private const MAX_ATTEMPTS = 5;
 
