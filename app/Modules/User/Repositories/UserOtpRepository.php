@@ -73,9 +73,9 @@ class UserOtpRepository extends BaseRepository implements UserOtpRepositoryInter
         $otp = $this->model->create([
             'phone'        => $phone,
             'otp_hash'     => bcrypt($plainCode),
-            'type'         => $type->value,
+            'type'         => $type,
             'attempts'     => 0,
-            'expired_at'   => now()->addMinutes(5),   // TTL ngắn: 5 phút
+            'expired_at'   => now()->addMinutes(),   // TTL ngắn: 1 phút
             'verified_at'  => null,
             'used_at'      => null,
             'last_sent_at' => now(),
@@ -109,7 +109,7 @@ class UserOtpRepository extends BaseRepository implements UserOtpRepositoryInter
 
     /**
      * Đánh dấu OTP đã được consume — dùng xong sau register/login.
-     * Ngăn replay attack: cùng 1 OTP không thể dùng để tạo tài khoản 2 lần.q
+     * Ngăn replay attack: cùng 1 OTP không thể dùng để tạo tài khoản 2 lần.
      */
     public function markLatestAsUsed(string $phone, UserOtpType $type): void
     {

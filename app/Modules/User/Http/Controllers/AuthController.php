@@ -8,8 +8,6 @@ use App\Core\Controller\BaseController;
 use App\Modules\User\Http\Requests\RegisterRequest;
 use App\Modules\User\Http\Requests\SendOtpRequest;
 use App\Modules\User\Http\Requests\VerifyOtpRequest;
-use App\Modules\User\Http\Resources\AuthResource;
-use App\Modules\User\Http\Resources\UserResource;
 use App\Modules\User\Interfaces\AuthServiceInterface;
 use App\Modules\User\Model\Enums\UserOtpType;
 use Illuminate\Http\JsonResponse;
@@ -99,8 +97,8 @@ class AuthController extends BaseController
     )]
     public function register(RegisterRequest $request): JsonResponse
     {
-        dd('11111111');
-        $result = $this->authService->register($request->validated());
+        $data = $request->validated();
+        $result = $this->authService->register($data);
 
         if ($result->isError()) {
             return $this->sendError(
@@ -109,12 +107,11 @@ class AuthController extends BaseController
             );
         }
 
-        $data = $result->getData();
-
-        return (new AuthResource($data['user']))
-            ->withToken($data['token'])
-            ->response()
-            ->setStatusCode(201);
+        return $this->sendSuccess(
+            data:    $result->getData(),
+            message: $result->getMessage(),
+            code: 201,
+        );
     }
 
     #[OA\Post(
@@ -152,11 +149,10 @@ class AuthController extends BaseController
             );
         }
 
-        $data = $result->getData();
-
-        return (new AuthResource($data['user']))
-            ->withToken($data['token'])
-            ->response();
+        return $this->sendSuccess(
+            data:    $result->getData(),
+            message: $result->getMessage(),
+        );
     }
 
     #[OA\Get(
@@ -171,11 +167,10 @@ class AuthController extends BaseController
     )]
     public function me(Request $request): JsonResponse
     {
-        $user = $request->user()->load(
-            $request->user()->isCustomer() ? 'customerProfile' : 'driverProfile'
+        return $this->sendError(
+            message: "Chưa có logic",
+            code: 404,
         );
-
-        return (new UserResource($user))->response();
     }
 
     #[OA\Post(
@@ -213,6 +208,9 @@ class AuthController extends BaseController
             );
         }
 
-        return $this->sendSuccess(message: $result->getMessage());
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage()
+        );
     }
 }

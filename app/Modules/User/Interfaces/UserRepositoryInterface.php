@@ -8,7 +8,6 @@ use App\Modules\User\Model\CustomerProfile;
 use App\Modules\User\Model\User;
 interface UserRepositoryInterface
 {
-    public function create(array $data): ?User;
     public function findByPhone(string $phone): ?User;
     public function existsByPhone(string $phone): bool;
     public function createCustomerProfile(int $userId, array $data): CustomerProfile;

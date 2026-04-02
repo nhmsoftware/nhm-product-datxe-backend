@@ -71,17 +71,17 @@ abstract class BaseService
                 return $catchResult instanceof ServiceReturn
                     ? $catchResult
                     : ServiceReturn::error(
-                        message: 'Có lỗi xảy ra. Vui lòng thử lại sau.',
+                        message: 'Có lỗi xảy ra. Vui lòng thử lại sau.' . ' ' . $e->getMessage(),
                         exception: $e,
                         code: 500,
                     );
             }
 
             // Lỗi hệ thống nghiêm trọng
-            Logging::error("[{$context}] Critical Error: ".$e->getMessage(), $e);
+            Logging::error("[{$context}] Critical Error: " . ' ' . $e->getMessage(), $e);
 
             return ServiceReturn::error(
-                message: 'Có lỗi xảy ra. Vui lòng thử lại sau.',
+                message: 'Có lỗi xảy ra. Vui lòng thử lại sau.'.$e->getMessage(),
                 exception: $e,
                 code: 500,
             );

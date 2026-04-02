@@ -15,6 +15,7 @@ use App\Modules\User\Model\User;
 use App\Modules\User\Model\UserOtp;
 use App\Modules\User\Repositories\UserOtpRepository;
 use App\Modules\User\Repositories\UserRepository;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 class AuthService extends BaseService implements AuthServiceInterface
@@ -22,6 +23,7 @@ class AuthService extends BaseService implements AuthServiceInterface
     protected const RETRY_AFTER_SECONDS = 60;
     protected const MAX_SEND_PER_DAY    = 5;
     protected const OTP_TTL_MINUTES     = 5;
+    protected const MAX_OTP_ATTEMPTS    = 5;
 
     public function __construct(
         protected UserRepository    $userRepository,
@@ -44,6 +46,7 @@ class AuthService extends BaseService implements AuthServiceInterface
             return [
                 'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
                 'expires_at'          => $otpRecord->expired_at,
+                'plain_code'          => $otpRecord->plain_code,
             ];
         });
     }
@@ -55,40 +58,56 @@ class AuthService extends BaseService implements AuthServiceInterface
     public function register(array $data): ServiceReturn
     {
         return $this->execute(function () use ($data) {
+
             $phone = $data['phone'];
+            try {
+                $user = DB::transaction(function () use ($phone, $data) {
 
-            // 1. Verify OTP
-            $this->verifyOtpOrFail($phone, $data['otp'], UserOtpType::VERIFY_REGISTER);
+                    // 1. Verify OTP
+                    $this->verifyOtpOrFail(
+                        $phone,
+                        $data['otp'],
+                        UserOtpType::VERIFY_REGISTER
+                    );
 
-            // 2. Race-condition guard
-            if ($this->userRepository->existsByPhone($phone)) {
-                $this->throw('Số điện thoại đã được đăng ký.', 409);
+                    // 2. Create user
+                    $user = $this->userRepository->create([
+                        'phone'             => $phone,
+                        'password'          => bcrypt($data['password'] ?? \Str::random(16)),
+                        'role'              => UserRole::Customer->value,
+                        'is_verified'       => true,
+                        'is_phone_verified' => true,
+                        'is_active'         => true,
+                    ]);
+
+                    // 3. Profile
+                    $this->userRepository->createCustomerProfile($user->id, [
+                        'full_name' => $data['full_name'],
+                        'gender'    => Gender::Other->value,
+                    ]);
+
+                    // 4. Device
+                    $this->upsertDeviceIfPresent($user->id, $data);
+
+                    // 5. Consume OTP
+                    $this->userOtpRepository->markLatestAsUsed(
+                        $phone,
+                        UserOtpType::VERIFY_REGISTER,
+                    );
+
+                    return $user;
+                });
+
+            } catch (QueryException $e) {
+
+                if (str_contains($e->getMessage(), 'users_phone_unique')) {
+                    $this->throw('Số điện thoại đã được đăng ký.', 409);
+                }
+
+                throw $e;
             }
 
-            // 3. Tạo user, profile, device trong transaction
-            $user = DB::transaction(function () use ($phone, $data) {
-                $user = $this->userRepository->create([
-                    'phone'       => $phone,
-                    'role'        => UserRole::Customer->value,
-                    'is_verified' => true,
-                ]);
-
-                $this->userRepository->createCustomerProfile($user->id, [
-                    'full_name' => $data['full_name'],
-                    'gender'    => Gender::Male,
-                ]);
-
-                $this->upsertDeviceIfPresent($user->id, $data);
-
-                return $user;
-            });
-
-            // 4. Consume OTP — không thể dùng lại
-            $this->userOtpRepository->markLatestAsUsed($phone, UserOtpType::VERIFY_REGISTER);
-
-            // 5. Dispatch event
-            event(new UserRegistered($user));
-
+            // 6. Token
             $token = $user->createToken('auth_token')->plainTextToken;
 
             return [
@@ -208,6 +227,10 @@ class AuthService extends BaseService implements AuthServiceInterface
 
         if ($otpRecord->isExpired()) {
             $this->throw('Mã OTP đã hết hạn.', 400);
+        }
+
+        if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) {
+            $this->throw('Mã OTP đã hết số lần thử. Vui lòng yêu cầu mã mới.', 400);
         }
 
         if (!$otpRecord->checkCode($code)) {
