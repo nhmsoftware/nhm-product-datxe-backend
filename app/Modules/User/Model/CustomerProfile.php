@@ -25,9 +25,4 @@ class CustomerProfile extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
-
-    public function savedAddresses(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(CustomerSavedAddress::class, 'customer_id');
-    }
 }

@@ -5,19 +5,13 @@ declare(strict_types=1);
 namespace App\Modules\User\Http\Controllers;
 
 use App\Core\Controller\BaseController;
-use App\Modules\User\Http\Requests\Auth\LoginRequest;
-use App\Modules\User\Http\Requests\Auth\RegisterRequest;
-use App\Modules\User\Http\Requests\Auth\SendOtpRequest;
-use App\Modules\User\Http\Requests\Auth\VerifyOtpRequest;
+use App\Modules\User\Http\Requests\RegisterRequest;
+use App\Modules\User\Http\Requests\SendOtpRequest;
+use App\Modules\User\Http\Requests\VerifyOtpRequest;
 use App\Modules\User\Http\Resources\AuthResource;
 use App\Modules\User\Http\Resources\UserResource;
 use App\Modules\User\Interfaces\AuthServiceInterface;
 use App\Modules\User\Model\Enums\UserOtpType;
-use App\Modules\User\Model\Enums\UserRole;
-use App\Modules\User\Services\Auth\LoginData;
-use App\Modules\User\Services\Auth\RegisterData;
-use App\Modules\User\Services\Auth\SendOtpData;
-use App\Modules\User\Services\Auth\VerifyOtpData;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -26,15 +20,11 @@ class AuthController extends BaseController
 {
     public function __construct(
         protected AuthServiceInterface $authService,
-//        private readonly RegisterService  $registerService,
-//        private readonly LoginService     $loginService,
-//        private readonly LogoutService    $logoutService,
-//        private readonly SendOtpService   $sendOtpService,
-//        private readonly VerifyOtpService $verifyOtpService,
     ) {}
 
+
     #[OA\Post(
-        path: 'api/v1/auth/send-otp',
+        path: '/api/v1/auth/authenticate-otp',
         summary: 'Gửi mã OTP',
         requestBody: new OA\RequestBody(
             required: true,
@@ -42,130 +32,101 @@ class AuthController extends BaseController
                 required: ['phone', 'type'],
                 properties: [
                     new OA\Property(property: 'phone', type: 'string',  example: '0901234567'),
-                    new OA\Property(property: 'type', description: '1=Verify_Register, 2=Verify_Forgot_Password',  type: 'integer', example: 1),
+                    new OA\Property(
+                        property: 'type',
+                        description: '1=Đăng ký, 2=Đăng nhập',
+                        type: 'integer',
+                        example: 1,
+                    ),
                 ]
             )
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(response: 200, description: 'Gửi thành công'),
+            new OA\Response(response: 200, description: 'Gửi OTP thành công'),
+            new OA\Response(response: 404, description: 'Số điện thoại không tồn tại (type=2)'),
+            new OA\Response(response: 409, description: 'Số điện thoại đã đăng ký (type=1)'),
             new OA\Response(response: 422, description: 'Validation error'),
             new OA\Response(response: 429, description: 'Gửi quá nhiều lần'),
         ]
     )]
-    public function sendOtp(SendOtpRequest $request): JsonResponse
+    public function authenticateOtp(SendOtpRequest $request): JsonResponse
     {
         $data = $request->validated();
 
         $result = $this->authService->sendOtp(
             phone: $data['phone'],
-            type: UserOtpType::from($data['type']),
+            type:  UserOtpType::from((int) $data['type']),
         );
 
-        if ($result->isError()){
+        if ($result->isError()) {
             return $this->sendError(
                 message: $result->getMessage(),
-                code: $result->getCode(),
+                code:    $result->getCode(),
             );
         }
-        $data = $result->getData();
+
         return $this->sendSuccess(
-            data: [
-                /// ....
-            ],
+            data:    $result->getData(),
             message: $result->getMessage(),
         );
-
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // POST /api/auth/verify-otp
-    // ─────────────────────────────────────────────────────────────
     #[OA\Post(
-        path: '/api/auth/verify-otp',
-        summary: 'Xác minh mã OTP',
+        path: '/api/v1/auth/register',
+        summary: 'Xác minh OTP và đăng ký tài khoản',
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['phone', 'otp', 'type'],
+                required: ['phone', 'otp', 'full_name'],
                 properties: [
-                    new OA\Property(property: 'phone', type: 'string',  example: '0901234567'),
-                    new OA\Property(property: 'otp',   type: 'string',  example: '123456'),
-                    new OA\Property(property: 'type',  type: 'integer', example: 1),
+                    new OA\Property(property: 'phone',        type: 'string', example: '0901234567'),
+                    new OA\Property(property: 'otp',          type: 'string', example: '123456'),
+                    new OA\Property(property: 'full_name',    type: 'string', example: 'Nguyễn Văn A'),
+                    new OA\Property(property: 'device_id',    type: 'string', example: 'abc123'),
+                    new OA\Property(property: 'device_token', type: 'string', example: 'fcm_token_here'),
+                    new OA\Property(property: 'device_type',  type: 'string', example: 'android'),
                 ]
             )
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(response: 200, description: 'OTP hợp lệ'),
-            new OA\Response(response: 400, description: 'OTP sai / hết hạn'),
-        ]
-    )]
-    public function verifyOtp(VerifyOtpRequest $request): JsonResponse
-    {
-        $this->verifyOtpService->handle(
-            VerifyOtpData::fromArray($request->validated())
-        );
-
-        return response()->json(['message' => 'Xác minh OTP thành công.']);
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // POST /api/auth/register
-    // ─────────────────────────────────────────────────────────────
-    #[OA\Post(
-        path: '/api/auth/register',
-        summary: 'Đăng ký tài khoản khách hàng',
-        requestBody: new OA\RequestBody(
-            required: true,
-            content: new OA\JsonContent(
-                required: ['phone', 'password', 'password_confirmation', 'full_name'],
-                properties: [
-                    new OA\Property(property: 'phone',                 type: 'string', example: '0901234567'),
-                    new OA\Property(property: 'password',              type: 'string', example: 'Secret@123'),
-                    new OA\Property(property: 'password_confirmation', type: 'string', example: 'Secret@123'),
-                    new OA\Property(property: 'full_name',             type: 'string', example: 'Nguyễn Văn A'),
-                    new OA\Property(property: 'device_id',             type: 'string', example: 'abc123'),
-                    new OA\Property(property: 'device_token',          type: 'string', example: 'fcm_token_here'),
-                    new OA\Property(property: 'device_type',           type: 'string', example: 'android'),
-                ]
-            )
-        ),
-        tags: ['Auth'],
-        responses: [
-            new OA\Response(response: 201, description: 'Đăng ký thành công'),
+            new OA\Response(response: 201, description: 'Đăng ký thành công, trả về token'),
+            new OA\Response(response: 400, description: 'OTP sai hoặc hết hạn'),
             new OA\Response(response: 409, description: 'Số điện thoại đã tồn tại'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
     public function register(RegisterRequest $request): JsonResponse
     {
-        $result = $this->registerService->handle(
-            RegisterData::fromArray([
-                ...$request->validated(),
-                'role' => UserRole::Customer->value,
-            ])
-        );
+        dd('11111111');
+        $result = $this->authService->register($request->validated());
 
-        return (new AuthResource($result['user']))
-            ->withToken($result['token'])
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+                code:    $result->getCode(),
+            );
+        }
+
+        $data = $result->getData();
+
+        return (new AuthResource($data['user']))
+            ->withToken($data['token'])
             ->response()
             ->setStatusCode(201);
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // POST /api/auth/login
-    // ─────────────────────────────────────────────────────────────
     #[OA\Post(
-        path: '/api/auth/login',
-        summary: 'Đăng nhập',
+        path: '/api/v1/auth/login',
+        summary: 'Xác minh OTP và đăng nhập',
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['phone', 'password'],
+                required: ['phone', 'otp'],
                 properties: [
                     new OA\Property(property: 'phone',        type: 'string', example: '0901234567'),
-                    new OA\Property(property: 'password',     type: 'string', example: 'Secret@123'),
+                    new OA\Property(property: 'otp',          type: 'string', example: '123456'),
                     new OA\Property(property: 'device_id',    type: 'string'),
                     new OA\Property(property: 'device_token', type: 'string'),
                     new OA\Property(property: 'device_type',  type: 'string'),
@@ -175,26 +136,31 @@ class AuthController extends BaseController
         tags: ['Auth'],
         responses: [
             new OA\Response(response: 200, description: 'Đăng nhập thành công'),
-            new OA\Response(response: 401, description: 'Sai thông tin đăng nhập'),
+            new OA\Response(response: 400, description: 'OTP sai hoặc hết hạn'),
+            new OA\Response(response: 404, description: 'Số điện thoại chưa đăng ký'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
-    public function login(LoginRequest $request): JsonResponse
+    public function login(VerifyOtpRequest $request): JsonResponse
     {
-        $result = $this->loginService->handle(
-            LoginData::fromArray($request->validated())
-        );
+        $result = $this->authService->login($request->validated());
 
-        return (new AuthResource($result['user']))
-            ->withToken($result['token'])
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+                code:    $result->getCode(),
+            );
+        }
+
+        $data = $result->getData();
+
+        return (new AuthResource($data['user']))
+            ->withToken($data['token'])
             ->response();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // GET /api/auth/me  [auth:sanctum]
-    // ─────────────────────────────────────────────────────────────
     #[OA\Get(
-        path: '/api/auth/me',
+        path: '/api/v1/auth/me',
         summary: 'Thông tin người dùng hiện tại',
         security: [['sanctum' => []]],
         tags: ['Auth'],
@@ -212,11 +178,8 @@ class AuthController extends BaseController
         return (new UserResource($user))->response();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // POST /api/auth/logout  [auth:sanctum]
-    // ─────────────────────────────────────────────────────────────
     #[OA\Post(
-        path: '/api/auth/logout',
+        path: '/api/v1/auth/logout',
         summary: 'Đăng xuất',
         security: [['sanctum' => []]],
         requestBody: new OA\RequestBody(
@@ -238,11 +201,18 @@ class AuthController extends BaseController
     )]
     public function logout(Request $request): JsonResponse
     {
-        $this->logoutService->handle(
-            $request->user(),
-            (bool) $request->input('logout_all', false)
+        $result = $this->authService->logout(
+            user:      $request->user(),
+            logoutAll: (bool) $request->input('logout_all', false),
         );
 
-        return response()->json(['message' => 'Đăng xuất thành công.']);
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+                code:    $result->getCode(),
+            );
+        }
+
+        return $this->sendSuccess(message: $result->getMessage());
     }
 }

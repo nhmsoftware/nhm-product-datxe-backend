@@ -4,9 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Model;
 
-use App\Modules\User\Model\CustomerProfile;
-use App\Modules\User\Model\UserDevice;
-use App\Modules\User\Model\UserOtp;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
@@ -37,22 +34,6 @@ class User extends Authenticatable
         'is_verified' => 'boolean',
         'deleted_at'  => 'datetime',
     ];
-
-    // ─── Relations ───────────────────────────────────────────────
-    public function customerProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(CustomerProfile::class, 'user_id');
-    }
-
-    public function driverProfile(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(DriverProfile::class, 'user_id');
-    }
-
-    public function devices(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(UserDevice::class, 'user_id');
-    }
 
     // ─── Helpers ─────────────────────────────────────────────────
     public function isCustomer(): bool

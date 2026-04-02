@@ -4,13 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Model;
 
-use App\Modules\User\Model\Enums\UserOtpType;
 use Illuminate\Database\Eloquent\Model;
 
 class UserOtp extends Model
 {
-    protected $table = 'user_otp';
 
+    protected $table = 'user_otp';
     protected $fillable = [
         'phone',
         'otp_hash',
@@ -18,30 +17,33 @@ class UserOtp extends Model
         'attempts',
         'expired_at',
         'verified_at',
+        'used_at',
         'last_sent_at',
         'send_count',
         'ip_address',
     ];
 
     protected $casts = [
-        'type'         => UserOtpType::class,
-        'expired_at'   => 'datetime',
-        'verified_at'  => 'datetime',
-        'last_sent_at' => 'datetime',
+        'expired_at'  => 'datetime',
+        'verified_at' => 'datetime',
+        'used_at'     => 'datetime',
+        'last_sent_at'=> 'datetime',
     ];
+
+    // Attribute ảo — lưu plain OTP tạm để gửi SMS, không persist DB
+    public ?string $plain_code = null;
 
     public function isExpired(): bool
     {
         return $this->expired_at->isPast();
     }
 
-    public function isVerified(): bool
+    /**
+     * Verify OTP nhập vào với hash trong DB.
+     * Dùng Hash::check thay vì so sánh string trực tiếp.
+     */
+    public function checkCode(string $plainCode): bool
     {
-        return $this->verified_at !== null;
-    }
-
-    public function hasExceededAttempts(int $max = 5): bool
-    {
-        return $this->attempts >= $max;
+        return \Illuminate\Support\Facades\Hash::check($plainCode, $this->otp_hash);
     }
 }
