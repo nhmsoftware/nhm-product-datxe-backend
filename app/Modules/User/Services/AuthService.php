@@ -6,7 +6,6 @@ namespace App\Modules\User\Services;
 
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
-use App\Modules\User\Events\UserRegistered;
 use App\Modules\User\Interfaces\AuthServiceInterface;
 use App\Modules\User\Model\Enums\Gender;
 use App\Modules\User\Model\Enums\UserOtpType;
@@ -15,20 +14,20 @@ use App\Modules\User\Model\User;
 use App\Modules\User\Model\UserOtp;
 use App\Modules\User\Repositories\UserOtpRepository;
 use App\Modules\User\Repositories\UserRepository;
-use Illuminate\Database\QueryException;
-use Illuminate\Support\Facades\DB;
 
 class AuthService extends BaseService implements AuthServiceInterface
 {
     protected const RETRY_AFTER_SECONDS = 60;
-    protected const MAX_SEND_PER_DAY    = 5;
-    protected const OTP_TTL_MINUTES     = 5;
-    protected const MAX_OTP_ATTEMPTS    = 5;
+    protected const MAX_SEND_PER_DAY = 5;
+    protected const OTP_TTL_MINUTES = 5;
+    protected const MAX_OTP_ATTEMPTS = 5;
 
     public function __construct(
         protected UserRepository    $userRepository,
         protected UserOtpRepository $userOtpRepository,
-    ) {}
+    )
+    {
+    }
 
     /**
      * POST /authenticate-otp
@@ -45,8 +44,8 @@ class AuthService extends BaseService implements AuthServiceInterface
 
             return [
                 'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
-                'expires_at'          => $otpRecord->expired_at,
-                'plain_code'          => $otpRecord->plain_code,
+                'expires_at' => $otpRecord->expired_at,
+                'plain_code' => $otpRecord->plain_code,
             ];
         });
     }
@@ -57,64 +56,60 @@ class AuthService extends BaseService implements AuthServiceInterface
      */
     public function register(array $data): ServiceReturn
     {
-        return $this->execute(function () use ($data) {
+        return $this->execute(
+            callback: function () use ($data) {
+                // Verify OTP
+                $this->verifyOtpOrFail(
+                    $data['phone'],
+                    $data['otp'],
+                    UserOtpType::VERIFY_REGISTER
+                );
+                // Check exist
+                $checkExist = $this->userRepository->query()
+                    ->where('phone', $data['phone'])
+                    ->withTrash()
+                    ->first();
 
-            $phone = $data['phone'];
-            try {
-                $user = DB::transaction(function () use ($phone, $data) {
-
-                    // 1. Verify OTP
-                    $this->verifyOtpOrFail(
-                        $phone,
-                        $data['otp'],
-                        UserOtpType::VERIFY_REGISTER
-                    );
-
-                    // 2. Create user
-                    $user = $this->userRepository->create([
-                        'phone'             => $phone,
-                        'password'          => bcrypt($data['password'] ?? \Str::random(16)),
-                        'role'              => UserRole::Customer->value,
-                        'is_verified'       => true,
-                        'is_phone_verified' => true,
-                        'is_active'         => true,
-                    ]);
-
-                    // 3. Profile
-                    $this->userRepository->createCustomerProfile($user->id, [
-                        'full_name' => $data['full_name'],
-                        'gender'    => Gender::Other->value,
-                    ]);
-
-                    // 4. Device
-                    $this->upsertDeviceIfPresent($user->id, $data);
-
-                    // 5. Consume OTP
-                    $this->userOtpRepository->markLatestAsUsed(
-                        $phone,
-                        UserOtpType::VERIFY_REGISTER,
-                    );
-
-                    return $user;
-                });
-
-            } catch (QueryException $e) {
-
-                if (str_contains($e->getMessage(), 'users_phone_unique')) {
+                if ($checkExist) {
                     $this->throw('Số điện thoại đã được đăng ký.', 409);
                 }
 
-                throw $e;
-            }
+                // Create user
+                /**
+                 * @var User $user
+                 */
+                $user = $this->userRepository->create([
+                    'phone' => $data['phone'],
+                    'password' => bcrypt($data['password'] ?? \Str::random(16)),
+                    'role' => UserRole::Customer, // Mặc định là khách hàng khi đăng ký
+                    'is_verified' => true,
+                    'is_phone_verified' => true,
+                    'is_active' => true,
+                ]);
 
-            // 6. Token
-            $token = $user->createToken('auth_token')->plainTextToken;
+                // 3. Profile
+                $this->userRepository->createCustomerProfile($user->id, [
+                    'full_name' => $data['full_name'],
+                    'gender' => Gender::Other->value,
+                ]);
 
-            return [
-                'user'  => $user->load('customerProfile'),
-                'token' => $token,
-            ];
-        });
+                // 4. Device
+                $this->upsertDeviceIfPresent($user, $data);
+
+                // 5. Consume OTP
+                $this->userOtpRepository->markLatestAsUsed(
+                    $data['phone'],
+                    UserOtpType::VERIFY_REGISTER,
+                );
+
+                // 6. Token
+                $token = $this->generateTokenAuth($user);
+
+                return [
+                    'user' => $user->load('customerProfile'),
+                    'token' => $token,
+                ];
+            });
     }
 
     /**
@@ -141,20 +136,20 @@ class AuthService extends BaseService implements AuthServiceInterface
             }
 
             // 4. Cập nhật device
-            $this->upsertDeviceIfPresent($user->id, $data);
+            $this->upsertDeviceIfPresent($user, $data);
 
             // 5. Consume OTP
             $this->userOtpRepository->markLatestAsUsed($phone, UserOtpType::VERIFY_LOGIN);
 
-            $token = $user->createToken('auth_token')->plainTextToken;
-
+            // 6. Token
+            $token = $this->generateTokenAuth($user);
             return [
-                'user'  => $user->load(
+                'user' => $user->load(
                     $user->isCustomer() ? 'customerProfile' : 'driverProfile'
                 ),
                 'token' => $token,
             ];
-        });
+        }, useTransaction: true);
     }
 
     /**
@@ -270,17 +265,30 @@ class AuthService extends BaseService implements AuthServiceInterface
     }
 
     /**
+     * Tạo token cho user.
+     * @param User $user
+     * @return string
+     */
+    private function generateTokenAuth(User $user)
+    {
+        return $user->createToken(
+            name: 'auth_token',
+            abilities: ['*'],
+            expiresAt: now()->addMonth())->plainTextToken;
+    }
+
+    /**
      * Upsert device nếu request có gửi device_id.
      */
-    private function upsertDeviceIfPresent(int $userId, array $data): void
+    private function upsertDeviceIfPresent(User $user, array $data): void
     {
         if (empty($data['device_id'])) {
             return;
         }
 
-        $this->userRepository->upsertDevice($userId, [
-            'device_id'   => $data['device_id'],
-            'token'       => $data['device_token'] ?? null,
+        $this->userRepository->upsertDevice($user, [
+            'device_id' => $data['device_id'],
+            'token' => $data['device_token'] ?? null,
             'device_type' => $data['device_type'] ?? null,
         ]);
     }

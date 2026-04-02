@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -28,6 +29,8 @@ class User extends Authenticatable
         'is_active',
         'google_id',
         'apple_id',
+        'full_name',
+        'gender',
     ];
 
     protected $hidden = [
@@ -46,6 +49,11 @@ class User extends Authenticatable
     public function customerProfile(): HasOne
     {
         return $this->hasOne(CustomerProfile::class);
+    }
+
+    public function userDevices(): HasMany
+    {
+        return $this->hasMany(UserDevice::class);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────

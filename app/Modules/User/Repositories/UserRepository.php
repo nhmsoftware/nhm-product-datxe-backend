@@ -70,9 +70,9 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
      * Tạo profile cho khách hàng.
      *
      */
-    public function createCustomerProfile(int $userId, array $data): CustomerProfile
+    public function createCustomerProfile(User $user, array $data): CustomerProfile
     {
-        return CustomerProfile::create(array_merge($data, ['user_id' => $userId]));
+        return $user->customerProfile()->create($data);
     }
 
     /**
@@ -80,17 +80,15 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
      * - Nếu device_id đã tồn tại với user này → cập nhật token
      * - Nếu chưa → tạo mới
      */
-    public function upsertDevice(int $userId, array $data): void
+    public function upsertDevice(User $user, array $data): void
     {
-        UserDevice::updateOrCreate(
-            [
-                'user_id'   => $userId,
-                'device_id' => $data['device_id'],
-            ],
-            [
-                'token'       => $data['token']       ?? null,
-                'device_type' => $data['device_type'] ?? null,
-            ]
-        );
+        $user->userDevices()->updateOrCreate([
+            'user_id'   => $user->id,
+            'device_id' => $data['device_id'],
+        ],[
+            'token'       => $data['token'] ?? null,
+            'device_type' => $data['device_type'] ?? null,
+        ]);
+
     }
 }
