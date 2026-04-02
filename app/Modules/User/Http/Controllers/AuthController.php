@@ -8,6 +8,7 @@ use App\Core\Controller\BaseController;
 use App\Modules\User\Http\Requests\RegisterRequest;
 use App\Modules\User\Http\Requests\SendOtpRequest;
 use App\Modules\User\Http\Requests\VerifyOtpRequest;
+use App\Modules\User\Http\Resources\AuthResource;
 use App\Modules\User\Interfaces\AuthServiceInterface;
 use App\Modules\User\Model\Enums\UserOtpType;
 use Illuminate\Http\JsonResponse;
