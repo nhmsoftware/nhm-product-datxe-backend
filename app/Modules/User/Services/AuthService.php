@@ -143,10 +143,23 @@ class AuthService extends BaseService implements AuthServiceInterface
 
             // 6. Token
             $token = $this->generateTokenAuth($user);
+
+            switch ($user->role) {
+                case UserRole::Customer:
+                    $profile = $user->load('customerProfile');
+                    break;
+                case UserRole::Merchants:
+                    $profile = $user->load('merchantProfile');
+                    break;
+                case UserRole::Admin:
+                    $profile = $user->load('adminProfile');
+                    break;
+                case UserRole::Driver:
+                    $profile = $user->load('driverProfile');
+                    break;
+            }
             return [
-                'user' => $user->load(
-                    $user->isCustomer() ? 'customerProfile' : 'driverProfile'
-                ),
+                'profile' => $profile,
                 'token' => $token,
             ];
         }, useTransaction: true);
@@ -288,7 +301,7 @@ class AuthService extends BaseService implements AuthServiceInterface
 
         $this->userRepository->upsertDevice($user, [
             'device_id' => $data['device_id'],
-            'token' => $data['device_token'] ?? null,
+            'token' => $data['device_token'],
             'device_type' => $data['device_type'] ?? null,
         ]);
     }

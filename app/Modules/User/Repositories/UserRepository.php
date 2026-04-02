@@ -86,7 +86,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
             'user_id'   => $user->id,
             'device_id' => $data['device_id'],
         ],[
-            'token'       => $data['token'] ?? null,
+            'token'       => $data['token'],
             'device_type' => $data['device_type'] ?? null,
         ]);
 
