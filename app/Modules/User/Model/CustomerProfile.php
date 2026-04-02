@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Model;
 
+use App\Core\Traits\HasBigIntId;
 use App\Modules\User\Model\Enums\Gender;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
 
 class CustomerProfile extends Model
 {
+
+    use HasBigIntId;
     protected $table = 'customer_profiles';
 
     protected $fillable = [

@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Model;
 
+use App\Core\Traits\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
 
 class UserDevice extends Model
 {
+
+    use HasBigIntId;
     protected $table = 'user_devices';
 
     protected $fillable = [

@@ -67,14 +67,6 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     }
 
     /**
-     * Tạo user mới.
-     */
-    public function create(array $data): ?User
-    {
-        return $this->model->create($data);
-    }
-
-    /**
      * Tạo profile cho khách hàng.
      *
      */

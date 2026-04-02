@@ -4,14 +4,17 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Model;
 
+use App\Core\Traits\HasBigIntId;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Modules\User\Model\CustomerProfile;
 use App\Modules\User\Model\Enums\UserRole;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, SoftDeletes;
+    use HasApiTokens, SoftDeletes, HasBigIntId;
 
     protected $table = 'users';
 
@@ -21,6 +24,8 @@ class User extends Authenticatable
         'password',
         'role',
         'is_verified',
+        'is_phone_verified',
+        'is_active',
         'google_id',
         'apple_id',
     ];
@@ -30,10 +35,18 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'role'        => UserRole::class,
-        'is_verified' => 'boolean',
-        'deleted_at'  => 'datetime',
+        'role'              => UserRole::class,
+        'is_verified'       => 'boolean',
+        'is_phone_verified' => 'boolean',
+        'is_active'         => 'boolean',
+        'deleted_at'        => 'datetime',
     ];
+
+    // ─── Relationships ───────────────────────────────────────────
+    public function customerProfile(): HasOne
+    {
+        return $this->hasOne(CustomerProfile::class);
+    }
 
     // ─── Helpers ─────────────────────────────────────────────────
     public function isCustomer(): bool

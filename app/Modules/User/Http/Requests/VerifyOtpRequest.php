@@ -18,7 +18,7 @@ class VerifyOtpRequest extends FormRequest
         return [
             'phone' => ['required', 'string', 'regex:/^0[3-9]\d{8}$/'],
             'otp'   => ['required', 'string', 'digits:6'],
-            'type'  => ['required', 'integer', Rule::enum(UserOtpType::class)],
+            'type'  => ['required', Rule::enum(UserOtpType::class)],
         ];
     }
 

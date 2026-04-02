@@ -15,10 +15,8 @@ class SendOtpRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone' => ['required', 'string', 'regex:/^0[0-9]{9}$/'],
-            'type'  => ['required', 'integer', Rule::in(
-                array_column(UserOtpType::cases(), 'value')
-            )],
+            'phone' => ['required', 'string', 'regex:/^0[3-9]\d{8}$/'],
+            'type' => ['required', Rule::enum(UserOtpType::class)],
         ];
     }
 

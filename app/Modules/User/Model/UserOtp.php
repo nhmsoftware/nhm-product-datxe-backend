@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Model;
 
+use App\Modules\User\Model\Enums\UserOtpType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Hash;
 
 class UserOtp extends Model
 {
@@ -28,6 +30,7 @@ class UserOtp extends Model
         'verified_at' => 'datetime',
         'used_at'     => 'datetime',
         'last_sent_at'=> 'datetime',
+        'type' => UserOtpType::class,
     ];
 
     // Attribute ảo — lưu plain OTP tạm để gửi SMS, không persist DB
@@ -44,6 +47,6 @@ class UserOtp extends Model
      */
     public function checkCode(string $plainCode): bool
     {
-        return \Illuminate\Support\Facades\Hash::check($plainCode, $this->otp_hash);
+        return Hash::check($plainCode, $this->otp_hash);
     }
 }
