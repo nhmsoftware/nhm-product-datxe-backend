@@ -106,9 +106,12 @@ class AuthController extends BaseController
                 code:    $result->getCode(),
             );
         }
-
+        $data = $result->getData();
         return $this->sendSuccess(
-            data:    $result->getData(),
+            data:    [
+                'user' => new AuthResource($data['user']),
+                'token' => $data['token'],
+            ],
             message: $result->getMessage(),
             code: 201,
         );
@@ -148,9 +151,12 @@ class AuthController extends BaseController
                 code:    $result->getCode(),
             );
         }
-
+        $data = $result->getData();
         return $this->sendSuccess(
-            data:    $result->getData(),
+            data:    [
+                'user' => new AuthResource($data['user']),
+                'token' => $data['token'],
+            ],
             message: $result->getMessage(),
         );
     }
@@ -209,7 +215,6 @@ class AuthController extends BaseController
         }
 
         return $this->sendSuccess(
-            data: $result->getData(),
             message: $result->getMessage()
         );
     }

@@ -10,8 +10,8 @@ interface UserRepositoryInterface
 {
     public function findByPhone(string $phone): ?User;
     public function existsByPhone(string $phone): bool;
-    public function createCustomerProfile(int $userId, array $data): CustomerProfile;
-    public function upsertDevice(int $userId, array $data): void;
+    public function createCustomerProfile(User $user, array $data): CustomerProfile;
+    public function upsertDevice(User $user, array $data): void;
     public function findByGoogleId(string $googleId): ?User;
     public function findByAppleId(string $appleId): ?User;
     public function findByEmail(?string $email): ?User;
