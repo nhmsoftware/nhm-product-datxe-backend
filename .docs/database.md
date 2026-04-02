@@ -42,7 +42,8 @@
 ### UserOtpType
 ```
 1: Verify_Register (Xác thực đăng ký)
-2: Verify_Forgot_Password (Xác thực quên mật khẩu)
+2: Verify_Login (Xác thực đăng nhập)
+3: Verify_Forgot_Password (Xác thực quên mật khẩu)
 ```
 ### Gender
 ```
@@ -112,11 +113,13 @@
     - id (unsigned bigint auto increment)
     - phone (varchar(50), not null) -- Số điện thoại
     - email (varchar(255), nullable) - Email
-    - is_verified (boolean default false) - Trạng thái xác thực
+    - is_verified (boolean default false) - Trạng thái xác thực đăng nhập
+    - is_phone_verified (boolean default false) - Trạng thái xác thực số điện thoại 
     - google_id (varchar(255), nullable) - ID của người dùng trên provider Google
     - apple_id (varchar(255), nullable) - ID của người dùng trên provider Apple
     - password (varchar(255), not null) - Mật khẩu, phải được mã hóa
     - role (unsigned tinyint, not null) - Vai trò, lưu trữ trong UserRole
+    - is_active (boolean, default true) - Trạng thái tài khoản có hoạt động hay không
     - created_at (timestamp) - Thời gian tạo
     - updated_at (timestamp) - Thời gian cập nhật
     - deleted_at (timestamp, nullable) - Thời gian xóa (soft delete)
@@ -140,6 +143,7 @@
     - expired_at (timestamp) -- thời gian hết hạn
     - verified_at (timestamp, nullable) -- thời gian xác thực
     - last_sent_at (timestamp, nullable) -- thời gian gửi OTP cuối cùng
+    - used_at -- (timestamp, nullable) -- thời gian dùng OTP
     - send_count (unsigned tinyint, default 1) -- số lần gửi OTP
     - ip_address (varchar, nullable) -- địa chỉ IP
     - created_at (timestamp) -- thời gian tạo
@@ -173,7 +177,7 @@
     - id (unsigned bigint, auto increment, primary key)
     - user_id (unsigned bigint, not null, FK → users.id)
     - full_name (varchar(100), not null) — Họ tên
-    - gender (unsigned tinyint, not null) — Giới tính, lưu trữ trong Gender
+    - gender (unsigned tinyint, nullable) — Giới tính, lưu trữ trong Gender
     - created_at (timestamp)
     - updated_at (timestamp)
     

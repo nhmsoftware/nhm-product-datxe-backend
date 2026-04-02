@@ -1,36 +1,79 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\User\Model;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Core\Traits\HasBigIntId;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Modules\User\Model\CustomerProfile;
+use App\Modules\User\Model\Enums\UserRole;
 
-#[Fillable(['name', 'email', 'password'])]
-#[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, HasBigIntId, SoftDeletes, HasApiTokens;
+    use HasApiTokens, SoftDeletes, HasBigIntId;
 
+    protected $table = 'users';
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    protected $fillable = [
+        'phone',
+        'email',
+        'password',
+        'role',
+        'is_verified',
+        'is_phone_verified',
+        'is_active',
+        'google_id',
+        'apple_id',
+        'full_name',
+        'gender',
+    ];
+
+    protected $hidden = [
+        'password',
+    ];
+
+    protected $casts = [
+        'role'              => UserRole::class,
+        'is_verified'       => 'boolean',
+        'is_phone_verified' => 'boolean',
+        'is_active'         => 'boolean',
+        'deleted_at'        => 'datetime',
+    ];
+
+    // ─── Relationships ───────────────────────────────────────────
+    public function customerProfile(): HasOne
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasOne(CustomerProfile::class);
+    }
+
+    public function userDevices(): HasMany
+    {
+        return $this->hasMany(UserDevice::class);
+    }
+
+    // ─── Helpers ─────────────────────────────────────────────────
+    public function isCustomer(): bool
+    {
+        return $this->role === UserRole::Customer;
+    }
+
+    public function isDriver(): bool
+    {
+        return $this->role === UserRole::Driver;
+    }
+
+    public function isMerchant(): bool
+    {
+        return $this->role === UserRole::Merchants;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === UserRole::Admin;
     }
 }

@@ -7,8 +7,9 @@ readonly class ServiceReturn
     public function __construct(
         private bool             $success,
         private string           $message,
-        public mixed             $data = null,
-        private null| \Throwable $error = null
+        private mixed             $data = null,
+        private null| \Throwable $error = null,
+        private int              $code = 200,
     )
     {
 
@@ -18,9 +19,9 @@ readonly class ServiceReturn
         return new self(true, $message, $data);
     }
 
-    public static function error(string $message = 'Error', \Throwable| null $exception = null, mixed $data = null): self
+    public static function error(string $message = 'Error', \Throwable| null $exception = null, mixed $data = null, int $code = 400): self
     {
-        return new self(false, $message, $data, $exception);
+        return new self(false, $message, $data, $exception, $code);
     }
 
     public function isSuccess(): bool
@@ -43,5 +44,9 @@ readonly class ServiceReturn
     public function getData()
     {
         return $this->data;
+    }
+    public function getCode(): int
+    {
+        return $this->code;
     }
 }

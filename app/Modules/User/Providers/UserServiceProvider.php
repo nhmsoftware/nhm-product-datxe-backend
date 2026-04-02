@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Modules\User\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
@@ -12,33 +14,25 @@ class UserServiceProvider extends BaseModuleServiceProvider
 {
     protected function getModuleName(): string
     {
-        return 'User';
+       return 'User';
     }
 
-
-    /**
-     *
-     * @return void
-     */
     public function register(): void
     {
-        /**
-         * Repository
-         */
-        $this->app->singleton(UserRepositoryInterface::class, UserRepository::class);
+        // ── Repository Binding ─────────────────────────────────
+        $this->app->bind(
+            UserRepositoryInterface::class,
+            UserRepository::class
+        );
 
-        /**
-         * Service
-         */
+        // ── Services (singleton để tái sử dụng DI graph) ──────
         $this->app->singleton(AuthServiceInterface::class, AuthService::class);
     }
 
     public function boot(): void
     {
-        parent::boot();
-
-        /**
-         * Boot service in here
-         */
+       parent::boot();
     }
+
+
 }
