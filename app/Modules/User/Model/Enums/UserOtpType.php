@@ -9,14 +9,18 @@ use App\Core\Traits\EnumHelper;
 enum UserOtpType: int
 {
     use EnumHelper;
-    case Verify_Register        = 1;
-    case Verify_Forgot_Password = 2;
+
+    case VERIFY_REGISTER = 1;
+    case VERIFY_LOGIN = 2;
+    case VERIFY_FORGOT_PASSWORD = 3;
+
 
     public function label(): string
     {
-        return match ($this){
-            self::Verify_Register        => 'Xác nhận đăng ký',
-            self::Verify_Forgot_Password => 'Xác nhận quên mật khẩu',
+        return match ($this) {
+            self::VERIFY_REGISTER => 'Xác nhận đăng ký',
+            self::VERIFY_LOGIN => 'Xác nhận đăng nhập',
+            self::VERIFY_FORGOT_PASSWORD => 'Xác nhận quên mật khẩu',
         };
     }
 }

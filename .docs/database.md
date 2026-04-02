@@ -112,7 +112,8 @@
     - id (unsigned bigint auto increment)
     - phone (varchar(50), not null) -- Số điện thoại
     - email (varchar(255), nullable) - Email
-    - is_verified (boolean default false) - Trạng thái xác thực
+    - is_verified (boolean default false) - Trạng thái xác thực đăng nhập
+    - is_phone_verified (boolean default false) - Trạng thái xác thực đặt dịch vụ
     - google_id (varchar(255), nullable) - ID của người dùng trên provider Google
     - apple_id (varchar(255), nullable) - ID của người dùng trên provider Apple
     - password (varchar(255), not null) - Mật khẩu, phải được mã hóa
@@ -140,6 +141,7 @@
     - expired_at (timestamp) -- thời gian hết hạn
     - verified_at (timestamp, nullable) -- thời gian xác thực
     - last_sent_at (timestamp, nullable) -- thời gian gửi OTP cuối cùng
+    - used_at -- (timestamp, nullable) -- thời gian dùng OTP
     - send_count (unsigned tinyint, default 1) -- số lần gửi OTP
     - ip_address (varchar, nullable) -- địa chỉ IP
     - created_at (timestamp) -- thời gian tạo

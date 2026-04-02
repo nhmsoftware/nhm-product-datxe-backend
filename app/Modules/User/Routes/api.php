@@ -5,39 +5,14 @@ declare(strict_types=1);
 use App\Modules\User\Http\Controllers\AuthController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Auth Routes — Module User
-|--------------------------------------------------------------------------
-| Prefix  : /api/auth
-| Middleware: throttle xem config/app.php
-*/
+// Authentication Routes
+// Các route công khai
+Route::post('v1/auth/authenticate-otp', [AuthController::class, 'authenticateOtp'])->name('auth.authenticate-otp');
+Route::post('v1/auth/register', [AuthController::class, 'register'])->name('auth.register');
+Route::post('v1/auth/login', [AuthController::class, 'login'])->name('auth.login');
 
-Route::post('v1/auth/send-otp', [AuthController::class, 'sendOtp'])
-    ->name('auth.send-otp');
-
-Route::prefix('api/auth')->group(function () {
-
-    // ── Public routes ─────────────────────────────────────────
-    Route::post('send-otp', [AuthController::class, 'sendOtp'])
-        ->middleware('throttle:10,1')   // 10 req / 1 phút
-        ->name('auth.send-otp');
-
-    Route::post('verify-otp', [AuthController::class, 'verifyOtp'])
-        ->name('auth.verify-otp');
-
-    Route::post('register', [AuthController::class, 'register'])
-        ->name('auth.register');
-
-    Route::post('login', [AuthController::class, 'login'])
-        ->middleware('throttle:5,1')    // 5 lần / 1 phút chống brute-force
-        ->name('auth.login');
-
-    // ── Protected routes ──────────────────────────────────────
-    Route::middleware('auth:sanctum')->group(function () {
-        Route::get('me', [AuthController::class, 'me'])
-            ->name('auth.me');
-        Route::post('logout', [AuthController::class, 'logout'])
-            ->name('auth.logout');
-    });
+// Các route cần đăng nhập (ví dụ dùng Sanctum)
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('v1/auth/me', [AuthController::class, 'me'])->name('auth.me');
+    Route::post('v1/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
 });
