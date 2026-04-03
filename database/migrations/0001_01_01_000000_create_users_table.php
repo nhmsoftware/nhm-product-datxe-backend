@@ -13,12 +13,18 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('phone', 50)->unique();
+            $table->string('email', 255)->nullable()->unique();
+            $table->boolean('is_verified')->default(false); // Trạng thái xác thực chung
+            $table->boolean('is_phone_verified')->default(false); // Xác thực SĐT
+            $table->string('google_id', 255)->nullable();
+            $table->string('apple_id', 255)->nullable();
+            $table->string('password', 255);
+            $table->unsignedTinyInteger('role')->index(); // Theo UserRole Enum (1:Admin, 2:Customer, 3:Driver, 4:Merchants)
+            $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->timestamps();
+            $table->softDeletes();
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
