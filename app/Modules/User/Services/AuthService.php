@@ -45,7 +45,6 @@ class AuthService extends BaseService implements AuthServiceInterface
             return [
                 'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
                 'expires_at' => $otpRecord->expired_at,
-                'plain_code' => $otpRecord->plain_code,
             ];
         });
     }
@@ -67,7 +66,7 @@ class AuthService extends BaseService implements AuthServiceInterface
                 // Check exist
                 $checkExist = $this->userRepository->query()
                     ->where('phone', $data['phone'])
-                    ->withTrash()
+                    ->withTrashed()
                     ->first();
 
                 if ($checkExist) {
@@ -88,7 +87,7 @@ class AuthService extends BaseService implements AuthServiceInterface
                 ]);
 
                 // 3. Profile
-                $this->userRepository->createCustomerProfile($user->id, [
+                $this->userRepository->createCustomerProfile($user, [
                     'full_name' => $data['full_name'],
                     'gender' => Gender::Other->value,
                 ]);
@@ -144,25 +143,27 @@ class AuthService extends BaseService implements AuthServiceInterface
             // 6. Token
             $token = $this->generateTokenAuth($user);
 
-            switch ($user->role) {
-                case UserRole::Customer:
-                    $profile = $user->load('customerProfile');
-                    break;
-                case UserRole::Merchants:
-                    $profile = $user->load('merchantProfile');
-                    break;
-                case UserRole::Admin:
-                    $profile = $user->load('adminProfile');
-                    break;
-                case UserRole::Driver:
-                    $profile = $user->load('driverProfile');
-                    break;
-            }
+            $user->load($this->getProfileRelation($user->role));
             return [
-                'profile' => $profile,
+                'user' => $user,
                 'token' => $token,
             ];
         }, useTransaction: true);
+    }
+
+    /**
+     * Lấy relation profile theo role.
+     * @param UserRole $role
+     * @return string
+     */
+    private function getProfileRelation(UserRole $role): string
+    {
+        return match ($role) {
+            UserRole::Customer => 'customerProfile',
+            UserRole::Merchants => 'merchantProfile',
+            UserRole::Admin => 'adminProfile',
+            UserRole::Driver => 'driverProfile',
+        };
     }
 
     /**
@@ -210,6 +211,10 @@ class AuthService extends BaseService implements AuthServiceInterface
 
         // Tạo OTP
         $otpRecord = $this->userOtpRepository->generateOtp($phone, $type);
+
+        if (app()->environment(['local', 'development'])) {
+            \Log::debug("OTP for {$phone}: {$otpRecord->plain_code}");
+        }
 
         // TODO: gửi SMS
         // $this->smsProvider->send($phone, $otpRecord->plain_code);
