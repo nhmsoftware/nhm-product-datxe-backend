@@ -128,6 +128,7 @@ class AuthController extends BaseController
                 properties: [
                     new OA\Property(property: 'phone',        type: 'string', example: '0901234567'),
                     new OA\Property(property: 'otp',          type: 'string', example: '123456'),
+                    new OA\Property(property: 'type',         description: 'Loại OTP, mặc định là 2 (Đăng nhập)', type: 'integer', example: 2),
                     new OA\Property(property: 'device_id',    type: 'string'),
                     new OA\Property(property: 'device_token', type: 'string'),
                     new OA\Property(property: 'device_type',  type: 'string'),
