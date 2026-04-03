@@ -13,13 +13,14 @@ return new class extends Migration
     {
         Schema::create('user_otp', function (Blueprint $table) {
             $table->id();
-            $table->string('phone', 50);
+            $table->string('phone', 50)->index();
             $table->string('otp_hash');
             $table->unsignedSmallInteger('type'); // UserOtpType enum
             $table->unsignedTinyInteger('attempts')->default(1);
             $table->timestamp('expired_at');
             $table->timestamp('verified_at')->nullable();
             $table->timestamp('last_sent_at')->nullable();
+            $table->timestamp('used_at')->nullable();
             $table->unsignedTinyInteger('send_count')->default(1);
             $table->string('ip_address')->nullable();
             $table->timestamps();

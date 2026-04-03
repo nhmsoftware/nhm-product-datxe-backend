@@ -1,0 +1,56 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev          # chỉ build tới stage "dev"
+    container_name: nhm-app
+    volumes:
+      - .:/var/www         # mount toàn bộ source code để hot-reload
+      - vendor:/var/www/vendor  # named volume → vendor không bị override bởi host
+    ports:
+      - "8000:8000"
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: base64:your-app-key-here
+      DB_CONNECTION: pgsql
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_DATABASE: nhm_datxe
+      DB_USERNAME: postgres
+      DB_PASSWORD: 123456
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: nhm-postgres
+    environment:
+      POSTGRES_DB: nhm_datxe
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123456
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: nhm-redis
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:
+  vendor:    # named volume cho vendor — tách biệt khỏi host filesystem
