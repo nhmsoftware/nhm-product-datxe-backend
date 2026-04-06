@@ -8,4 +8,6 @@ return [
     L5Swagger\L5SwaggerServiceProvider::class,
     AppServiceProvider::class,
     UserServiceProvider::class,
+    \Laravel\Socialite\SocialiteServiceProvider::class,
+
 ];

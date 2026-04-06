@@ -52,11 +52,27 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
             ->first();
     }
 
+    /**
+     * Check if user exists by google_id
+     */
+    public function existsByGoogleId(string $googleId): bool
+    {
+        return $this->model->where('google_id', $googleId)->exists();
+    }
+
     public function findByGoogleId(string $googleId): ?User
     {
         return $this->model
             ->where('google_id', $googleId)
             ->first();
+    }
+
+    /**
+     * Check if user exists by apple_id
+     */
+    public function existsByAppleId(string $appleId): bool
+    {
+        return $this->model->where('apple_id', $appleId)->exists();
     }
 
     public function findByAppleId(string $appleId): ?User

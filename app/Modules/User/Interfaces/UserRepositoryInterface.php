@@ -58,4 +58,14 @@ interface UserRepositoryInterface
      * @return User|null
      */
     public function findByEmail(?string $email): ?User;
+
+    /**
+     * Check if user exists by google_id
+     */
+    public function existsByGoogleId(string $googleId): bool;
+
+    /**
+     * Check if user exists by apple_id
+     */
+    public function existsByAppleId(string $appleId): bool;
 }
