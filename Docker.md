@@ -1,6 +1,6 @@
-# Docker Setup — Laravel + PostgreSQL
+# Docker Setup — Laravel + PostgreSQL + Redis
 
-> Dev-first, CI/CD-ready. Hướng dẫn từ local đến production.
+> Dev-first. Hướng dẫn từ local đến production.
 
 ---
 
@@ -8,314 +8,250 @@
 
 ```
 project/
-├── Dockerfile            # Multi-stage: base → dev → production (sau này)
-├── docker-compose.yml    # Dev only
+├── Dockerfile            # Single-stage, tối giản cho local dev
+├── docker-compose.yml    # Dev only: app + postgres + redis
+├── data/
+│   └── postgres/         # Dữ liệu DB (bind mount, gitignore)
 └── DOCKER.md             # File này
 ```
 
 ---
 
-## Kiến trúc Dockerfile — Multi-stage
+## Kiến trúc hiện tại (Local Dev)
 
 ```
-┌─────────────────────────────────────────────────┐
-│  FROM php:8.3-cli-alpine  ← base image (~35MB)  │
-│                                                  │
-│  Stage: base                                     │
-│  ├── apk runtime libs (libpq, icu, oniguruma...) │
-│  ├── PHP extensions (pdo_pgsql, mbstring, ...)   │
-│  └── composer binary                             │
-│                                                  │
-│  Stage: dev  (target: dev)                       │
-│  ├── ENV APP_ENV=local                           │
-│  └── CMD: composer install + artisan serve       │
-│                                                  │
-│  Stage: production  (chưa có — xem phần 4)       │
-│  ├── COPY --from=base                            │
-│  ├── composer install --no-dev                   │
-│  ├── php artisan optimize                        │
-│  └── CMD: php-fpm                                │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────┐
+│  FROM php:8.3-cli-alpine  (~35MB)                    │
+│                                                      │
+│  ├── Runtime libs: libpq, icu-libs, oniguruma,       │
+│  │                 libzip, bash                       │
+│  │                                                    │
+│  ├── PHP Extensions (compile xong xóa build-deps):   │
+│  │   pdo_pgsql, mbstring, intl, zip,                 │
+│  │   opcache, pcntl, sockets, redis                  │
+│  │                                                    │
+│  └── CMD: composer install → php artisan serve :8000 │
+└──────────────────────────────────────────────────────┘
+
+docker-compose services:
+  app       → php:8.3-cli-alpine (Dockerfile trên)
+  postgres  → postgres:16-alpine
+  redis     → redis:7-alpine
 ```
 
-**Tại sao multi-stage?**
+**Tại sao single-stage cho local?**
 
-- `base` chứa toàn bộ extensions đã compile → tái dùng cho cả dev lẫn prod
-- `dev` stage nhẹ, không có bước optimize
-- CI/CD sau này chỉ cần build đến stage `production` → image sạch, không có dev tools
+- Local không cần optimize hay strip dev-deps → multi-stage chỉ làm build chậm hơn
+- Source code bind-mount từ host → sửa code không cần rebuild hay restart
+- Khi lên server sẽ thêm stage `production` với php-fpm + nginx
 
 ---
 
 ## Giải thích chi tiết Dockerfile
 
-### 1. Base image
+### Base image
 
 ```dockerfile
-FROM php:8.3-cli-alpine AS base
+FROM php:8.3-cli-alpine
 ```
 
-| Lựa chọn | Size | Lý do chọn |
+| Image | Size | Ghi chú |
 |---|---|---|
-| `php:8.3-apache` | ~450MB | Quá nặng, kéo theo Apache |
-| `php:8.3-fpm` | ~140MB | Cần thêm nginx để chạy |
-| `php:8.3-cli-alpine` | ~35MB | ✅ Nhẹ nhất, đủ dùng cho dev |
+| `php:8.3-apache` | ~450MB | Kéo theo Apache, quá nặng |
+| `php:8.3-fpm` | ~140MB | Cần nginx, dùng cho production |
+| `php:8.3-cli-alpine` | ~35MB | ✅ Nhẹ nhất, đủ cho local dev |
 
-### 2. Pattern `.build-deps` — cách giảm size chính
+### Pattern `.build-deps` — giảm size chính
 
 ```dockerfile
+# Runtime libs — cài riêng, KHÔNG nằm trong .build-deps → giữ lại sau build
+RUN apk add --no-cache \
+        libpq icu-libs oniguruma libzip bash
+
+# Build tools — gom vào .build-deps, xóa ngay sau khi compile xong
 RUN apk add --no-cache --virtual .build-deps \
-        $PHPIZE_DEPS \
-        postgresql-dev \
-        icu-dev \
-    && docker-php-ext-install pdo_pgsql intl \
-    && apk del .build-deps    # ← xóa build tools sau khi compile xong
+        ${PHPIZE_DEPS} \
+        linux-headers \      # ← cần cho sockets extension trên Alpine
+        postgresql-dev icu-dev oniguruma-dev libzip-dev \
+    && docker-php-ext-install ... \
+    && apk del --purge .build-deps   # gcc, make, headers... biến mất
 ```
 
-**Giải thích:**
+Kết quả: tiết kiệm ~80-100MB so với không dùng pattern này.
 
-- `--virtual .build-deps` gom toàn bộ build tools vào một nhóm tên `.build-deps`
-- Sau khi compile extension xong, `apk del .build-deps` xóa sạch gcc, make, headers...
-- Runtime libs (`libpq`, `icu`, `oniguruma`) được cài riêng **không** nằm trong `.build-deps` → giữ lại để extension chạy được
-- Kết quả: tiết kiệm ~80-100MB so với không dùng pattern này
+> **Lưu ý `linux-headers`:** Extension `sockets` cần `linux/sock_diag.h` — header
+> này không có sẵn trên Alpine. Thiếu dòng này build sẽ lỗi:
+> `fatal error: linux/sock_diag.h: No such file or directory`
 
-### 3. Composer layer cache
-
-```dockerfile
-COPY --from=composer:2.8 /usr/bin/composer /usr/bin/composer
-```
-
-Chỉ copy binary `composer`, không kéo toàn bộ composer image (~200MB).
-
-Trong `docker-compose.yml`, vendor được mount qua named volume:
-
-```yaml
-volumes:
-  - .:/var/www          # source code → hot-reload
-  - vendor:/var/www/vendor  # named volume riêng
-```
-
-**Tại sao dùng named volume cho vendor?**
-
-```
-Host filesystem:
-  /project/vendor/  ← thường rỗng hoặc không đồng bộ
-
-Container:
-  /var/www/vendor/  ← composer install vào đây
-
-Nếu dùng bind mount (.:/var/www):
-  → host /vendor rỗng sẽ override container /vendor → mất packages!
-
-Giải pháp: named volume "vendor" tách biệt hoàn toàn khỏi host
-  → vendor sống trong Docker volume, không bị ảnh hưởng bởi host
-```
-
-### 4. PHP Extensions được cài
+### PHP Extensions được cài
 
 | Extension | Lý do |
 |---|---|
 | `pdo_pgsql` | Kết nối PostgreSQL |
 | `mbstring` | Xử lý string UTF-8 (Laravel core) |
 | `intl` | Internationalization |
-| `zip` | Composer cần để unzip packages |
-| `opcache` | Cache bytecode PHP → nhanh hơn |
-| `pcntl` | Process control → Laravel Queue worker cần |
+| `zip` | Composer unzip packages |
+| `opcache` | Cache bytecode PHP |
+| `pcntl` | Process control — Queue worker cần |
+| `sockets` | Socket support |
 | `redis` (PECL) | Cache, Queue, Session qua Redis |
+
+### CMD — composer install tự động
+
+```dockerfile
+CMD ["sh", "-c", "composer install --no-interaction && php artisan serve --host=0.0.0.0 --port=8000"]
+```
+
+- `composer install` chạy mỗi lần container start
+- `vendor` nằm trong **named volume** riêng → không bị xóa giữa các lần restart
+- Nếu `composer.lock` không đổi, install gần như tức thì (đã có cache)
 
 ---
 
-## Chạy dev
+## Giải thích docker-compose.yml
+
+### Tại sao vendor dùng named volume, không dùng bind mount?
+
+```
+Vấn đề nếu chỉ dùng bind mount (.:/var/www):
+
+  Host:       /project/vendor/  ← thường rỗng
+  Container:  /var/www/vendor/  ← composer install vào đây
+
+  → Docker mount đè host lên container → vendor trong container bị xóa!
+
+Giải pháp: tách vendor ra named volume riêng
+
+  volumes:
+    - .:/var/www              # host override container (source code)
+    - vendor:/var/www/vendor  # named volume, Docker ưu tiên hơn bind mount bên trên
+```
+
+### Tại sao DB dùng bind mount, không dùng named volume?
+
+```yaml
+postgres:
+  volumes:
+    - ./data/postgres:/var/lib/postgresql/data  # bind mount ra host
+```
+
+- Named volume bị xóa khi chạy `docker compose down -v` → mất DB
+- Bind mount `./data/postgres` tồn tại ngay cả khi `down -v`
+- Dễ backup: `tar -czf backup.tar.gz ./data/postgres`
+- Dễ inspect: xem thẳng file trên host
+
+### Healthcheck — app đợi DB sẵn sàng
+
+```yaml
+depends_on:
+  postgres:
+    condition: service_healthy   # đợi pg_isready pass mới start app
+  redis:
+    condition: service_healthy   # đợi redis-cli ping pass
+```
+
+Không có healthcheck, app có thể start trước DB → lỗi connection khi migrate.
+
+### DB_PASSWORD bắt buộc
+
+```yaml
+POSTGRES_PASSWORD: ${DB_PASSWORD:?Thiếu DB_PASSWORD trong .env}
+```
+
+Cú pháp `:?` làm `docker compose up` fail ngay với error rõ ràng nếu quên set password trong `.env`.
+
+---
+
+## Chạy local
 
 ```bash
-# Lần đầu
+# Chuẩn bị lần đầu
+mkdir -p data/postgres
+cp .env.example .env          # điền APP_KEY và DB_PASSWORD
+
+# Build và start
 docker compose up -d --build
 
 # Xem log
 docker compose logs -f app
 
-# Vào trong container
-docker compose exec app bash
-
 # Chạy artisan
 docker compose exec app php artisan migrate
 docker compose exec app php artisan make:controller UserController
 
-# Dừng
+# Vào shell container
+docker compose exec app bash
+
+# Dừng an toàn — GIỮ toàn bộ data
 docker compose down
 
-# Dừng + xóa volumes (reset DB)
-docker compose down -v
+# Reset hoàn toàn — XÓA vendor + data DB
+docker compose down -v && rm -rf ./data
 ```
 
-**Lưu ý:** Lần đầu chạy sẽ mất 1-2 phút để composer install. Các lần sau nhanh hơn vì vendor đã có trong named volume.
-
----
-
-## Chuyển sang Production + CI/CD
-
-### Bước 1 — Thêm stage `production` vào Dockerfile
-
-Thêm vào cuối `Dockerfile`:
-
-```dockerfile
-# ============================================================
-# PRODUCTION STAGE
-# ============================================================
-FROM base AS production
-
-ENV APP_ENV=production \
-    APP_DEBUG=false
-
-WORKDIR /var/www
-
-# Copy source code VÀO image (không mount volume như dev)
-COPY . .
-
-# Install dependencies — không có dev packages
-RUN composer install \
-        --no-dev \
-        --no-interaction \
-        --prefer-dist \
-        --optimize-autoloader
-
-# Cache Laravel config/routes/views để tăng performance
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
-
-# Set quyền đúng
-RUN chown -R www-data:www-data storage bootstrap/cache
-
-EXPOSE 9000
-
-CMD ["php-fpm"]
-```
-
-> ⚠️ Stage production dùng `php-fpm`, cần thêm nginx. Xem Bước 3.
-
-### Bước 2 — Thêm nginx vào docker-compose (production)
-
-Tạo file `docker-compose.prod.yml`:
-
-```yaml
-services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production    # ← build đến stage production
-    image: your-registry/nhm-app:${TAG:-latest}
-    # KHÔNG có volumes mount — code đã nằm trong image
-
-  nginx:
-    image: nginx:alpine
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - app
-```
-
-### Bước 3 — Tạo nginx.conf tối giản
-
-```nginx
-server {
-    listen 80;
-    root /var/www/public;
-
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass app:9000;
-        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
-}
-```
-
-### Bước 4 — CI/CD pipeline (GitHub Actions)
-
-Tạo `.github/workflows/deploy.yml`:
-
-```yaml
-name: Build & Deploy
-
-on:
-  push:
-    branches: [main]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build production image
-        run: |
-          docker build \
-            --target production \
-            --cache-from your-registry/nhm-app:latest \
-            -t your-registry/nhm-app:${{ github.sha }} \
-            -t your-registry/nhm-app:latest \
-            .
-
-      - name: Push image
-        run: docker push your-registry/nhm-app --all-tags
-
-      - name: Deploy
-        run: |
-          # ssh vào server, pull image mới, docker compose up
-          ssh user@server "
-            docker compose -f docker-compose.prod.yml pull &&
-            docker compose -f docker-compose.prod.yml up -d --no-build
-          "
-```
-
-**`--cache-from`** là key để CI/CD nhanh: pull image cũ trước, dùng làm cache → chỉ build lại layer thay đổi.
-
----
-
-## So sánh dev vs production
-
-| | Dev | Production |
-|---|---|---|
-| **Stage** | `dev` | `production` |
-| **Source code** | Mount volume (hot-reload) | COPY vào image |
-| **vendor** | Named volume + `composer install` khi start | Baked vào image (`--no-dev`) |
-| **PHP server** | `artisan serve` | `php-fpm` + nginx |
-| **APP_DEBUG** | `true` | `false` |
-| **Artisan cache** | Không (vì code thay đổi liên tục) | `config:cache`, `route:cache`, `view:cache` |
-| **Image size** | ~120MB | ~90MB (không có dev deps) |
+> **Lần đầu** mất 1-3 phút để build image và composer install.
+> Các lần sau `docker compose up -d` (không `--build`) chỉ mất vài giây.
 
 ---
 
 ## Troubleshooting
 
-**Vendor bị mất sau khi down:**
-
+**Lỗi `linux/sock_diag.h` khi build:**
 ```bash
-# vendor nằm trong named volume, không mất khi down
-# Chỉ mất khi chạy: docker compose down -v
-# Fix: chạy lại, composer sẽ tự install
-docker compose up -d
+# Đã fix bằng linux-headers trong .build-deps — nếu vẫn lỗi, thử:
+docker compose build --no-cache
+```
+
+**Vendor bị mất / lỗi class not found:**
+```bash
+# Named volume có thể bị corrupt, tạo lại:
+docker compose down -v
+docker compose up -d --build
 ```
 
 **Lỗi permission storage:**
-
 ```bash
 docker compose exec app chmod -R 775 storage bootstrap/cache
 ```
 
-**Postgres chưa kịp ready khi app start:**
-
-Đã xử lý bằng `healthcheck` + `condition: service_healthy` trong compose.
+**Postgres chưa kịp sẵn sàng:**
+Đã xử lý bằng healthcheck. Nếu vẫn lỗi, tăng `retries` trong compose.
 
 **Xem size image:**
-
 ```bash
 docker images nhm-app
 docker history nhm-app:latest
+```
+
+**Rebuild khi đổi Dockerfile hoặc composer.lock:**
+```bash
+docker compose build --no-cache
+docker compose up -d
+```
+
+---
+
+## Lên production (roadmap)
+
+Khi sẵn sàng deploy server, sẽ thêm:
+
+| Thành phần | Thay đổi |
+|---|---|
+| **Dockerfile** | Thêm stage `production`: php-fpm, `--no-dev`, `artisan optimize` |
+| **Nginx** | Container riêng, phục vụ static files + forward PHP đến fpm |
+| **Source code** | COPY vào image (không mount volume) |
+| **Queue + Scheduler** | Service riêng trong compose |
+| **Secrets** | Không dùng `.env` file — dùng Docker secrets hoặc env từ CI/CD |
+
+---
+
+## Tham khảo nhanh
+
+```bash
+docker compose up -d --build     # build + start
+docker compose down              # dừng, giữ data
+docker compose logs -f app       # theo dõi log
+docker compose exec app bash     # vào shell
+docker compose ps                # trạng thái services
+docker images nhm-app            # xem size image
 ```
