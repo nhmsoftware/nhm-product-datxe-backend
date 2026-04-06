@@ -287,7 +287,8 @@ class AuthController extends BaseController
         ),
         tags: ['Auth'],
         responses: [
-            '200' => new OA\Response(
+            new OA\Response(
+                response: 200,
                 description: 'Đăng nhập/đăng ký thành công',
                 content: new OA\JsonContent(
                     properties: [
@@ -345,7 +346,8 @@ class AuthController extends BaseController
         ),
         tags: ['Auth'],
         responses: [
-            '200' => new OA\Response(
+            new OA\Response(
+                response: 200,
                 description: 'Đăng nhập/đăng ký thành công',
                 content: new OA\JsonContent(
                     properties: [
