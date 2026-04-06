@@ -39,4 +39,25 @@ interface AuthServiceInterface
      * @return ServiceReturn
      */
     public function logout(User $user, bool $logoutAll = false): ServiceReturn;
+
+    /**
+     * POST /google-login
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function googleLogin(array $data): ServiceReturn;
+
+    /**
+     * POST /apple-login
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function appleLogin(array $data): ServiceReturn;
+
+    /**
+     * POST /reset-password
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function resetPassword(array $data): ServiceReturn;
 }

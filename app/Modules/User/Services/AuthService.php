@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Services;
 
 use App\Core\Services\BaseService;
+use App\Core\Services\ServiceException;
 use App\Core\Services\ServiceReturn;
 use App\Modules\User\Interfaces\AuthServiceInterface;
 use App\Modules\User\Model\Enums\Gender;
@@ -14,6 +15,9 @@ use App\Modules\User\Model\User;
 use App\Modules\User\Model\UserOtp;
 use App\Modules\User\Repositories\UserOtpRepository;
 use App\Modules\User\Repositories\UserRepository;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+use Firebase\JWT\JWK;
 
 class AuthService extends BaseService implements AuthServiceInterface
 {
@@ -55,60 +59,34 @@ class AuthService extends BaseService implements AuthServiceInterface
      */
     public function register(array $data): ServiceReturn
     {
-        return $this->execute(
-            callback: function () use ($data) {
-                // Verify OTP
-                $this->verifyOtpOrFail(
-                    $data['phone'],
-                    $data['otp'],
-                    UserOtpType::VERIFY_REGISTER
-                );
-                // Check exist
-                $checkExist = $this->userRepository->query()
-                    ->where('phone', $data['phone'])
-                    ->withTrashed()
-                    ->first();
+        return $this->execute(function () use ($data) {
+            $this->verifyOtpOrFail($data['phone'], $data['otp'], UserOtpType::VERIFY_REGISTER);
+            $checkExist = $this->userRepository->query()->where('phone', $data['phone'])->withTrashed()->first();
+            if ($checkExist) $this->throw('Số điện thoại đã được đăng ký.', 409);
 
-                if ($checkExist) {
-                    $this->throw('Số điện thoại đã được đăng ký.', 409);
-                }
+            $user = $this->userRepository->create([
+                'phone' => $data['phone'],
+                'password' => bcrypt($data['password'] ?? \Str::random(16)),
+                'role' => UserRole::Customer,
+                'is_verified' => true,
+                'is_phone_verified' => true,
+                'is_active' => true,
+            ]);
 
-                // Create user
-                /**
-                 * @var User $user
-                 */
-                $user = $this->userRepository->create([
-                    'phone' => $data['phone'],
-                    'password' => bcrypt($data['password'] ?? \Str::random(16)),
-                    'role' => UserRole::Customer, // Mặc định là khách hàng khi đăng ký
-                    'is_verified' => true,
-                    'is_phone_verified' => true,
-                    'is_active' => true,
-                ]);
+            $this->userRepository->createCustomerProfile($user, [
+                'full_name' => $data['full_name'],
+                'gender' => Gender::Other->value,
+            ]);
 
-                // 3. Profile
-                $this->userRepository->createCustomerProfile($user, [
-                    'full_name' => $data['full_name'],
-                    'gender' => Gender::Other->value,
-                ]);
+            $this->upsertDeviceIfPresent($user, $data);
+            $this->userOtpRepository->markLatestAsUsed($data['phone'], UserOtpType::VERIFY_REGISTER);
+            $token = $this->generateTokenAuth($user);
 
-                // 4. Device
-                $this->upsertDeviceIfPresent($user, $data);
-
-                // 5. Consume OTP
-                $this->userOtpRepository->markLatestAsUsed(
-                    $data['phone'],
-                    UserOtpType::VERIFY_REGISTER,
-                );
-
-                // 6. Token
-                $token = $this->generateTokenAuth($user);
-
-                return [
-                    'user' => $user->load('customerProfile'),
-                    'token' => $token,
-                ];
-            });
+            return [
+                'user' => $user->load('customerProfile'),
+                'token' => $token,
+            ];
+        });
     }
 
     /**
@@ -119,28 +97,16 @@ class AuthService extends BaseService implements AuthServiceInterface
     {
         return $this->execute(function () use ($data) {
             $phone = $data['phone'];
-
-            // 1. Kiểm tra user tồn tại
             $user = $this->userRepository->findByPhone($phone);
-            if (!$user) {
-                $this->throw('Số điện thoại chưa được đăng ký trong hệ thống.', 404);
-            }
+            if (!$user) $this->throw('Số điện thoại chưa được đăng ký.', 404);
 
-            // 2. Verify OTP
             $this->verifyOtpOrFail($phone, $data['otp'], UserOtpType::VERIFY_LOGIN);
+            if (!$user->is_active) $this->throw('Tài khoản đã bị khoá.', 403);
 
-            // 3. Kiểm tra tài khoản có bị khoá không
-            if (!$user->is_active) {
-                $this->throw('Tài khoản đã bị khoá, vui lòng liên hệ hỗ trợ.', 403);
-            }
-
-            // 4. Cập nhật device
             $this->upsertDeviceIfPresent($user, $data);
 
-            // 5. Consume OTP
             $this->userOtpRepository->markLatestAsUsed($phone, UserOtpType::VERIFY_LOGIN);
 
-            // 6. Token
             $token = $this->generateTokenAuth($user);
 
             $user->load($this->getProfileRelation($user->role));
@@ -149,6 +115,178 @@ class AuthService extends BaseService implements AuthServiceInterface
                 'token' => $token,
             ];
         }, useTransaction: true);
+    }
+
+    /**
+     * POST /reset-password
+     * Đặt lại mật khẩu với OTP
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function resetPassword(array $data): ServiceReturn
+    {
+        return $this->execute(function () use ($data) {
+            $phone = $data['phone'];
+            $user = $this->userRepository->findByPhone($phone);
+
+            if (!$user) {
+                $this->throw('Số điện thoại này chưa được đăng ký trên hệ thống.', 404);
+            }
+
+            $this->verifyOtpOrFail($phone, $data['otp'], UserOtpType::VERIFY_FORGOT_PASSWORD);
+
+            if (!$user->is_active) {
+                $this->throw('Tài khoản đã bị khoá.', 403);
+            }
+
+            $this->userRepository->updateById($user->id, [
+                'password' => bcrypt($data['password']),
+            ]);
+
+            $this->userOtpRepository->markLatestAsUsed($phone, UserOtpType::VERIFY_FORGOT_PASSWORD);
+
+            $this->upsertDeviceIfPresent($user, $data);
+            $token = $this->generateTokenAuth($user);
+            $user->load($this->getProfileRelation($user->role));
+
+            return [
+                'user'  => $user,
+                'token' => $token,
+            ];
+        }, useTransaction: true);
+    }
+
+
+    /**
+     * POST /google-login
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function googleLogin(array $data): ServiceReturn
+    {
+        return $this->execute(
+            callback:  function () use ($data) {
+            $claims = $this->verifyGoogleToken($data['id_token']);
+            $googleId = $claims['sub'];
+
+            $user = $this->userRepository->findByGoogleId($googleId);
+
+            if (!$user) {
+                $email = $claims['email'] ?? null;
+                $name = $claims['name'] ?? null;
+
+                if (!$name) {
+                    $name = $email ? explode('@', $email)[0] : 'User ' . $googleId;
+                }
+
+                if ($email && $this->userRepository->findByEmail($email)) {
+                    $this->throw('Địa chỉ email đã được sử dụng bởi một tài khoản khác.', 409);
+                }
+
+                $user = $this->userRepository->create([
+                    'google_id' => $googleId,
+                    'email' => $email,
+                    'password' => bcrypt(\Str::random(16)),
+                    'role' => UserRole::Customer,
+                    'is_verified' => true,
+                    'is_active' => true,
+                ]);
+            }
+
+            if (!$user->customerProfile) {
+                $this->userRepository->createCustomerProfile($user, [
+                    'full_name' => $name,
+                    'gender' => Gender::Other->value,
+                ]);
+            }
+
+            if (!$user->is_active) {
+                $this->throw('Tài khoản đã bị khóa.', 403);
+            }
+
+            $this->upsertDeviceIfPresent($user, $data);
+            $token = $this->generateTokenAuth($user);
+            $user->load($this->getProfileRelation($user->role));
+
+            return [
+                'user' => $user,
+                'token' => $token,
+            ];
+        }, useTransaction: true);
+    }
+
+    /**
+     * POST /apple-login
+     * @param array $data
+     * @return ServiceReturn
+     */
+    public function appleLogin(array $data): ServiceReturn
+    {
+        return $this->execute(
+            callback: function () use ($data) {
+            $appleConfig = config('services.apple');
+            $claims = $this->verifyAppleToken($data['id_token'], $appleConfig);
+            $appleId = $claims['sub'];
+
+            $user = $this->userRepository->findByAppleId($appleId);
+
+            if (!$user) {
+                $email = $claims['email'] ?? null;
+                $name = $this->extractAppleName($data['name'] ?? []);
+
+                if (!$name) {
+                    $name = $email ? explode('@', $email)[0] : 'User ' . $appleId;
+                }
+
+                if ($email && $this->userRepository->findByEmail($email)) {
+                    $this->throw('Địa chỉ email đã được sử dụng bởi một tài khoản khác.', 409);
+                }
+
+                $user = $this->userRepository->create([
+                    'apple_id' => $appleId,
+                    'email' => $email,
+                    'password' => bcrypt(\Str::random(16)),
+                    'role' => UserRole::Customer,
+                    'is_verified' => true,
+                    'is_active' => true,
+                ]);
+            }
+
+            if (!$user->customerProfile) {
+                $this->userRepository->createCustomerProfile($user, [
+                    'full_name' => $name,
+                    'gender' => Gender::Other->value,
+                ]);
+            }
+
+            if (!$user->is_active) {
+                $this->throw('Tài khoản đã bị khóa.', 403);
+            }
+
+            $this->upsertDeviceIfPresent($user, $data);
+            $token = $this->generateTokenAuth($user);
+            $user->load($this->getProfileRelation($user->role));
+
+            return [
+                'user' => $user,
+                'token' => $token,
+            ];
+        }, useTransaction: true);
+    }
+
+    /**
+     * POST /logout
+     * @param User $user
+     * @param bool $logoutAll
+     * @return ServiceReturn
+     * @throws \Throwable
+     */
+    public function logout(User $user, bool $logoutAll = false): ServiceReturn
+    {
+        return $this->execute(function () use ($user, $logoutAll) {
+            if ($logoutAll) $user->tokens()->delete();
+            else $user->currentAccessToken()->delete();
+        });
     }
 
     /**
@@ -167,90 +305,46 @@ class AuthService extends BaseService implements AuthServiceInterface
     }
 
     /**
-     * POST /logout
-     */
-    public function logout(User $user, bool $logoutAll = false): ServiceReturn
-    {
-        return $this->execute(function () use ($user, $logoutAll) {
-            if ($logoutAll) {
-                $user->tokens()->delete();
-            } else {
-                $user->currentAccessToken()->delete();
-            }
-        });
-    }
-
-    /**
-     * Thực sự tạo OTP record và gửi SMS.
-     * Protected để subclass (VD: DriverAuthService) có thể gọi lại
-     * mà không cần lặp logic throttle.
-     *
-     * Luồng:
-     *   throttle theo RETRY_AFTER_SECONDS
-     *   → giới hạn MAX_SEND_PER_DAY
-     *   → generateOtp (hash + persist)
-     *   → gửi SMS
+     * Gử OTP đến số điện thoại.
+     * @param string $phone
+     * @param UserOtpType $type
+     * @return UserOtp
+     * @throws ServiceException
      */
     protected function dispatchOtp(string $phone, UserOtpType $type): UserOtp
     {
-        // Throttle: chặn gửi lại quá nhanh
         $lastOtp = $this->userOtpRepository->getLastOtp($phone, $type);
-
         if ($lastOtp && $lastOtp->created_at->addSeconds(self::RETRY_AFTER_SECONDS)->isFuture()) {
-            $retryAfter = now()->diffInSeconds(
-                $lastOtp->created_at->addSeconds(self::RETRY_AFTER_SECONDS)
-            );
+            $retryAfter = now()->diffInSeconds($lastOtp->created_at->addSeconds(self::RETRY_AFTER_SECONDS));
             $this->throw("Vui lòng đợi {$retryAfter} giây trước khi yêu cầu mã mới.", 429);
         }
-
-        // Giới hạn số lần gửi trong ngày
         $sentToday = $this->userOtpRepository->countSentToday($phone, $type);
-        if ($sentToday >= self::MAX_SEND_PER_DAY) {
-            $this->throw('Bạn đã gửi OTP quá số lần cho phép trong ngày.', 429);
-        }
-
-        // Tạo OTP
+        if ($sentToday >= self::MAX_SEND_PER_DAY) $this->throw('Quá số lần OTP.', 429);
         $otpRecord = $this->userOtpRepository->generateOtp($phone, $type);
-
-        if (app()->environment(['local', 'development'])) {
-            \Log::debug("OTP for {$phone}: {$otpRecord->plain_code}");
-        }
-
-        // TODO: gửi SMS
-        // $this->smsProvider->send($phone, $otpRecord->plain_code);
-
+        if (app()->environment(['local', 'development'])) \Log::debug("OTP {$phone}: {$otpRecord->plain_code}");
         return $otpRecord;
     }
 
     /**
      * Xác minh OTP — throw nếu sai / hết hạn / đã dùng.
      * Protected để subclass override nếu cần thêm logic (VD: bypass OTP ở môi trường test).
+     * @param string $phone
+     * @param string $code
+     * @param UserOtpType $type
+     * @return void
+     * @throws ServiceException
      */
     protected function verifyOtpOrFail(string $phone, string $code, UserOtpType $type): void
     {
         $otpRecord = $this->userOtpRepository->getLastOtp($phone, $type);
-
-        if (!$otpRecord) {
-            $this->throw('Mã OTP không tồn tại.', 400);
-        }
-
-        if ($otpRecord->used_at !== null) {
-            $this->throw('Mã OTP đã được sử dụng.', 400);
-        }
-
-        if ($otpRecord->isExpired()) {
-            $this->throw('Mã OTP đã hết hạn.', 400);
-        }
-
-        if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) {
-            $this->throw('Mã OTP đã hết số lần thử. Vui lòng yêu cầu mã mới.', 400);
-        }
-
+        if (!$otpRecord) $this->throw('Mã OTP không tồn tại.', 400);
+        if ($otpRecord->used_at) $this->throw('Mã OTP đã sử dụng.', 400);
+        if ($otpRecord->isExpired()) $this->throw('Mã OTP hết hạn.', 400);
+        if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) $this->throw('Hết lượt thử OTP.', 400);
         if (!$otpRecord->checkCode($code)) {
             $this->userOtpRepository->incrementAttempts($otpRecord);
             $this->throw('Mã OTP không chính xác.', 400);
         }
-
         $this->userOtpRepository->markAsVerified($otpRecord);
     }
 
@@ -258,56 +352,222 @@ class AuthService extends BaseService implements AuthServiceInterface
      * Validate số điện thoại có đủ điều kiện nhận OTP không.
      * - VERIFY_REGISTER : số chưa tồn tại
      * - VERIFY_LOGIN    : số đã tồn tại
+     * - VERIFY_FORGOT_PASSWORD : số chưa tồn tại
+     * @param string $phone
+     * @param UserOtpType $type
+     * @return void
+     * @throws ServiceException
      */
     private function assertPhoneEligibleForOtp(string $phone, UserOtpType $type): void
     {
         $exists = $this->userRepository->existsByPhone($phone);
-
         switch ($type) {
             case UserOtpType::VERIFY_REGISTER:
-                if ($exists) {
-                    $this->throw('Số điện thoại đã được đăng ký.', 409);
-                }
+                if ($exists) $this->throw('Số điện thoại đã đăng ký.', 409);
                 break;
-
             case UserOtpType::VERIFY_LOGIN:
             case UserOtpType::VERIFY_FORGOT_PASSWORD:
-                if (!$exists) {
-                    $this->throw('Số điện thoại chưa được đăng ký trong hệ thống.', 404);
-                }
+                if (!$exists) $this->throw('Số điện thoại chưa đăng ký.', 404);
                 break;
-
             default:
                 $this->throw('Loại OTP không hợp lệ.', 400);
         }
     }
 
     /**
-     * Tạo token cho user.
+     * Tạo token auth cho user.
      * @param User $user
      * @return string
      */
-    private function generateTokenAuth(User $user)
+    private function generateTokenAuth(User $user): string
     {
-        return $user->createToken(
-            name: 'auth_token',
-            abilities: ['*'],
-            expiresAt: now()->addMonth())->plainTextToken;
+        return $user->createToken('auth_token', ['*'], now()->addMonth())->plainTextToken;
     }
 
     /**
-     * Upsert device nếu request có gửi device_id.
+     * Cập nhật device cho user nếu có.
+     * @param User $user
+     * @param array $data
+     * @return void
      */
     private function upsertDeviceIfPresent(User $user, array $data): void
     {
-        if (empty($data['device_id'])) {
-            return;
-        }
-
+        if (!isset($data['device_id'])) return;
         $this->userRepository->upsertDevice($user, [
             'device_id' => $data['device_id'],
-            'token' => $data['device_token'],
+            'token' => $data['device_token'] ?? null,
             'device_type' => $data['device_type'] ?? null,
         ]);
     }
+
+    /**
+     * Xác minh token Google — throw nếu sai.
+     * @param string $idToken
+     * @return array
+     * @throws ServiceException
+     */
+    private function verifyGoogleToken(string $idToken): array
+    {
+        $tks = explode('.', $idToken);
+        if (count($tks) !== 3) {
+            $this->throw('Wrong number of segments in token', 400);
+        }
+        $header = JWT::jsonDecode(JWT::urlsafeB64Decode($tks[0]));
+        if (empty($header->kid)) {
+            $this->throw('kid not found in token header', 400);
+        }
+
+        $publicKeys = $this->fetchGooglePublicKeys();
+        if (!isset($publicKeys[$header->kid])) {
+            // refetch keys and try again
+            $publicKeys = $this->fetchGooglePublicKeys(true);
+            if (!isset($publicKeys[$header->kid])) {
+                $this->throw('kid not found in google certs', 400);
+            }
+        }
+
+        JWT::$leeway = 60; // 60 seconds
+        $publicKey = $publicKeys[$header->kid];
+        $decoded = JWT::decode($idToken, new Key($publicKey, 'RS256'));
+
+        // validate audience - support multiple client IDs separated by comma
+        $audiences = explode(',', config('services.google.client_id'));
+        $audiences = array_map('trim', $audiences);
+
+        if (!in_array($decoded->aud, $audiences)) {
+            $this->throw('Invalid audience', 400);
+        }
+
+        // validate issuer
+        if (!in_array($decoded->iss, ['https://accounts.google.com', 'accounts.google.com'])) {
+            $this->throw('Invalid issuer', 400);
+        }
+
+        return (array)$decoded;
+    }
+
+    /**
+     * Lấy public key Google.
+     * @return array
+     * @throws ServiceException
+     */
+    private function fetchGooglePublicKeys(bool $forceRefresh = false): array
+    {
+        $cacheKey = 'google_public_keys';
+        if (!$forceRefresh && \Cache::has($cacheKey)) {
+            return \Cache::get($cacheKey);
+        }
+
+        $response = file_get_contents('https://www.googleapis.com/oauth2/v1/certs');
+        $keys = json_decode($response, true);
+
+        if (empty($keys)) {
+            $this->throw('Could not fetch Google public keys.', 500);
+        }
+
+        // cache for 1 hour
+        \Cache::put($cacheKey, $keys, 3600);
+
+        return $keys;
+    }
+
+    /**
+     * Xác minh token Apple — throw nếu sai.
+     * @param string $idToken
+     * @param array $config
+     * @return array
+     * @throws ServiceException
+     */
+    private function verifyAppleToken(string $idToken, array $config): array
+    {
+        $tks = explode('.', $idToken);
+        if (count($tks) !== 3) {
+            $this->throw('Wrong number of segments in token', 400);
+        }
+        $header = JWT::jsonDecode(JWT::urlsafeB64Decode($tks[0]));
+        if (empty($header->kid)) {
+            $this->throw('kid not found in token header', 400);
+        }
+
+        $jwks = $this->fetchApplePublicKeys();
+
+        try {
+            $publicKeys = JWK::parseKeySet($jwks);
+        } catch (\Exception $e) {
+            $this->throw('Invalid Apple public keys format.', 500);
+        }
+
+        if (!isset($publicKeys[$header->kid])) {
+            \Cache::forget('apple_public_keys');
+            $jwks = $this->fetchApplePublicKeys();
+            try {
+                $publicKeys = JWK::parseKeySet($jwks);
+            } catch (\Exception $e) {
+                $this->throw('Invalid Apple public keys format.', 500);
+            }
+
+            if (!isset($publicKeys[$header->kid])) {
+                $this->throw('kid not found in apple certs', 400);
+            }
+        }
+
+        JWT::$leeway = 60;
+        $publicKey = $publicKeys[$header->kid];
+        $decoded = JWT::decode($idToken, $publicKey);
+
+        if (empty($decoded->sub)) {
+            $this->throw('Invalid Apple token: missing sub.', 400);
+        }
+
+        if ($decoded->iss !== 'https://appleid.apple.com') {
+            $this->throw('Invalid issuer', 400);
+        }
+
+        // validate audience - support multiple client IDs separated by comma
+        $audiences = explode(',', $config['client_id']);
+        $audiences = array_map('trim', $audiences);
+
+        if (!in_array($decoded->aud, $audiences)) {
+            $this->throw('Invalid audience', 400);
+        }
+
+        return (array) $decoded;
+    }
+
+    /**
+     * Lấy public keys của Apple.
+     * @return array
+     * @throws ServiceException
+     */
+    private function fetchApplePublicKeys(): array
+    {
+        $cacheKey = 'apple_public_keys';
+        if (\Cache::has($cacheKey)) {
+            return \Cache::get($cacheKey);
+        }
+
+        $response = file_get_contents('https://appleid.apple.com/auth/keys');
+        $jwks = json_decode($response, true);
+
+        if (empty($jwks) || !isset($jwks['keys'])) {
+            $this->throw('Could not fetch Apple public keys.', 500);
+        }
+
+        \Cache::put($cacheKey, $jwks, 3600);
+
+        return $jwks;
+    }
+
+    /**
+     * Trích tên từ claims Apple — return null nếu không có.
+     * @param array $nameData
+     * @return string|null
+     */
+    private function extractAppleName(array $nameData): ?string
+    {
+        $firstName = $nameData['firstName'] ?? '';
+        $lastName = $nameData['lastName'] ?? '';
+        return trim($firstName . ' ' . $lastName) ?: null;
+    }
+
 }
