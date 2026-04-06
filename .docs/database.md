@@ -111,7 +111,7 @@
 
     # cấu trúc
     - id (unsigned bigint auto increment)
-    - phone (varchar(50), not null) -- Số điện thoại
+    - phone (varchar(50), nullable) -- Số điện thoại
     - email (varchar(255), nullable) - Email
     - is_verified (boolean default false) - Trạng thái xác thực đăng nhập
     - is_phone_verified (boolean default false) - Trạng thái xác thực số điện thoại 

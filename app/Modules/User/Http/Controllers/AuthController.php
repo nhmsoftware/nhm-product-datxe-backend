@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Modules\User\Http\Controllers;
 
 use App\Core\Controller\BaseController;
+use App\Modules\User\Http\Requests\AppleLoginRequest;
+use App\Modules\User\Http\Requests\GoogleLoginRequest;
 use App\Modules\User\Http\Requests\RegisterRequest;
+use App\Modules\User\Http\Requests\ResetPasswordRequest;
 use App\Modules\User\Http\Requests\SendOtpRequest;
 use App\Modules\User\Http\Requests\VerifyOtpRequest;
 use App\Modules\User\Http\Resources\AuthResource;
@@ -33,7 +36,7 @@ class AuthController extends BaseController
                     new OA\Property(property: 'phone', type: 'string',  example: '0901234567'),
                     new OA\Property(
                         property: 'type',
-                        description: '1=Đăng ký, 2=Đăng nhập',
+                        description: '1=Đăng ký, 2=Đăng nhập, 3=Quên mật khẩu',
                         type: 'integer',
                         example: 1,
                     ),
@@ -163,6 +166,52 @@ class AuthController extends BaseController
         );
     }
 
+    #[OA\Post(
+        path: '/api/v1/auth/reset-password',
+        summary: 'Đặt lại mật khẩu (Forgot Password)',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['phone', 'otp', 'password', 'password_confirmation'],
+                properties: [
+                    new OA\Property(property: 'phone', type: 'string', example: '0901234567'),
+                    new OA\Property(property: 'otp', type: 'string', example: '123456'),
+                    new OA\Property(property: 'password', type: 'string', example: 'NewPass123!'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', example: 'NewPass123!'),
+                    new OA\Property(property: 'device_id', type: 'string'),
+                    new OA\Property(property: 'device_token', type: 'string'),
+                    new OA\Property(property: 'device_type', type: 'string'),
+                ]
+            )
+        ),
+        tags: ['Auth'],
+        responses: [
+            new OA\Response(response: 200, description: 'Đặt lại mật khẩu thành công'),
+            new OA\Response(response: 400, description: 'OTP sai hoặc hết hạn'),
+            new OA\Response(response: 404, description: 'Số điện thoại chưa được đăng ký'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    {
+        $result = $this->authService->resetPassword($request->validated());
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+                code:    $result->getCode(),
+            );
+        }
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data:    [
+                'user' => new AuthResource($data['user']),
+                'token' => $data['token'],
+            ],
+            message: 'Đặt lại mật khẩu thành công',
+        );
+    }
+
     #[OA\Get(
         path: '/api/v1/auth/me',
         summary: 'Thông tin người dùng hiện tại',
@@ -220,4 +269,121 @@ class AuthController extends BaseController
             message: $result->getMessage()
         );
     }
+
+    #[OA\Post(
+        path: '/api/v1/auth/google-login',
+        summary: 'Đăng nhập/đăng ký bằng Google',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['id_token'],
+                properties: [
+                    new OA\Property(property: 'id_token', type: 'string', example: 'google_id_token'),
+                    new OA\Property(property: 'device_id', type: 'string'),
+                    new OA\Property(property: 'device_token', type: 'string'),
+                    new OA\Property(property: 'device_type', type: 'string', example: 'android'),
+                ]
+            )
+        ),
+        tags: ['Auth'],
+        responses: [
+            '200' => new OA\Response(
+                description: 'Đăng nhập/đăng ký thành công',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'user'),
+                                new OA\Property(property: 'token'),
+                            ],
+                            type: 'object'
+                        )
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: 'Token không hợp lệ'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
+    public function googleLogin(GoogleLoginRequest $request): JsonResponse
+    {
+        $result = $this->authService->googleLogin($request->validated());
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+                code: $result->getCode(),
+            );
+        }
+
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: [
+                'user' => new AuthResource($data['user']),
+                'token' => $data['token'],
+            ],
+            message: 'Đăng nhập Google thành công',
+        );
+    }
+
+    #[OA\Post(
+        path: '/api/v1/auth/apple-login',
+        summary: 'Đăng nhập/đăng ký bằng Apple',
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['id_token'],
+                properties: [
+                    new OA\Property(property: 'id_token', type: 'string', example: 'apple_id_token'),
+                    new OA\Property(property: 'user', type: 'string'),
+                    new OA\Property(property: 'device_id', type: 'string'),
+                    new OA\Property(property: 'device_token', type: 'string'),
+                    new OA\Property(property: 'device_type', type: 'string', example: 'ios'),
+                ]
+            )
+        ),
+        tags: ['Auth'],
+        responses: [
+            '200' => new OA\Response(
+                description: 'Đăng nhập/đăng ký thành công',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'data',
+                            properties: [
+                                new OA\Property(property: 'user'),
+                                new OA\Property(property: 'token'),
+                            ],
+                            type: 'object'
+                        )
+                    ]
+                )
+            ),
+            new OA\Response(response: 400, description: 'Token không hợp lệ'),
+            new OA\Response(response: 422, description: 'Validation error'),
+        ]
+    )]
+    public function appleLogin(AppleLoginRequest $request): JsonResponse
+    {
+        $result = $this->authService->appleLogin($request->validated());
+
+        if ($result->isError()) {
+            return $this->sendError(
+                message: $result->getMessage(),
+                code: $result->getCode(),
+            );
+        }
+
+        $data = $result->getData();
+        return $this->sendSuccess(
+            data: [
+                'user' => new AuthResource($data['user']),
+                'token' => $data['token'],
+            ],
+            message: 'Đăng nhập Apple thành công'
+        );
+    }
+
+
 }
