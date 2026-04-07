@@ -1,13 +1,14 @@
 <?php
 
-use App\Modules\Auth\Providers\UserServiceProvider;
+use App\Modules\Auth\Providers\AuthServiceProvider;
 use App\Providers\AppServiceProvider;
+use Laravel\Socialite\SocialiteServiceProvider;
 
 return [
     // Swagger Provider
     L5Swagger\L5SwaggerServiceProvider::class,
     AppServiceProvider::class,
-    UserServiceProvider::class,
-    \Laravel\Socialite\SocialiteServiceProvider::class,
+    AuthServiceProvider::class,
+    SocialiteServiceProvider::class,
 
 ];

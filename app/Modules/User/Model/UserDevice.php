@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Auth\Model;
+namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;

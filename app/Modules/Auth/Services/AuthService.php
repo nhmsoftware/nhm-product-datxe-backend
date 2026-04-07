@@ -8,16 +8,16 @@ use App\Core\Services\BaseService;
 use App\Core\Services\ServiceException;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Auth\Interfaces\AuthServiceInterface;
-use App\Modules\Auth\Model\Enums\Gender;
-use App\Modules\Auth\Model\Enums\UserOtpType;
-use App\Modules\Auth\Model\Enums\UserRole;
-use App\Modules\Auth\Model\User;
-use App\Modules\Auth\Model\UserOtp;
-use App\Modules\Auth\Repositories\UserOtpRepository;
-use App\Modules\Auth\Repositories\UserRepository;
+use App\Modules\Auth\Repositories\AuthOtpRepository;
+use App\Modules\User\Repositories\UserRepository;
+use App\Modules\User\Model\Enums\Gender;
+use App\Modules\User\Model\Enums\UserOtpType;
+use App\Modules\User\Model\Enums\UserRole;
+use App\Modules\User\Model\User;
+use App\Modules\User\Model\UserOtp;
+use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
-use Firebase\JWT\JWK;
 
 class AuthService extends BaseService implements AuthServiceInterface
 {
@@ -28,7 +28,7 @@ class AuthService extends BaseService implements AuthServiceInterface
 
     public function __construct(
         protected UserRepository    $userRepository,
-        protected UserOtpRepository $userOtpRepository,
+        protected AuthOtpRepository $authOtpRepository,
     )
     {
     }
@@ -46,10 +46,16 @@ class AuthService extends BaseService implements AuthServiceInterface
             // 2. Throttle + tạo OTP + gửi SMS
             $otpRecord = $this->dispatchOtp($phone, $type);
 
-            return [
+            $response = [
                 'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
                 'expires_at' => $otpRecord->expired_at,
             ];
+
+            if (config('services.otp_expose') === true && !app()->isProduction()) {
+                $response['otp_code'] = $otpRecord->plain_code;
+            }
+
+            return $response;
         });
     }
 
@@ -75,11 +81,11 @@ class AuthService extends BaseService implements AuthServiceInterface
 
             $this->userRepository->createCustomerProfile($user, [
                 'full_name' => $data['full_name'],
-                'gender' => Gender::Other->value,
+                'gender' => $data['gender'] ?? Gender::Other->value,
             ]);
 
             $this->upsertDeviceIfPresent($user, $data);
-            $this->userOtpRepository->markLatestAsUsed($data['phone'], UserOtpType::VERIFY_REGISTER);
+            $this->authOtpRepository->markLatestAsUsed($data['phone'], UserOtpType::VERIFY_REGISTER);
             $token = $this->generateTokenAuth($user);
 
             return [
@@ -105,7 +111,7 @@ class AuthService extends BaseService implements AuthServiceInterface
 
             $this->upsertDeviceIfPresent($user, $data);
 
-            $this->userOtpRepository->markLatestAsUsed($phone, UserOtpType::VERIFY_LOGIN);
+            $this->authOtpRepository->markLatestAsUsed($phone, UserOtpType::VERIFY_LOGIN);
 
             $token = $this->generateTokenAuth($user);
 
@@ -143,7 +149,7 @@ class AuthService extends BaseService implements AuthServiceInterface
                 'password' => bcrypt($data['password']),
             ]);
 
-            $this->userOtpRepository->markLatestAsUsed($phone, UserOtpType::VERIFY_FORGOT_PASSWORD);
+            $this->authOtpRepository->markLatestAsUsed($phone, UserOtpType::VERIFY_FORGOT_PASSWORD);
 
             $this->upsertDeviceIfPresent($user, $data);
             $token = $this->generateTokenAuth($user);
@@ -313,15 +319,14 @@ class AuthService extends BaseService implements AuthServiceInterface
      */
     protected function dispatchOtp(string $phone, UserOtpType $type): UserOtp
     {
-        $lastOtp = $this->userOtpRepository->getLastOtp($phone, $type);
+        $lastOtp = $this->authOtpRepository->getLastOtp($phone, $type);
         if ($lastOtp && $lastOtp->created_at->addSeconds(self::RETRY_AFTER_SECONDS)->isFuture()) {
             $retryAfter = now()->diffInSeconds($lastOtp->created_at->addSeconds(self::RETRY_AFTER_SECONDS));
             $this->throw("Vui lòng đợi {$retryAfter} giây trước khi yêu cầu mã mới.", 429);
         }
-        $sentToday = $this->userOtpRepository->countSentToday($phone, $type);
+        $sentToday = $this->authOtpRepository->countSentToday($phone, $type);
         if ($sentToday >= self::MAX_SEND_PER_DAY) $this->throw('Quá số lần OTP.', 429);
-        $otpRecord = $this->userOtpRepository->generateOtp($phone, $type);
-        if (app()->environment(['local', 'development'])) \Log::debug("OTP {$phone}: {$otpRecord->plain_code}");
+        $otpRecord = $this->authOtpRepository->generateOtp($phone, $type);
         return $otpRecord;
     }
 
@@ -336,16 +341,16 @@ class AuthService extends BaseService implements AuthServiceInterface
      */
     protected function verifyOtpOrFail(string $phone, string $code, UserOtpType $type): void
     {
-        $otpRecord = $this->userOtpRepository->getLastOtp($phone, $type);
+        $otpRecord = $this->authOtpRepository->getLastOtp($phone, $type);
         if (!$otpRecord) $this->throw('Mã OTP không tồn tại.', 400);
         if ($otpRecord->used_at) $this->throw('Mã OTP đã sử dụng.', 400);
         if ($otpRecord->isExpired()) $this->throw('Mã OTP hết hạn.', 400);
         if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) $this->throw('Hết lượt thử OTP.', 400);
         if (!$otpRecord->checkCode($code)) {
-            $this->userOtpRepository->incrementAttempts($otpRecord);
+            $this->authOtpRepository->incrementAttempts($otpRecord);
             $this->throw('Mã OTP không chính xác.', 400);
         }
-        $this->userOtpRepository->markAsVerified($otpRecord);
+        $this->authOtpRepository->markAsVerified($otpRecord);
     }
 
     /**
