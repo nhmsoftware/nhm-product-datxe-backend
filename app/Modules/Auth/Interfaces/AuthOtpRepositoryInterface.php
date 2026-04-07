@@ -2,10 +2,10 @@
 
 namespace App\Modules\Auth\Interfaces;
 
-use App\Modules\Auth\Model\Enums\UserOtpType;
-use App\Modules\Auth\Model\UserOtp;
+use App\Modules\User\Model\Enums\UserOtpType;
+use App\Modules\User\Model\UserOtp;
 
-interface UserOtpRepositoryInterface
+interface AuthOtpRepositoryInterface
 {
 
 

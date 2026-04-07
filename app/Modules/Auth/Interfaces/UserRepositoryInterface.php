@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth\Interfaces;
 
-use App\Modules\Auth\Model\CustomerProfile;
-use App\Modules\Auth\Model\User;
+use App\Modules\User\Model\CustomerProfile;
+use App\Modules\User\Model\User;
 interface UserRepositoryInterface
 {
     /**

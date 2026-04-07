@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth\Http\Requests;
 
-use App\Modules\Auth\Model\Enums\UserRole;
+use App\Modules\User\Model\Enums\UserRole;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 

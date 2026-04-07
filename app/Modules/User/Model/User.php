@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Auth\Model;
+namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
+use App\Modules\User\Model\Enums\UserRole;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Modules\Auth\Model\CustomerProfile;
-use App\Modules\Auth\Model\Enums\UserRole;
+use App\Modules\User\Model\CustomerProfile;
 
 class User extends Authenticatable
 {
