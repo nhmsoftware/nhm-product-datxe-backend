@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Auth\Repositories;
 
 use App\Core\Repository\BaseRepository;
-use App\Modules\Auth\Interfaces\UserOtpRepositoryInterface;
-use App\Modules\Auth\Model\Enums\UserOtpType;
-use App\Modules\Auth\Model\UserOtp;
+use App\Modules\Auth\Interfaces\AuthOtpRepositoryInterface;
+use App\Modules\User\Model\Enums\UserOtpType;
+use App\Modules\User\Model\UserOtp;
 
-class UserOtpRepository extends BaseRepository implements UserOtpRepositoryInterface
+class AuthOtpRepository extends BaseRepository implements AuthOtpRepositoryInterface
 {
     public function getModel(): string
     {
@@ -19,7 +19,9 @@ class UserOtpRepository extends BaseRepository implements UserOtpRepositoryInter
     /**
      * Lấy OTP mới nhất của số điện thoại theo type (bất kể trạng thái).
      * Dùng để kiểm tra throttle và lấy record để verify.
-     * @param
+     * @param string $phone
+     * @param UserOtpType $type
+     * @return UserOtp|null
      */
     public function getLastOtp(string $phone, UserOtpType $type): ?UserOtp
     {

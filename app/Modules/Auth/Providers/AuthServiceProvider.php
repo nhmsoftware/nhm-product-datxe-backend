@@ -6,22 +6,22 @@ namespace App\Modules\Auth\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
 use App\Modules\Auth\Interfaces\AuthServiceInterface;
-use App\Modules\Auth\Interfaces\UserRepositoryInterface;
+use App\Modules\Auth\Interfaces\AuthRepositoryInterface;
 use App\Modules\Auth\Repositories\UserRepository;
 use App\Modules\Auth\Services\AuthService;
 
-class UserServiceProvider extends BaseModuleServiceProvider
+class AuthServiceProvider extends BaseModuleServiceProvider
 {
     protected function getModuleName(): string
     {
-       return 'User';
+       return 'Auth';
     }
 
     public function register(): void
     {
         // ── Repository Binding ─────────────────────────────────
         $this->app->bind(
-            UserRepositoryInterface::class,
+            AuthRepositoryInterface::class,
             UserRepository::class
         );
 

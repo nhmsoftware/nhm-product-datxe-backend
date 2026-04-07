@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Auth\Model\Enums;
+namespace App\Modules\User\Model\Enums;
 
 use App\Core\Traits\EnumHelper;
 

@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Auth\Model;
+namespace App\Modules\User\Model;
 
-use App\Modules\Auth\Model\Enums\UserOtpType;
+use App\Modules\User\Model\Enums\UserOtpType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 

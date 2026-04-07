@@ -50,4 +50,6 @@ return [
         'private_key' => env('APPLE_PRIVATE_KEY_PATH'),
     ],
 
+    // hiện thị OTP trong response (mặc định: false)
+    'otp_expose' => env('OTP_EXPOSE_IN_RESPONSE', false),
 ];

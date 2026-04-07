@@ -2,13 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Auth\Repositories;
+namespace App\Modules\User\Repositories;
 
 use App\Core\Repository\BaseRepository;
 use App\Modules\Auth\Interfaces\UserRepositoryInterface;
-use App\Modules\Auth\Model\CustomerProfile;
-use App\Modules\Auth\Model\User;
-use App\Modules\Auth\Model\UserDevice;
+use App\Modules\User\Model\CustomerProfile;
+use App\Modules\User\Model\User;
 
 class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
