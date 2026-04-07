@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Auth\Interfaces;
 
 use App\Core\Services\ServiceReturn;
-use App\Modules\Auth\Model\Enums\UserOtpType;
-use App\Modules\Auth\Model\User;
+use App\Modules\User\Model\User;
+use App\Modules\User\Model\Enums\UserOtpType;
 
 interface AuthServiceInterface
 {

@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Auth\Model;
+namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
-use App\Modules\Auth\Model\Enums\Gender;
+use App\Modules\User\Model\Enums\Gender;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Laravel\Sanctum\HasApiTokens;
