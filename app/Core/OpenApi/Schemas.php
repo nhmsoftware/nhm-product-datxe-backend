@@ -31,7 +31,6 @@ class Schemas
                 properties: [
                     new OA\Property(property: 'value', type: 'string', nullable: true, example: 'https://example.com/avatar.jpg'),
                     new OA\Property(property: 'display', type: 'string', example: 'Chưa cập nhật'),
-                    new OA\Property(property: 'is_pending', type: 'boolean', example: true),
                     new OA\Property(property: 'field', type: 'string', example: 'avatar')
                 ],
                 type: 'object'
@@ -41,7 +40,6 @@ class Schemas
                 properties: [
                     new OA\Property(property: 'value', type: 'string', nullable: true, example: 'Nguyễn Văn A'),
                     new OA\Property(property: 'display', type: 'string', example: 'Nguyễn Văn A'),
-                    new OA\Property(property: 'is_pending', type: 'boolean', example: false),
                     new OA\Property(property: 'field', type: 'string', example: 'full_name')
                 ],
                 type: 'object'
@@ -52,7 +50,6 @@ class Schemas
                 properties: [
                     new OA\Property(property: 'value', type: 'string', nullable: true, example: 'user@example.com'),
                     new OA\Property(property: 'display', type: 'string', example: 'Chưa cập nhật'),
-                    new OA\Property(property: 'is_pending', type: 'boolean', example: true),
                     new OA\Property(property: 'field', type: 'string', example: 'email')
                 ],
                 type: 'object'
@@ -62,7 +59,6 @@ class Schemas
                 properties: [
                     new OA\Property(property: 'value', type: 'integer', nullable: true, enum: [1, 2, 3], example: 1),
                     new OA\Property(property: 'display', type: 'string', example: 'Nam'),
-                    new OA\Property(property: 'is_pending', type: 'boolean', example: false),
                     new OA\Property(property: 'field', type: 'string', example: 'gender')
                 ],
                 type: 'object'
@@ -73,7 +69,6 @@ class Schemas
                 properties: [
                     new OA\Property(property: 'value', type: 'string', nullable: true, example: '123 Đường ABC, Quận 1, TP.HCM'),
                     new OA\Property(property: 'display', type: 'string', example: 'Chưa cập nhật'),
-                    new OA\Property(property: 'is_pending', type: 'boolean', example: true),
                     new OA\Property(property: 'field', type: 'string', example: 'address')
                 ],
                 type: 'object'
@@ -83,7 +78,6 @@ class Schemas
                 properties: [
                     new OA\Property(property: 'value', type: 'string', nullable: true, example: '123456789012'),
                     new OA\Property(property: 'display', type: 'string', example: 'Chưa cập nhật'),
-                    new OA\Property(property: 'is_pending', type: 'boolean', example: true),
                     new OA\Property(property: 'field', type: 'string', example: 'citizen_id')
                 ],
                 type: 'object'
@@ -205,4 +199,99 @@ class Schemas
     {
         // Schema definition only
     }
+
+    /**
+     * Forbidden Response Schema
+     */
+    #[OA\Schema(
+        schema: 'ForbiddenResponse',
+        description: 'Lỗi không có quyền truy cập hoặc tài khoản bị khóa',
+        required: ['success', 'message'],
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', example: false),
+            new OA\Property(property: 'message', type: 'string', example: 'Tài khoản của bạn đã bị khóa hoặc bạn không có quyền thực hiện hành động này.')
+        ]
+    )]
+    public static function forbiddenResponse(): void {}
+
+    /**
+     * Validation Error Response Schema
+     */
+    #[OA\Schema(
+        schema: 'ValidationErrorResponse',
+        description: 'Lỗi dữ liệu đầu vào không hợp lệ',
+        required: ['success', 'message', 'errors'],
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', example: false),
+            new OA\Property(property: 'message', type: 'string', example: 'Dữ liệu không hợp lệ.'),
+            new OA\Property(
+                property: 'errors',
+                type: 'object',
+                additionalProperties: new OA\AdditionalProperties(type: 'array', items: new OA\Items(type: 'string'))
+            )
+        ]
+    )]
+    public static function validationErrorResponse(): void {}
+
+    /**
+     * Server Error Response Schema
+     */
+    #[OA\Schema(
+        schema: 'ServerErrorResponse',
+        description: 'Lỗi server nội bộ',
+        required: ['success', 'message'],
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', example: false),
+            new OA\Property(property: 'message', type: 'string', example: 'Có lỗi xảy ra trên hệ thống. Vui lòng thử lại sau.')
+        ]
+    )]
+    public static function serverErrorResponse(): void {}
+
+    /**
+     * Unauthorized Response Schema
+     */
+    #[OA\Schema(
+        schema: 'UnauthorizedResponse',
+        description: 'Lỗi chưa đăng nhập hoặc token hết hạn',
+        required: ['success', 'message'],
+        properties: [
+            new OA\Property(property: 'success', type: 'boolean', example: false),
+            new OA\Property(property: 'message', type: 'string', example: 'Vui lòng đăng nhập để thực hiện hành động này.')
+        ]
+    )]
+    public static function unauthorizedResponse(): void {}
+
+    /**
+     * Verify OTP Profile Request Schema
+     */
+    #[OA\Schema(
+        schema: 'VerifyOtpProfileRequest',
+        description: 'Request body để xác thực OTP khi thay đổi thông tin nhạy cảm',
+        required: ['otp'],
+        properties: [
+            new OA\Property(property: 'otp', type: 'string', example: '123456', description: 'Mã OTP gồm 6 chữ số'),
+            new OA\Property(
+                property: 'sensitive_data',
+                description: 'Dữ liệu nhạy cảm cần cập nhật (ví dụ: phone hoặc email)',
+                type: 'object',
+                nullable: true
+            )
+        ]
+    )]
+    public static function verifyOtpProfileRequest(): void {}
+
+    /**
+     * Change Password Request Schema
+     */
+    #[OA\Schema(
+        schema: 'ChangePasswordRequest',
+        description: 'Request body để thay đổi mật khẩu',
+        required: ['current_password', 'new_password', 'new_password_confirmation'],
+        properties: [
+            new OA\Property(property: 'current_password', type: 'string', example: 'OldPassword123!', description: 'Mật khẩu hiện tại'),
+            new OA\Property(property: 'new_password', type: 'string', example: 'NewPassword123!', description: 'Mật khẩu mới (tối thiểu 8 ký tự, bao gồm chữ và số)'),
+            new OA\Property(property: 'new_password_confirmation', type: 'string', example: 'NewPassword123!', description: 'Xác nhận mật khẩu mới')
+        ]
+    )]
+    public static function changePasswordRequest(): void {}
 }

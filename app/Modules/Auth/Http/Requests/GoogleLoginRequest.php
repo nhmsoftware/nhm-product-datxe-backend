@@ -30,5 +30,22 @@ class GoogleLoginRequest extends FormRequest
             'device_type' => 'nullable|string|in:android,ios',
         ];
     }
+
+    /**
+     * Nhận các thông báo xác thực áp dụng cho yêu cầu.
+     * @return array
+     */
+    public function messages(): array
+    {
+        return [
+            'id_token.required' => 'ID token không được để trống.',
+            'id_token.string' => 'ID token phải là một chuỗi.',
+            'device_id.string' => 'Device ID phải là một chuỗi.',
+            'device_id.max' => 'Device ID không được quá 255 ký tự.',
+            'device_token.string' => 'Device token phải là một chuỗi.',
+            'device_type.string' => 'Device type phải là một chuỗi.',
+            'device_type.in' => 'Device type phải là android hoặc ios.',
+        ];
+    }
 }
 

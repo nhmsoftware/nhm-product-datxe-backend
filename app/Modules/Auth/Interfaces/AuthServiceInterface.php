@@ -59,5 +59,5 @@ interface AuthServiceInterface
      * @param array $data
      * @return ServiceReturn
      */
-    public function resetPassword(array $data): ServiceReturn;
+    public function forgotPassword(array $data): ServiceReturn;
 }

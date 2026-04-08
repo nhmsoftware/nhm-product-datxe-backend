@@ -18,6 +18,7 @@ use App\Modules\User\Model\UserOtp;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
 class AuthService extends BaseService implements AuthServiceInterface
@@ -139,22 +140,30 @@ class AuthService extends BaseService implements AuthServiceInterface
      * @param array $data
      * @return ServiceReturn
      */
-    public function resetPassword(array $data): ServiceReturn
+    public function forgotPassword(array $data): ServiceReturn
     {
-        return $this->execute(function () use ($data) {
-            $phone = $data['phone'];
-            $user = $this->userRepository->findByPhone($phone);
+        $phone = $data['phone'];
+        $user = $this->userRepository->findByPhone($phone);
 
-            if (!$user) {
-                $this->throw('Số điện thoại này chưa được đăng ký trên hệ thống.', 404);
-            }
+        if (!$user) {
+            $this->throw('Số điện thoại này chưa được đăng ký trên hệ thống.', 404);
+        }
 
-            $this->verifyOtpOrFail($phone, $data['otp'], UserOtpType::VERIFY_FORGOT_PASSWORD);
+        if (!$user->is_active) {
+            $this->throw('Tài khoản đã bị khoá.', 403);
+        }
 
-            if (!$user->is_active) {
-                $this->throw('Tài khoản đã bị khoá.', 403);
-            }
+        if (Hash::check($data['password'], $user->password)) {
+            return ServiceReturn::error(
+                message: 'Mật khẩu mới không được trùng mật khẩu cũ',
+            );
+        }
 
+        // Bước 1: Xác thực OTP ngoài transaction để record attempts không bị rollback
+        $this->verifyOtpOrFail($phone, $data['otp'], UserOtpType::VERIFY_FORGOT_PASSWORD);
+
+        // Bước 2: Thực hiện đổi mật khẩu trong transaction
+        return $this->execute(function () use ($data, $user, $phone) {
             $this->userRepository->updateById($user->id, [
                 'password' => bcrypt($data['password']),
             ]);
@@ -352,14 +361,34 @@ class AuthService extends BaseService implements AuthServiceInterface
     protected function verifyOtpOrFail(string $phone, string $code, UserOtpType $type): void
     {
         $otpRecord = $this->authOtpRepository->getLastOtp($phone, $type);
-        if (!$otpRecord) $this->throw('Mã OTP không tồn tại.', 400);
-        if ($otpRecord->used_at) $this->throw('Mã OTP đã sử dụng.', 400);
-        if ($otpRecord->isExpired()) $this->throw('Mã OTP hết hạn.', 400);
-        if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) $this->throw('Hết lượt thử OTP.', 400);
+
+        if (!$otpRecord) {
+            $this->throw('Mã OTP không tồn tại.', 400);
+        }
+
+        if ($otpRecord->used_at) {
+            $this->throw('Mã OTP đã sử dụng.', 400);
+        }
+
+        if ($otpRecord->isExpired()) {
+            $this->throw('Mã OTP hết hạn.', 400);
+        }
+
+        if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) {
+            $this->throw('Bạn đã nhập sai mã OTP quá ' . self::MAX_OTP_ATTEMPTS . ' lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
+        }
+
         if (!$otpRecord->checkCode($code)) {
             $this->authOtpRepository->incrementAttempts($otpRecord);
-            $this->throw('Mã OTP không chính xác.', 400);
+
+            if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) {
+                $this->throw('Bạn đã nhập sai mã OTP quá ' . self::MAX_OTP_ATTEMPTS . ' lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
+            }
+
+            $remaining = self::MAX_OTP_ATTEMPTS - $otpRecord->attempts;
+            $this->throw("Mã OTP không chính xác. Bạn còn {$remaining} lần thử.", 400);
         }
+
         $this->authOtpRepository->markAsVerified($otpRecord);
     }
 
