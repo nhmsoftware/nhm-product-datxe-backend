@@ -6,9 +6,9 @@ namespace App\Modules\Auth\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
 use App\Modules\Auth\Interfaces\AuthServiceInterface;
-use App\Modules\Auth\Interfaces\AuthRepositoryInterface;
-use App\Modules\Auth\Repositories\UserRepository;
 use App\Modules\Auth\Services\AuthService;
+use App\Modules\User\Interfaces\UserRepositoryInterface;
+use App\Modules\User\Repositories\UserRepository;
 
 class AuthServiceProvider extends BaseModuleServiceProvider
 {
@@ -21,7 +21,7 @@ class AuthServiceProvider extends BaseModuleServiceProvider
     {
         // ── Repository Binding ─────────────────────────────────
         $this->app->bind(
-            AuthRepositoryInterface::class,
+            UserRepositoryInterface::class,
             UserRepository::class
         );
 
