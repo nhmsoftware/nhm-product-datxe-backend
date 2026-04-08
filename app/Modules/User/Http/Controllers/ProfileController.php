@@ -238,6 +238,52 @@ class ProfileController extends BaseController
      * Thay đổi mật khẩu của người dùng. Yêu cầu nhập mật khẩu hiện tại để xác thực.
      * Mật khẩu mới phải có ít nhất 8 ký tự, bao gồm cả chữ và số.
      */
+    #[OA\Post(
+        path: '/api/v1/user/profile/change-password',
+        description: 'Thay đổi mật khẩu của người dùng. Yêu cầu nhập mật khẩu hiện tại để xác thực.',
+        summary: 'UC-05: Thay đổi mật khẩu',
+        security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                ref: '#/components/schemas/ChangePasswordRequest'
+            )
+        ),
+        tags: ['User Profile'],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Thành công - Đổi mật khẩu thành công',
+                content: new OA\JsonContent(
+                    required: ['message'],
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Đổi mật khẩu thành công.')
+                    ]
+                )
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'Tài khoản bị khóa',
+                content: new OA\JsonContent(
+                    ref: '#/components/schemas/ForbiddenResponse'
+                )
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Mật khẩu mới không hợp lệ (A3/A4)',
+                content: new OA\JsonContent(
+                    ref: '#/components/schemas/ValidationErrorResponse'
+                )
+            ),
+            new OA\Response(
+                response: 500,
+                description: 'Lỗi server',
+                content: new OA\JsonContent(
+                    ref: '#/components/schemas/ServerErrorResponse'
+                )
+            )
+        ]
+    )]
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
         try {
