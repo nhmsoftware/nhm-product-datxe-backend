@@ -37,7 +37,24 @@ class LoginRequest extends FormRequest
         return [
             'phone.required'    => 'Vui lòng nhập số điện thoại.',
             'phone.regex'       => 'Số điện thoại không hợp lệ.',
+            'phone.string'      => 'Số điện thoại phải là chuỗi.',
+            'phone.max'         => 'Số điện thoại không được quá 11 kí tự.',
+            'phone.min'         => 'Số điện thoại phải có 11 kí tự.',
             'password.required' => 'Vui lòng nhập mật khẩu.',
+            'password.string'   => 'Mật khẩu phải là chuỗi.',
+            'password.max'      => 'Mật khẩu không được quá 255 kí tự.',
+            'password.min'      => 'Mật khẩu phải có 8 kí tự.',
+            'password.confirmed' => 'Mật khẩu không khớp với xác nhận mật khẩu.',
+            'password.same'       => 'Mật khẩu không khớp với xác nhận mật khẩu.',
+            'device_id.max' => 'Device ID không được quá 255 kí tự.',
+            'device_token.max' => 'Device Token không được quá 500 kí tự.',
+            'device_type.max' => 'Device Type không được quá 50 kí tự.',
+            'device_type.string' => 'Device Type phải là chuỗi.',
+            'device_type.min' => 'Device Type phải có 1 kí tự.',
+            'device_type.required' => 'Vui lòng chọn Device Type.',
+            'device_type.in' => 'Device Type không hợp lệ.',
+            'device_type.exists' => 'Device Type không tồn tại.',
+            'device_type.unique' => 'Device Type đã được sử dụng.'
         ];
     }
 }

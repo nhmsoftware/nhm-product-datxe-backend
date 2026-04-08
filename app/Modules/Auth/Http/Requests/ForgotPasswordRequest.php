@@ -6,7 +6,7 @@ namespace App\Modules\Auth\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ResetPasswordRequest extends FormRequest
+class ForgotPasswordRequest extends FormRequest
 {
     /**
      * Xác định xem người dùng có được phép thực hiện yêu cầu này hay không.

@@ -139,7 +139,7 @@ class AuthService extends BaseService implements AuthServiceInterface
      * @param array $data
      * @return ServiceReturn
      */
-    public function resetPassword(array $data): ServiceReturn
+    public function forgotPassword(array $data): ServiceReturn
     {
         return $this->execute(function () use ($data) {
             $phone = $data['phone'];
@@ -352,14 +352,35 @@ class AuthService extends BaseService implements AuthServiceInterface
     protected function verifyOtpOrFail(string $phone, string $code, UserOtpType $type): void
     {
         $otpRecord = $this->authOtpRepository->getLastOtp($phone, $type);
-        if (!$otpRecord) $this->throw('Mã OTP không tồn tại.', 400);
-        if ($otpRecord->used_at) $this->throw('Mã OTP đã sử dụng.', 400);
-        if ($otpRecord->isExpired()) $this->throw('Mã OTP hết hạn.', 400);
-        if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) $this->throw('Hết lượt thử OTP.', 400);
+
+        if (!$otpRecord) {
+            $this->throw('Mã OTP không tồn tại.', 400);
+        }
+
+        if ($otpRecord->used_at) {
+            $this->throw('Mã OTP đã sử dụng.', 400);
+        }
+
+        if ($otpRecord->isExpired()) {
+            $this->throw('Mã OTP hết hạn.', 400);
+        }
+
+        if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) {
+            $this->throw('Bạn đã nhập sai mã OTP quá ' . self::MAX_OTP_ATTEMPTS . ' lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
+        }
+
         if (!$otpRecord->checkCode($code)) {
             $this->authOtpRepository->incrementAttempts($otpRecord);
-            $this->throw('Mã OTP không chính xác.', 400);
+            $newAttempts = $otpRecord->attempts + 1;
+
+            if ($newAttempts >= self::MAX_OTP_ATTEMPTS) {
+                $this->throw('Bạn đã nhập sai mã OTP quá ' . self::MAX_OTP_ATTEMPTS . ' lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
+            }
+
+            $remaining = self::MAX_OTP_ATTEMPTS - $newAttempts;
+            $this->throw("Mã OTP không chính xác. Bạn còn {$remaining} lần thử.", 400);
         }
+
         $this->authOtpRepository->markAsVerified($otpRecord);
     }
 
