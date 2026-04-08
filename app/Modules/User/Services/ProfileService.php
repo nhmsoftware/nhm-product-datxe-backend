@@ -90,7 +90,7 @@ class ProfileService extends BaseService implements ProfileServiceInterface
     }
 
     /**
-     * Verify OTP and update sensitive fields.
+     * Xác minh OTP và cập nhật các trường nhạy cảm.
      */
     public function verifyAndUpdateSensitiveFields(User $user, string $otp, array $sensitiveData): ServiceReturn
     {
@@ -109,12 +109,19 @@ class ProfileService extends BaseService implements ProfileServiceInterface
 
             // A3 - OTP sai (max 5 attempts)
             if ($userOtp->attempts >= 5) {
-                $this->throw('Bạn đã nhập sai OTP quá 5 lần. Vui lòng gửi lại mã OTP.', 400);
+                $this->throw('Bạn đã nhập sai mã OTP quá 5 lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
             }
 
             if (!$userOtp->checkCode($otp)) {
                 $this->profileRepository->incrementOtpAttempts($userOtp);
-                $this->throw('Mã OTP không đúng. Vui lòng thử lại.', 400);
+                $newAttempts = $userOtp->attempts + 1;
+
+                if ($newAttempts >= 5) {
+                    $this->throw('Bạn đã nhập sai mã OTP quá 5 lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
+                }
+
+                $remaining = 5 - $newAttempts;
+                $this->throw("Mã OTP không đúng. Bạn còn {$remaining} lần thử.", 400);
             }
 
             // Đánh dấu OTP đã được xác thực

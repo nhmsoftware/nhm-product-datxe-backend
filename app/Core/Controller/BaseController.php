@@ -13,7 +13,7 @@ use OpenApi\Attributes as OA;
     title: 'NHM Product Dat Xe Backend API'
 )]
 #[OA\Server(
-    url: '/api/v1',
+    url: '',
     description: 'API Server'
 )]
 #[OA\SecurityScheme(

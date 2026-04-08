@@ -9,7 +9,7 @@ use App\Modules\Auth\Http\Requests\AppleLoginRequest;
 use App\Modules\Auth\Http\Requests\GoogleLoginRequest;
 use App\Modules\Auth\Http\Requests\LoginRequest;
 use App\Modules\Auth\Http\Requests\RegisterRequest;
-use App\Modules\Auth\Http\Requests\ResetPasswordRequest;
+use App\Modules\Auth\Http\Requests\ForgotPasswordRequest;
 use App\Modules\Auth\Http\Requests\SendOtpRequest;
 use App\Modules\Auth\Http\Resources\AuthResource;
 use App\Modules\Auth\Interfaces\AuthServiceInterface;
@@ -48,7 +48,7 @@ class AuthController extends BaseController
             new OA\Response(response: 200, description: 'Gửi OTP thành công'),
             new OA\Response(response: 404, description: 'Số điện thoại không tồn tại (type=2)'),
             new OA\Response(response: 409, description: 'Số điện thoại đã đăng ký (type=1)'),
-            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 422, description: 'Số điện thoại không đúng định dạng'),
             new OA\Response(response: 429, description: 'Gửi quá nhiều lần'),
         ]
     )]
@@ -83,6 +83,7 @@ class AuthController extends BaseController
                 required: ['phone', 'otp', 'full_name'],
                 properties: [
                     new OA\Property(property: 'phone',        type: 'string', example: '0901234567'),
+                    new OA\Property(property: 'password',     type: 'string', example: 'Password123!@#'),
                     new OA\Property(property: 'otp',          type: 'string', example: '123456'),
                     new OA\Property(property: 'full_name',    type: 'string', example: 'Nguyễn Văn A'),
                     new OA\Property(property: 'device_id',    type: 'string', example: 'abc123'),
@@ -96,7 +97,7 @@ class AuthController extends BaseController
             new OA\Response(response: 201, description: 'Đăng ký thành công, trả về token'),
             new OA\Response(response: 400, description: 'OTP sai hoặc hết hạn'),
             new OA\Response(response: 409, description: 'Số điện thoại đã tồn tại'),
-            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 422, description: 'Số điện thoại không đúng định dạng'),
         ]
     )]
     public function register(RegisterRequest $request): JsonResponse
@@ -143,7 +144,7 @@ class AuthController extends BaseController
             new OA\Response(response: 401, description: 'Mật khẩu không đúng'),
             new OA\Response(response: 403, description: 'Tài khoản đã bị khóa'),
             new OA\Response(response: 404, description: 'Số điện thoại chưa đăng ký'),
-            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 422, description: 'Số điện thoại không đúng định dạng'),
         ]
     )]
     public function login(LoginRequest $request): JsonResponse
@@ -167,7 +168,7 @@ class AuthController extends BaseController
     }
 
     #[OA\Post(
-        path: '/api/v1/auth/reset-password',
+        path: '/api/v1/auth/forgot-password',
         summary: 'Đặt lại mật khẩu (Forgot Password)',
         requestBody: new OA\RequestBody(
             required: true,
@@ -189,12 +190,12 @@ class AuthController extends BaseController
             new OA\Response(response: 200, description: 'Đặt lại mật khẩu thành công'),
             new OA\Response(response: 400, description: 'OTP sai hoặc hết hạn'),
             new OA\Response(response: 404, description: 'Số điện thoại chưa được đăng ký'),
-            new OA\Response(response: 422, description: 'Validation error'),
+            new OA\Response(response: 422, description: 'Dữ liệu không hợp lệ'),
         ]
     )]
-    public function resetPassword(ResetPasswordRequest $request): JsonResponse
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
-        $result = $this->authService->resetPassword($request->validated());
+        $result = $this->authService->forgotPassword($request->validated());
 
         if ($result->isError()) {
             return $this->sendError(

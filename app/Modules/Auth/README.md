@@ -41,10 +41,10 @@ Module `Auth` chịu trách nhiệm cho tất cả các quy trình liên quan đ
 2.  **AuthController** -> **AuthService (`sendOtp`)**:
     -   Kiểm tra số điện thoại có tồn tại trong hệ thống không. Nếu không, trả về lỗi "Số điện thoại chưa được đăng ký" (A3).
     -   Tạo và gửi mã OTP 6 chữ số qua SMS.
-3.  **Client** -> `POST /api/v1/auth/reset-password` (với `phone`, `otp`, `password`, `password_confirmation`).
-4.  **AuthController** (`resetPassword` method, using `ResetPasswordRequest`):
-    -   `ResetPasswordRequest` sẽ xác thực đầu vào, đảm bảo mật khẩu mới hợp lệ và khớp với mật khẩu xác nhận (A4).
-5.  **AuthService (`resetPassword`)**:
+3.  **Client** -> `POST /api/v1/auth/forgot-password` (với `phone`, `otp`, `password`, `password_confirmation`).
+4.  **AuthController** (`forgotPassword` method, using `ForgotPasswordRequest`):
+    -   `ForgotPasswordRequest` sẽ xác thực đầu vào, đảm bảo mật khẩu mới hợp lệ và khớp với mật khẩu xác nhận (A4).
+5.  **AuthService (`forgotPassword`)**:
     -   Xác thực OTP (`verifyOtpOrFail`). Xử lý các trường hợp OTP sai (A1) hoặc hết hạn (A2).
     -   Tìm người dùng bằng số điện thoại.
     -   Cập nhật mật khẩu mới (đã được mã hóa) cho người dùng.

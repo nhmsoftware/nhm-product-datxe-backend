@@ -12,7 +12,7 @@ Route::post('v1/auth/register', [AuthController::class, 'register'])->name('auth
 Route::post('v1/auth/login', [AuthController::class, 'login'])->name('auth.login');
 Route::post('v1/auth/google-login', [AuthController::class, 'googleLogin'])->name('auth.google-login');
 Route::post('v1/auth/apple-login', [AuthController::class, 'appleLogin'])->name('auth.apple-login');
-Route::post('v1/auth/reset-password', [AuthController::class, 'resetPassword'])->name('auth.reset-password');
+Route::post('v1/auth/forgot-password', [AuthController::class, 'forgotPassword'])->name('auth.forgot-password');
 
 // Các route cần đăng nhập (ví dụ dùng Sanctum)
 Route::middleware('auth:sanctum')->group(function () {

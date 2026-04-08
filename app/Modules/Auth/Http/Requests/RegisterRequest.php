@@ -56,6 +56,13 @@ class RegisterRequest extends FormRequest
         return [
             'phone.required'    => 'Số điện thoại không được để trống.',
             'phone.regex'       => 'Số điện thoại không đúng định dạng Việt Nam.',
+            'otp.required'      => 'Mã OTP không được để trống.',
+            'otp.size'          => 'Mã OTP phải bao gồm 6 chữ số.',
+            'full_name.required' => 'Tên không được để trống.',
+            'full_name.max'      => 'Tên không được vượt quá 100 ký tự.',
+            'role.required'      => 'Vai lòng chọn vai trò.',
+            'role.in'            => 'Vai trò không hợp lệ.',
+            'role.sometimes'     => 'Vai trò không được để trống.',
             'password.required' => 'Mật khẩu không được để trống.',
             'password.min'      => 'Mật khẩu phải có ít nhất 8 ký tự.',
             'password.confirmed'=> 'Xác nhận mật khẩu không khớp.',
