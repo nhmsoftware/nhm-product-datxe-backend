@@ -83,7 +83,8 @@ class AuthController extends BaseController
                 required: ['phone', 'otp', 'full_name'],
                 properties: [
                     new OA\Property(property: 'phone',        type: 'string', example: '0901234567'),
-                    new OA\Property(property: 'password',     type: 'string', example: 'Password123!@#'),
+                    new OA\Property(property: 'password',     type: 'string', example: 'Password123!@'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', example: 'Password123!@'),
                     new OA\Property(property: 'otp',          type: 'string', example: '123456'),
                     new OA\Property(property: 'full_name',    type: 'string', example: 'Nguyễn Văn A'),
                     new OA\Property(property: 'device_id',    type: 'string', example: 'abc123'),
