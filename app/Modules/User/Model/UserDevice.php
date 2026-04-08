@@ -6,6 +6,7 @@ namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserDevice extends Model
 {
@@ -20,7 +21,7 @@ class UserDevice extends Model
         'device_type',
     ];
 
-    public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
     }

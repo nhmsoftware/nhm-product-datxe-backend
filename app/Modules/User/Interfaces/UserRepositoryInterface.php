@@ -2,14 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Auth\Interfaces;
+namespace App\Modules\User\Interfaces;
 
 use App\Modules\User\Model\CustomerProfile;
 use App\Modules\User\Model\User;
+
 interface UserRepositoryInterface
 {
     /**
-     * Tạo user
+     * Tìm kiếm user theo số điện thoại
      * @param string $phone
      * @return User|null
      */

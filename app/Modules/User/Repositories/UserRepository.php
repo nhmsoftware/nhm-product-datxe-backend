@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Repositories;
 
 use App\Core\Repository\BaseRepository;
-use App\Modules\Auth\Interfaces\UserRepositoryInterface;
+use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\CustomerProfile;
 use App\Modules\User\Model\User;
 
