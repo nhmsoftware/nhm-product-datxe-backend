@@ -18,6 +18,7 @@ use App\Modules\User\Model\UserOtp;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
 
 class AuthService extends BaseService implements AuthServiceInterface
@@ -150,6 +151,12 @@ class AuthService extends BaseService implements AuthServiceInterface
 
         if (!$user->is_active) {
             $this->throw('Tài khoản đã bị khoá.', 403);
+        }
+
+        if (Hash::check($data['password'], $user->password)) {
+            return ServiceReturn::error(
+                message: 'Mật khẩu mới không được trùng mật khẩu cũ',
+            );
         }
 
         // Bước 1: Xác thực OTP ngoài transaction để record attempts không bị rollback
