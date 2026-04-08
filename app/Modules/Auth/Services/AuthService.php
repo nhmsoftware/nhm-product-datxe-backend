@@ -141,20 +141,22 @@ class AuthService extends BaseService implements AuthServiceInterface
      */
     public function forgotPassword(array $data): ServiceReturn
     {
-        return $this->execute(function () use ($data) {
-            $phone = $data['phone'];
-            $user = $this->userRepository->findByPhone($phone);
+        $phone = $data['phone'];
+        $user = $this->userRepository->findByPhone($phone);
 
-            if (!$user) {
-                $this->throw('Số điện thoại này chưa được đăng ký trên hệ thống.', 404);
-            }
+        if (!$user) {
+            $this->throw('Số điện thoại này chưa được đăng ký trên hệ thống.', 404);
+        }
 
-            $this->verifyOtpOrFail($phone, $data['otp'], UserOtpType::VERIFY_FORGOT_PASSWORD);
+        if (!$user->is_active) {
+            $this->throw('Tài khoản đã bị khoá.', 403);
+        }
 
-            if (!$user->is_active) {
-                $this->throw('Tài khoản đã bị khoá.', 403);
-            }
+        // Bước 1: Xác thực OTP ngoài transaction để record attempts không bị rollback
+        $this->verifyOtpOrFail($phone, $data['otp'], UserOtpType::VERIFY_FORGOT_PASSWORD);
 
+        // Bước 2: Thực hiện đổi mật khẩu trong transaction
+        return $this->execute(function () use ($data, $user, $phone) {
             $this->userRepository->updateById($user->id, [
                 'password' => bcrypt($data['password']),
             ]);
@@ -371,13 +373,12 @@ class AuthService extends BaseService implements AuthServiceInterface
 
         if (!$otpRecord->checkCode($code)) {
             $this->authOtpRepository->incrementAttempts($otpRecord);
-            $newAttempts = $otpRecord->attempts + 1;
 
-            if ($newAttempts >= self::MAX_OTP_ATTEMPTS) {
+            if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) {
                 $this->throw('Bạn đã nhập sai mã OTP quá ' . self::MAX_OTP_ATTEMPTS . ' lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
             }
 
-            $remaining = self::MAX_OTP_ATTEMPTS - $newAttempts;
+            $remaining = self::MAX_OTP_ATTEMPTS - $otpRecord->attempts;
             $this->throw("Mã OTP không chính xác. Bạn còn {$remaining} lần thử.", 400);
         }
 
