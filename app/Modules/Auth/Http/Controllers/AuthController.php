@@ -7,10 +7,10 @@ namespace App\Modules\Auth\Http\Controllers;
 use App\Core\Controller\BaseController;
 use App\Modules\Auth\Http\Requests\AppleLoginRequest;
 use App\Modules\Auth\Http\Requests\GoogleLoginRequest;
+use App\Modules\Auth\Http\Requests\LoginRequest;
 use App\Modules\Auth\Http\Requests\RegisterRequest;
 use App\Modules\Auth\Http\Requests\ResetPasswordRequest;
 use App\Modules\Auth\Http\Requests\SendOtpRequest;
-use App\Modules\Auth\Http\Requests\VerifyOtpRequest;
 use App\Modules\Auth\Http\Resources\AuthResource;
 use App\Modules\Auth\Interfaces\AuthServiceInterface;
 use App\Modules\User\Model\Enums\UserOtpType;
@@ -123,15 +123,14 @@ class AuthController extends BaseController
 
     #[OA\Post(
         path: '/api/v1/auth/login',
-        summary: 'Xác minh OTP và đăng nhập',
+        summary: 'Đăng nhập bằng số điện thoại và mật khẩu',
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['phone', 'otp'],
+                required: ['phone', 'password'],
                 properties: [
                     new OA\Property(property: 'phone',        type: 'string', example: '0901234567'),
-                    new OA\Property(property: 'otp',          type: 'string', example: '123456'),
-                    new OA\Property(property: 'type',         description: 'Loại OTP, mặc định là 2 (Đăng nhập)', type: 'integer', example: 2),
+                    new OA\Property(property: 'password',     type: 'string', example: 'Password123!'),
                     new OA\Property(property: 'device_id',    type: 'string'),
                     new OA\Property(property: 'device_token', type: 'string'),
                     new OA\Property(property: 'device_type',  type: 'string'),
@@ -141,12 +140,13 @@ class AuthController extends BaseController
         tags: ['Auth'],
         responses: [
             new OA\Response(response: 200, description: 'Đăng nhập thành công'),
-            new OA\Response(response: 400, description: 'OTP sai hoặc hết hạn'),
+            new OA\Response(response: 401, description: 'Mật khẩu không đúng'),
+            new OA\Response(response: 403, description: 'Tài khoản đã bị khóa'),
             new OA\Response(response: 404, description: 'Số điện thoại chưa đăng ký'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
-    public function login(VerifyOtpRequest $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
         $result = $this->authService->login($request->validated());
 
