@@ -31,6 +31,9 @@ class User extends Authenticatable
         'apple_id',
         'full_name',
         'gender',
+        'avatar',
+        'address',
+        'citizen_id',
     ];
 
     protected $hidden = [
@@ -49,6 +52,16 @@ class User extends Authenticatable
     public function customerProfile(): HasOne
     {
         return $this->hasOne(CustomerProfile::class);
+    }
+
+    public function driverProfile(): HasOne
+    {
+        return $this->hasOne(DriverProfile::class);
+    }
+
+    public function merchantProfile(): HasOne
+    {
+        return $this->hasOne(MerchantProfile::class);
     }
 
     public function userDevices(): HasMany

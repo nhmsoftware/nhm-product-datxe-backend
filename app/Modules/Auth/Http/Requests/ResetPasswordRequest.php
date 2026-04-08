@@ -8,11 +8,21 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class ResetPasswordRequest extends FormRequest
 {
+    /**
+     * Xác định xem người dùng có được phép thực hiện yêu cầu này hay không.
+     *
+     * @return bool
+     */
     public function authorize(): bool
     {
         return true;
     }
 
+    /**
+     * Định nghĩa quy tắc xác thực cho yêu cầu này.
+     *
+     * @return array
+     */
     public function rules(): array
     {
         return [
@@ -22,6 +32,11 @@ class ResetPasswordRequest extends FormRequest
         ];
     }
 
+    /**
+     * Định nghĩa các thông báo xác thực cho yêu cầu này.
+     *
+     * @return array
+     */
     public function messages(): array
     {
         return [

@@ -7,9 +7,9 @@ namespace App\Modules\Auth\Services;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceException;
 use App\Core\Services\ServiceReturn;
+use App\Modules\Auth\Interfaces\AuthOtpRepositoryInterface;
 use App\Modules\Auth\Interfaces\AuthServiceInterface;
-use App\Modules\Auth\Repositories\AuthOtpRepository;
-use App\Modules\User\Repositories\UserRepository;
+use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\Gender;
 use App\Modules\User\Model\Enums\UserOtpType;
 use App\Modules\User\Model\Enums\UserRole;
@@ -18,17 +18,17 @@ use App\Modules\User\Model\UserOtp;
 use Firebase\JWT\JWK;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
+use Illuminate\Support\Facades\Http;
 
 class AuthService extends BaseService implements AuthServiceInterface
 {
     protected const RETRY_AFTER_SECONDS = 60;
     protected const MAX_SEND_PER_DAY = 5;
-    protected const OTP_TTL_MINUTES = 5;
     protected const MAX_OTP_ATTEMPTS = 5;
 
     public function __construct(
-        protected UserRepository    $userRepository,
-        protected AuthOtpRepository $authOtpRepository,
+        protected UserRepositoryInterface    $userRepository,
+        protected AuthOtpRepositoryInterface $authOtpRepository,
     )
     {
     }
@@ -67,8 +67,10 @@ class AuthService extends BaseService implements AuthServiceInterface
     {
         return $this->execute(function () use ($data) {
             $this->verifyOtpOrFail($data['phone'], $data['otp'], UserOtpType::VERIFY_REGISTER);
-            $checkExist = $this->userRepository->query()->where('phone', $data['phone'])->withTrashed()->first();
-            if ($checkExist) $this->throw('Số điện thoại đã được đăng ký.', 409);
+
+            if ($this->userRepository->existsByPhone($data['phone'])) {
+                $this->throw('Số điện thoại đã được đăng ký.', 409);
+            }
 
             $user = $this->userRepository->create([
                 'phone' => $data['phone'],
@@ -97,21 +99,29 @@ class AuthService extends BaseService implements AuthServiceInterface
 
     /**
      * POST /login
-     * Verify OTP → kiểm tra trạng thái tài khoản → trả token.
+     * Kiểm tra thông tin đăng nhập (SĐT + Mật khẩu) → kiểm tra trạng thái tài khoản → trả token.
      */
     public function login(array $data): ServiceReturn
     {
         return $this->execute(function () use ($data) {
             $phone = $data['phone'];
-            $user = $this->userRepository->findByPhone($phone);
-            if (!$user) $this->throw('Số điện thoại chưa được đăng ký.', 404);
+            $password = $data['password'];
 
-            $this->verifyOtpOrFail($phone, $data['otp'], UserOtpType::VERIFY_LOGIN);
-            if (!$user->is_active) $this->throw('Tài khoản đã bị khoá.', 403);
+            $user = $this->userRepository->findByPhone($phone);
+
+            if (!$user) {
+                $this->throw('Số điện thoại chưa được đăng ký.', 404);
+            }
+
+            if (!\Hash::check($password, $user->password)) {
+                $this->throw('Mật khẩu không chính xác.', 401);
+            }
+
+            if (!$user->is_active) {
+                $this->throw('Tài khoản đã bị khoá.', 403);
+            }
 
             $this->upsertDeviceIfPresent($user, $data);
-
-            $this->authOtpRepository->markLatestAsUsed($phone, UserOtpType::VERIFY_LOGIN);
 
             $token = $this->generateTokenAuth($user);
 
@@ -463,17 +473,33 @@ class AuthService extends BaseService implements AuthServiceInterface
             return \Cache::get($cacheKey);
         }
 
-        $response = file_get_contents('https://www.googleapis.com/oauth2/v1/certs');
-        $keys = json_decode($response, true);
+        try {
+            // Sử dụng Http client của Laravel với timeout
+            $response = Http::timeout(5)
+                ->get('https://www.googleapis.com/oauth2/v1/certs');
 
-        if (empty($keys)) {
-            $this->throw('Could not fetch Google public keys.', 500);
+            if ($response->failed()) {
+                $this->throw('Không thể kết nối tới Google API để lấy public keys.', 500);
+            }
+
+            $keys = $response->json();
+
+            if (empty($keys)) {
+                $this->throw('Dữ liệu public key từ Google bị trống.', 500);
+            }
+
+            // Cache trong 1 giờ
+            \Cache::put($cacheKey, $keys, 3600);
+
+            return $keys;
         }
-
-        // cache for 1 hour
-        \Cache::put($cacheKey, $keys, 3600);
-
-        return $keys;
+        catch (\Exception $e) {
+            // Log chi tiết message và stack trace để biết lỗi cURL hay lỗi logic
+            \Log::error("Google Certs Fetch Error: " . $e->getMessage(), [
+                'exception' => $e
+            ]);
+            $this->throw('Could not fetch Google public keys: ' . $e->getMessage(), 500);
+        }
     }
 
     /**

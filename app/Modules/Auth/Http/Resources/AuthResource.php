@@ -11,7 +11,7 @@ class AuthResource extends JsonResource
 {
 
     /**
-     * Transform the resource into an array.
+     * Chuyển đổi tài nguyên thành một mảng.
      * @param Request $request
      * @return array
      */
