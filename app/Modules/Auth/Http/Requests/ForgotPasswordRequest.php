@@ -28,7 +28,7 @@ class ForgotPasswordRequest extends FormRequest
         return [
             'phone'    => ['required', 'string', 'regex:/^0[3-9]\d{8}$/'],
             'otp'      => ['required', 'string', 'size:6'],
-            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/', 'confirmed'],
+            'password' => ['required', 'string', 'min:8', 'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]{8,}$/', 'confirmed'],
         ];
     }
 
