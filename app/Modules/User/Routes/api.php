@@ -19,23 +19,20 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware(['auth:sanctum'])->prefix('user')->group(function () {
-    // UC-04: View Profile
-    Route::get('/profile', [ProfileController::class, 'show'])->name('user.profile.show');
-
-    // UC-05: Edit Profile
+    // UC-04 & UC-05: User Profile
     Route::prefix('profile')->group(function () {
-        // Lấy thông tin để edit (trả về form data)
-        Route::get('/edit', [EditProfileController::class, 'edit'])->name('user.profile.edit');
+        // Xem thông tin hồ sơ
+        Route::get('/', [ProfileController::class, 'show'])->name('user.profile.show');
 
         // Cập nhật thông tin cơ bản
-        Route::put('/', [EditProfileController::class, 'update'])->name('user.profile.update');
-        Route::patch('/', [EditProfileController::class, 'update'])->name('user.profile.patch');
+        Route::put('/', [ProfileController::class, 'update'])->name('user.profile.update');
+        Route::patch('/', [ProfileController::class, 'update'])->name('user.profile.patch');
 
         // Xác thực OTP cho thông tin nhạy cảm
-        Route::post('/verify-otp', [EditProfileController::class, 'verifyOtp'])->name('user.profile.verify-otp');
+        Route::post('/verify-otp', [ProfileController::class, 'verifyOtp'])->name('user.profile.verify-otp');
 
         // Đổi mật khẩu
-        Route::post('/change-password', [EditProfileController::class, 'changePassword'])->name('user.profile.change-password');
+        Route::post('/change-password', [ProfileController::class, 'changePassword'])->name('user.profile.change-password');
     });
 
     // UC-06: Saved Addresses

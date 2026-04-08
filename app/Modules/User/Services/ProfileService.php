@@ -17,6 +17,8 @@ class ProfileService extends BaseService implements ProfileServiceInterface
     // Sensitive fields that require OTP verification
     private const SENSITIVE_FIELDS = ['phone', 'email'];
 
+    private const MAX_OTP_ATTEMPTS = 5;
+
     public function __construct(
         private readonly ProfileRepositoryInterface $profileRepository
     ) {
@@ -90,33 +92,37 @@ class ProfileService extends BaseService implements ProfileServiceInterface
     }
 
     /**
-     * Verify OTP and update sensitive fields.
+     * Xác minh OTP và cập nhật các trường nhạy cảm.
      */
     public function verifyAndUpdateSensitiveFields(User $user, string $otp, array $sensitiveData): ServiceReturn
     {
-        return $this->execute(function () use ($user, $otp, $sensitiveData) {
-            if (!$user->is_active) {
-                $this->throw('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.', 403);
+        if (!$user->is_active) {
+            $this->throw('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.', 403);
+        }
+
+        // Tìm OTP hợp lệ (Xác thực ngoài transaction để tránh rollback attempts)
+        $userOtp = $this->profileRepository->findValidOtp($user->phone, UserOtpType::CHANGE_PROFILE);
+
+        if (!$userOtp) {
+            $this->throw('Mã OTP không hợp lệ hoặc đã hết hạn.', 400);
+        }
+
+        if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
+            $this->throw('Bạn đã nhập sai mã OTP quá' . self::MAX_OTP_ATTEMPTS . 'lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
+        }
+
+        if (!$userOtp->checkCode($otp)) {
+            $this->profileRepository->incrementOtpAttempts($userOtp);
+
+            if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
+                $this->throw('Bạn đã nhập sai mã OTP quá' . self::MAX_OTP_ATTEMPTS . 'lần.', 400);
             }
 
-            // Tìm OTP hợp lệ
-            $userOtp = $this->profileRepository->findValidOtp($user->phone, UserOtpType::CHANGE_PROFILE);
+            $remaining = self::MAX_OTP_ATTEMPTS - $userOtp->attempts;
+            $this->throw("Mã OTP không đúng. Bạn còn {$remaining}.", 400);
+        }
 
-            // A4 - OTP hết hạn hoặc không tồn tại
-            if (!$userOtp) {
-                $this->throw('Mã OTP không hợp lệ hoặc đã hết hạn.', 400);
-            }
-
-            // A3 - OTP sai (max 5 attempts)
-            if ($userOtp->attempts >= 5) {
-                $this->throw('Bạn đã nhập sai OTP quá 5 lần. Vui lòng gửi lại mã OTP.', 400);
-            }
-
-            if (!$userOtp->checkCode($otp)) {
-                $this->profileRepository->incrementOtpAttempts($userOtp);
-                $this->throw('Mã OTP không đúng. Vui lòng thử lại.', 400);
-            }
-
+        return $this->execute(function () use ($user, $userOtp, $sensitiveData) {
             // Đánh dấu OTP đã được xác thực
             $this->profileRepository->markOtpAsVerified($userOtp);
 
