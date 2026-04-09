@@ -185,15 +185,15 @@ class SavedAddressController extends BaseController
             content: new OA\JsonContent(
                 required: ['label', 'name', 'address_text', 'location'],
                 properties: [
-                    new OA\Property(property: 'label', type: 'integer', enum: [1, 2, 3, 4], example: 1, description: 'Nhãn địa chỉ: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác'),
-                    new OA\Property(property: 'name', type: 'string', maxLength: 200, example: 'Nhà A', description: 'Tên gợi nhớ cho địa chỉ'),
-                    new OA\Property(property: 'address_text', type: 'string', maxLength: 500, example: '123 Đường ABC, Phường 5, Quận 1, TP.HCM', description: 'Địa chỉ đầy đủ dạng text'),
+                    new OA\Property(property: 'label', description: 'Nhãn địa chỉ: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác', type: 'integer', example: 1, enum: [1, 2, 3, 4]),
+                    new OA\Property(property: 'name', description: 'Tên gợi nhớ cho địa chỉ', type: 'string', example: 'Nhà A', maxLength: 200),
+                    new OA\Property(property: 'address_text', description: 'Địa chỉ đầy đủ dạng text', type: 'string', example: '123 Đường ABC, Phường 5, Quận 1, TP.HCM', maxLength: 500),
                     new OA\Property(
                         property: 'location',
                         description: 'Tọa độ địa lý',
                         properties: [
-                            new OA\Property(property: 'latitude', type: 'number', format: 'double', example: 10.7629, description: 'Vĩ độ'),
-                            new OA\Property(property: 'longitude', type: 'number', format: 'double', example: 106.6818, description: 'Kinh độ')
+                            new OA\Property(property: 'lat', type: 'number', format: 'double', example: 10.7629, description: 'Vĩ độ'),
+                            new OA\Property(property: 'lng', type: 'number', format: 'double', example: 106.6818, description: 'Kinh độ')
                         ],
                         type: 'object'
                     ),
@@ -262,19 +262,19 @@ class SavedAddressController extends BaseController
     )]
     public function store(SaveAddressRequest $request): JsonResponse
     {
-        try {
-            $serviceReturn = $this->savedAddressService->createAddress(
-                $request->user(),
-                $request->validated()
-            );
+        $serviceReturn = $this->savedAddressService->createAddress(
+            $request->user(),
+            $request->validated()
+        );
 
-            return $this->sendSuccess(
-                data: $serviceReturn->getData(),
-                message: 'Địa chỉ đã được lưu thành công.'
-            );
-        } catch (ServiceException $e) {
-            return $this->sendError($e->getMessage(), $e->getCode());
+        if (!$serviceReturn->isSuccess()) {
+            return $this->sendError($serviceReturn->getMessage(), $serviceReturn->getCode() ?: 400);
         }
+
+        return $this->sendSuccess(
+            data: $serviceReturn->getData(),
+            message: 'Địa chỉ đã được lưu thành công.'
+        );
     }
 
     /**

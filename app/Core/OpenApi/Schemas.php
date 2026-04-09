@@ -131,15 +131,15 @@ class Schemas
                 property: 'location',
                 description: 'Tọa độ địa lý',
                 properties: [
-                    new OA\Property(property: 'latitude', type: 'number', format: 'double', example: 10.7629),
-                    new OA\Property(property: 'longitude', type: 'number', format: 'double', example: 106.6818)
+                    new OA\Property(property: 'lat', type: 'number', format: 'double', example: 10.7629),
+                    new OA\Property(property: 'lng', type: 'number', format: 'double', example: 106.6818)
                 ],
                 type: 'object'
             ),
-            new OA\Property(property: 'receiver_name', type: 'string', maxLength: 100, example: 'Nguyễn Văn A', description: 'Tên người nhận'),
-            new OA\Property(property: 'receiver_phone', type: 'string', maxLength: 20, example: '0912345678', description: 'SĐT người nhận'),
-            new OA\Property(property: 'note', type: 'string', nullable: true, maxLength: 500, example: 'Gần siêu thị', description: 'Ghi chú'),
-            new OA\Property(property: 'is_default', type: 'boolean', example: true, description: 'Là địa chỉ mặc định'),
+            new OA\Property(property: 'receiver_name', description: 'Tên người nhận', type: 'string', example: 'Nguyễn Văn A', maxLength: 100),
+            new OA\Property(property: 'receiver_phone', type: 'string', example: '0912345678:', maxLength: 20),
+            new OA\Property(property: 'note', description: 'Ghi chú', type: 'string', example: 'Gần siêu thị', nullable: true, maxLength: 500),
+            new OA\Property(property: 'is_default', description: 'Là địa chỉ mặc định', type: 'boolean', example: true),
             new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2024-01-15T10:30:00Z'),
             new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2024-01-15T10:30:00Z')
         ]

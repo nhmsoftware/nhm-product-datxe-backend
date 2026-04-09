@@ -80,4 +80,23 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
     {
         return $this->model->where('customer_id', $customerProfile->id)->first();
     }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function createForCustomer(CustomerProfile $customerProfile, array $data): CustomerSavedAddress
+    {
+        return $this->model->create([
+            'customer_id' => $customerProfile->id,
+            'label' => $data['label'],
+            'name' => $data['name'] ?? null,
+            'address_text' => $data['address_text'],
+            'lat' => $data['lat'],
+            'lng' => $data['lng'],
+            'is_default' => $data['is_default'] ?? false,
+            'receiver_name' => $data['receiver_name'] ?? null,
+            'receiver_phone' => $data['receiver_phone'] ?? null,
+            'note' => $data['note'] ?? null,
+        ]);
+    }
 }
