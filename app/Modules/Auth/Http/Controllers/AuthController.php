@@ -17,6 +17,7 @@ use App\Modules\User\Model\Enums\UserOtpType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
+use PhpParser\Token;
 
 class AuthController extends BaseController
 {
@@ -36,7 +37,7 @@ class AuthController extends BaseController
                     new OA\Property(property: 'phone', type: 'string',  example: '0901234567'),
                     new OA\Property(
                         property: 'type',
-                        description: '1=Đăng ký, 2=Đăng nhập, 3=Quên mật khẩu',
+                        description: '1=Đăng ký, 2=Đăng nhập, 3=Quên mật khẩu, 4=Thay đổi thông tin',
                         type: 'integer',
                         example: 1,
                     ),
@@ -214,24 +215,6 @@ class AuthController extends BaseController
         );
     }
 
-    #[OA\Get(
-        path: '/api/v1/auth/me',
-        summary: 'Thông tin người dùng hiện tại',
-        security: [['sanctum' => []]],
-        tags: ['Auth'],
-        responses: [
-            new OA\Response(response: 200, description: 'OK'),
-            new OA\Response(response: 401, description: 'Chưa đăng nhập'),
-        ]
-    )]
-    public function me(Request $request): JsonResponse
-    {
-        return $this->sendError(
-            message: "Chưa có logic",
-            code: 404,
-        );
-    }
-
     #[OA\Post(
         path: '/api/v1/auth/logout',
         summary: 'Đăng xuất',
@@ -268,7 +251,7 @@ class AuthController extends BaseController
         }
 
         return $this->sendSuccess(
-            message: $result->getMessage()
+            message: 'Đăng xuất thành công',
         );
     }
 

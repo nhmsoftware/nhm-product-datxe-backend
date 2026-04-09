@@ -11,6 +11,8 @@ return [
     AppServiceProvider::class,
     AuthServiceProvider::class,
     UserServiceProvider::class,
+    \App\Modules\Homepage\Providers\HomepageServiceProvider::class,
+    App\Modules\Ride\Providers\RideServiceProvider::class,
     SocialiteServiceProvider::class,
 
 ];

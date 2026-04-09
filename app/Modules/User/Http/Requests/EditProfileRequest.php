@@ -20,6 +20,19 @@ class EditProfileRequest extends FormRequest
     }
 
     /**
+     * Chuẩn bị dữ liệu để xác thực.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Phối hợp dob vào birthday nếu birthday để trống
+        if ($this->has('dob') && !$this->has('birthday')) {
+            $this->merge([
+                'birthday' => $this->input('dob'),
+            ]);
+        }
+    }
+
+    /**
      * Get the validation rules that apply to the request.
      *
      * @return array<string, ValidationRule|array|string>
@@ -33,11 +46,12 @@ class EditProfileRequest extends FormRequest
             'gender' => 'nullable|integer|in:1,2,3',
             'address' => 'nullable|string|max:500',
             'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|phone:VN|max:20',
+            'phone' => 'nullable|string|max:20',
             'citizen_id' => 'nullable|string|max:20|regex:/^[0-9]{12}$/',
 
             // Customer-specific (nếu có)
             'birthday' => 'nullable|date|before:today',
+            'dob' => 'nullable|date|before:today',
 
             // Driver-specific fields
             'vehicle_name' => 'nullable|string|max:255',
@@ -77,7 +91,8 @@ class EditProfileRequest extends FormRequest
             'email.email' => 'Email không đúng định dạng.',
             'citizen_id.regex' => 'Căn cước công dân phải có 12 chữ số.',
             'birthday.before' => 'Ngày sinh phải trước ngày hôm nay.',
-            'closing_time.after' => 'Giờ đóng cửa phải sau giờ mở cửa.',
+            'phone.max' => 'Số điện thoại không được vượt quá 20 ký tự.',
+            'citizen_id.max' => 'Căn cước công dân không được vượt quá 20 ký tự.'
         ];
     }
 

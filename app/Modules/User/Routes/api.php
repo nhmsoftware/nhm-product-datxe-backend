@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Modules\User\Http\Controllers\EditProfileController;
 use App\Modules\User\Http\Controllers\ProfileController;
 use App\Modules\User\Http\Controllers\SavedAddressController;
 use Illuminate\Support\Facades\Route;
@@ -18,42 +17,28 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware(['auth:sanctum'])->prefix('user')->group(function () {
-    // UC-04 & UC-05: User Profile
-    Route::prefix('profile')->group(function () {
-        // Xem thông tin hồ sơ
-        Route::get('/', [ProfileController::class, 'show'])->name('user.profile.show');
+Route::middleware('auth:sanctum')->group(function () {
 
-        // Cập nhật thông tin cơ bản
-        Route::put('/', [ProfileController::class, 'update'])->name('user.profile.update');
-        Route::patch('/', [ProfileController::class, 'update'])->name('user.profile.patch');
+    // UC-04: View Profile
+    // URL: GET /api/v1/user/profile
+    Route::get('v1/user/profile', [ProfileController::class, 'show'])->name('user.profile.show');
 
-        // Xác thực OTP cho thông tin nhạy cảm
-        Route::post('/verify-otp', [ProfileController::class, 'verifyOtp'])->name('user.profile.verify-otp');
+    // UC-05: Edit Profile actions
+    // Cập nhật thông tin (PUT/PATCH)
+    Route::match(['put', 'patch'], 'v1/user/profile', [ProfileController::class, 'update'])->name('user.profile.update');
 
-        // Đổi mật khẩu
-        Route::post('/change-password', [ProfileController::class, 'changePassword'])->name('user.profile.change-password');
-    });
+    // Các thao tác bổ trợ hồ sơ
+    Route::post('v1/user/profile/verify-otp', [ProfileController::class, 'verifyOtp'])->name('user.profile.verify-otp');
+    Route::post('v1/user/profile/change-password', [ProfileController::class, 'changePassword'])->name('user.profile.change-password');
 
-    // UC-06: Saved Addresses
-    Route::prefix('addresses')->group(function () {
-        // Danh sách địa chỉ đã lưu
-        Route::get('/', [SavedAddressController::class, 'index'])->name('user.addresses.index');
+    // UC-06: Saved Addresses (Địa chỉ đã lưu)
+    // URL cơ sở: /api/v1/user/addresses
+    Route::get('v1/user/addresses', [SavedAddressController::class, 'index'])->name('user.addresses.index');
+    Route::post('v1/user/addresses', [SavedAddressController::class, 'store'])->name('user.addresses.store');
+    Route::get('v1/user/addresses/{id}', [SavedAddressController::class, 'show'])->name('user.addresses.show');
+    Route::match(['put', 'patch'], 'v1/user/addresses/{id}', [SavedAddressController::class, 'update'])->name('user.addresses.update');
+    Route::delete('v1/user/addresses/{id}', [SavedAddressController::class, 'destroy'])->name('user.addresses.destroy');
 
-        // Tạo địa chỉ mới
-        Route::post('/', [SavedAddressController::class, 'store'])->name('user.addresses.store');
-
-        // Xem chi tiết địa chỉ
-        Route::get('/{id}', [SavedAddressController::class, 'show'])->name('user.addresses.show');
-
-        // Cập nhật địa chỉ
-        Route::put('/{id}', [SavedAddressController::class, 'update'])->name('user.addresses.update');
-        Route::patch('/{id}', [SavedAddressController::class, 'update'])->name('user.addresses.patch');
-
-        // Xóa địa chỉ
-        Route::delete('/{id}', [SavedAddressController::class, 'destroy'])->name('user.addresses.destroy');
-
-        // Đặt làm địa chỉ mặc định
-        Route::post('/{id}/default', [SavedAddressController::class, 'setDefault'])->name('user.addresses.set-default');
-    });
+    // Đặt làm địa chỉ mặc định
+    Route::post('v1/user/addresses/{id}/default', [SavedAddressController::class, 'setDefault'])->name('user.addresses.set-default');
 });

@@ -29,8 +29,6 @@ class User extends Authenticatable
         'is_active',
         'google_id',
         'apple_id',
-        'full_name',
-        'gender',
         'avatar',
         'address',
         'citizen_id',
@@ -42,6 +40,7 @@ class User extends Authenticatable
 
     protected $casts = [
         'role'              => UserRole::class,
+        'gender'            => Gender::class,
         'is_verified'       => 'boolean',
         'is_phone_verified' => 'boolean',
         'is_active'         => 'boolean',
@@ -88,5 +87,45 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return $this->role === UserRole::Admin;
+    }
+
+    // ─── Accessors ────────────────────────────────────────────────
+    public function getFullNameAttribute(): ?string
+    {
+        return $this->customerProfile?->full_name 
+            ?? $this->driverProfile?->full_name 
+            ?? $this->merchantProfile?->store_name;
+    }
+
+    public function getGenderAttribute()
+    {
+        return $this->customerProfile?->gender;
+    }
+
+    public function getAvatarAttribute(): ?string
+    {
+        // Ưu tiên avatar ở bảng core users nếu có, nếu không lấy ở profile
+        return $this->attributes['avatar'] 
+            ?? $this->customerProfile?->avatar 
+            ?? $this->driverProfile?->avatar;
+    }
+
+    public function getAddressAttribute(): ?string
+    {
+        return $this->attributes['address'] 
+            ?? $this->customerProfile?->address 
+            ?? $this->merchantProfile?->store_address;
+    }
+
+    public function getBirthdayAttribute()
+    {
+        return $this->customerProfile?->birthday;
+    }
+
+    public function getCitizenIdAttribute(): ?string
+    {
+        return $this->attributes['citizen_id'] 
+            ?? $this->customerProfile?->citizen_id 
+            ?? $this->driverProfile?->citizen_id;
     }
 }

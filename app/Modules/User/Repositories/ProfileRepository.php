@@ -6,6 +6,9 @@ namespace App\Modules\User\Repositories;
 
 use App\Core\Repository\BaseRepository;
 use App\Modules\User\Interfaces\ProfileRepositoryInterface;
+use App\Modules\User\Model\CustomerProfile;
+use App\Modules\User\Model\DriverProfile;
+use App\Modules\User\Model\MerchantProfile;
 use App\Modules\User\Model\Enums\UserOtpType;
 use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\User;
@@ -37,27 +40,42 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
      */
     public function updateProfile(User $user, array $data): User
     {
-        // 1. Tách dữ liệu cho bảng users và bảng profile tương ứng
-        $baseData = Arr::only($data, self::BASE_FIELDS);
-        $profileData = Arr::except($data, self::BASE_FIELDS);
+        // 1. Cập nhật bảng users (chỉ các trường account/system)
+        $userFillable = (new User())->getFillable();
+        $userData = array_intersect_key($data, array_flip($userFillable));
 
-        // 2. Cập nhật bảng users nếu có dữ liệu
-        if (!empty($baseData)) {
-            $user->update($baseData);
+        if (!empty($userData)) {
+            $user->update($userData);
         }
 
-        // 3. Cập nhật bảng profile tương ứng với vai trò
-        if (!empty($profileData)) {
-            match ($user->role) {
-                UserRole::Customer => $this->updateCustomerProfile($user, $profileData),
-                // Thêm logic cho Driver, Merchant ở đây nếu cần
-                // UserRole::Driver => $this->updateDriverProfile($user, $profileData),
-                // UserRole::Merchants => $this->updateMerchantProfile($user, $profileData),
-                default => null,
-            };
+        // 2. Cập nhật profile tương ứng dựa trên role của user
+        // Chúng ta cập nhật tất cả profile hiện có của user này để đảm bảo đồng bộ
+        if ($user->customerProfile) {
+            $customerFillable = (new CustomerProfile())->getFillable();
+            $customerData = array_intersect_key($data, array_flip($customerFillable));
+            if (!empty($customerData)) {
+                $user->customerProfile->update($customerData);
+            }
         }
 
-        return $user->fresh();
+        if ($user->driverProfile) {
+            $driverFillable = (new DriverProfile())->getFillable();
+            $driverData = array_intersect_key($data, array_flip($driverFillable));
+            if (!empty($driverData)) {
+                $user->driverProfile->update($driverData);
+            }
+        }
+
+        if ($user->merchantProfile) {
+            $merchantFillable = (new MerchantProfile())->getFillable();
+            $merchantData = array_intersect_key($data, array_flip($merchantFillable));
+            if (!empty($merchantData)) {
+                $user->merchantProfile->update($merchantData);
+            }
+        }
+
+        // 3. Nạp lại model kèm theo các quan hệ để đảm bảo Accessors có dữ liệu mới nhất
+        return $user->refresh()->load(['customerProfile', 'driverProfile', 'merchantProfile']);
     }
 
     /**

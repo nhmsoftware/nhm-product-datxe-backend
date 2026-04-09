@@ -269,9 +269,10 @@ class Schemas
         description: 'Request body để xác thực OTP khi thay đổi thông tin nhạy cảm',
         required: ['otp'],
         properties: [
-            new OA\Property(property: 'otp', type: 'string', example: '123456', description: 'Mã OTP gồm 6 chữ số'),
+            new OA\Property(property: 'otp', description: 'Mã OTP gồm 6 chữ số', type: 'string', example: '123456'),
             new OA\Property(
                 property: 'sensitive_data',
+                title: 'Dữ liệu nhạy cảm cần cập nhật',
                 description: 'Dữ liệu nhạy cảm cần cập nhật (ví dụ: phone hoặc email)',
                 type: 'object',
                 nullable: true

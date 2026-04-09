@@ -7,6 +7,7 @@ namespace App\Modules\Auth\Interfaces;
 use App\Core\Services\ServiceReturn;
 use App\Modules\User\Model\User;
 use App\Modules\User\Model\Enums\UserOtpType;
+use PhpParser\Token;
 
 interface AuthServiceInterface
 {

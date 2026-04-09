@@ -5,13 +5,12 @@ declare(strict_types=1);
 namespace App\Modules\User\Http\Controllers;
 
 use App\Core\Controller\BaseController;
-use App\Core\Services\ServiceException;
 use App\Modules\User\Http\Requests\ChangePasswordRequest;
 use App\Modules\User\Http\Requests\EditProfileRequest;
 use App\Modules\User\Http\Requests\VerifyOtpRequest;
 use App\Modules\User\Http\Resources\ProfileResource;
 use App\Modules\User\Interfaces\ProfileServiceInterface;
-use Hash;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -72,16 +71,16 @@ class ProfileController extends BaseController
     )]
     public function show(Request $request): JsonResponse
     {
-        try {
-            $serviceReturn = $this->profileService->getProfile($request->user());
+        $serviceReturn = $this->profileService->getProfile($request->user());
 
-            return $this->sendSuccess(
-                data: (new ProfileResource($serviceReturn->getData()))->toArray($request),
-                message: 'Lấy thông tin hồ sơ thành công.'
-            );
-        } catch (ServiceException $e) {
-            return $this->sendError($e->getMessage(), $e->getCode() ?: 500);
+        if ($serviceReturn->isError()) {
+            return $this->sendError($serviceReturn->getMessage(), $serviceReturn->getCode());
         }
+
+        return $this->sendSuccess(
+            data: (new ProfileResource($serviceReturn->getData()))->toArray($request),
+            message: 'Lấy thông tin hồ sơ thành công.'
+        );
     }
 
     /**
@@ -91,11 +90,35 @@ class ProfileController extends BaseController
      */
     #[OA\Put(
         path: '/api/v1/user/profile',
-        description: "Cập nhật thông tin cá nhân của người dùng. Nếu thay đổi số điện thoại hoặc email, hệ thống sẽ yêu cầu xác thực OTP. Các trường driver-specific và merchant-specific sẽ được cập nhật tương ứng với vai trò.\n\n**Preconditions:** Người dùng đã đăng nhập. Tài khoản đang hoạt động. Token hợp lệ.\n\n**Postconditions:** Nếu thành công: Thông tin hồ sơ được cập nhật, trả về profile mới. Nếu có thay đổi nhạy cảm: Yêu cầu xác thực OTP qua endpoint /verify-otp.\n\n**Alternative Flows:**\nA1: Thay đổi số điện thoại → Gửi OTP đến số mới.\nA2: Thay đổi email → Gửi OTP xác thực.\nA5: Validation error → Trả về danh sách lỗi.\nA7: Lỗi server → Thông báo và cho thử lại.",
+        description: "Cập nhật thông tin cá nhân của người dùng. Nếu thay đổi số điện thoại hoặc email, hệ thống sẽ yêu cầu xác thực OTP. Các trường driver-specific và merchant-specific sẽ được cập nhật tương ứng với vai trò.\n\n**Preconditions:** Người dùng đã đăng nhập. Tài khoản đang hoạt động. Token hợp lệ.\n\n**Postconditions:** Nếu thành công: Thông tin hồ sơ được cập nhật, trả về profile mới. Nếu có thay đổi nhạy cảm: Yêu cầu xác thực OTP qua endpoint /verify-otp.\n\n**Alternative Flows:**\nA1: Thay đổi số điện thoại → Gửi OTP đến số mới.\nA5: Validation error → Trả về danh sách lỗi.\nA7: Lỗi server → Thông báo và cho thử lại.",
         summary: 'UC-05: Cập nhật thông tin hồ sơ',
         security: [['sanctum' => []]],
         requestBody: new OA\RequestBody(
+            description: 'Các trường thông tin cần cập nhật. Chỉ cần gửi những trường muốn thay đổi.',
             required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    // --- Common Fields ---
+                    new OA\Property(property: 'full_name', type: 'string', example: 'Nguyễn Văn B'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'new.email@example.com'),
+                    new OA\Property(property: 'phone', type: 'string', example: '0123456789'),
+                    new OA\Property(property: 'gender', type: 'string', example: 1, enum: [1 => 'male', 2 => 'female', 3 => 'other']),
+                    new OA\Property(property: 'dob', description: 'Ngày (YYYY-MM-DD)', type: 'string', format: 'date', example: '1995-08-15'),
+                    new OA\Property(property: 'avatar', description: 'URL ảnh đại diện mới', type: 'string', example: 'https://example.com/avatar.jpg'),
+
+                    // --- Driver-Specific Fields ---
+                    new OA\Property(property: 'address', description: '(Driver) thường trú', example: '123 Đường ABC, Quận 1, TP. HCM'),
+                    new OA\Property(property: 'identity_number', description: '(Driver) Số CMND/CCCD', type: 'string', example: '012345678912'),
+                    new OA\Property(property: 'license_plate', description: '(Driver) Biển số xe', type: 'string', example: '59-T1 123.45'),
+                    new OA\Property(property: 'vehicle_type_id', description: '(Driver) ID loại xe', type: 'integer', example: 1),
+
+                    // --- Merchant-Specific Fields ---
+                    new OA\Property(property: 'store_name', description: '(Merchant) Tên cửa hàng', example: 'Cửa hàng tiện lợi XYZ'),
+                    new OA\Property(property: 'store_address', description: '(Merchant) thường trú', example: '456 Đường DEF, Quận 3, TP. HCM'),
+                    new OA\Property(property: 'tax_code', description: '(Merchant) Mã số thuế', type: 'string', example: '0312345678'),
+                ],
+                type: 'object'
+            )
         ),
         tags: ['User Profile'],
         responses: [
@@ -106,7 +129,7 @@ class ProfileController extends BaseController
                     required: ['success', 'data', 'message'],
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'data', type: 'object', ref: '#/components/schemas/ProfileResponse'),
+                        new OA\Property(property: 'data', ref: '#/components/schemas/ProfileResponse', type: 'object'),
                         new OA\Property(property: 'message', type: 'string', example: 'Cập nhật thông tin thành công.')
                     ]
                 )
@@ -143,23 +166,17 @@ class ProfileController extends BaseController
     )]
     public function update(EditProfileRequest $request): JsonResponse
     {
-        try {
-            $serviceReturn = $this->profileService->updateProfile($request->user(), $request->validated());
+        $serviceReturn = $this->profileService->updateProfile($request->user(), $request->validated());
 
-            return $this->sendSuccess(
-                data: (new ProfileResource($serviceReturn->getData()))->toArray($request),
-                message: 'Cập nhật thông tin thành công.'
-            );
-        } catch (ServiceException $e) {
-            // Nếu service throw lỗi với code 422 (cần OTP), trả về response 202
-            if ($e->getCode() === 422) {
-                return $this->sendSuccess(
-                    message: $e->getMessage(),
-                    code: 202 // Accepted
-                );
-            }
-            return $this->sendError($e->getMessage(), $e->getCode());
+        if ($serviceReturn->isError()) {
+            return $this->sendError($serviceReturn->getMessage(), $serviceReturn->getCode());
         }
+
+        return $this->sendSuccess(
+            data: (new ProfileResource($serviceReturn->getData()))->toArray($request),
+            message: $serviceReturn->getMessage() ?: 'Cập nhật thông tin thành công.',
+            code: $serviceReturn->getCode() ?: 200
+        );
     }
 
     /**
@@ -187,7 +204,7 @@ class ProfileController extends BaseController
                     required: ['success', 'data', 'message'],
                     properties: [
                         new OA\Property(property: 'success', type: 'boolean', example: true),
-                        new OA\Property(property: 'data', type: 'object', ref: '#/components/schemas/ProfileResponse'),
+                        new OA\Property(property: 'data', ref: '#/components/schemas/ProfileResponse', type: 'object'),
                         new OA\Property(property: 'message', type: 'string', example: 'Cập nhật thông tin thành công.')
                     ]
                 )
@@ -217,20 +234,19 @@ class ProfileController extends BaseController
     )]
     public function verifyOtp(VerifyOtpRequest $request): JsonResponse
     {
-        try {
-            $serviceReturn = $this->profileService->verifyAndUpdateSensitiveFields(
-                $request->user(),
-                $request->input('otp'),
-                $request->input('sensitive_data')
-            );
-
-            return $this->sendSuccess(
-                data: (new ProfileResource($serviceReturn->getData()))->toArray($request),
-                message: 'Xác thực và cập nhật thông tin thành công.'
-            );
-        } catch (ServiceException $e) {
-            return $this->sendError($e->getMessage(), $e->getCode());
+        $serviceReturn = $this->profileService->verifyAndUpdateSensitiveFields(
+            $request->user(),
+            $request->input('otp'),
+            $request->input('sensitive_data')
+        );
+        if ($serviceReturn->isError()) {
+            return $this->sendError($serviceReturn->getMessage(), $serviceReturn->getCode());
         }
+
+        return $this->sendSuccess(
+            data: (new ProfileResource($serviceReturn->getData()))->toArray($request),
+            message: 'Xác thực và cập nhật thông tin thành công.'
+        );
     }
 
     /**
@@ -286,8 +302,6 @@ class ProfileController extends BaseController
     )]
     public function changePassword(ChangePasswordRequest $request): JsonResponse
     {
-        try {
-            // Check if new password is same as current password
             $user = $request->user();
             if (Hash::check($request->input('new_password'), $user->password)) {
                 return $this->sendError(
@@ -295,19 +309,21 @@ class ProfileController extends BaseController
                 );
             }
 
-            $this->profileService->changePassword(
+            $result = $this->profileService->changePassword(
                 $user,
                 $request->input('new_password'),
             );
 
+            if ($result->isError()) {
+                return $this->sendError(
+                    message: $result->getMessage(),
+                    code: $result->getCode(),
+                );
+            }
+
             return $this->sendSuccess(
                 message: 'Đổi mật khẩu thành công'
             );
-        } catch (ServiceException $e) {
-            return $this->sendError(
-                message: $e->getMessage(),
-                code: $e->getCode(),
-            );
-        }
+
     }
 }

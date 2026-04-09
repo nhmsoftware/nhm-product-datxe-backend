@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Http\Controllers;
 
 use App\Core\Controller\BaseController;
+use App\Core\Services\ServiceException;
 use App\Modules\User\Http\Requests\SaveAddressRequest;
 use App\Modules\User\Http\Requests\UpdateAddressRequest;
 use App\Modules\User\Interfaces\SavedAddressServiceInterface;

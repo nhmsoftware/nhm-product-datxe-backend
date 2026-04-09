@@ -20,10 +20,11 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use PhpParser\Token;
 
 class AuthService extends BaseService implements AuthServiceInterface
 {
-    protected const RETRY_AFTER_SECONDS = 60;
+    protected const RETRY_AFTER_SECONDS = 180; // 3 phút
     protected const MAX_SEND_PER_DAY = 5;
     protected const MAX_OTP_ATTEMPTS = 5;
 
@@ -302,6 +303,7 @@ class AuthService extends BaseService implements AuthServiceInterface
     /**
      * POST /logout
      * @param User $user
+     * @param Token $tokenId
      * @param bool $logoutAll
      * @return ServiceReturn
      * @throws \Throwable
@@ -411,6 +413,7 @@ class AuthService extends BaseService implements AuthServiceInterface
                 break;
             case UserOtpType::VERIFY_LOGIN:
             case UserOtpType::VERIFY_FORGOT_PASSWORD:
+            case UserOtpType::CHANGE_PROFILE:
                 if (!$exists) $this->throw('Số điện thoại chưa đăng ký.', 404);
                 break;
             default:
