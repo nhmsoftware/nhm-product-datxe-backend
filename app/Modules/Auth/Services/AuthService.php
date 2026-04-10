@@ -475,19 +475,19 @@ class AuthService extends BaseService implements AuthServiceInterface
 
         JWT::$leeway = 60; // 60 seconds
         $publicKey = $publicKeys[$header->kid];
-        $decoded = JWT::decode($idToken, new Key($publicKey, 'RS256'));
+        $decoded = JWT::decode($idToken, $publicKeys[$header->kid]);
 
         // validate audience - support multiple client IDs separated by comma
         $audiences = explode(',', config('services.google.client_id'));
         $audiences = array_map('trim', $audiences);
 
         if (!in_array($decoded->aud, $audiences)) {
-            $this->throw('Invalid audience', 400);
+            $this->throw('Đối tượng không hợp lệ' . $decoded->aud, 400);
         }
 
         // validate issuer
         if (!in_array($decoded->iss, ['https://accounts.google.com', 'accounts.google.com'])) {
-            $this->throw('Invalid issuer', 400);
+            $this->throw('Tổ chức phát hành không hợp lệ' . $decoded->iss, 400);
         }
 
         return (array)$decoded;
@@ -501,35 +501,36 @@ class AuthService extends BaseService implements AuthServiceInterface
     private function fetchGooglePublicKeys(bool $forceRefresh = false): array
     {
         $cacheKey = 'google_public_keys';
+
         if (!$forceRefresh && \Cache::has($cacheKey)) {
             return \Cache::get($cacheKey);
         }
 
         try {
-            // Sử dụng Http client của Laravel với timeout
             $response = Http::timeout(5)
-                ->get('https://www.googleapis.com/oauth2/v1/certs');
+                ->get('https://www.googleapis.com/oauth2/v3/certs');
 
             if ($response->failed()) {
                 $this->throw('Không thể kết nối tới Google API để lấy public keys.', 500);
             }
 
-            $keys = $response->json();
+            $jwks = $response->json();
 
-            if (empty($keys)) {
-                $this->throw('Dữ liệu public key từ Google bị trống.', 500);
+            if (empty($jwks) || !isset($jwks['keys'])) {
+                $this->throw('Dữ liệu public key từ Google không hợp lệ.', 500);
             }
 
-            // Cache trong 1 giờ
-            \Cache::put($cacheKey, $keys, 3600);
+            $publicKeys = JWK::parseKeySet($jwks);
 
-            return $keys;
-        }
-        catch (\Exception $e) {
-            // Log chi tiết message và stack trace để biết lỗi cURL hay lỗi logic
+            \Cache::put($cacheKey, $publicKeys, 3600);
+
+            return $publicKeys;
+
+        } catch (\Exception $e) {
             \Log::error("Google Certs Fetch Error: " . $e->getMessage(), [
                 'exception' => $e
             ]);
+
             $this->throw('Could not fetch Google public keys: ' . $e->getMessage(), 500);
         }
     }

@@ -32,7 +32,7 @@ class ProfileService extends BaseService implements ProfileServiceInterface
         return $this->execute(
             callback: function () use ($user) {
             if (!$user->is_active) {
-                $this->throw('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.', 403);
+                $this->throw(message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.', code: 403);
             }
 
             return $user;
@@ -92,33 +92,43 @@ class ProfileService extends BaseService implements ProfileServiceInterface
      */
     public function verifyAndUpdateSensitiveFields(User $user, string $otp, array $sensitiveData): ServiceReturn
     {
-        if (!$user->is_active) {
-            $this->throw('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.', 403);
-        }
 
         // Tìm OTP hợp lệ (Xác thực ngoài transaction để tránh rollback attempts)
         $userOtp = $this->profileRepository->findValidOtp($user->phone, UserOtpType::CHANGE_PROFILE);
+        return $this->execute(function () use ($user, $otp, $sensitiveData, $userOtp) {
 
-        if (!$userOtp) {
-            $this->throw('Mã OTP không hợp lệ hoặc đã hết hạn.', 400);
-        }
-
-        if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
-            $this->throw('Bạn đã nhập sai mã OTP quá ' . self::MAX_OTP_ATTEMPTS . ' lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
-        }
-
-        if (!$userOtp->checkCode($otp)) {
-            $this->profileRepository->incrementOtpAttempts($userOtp);
-
-            if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
-                $this->throw('Bạn đã nhập sai mã OTP quá ' . self::MAX_OTP_ATTEMPTS . ' lần.', 400);
+            if (!$user->is_active) {
+                $this->throw(message: 'Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.', code: 403);
             }
 
-            $remaining = self::MAX_OTP_ATTEMPTS - $userOtp->attempts;
-            $this->throw("Mã OTP không đúng. Bạn còn {$remaining} lần thử.", 400);
-        }
+            if (empty($sensitiveData)) {
+                $this->throw(message: 'Không có trường nhạy cảm nào cần cập nhật.', code: 400);
+            }
 
-        return $this->execute(function () use ($user, $userOtp, $sensitiveData) {
+            if ($sensitiveData['phone'] === $user->phone) {
+                $this->throw(message: 'SĐT mới không thay đổi.', code: 400);
+            }
+
+
+            if (!$userOtp) {
+                return $this->throw(message: 'Mã OTP không hợp lệ hoặc đã hết hạn.', code: 400);
+            }
+
+            if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
+                $this->throw(message: 'Bạn đã nhập sai mã OTP quá ' . self::MAX_OTP_ATTEMPTS . ' lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', code: 400);
+            }
+
+            if (!$userOtp->checkCode($otp)) {
+                $this->profileRepository->incrementOtpAttempts($userOtp);
+
+                if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
+                    $this->throw(message: 'Bạn đã nhập sai mã OTP quá ' . self::MAX_OTP_ATTEMPTS . ' lần.', code: 400);
+                }
+
+                $remaining = self::MAX_OTP_ATTEMPTS - $userOtp->attempts;
+                $this->throw(message: "Mã OTP không đúng. Bạn còn {$remaining} lần thử.", code: 400);
+            }
+
             // Đánh dấu OTP đã được xác thực
             $this->profileRepository->markOtpAsVerified($userOtp);
 

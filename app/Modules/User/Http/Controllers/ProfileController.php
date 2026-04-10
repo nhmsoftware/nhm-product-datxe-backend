@@ -74,7 +74,7 @@ class ProfileController extends BaseController
         $serviceReturn = $this->profileService->getProfile($request->user());
 
         if ($serviceReturn->isError()) {
-            return $this->sendError($serviceReturn->getMessage(), $serviceReturn->getCode());
+            return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode());
         }
 
         return $this->sendSuccess(
@@ -169,7 +169,7 @@ class ProfileController extends BaseController
         $serviceReturn = $this->profileService->updateProfile($request->user(), $request->validated());
 
         if ($serviceReturn->isError()) {
-            return $this->sendError($serviceReturn->getMessage(), $serviceReturn->getCode());
+            return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode());
         }
 
         return $this->sendSuccess(
@@ -240,7 +240,7 @@ class ProfileController extends BaseController
             $request->input('sensitive_data')
         );
         if ($serviceReturn->isError()) {
-            return $this->sendError($serviceReturn->getMessage(), $serviceReturn->getCode());
+            return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode());
         }
 
         return $this->sendSuccess(

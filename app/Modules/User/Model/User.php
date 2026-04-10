@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
+use App\Modules\User\Model\Enums\Gender;
 use App\Modules\User\Model\Enums\UserRole;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -92,8 +93,8 @@ class User extends Authenticatable
     // ─── Accessors ────────────────────────────────────────────────
     public function getFullNameAttribute(): ?string
     {
-        return $this->customerProfile?->full_name 
-            ?? $this->driverProfile?->full_name 
+        return $this->customerProfile?->full_name
+            ?? $this->driverProfile?->full_name
             ?? $this->merchantProfile?->store_name;
     }
 
@@ -105,15 +106,15 @@ class User extends Authenticatable
     public function getAvatarAttribute(): ?string
     {
         // Ưu tiên avatar ở bảng core users nếu có, nếu không lấy ở profile
-        return $this->attributes['avatar'] 
-            ?? $this->customerProfile?->avatar 
+        return $this->attributes['avatar']
+            ?? $this->customerProfile?->avatar
             ?? $this->driverProfile?->avatar;
     }
 
     public function getAddressAttribute(): ?string
     {
-        return $this->attributes['address'] 
-            ?? $this->customerProfile?->address 
+        return $this->attributes['address']
+            ?? $this->customerProfile?->address
             ?? $this->merchantProfile?->store_address;
     }
 
@@ -124,8 +125,8 @@ class User extends Authenticatable
 
     public function getCitizenIdAttribute(): ?string
     {
-        return $this->attributes['citizen_id'] 
-            ?? $this->customerProfile?->citizen_id 
+        return $this->attributes['citizen_id']
+            ?? $this->customerProfile?->citizen_id
             ?? $this->driverProfile?->citizen_id;
     }
 }
