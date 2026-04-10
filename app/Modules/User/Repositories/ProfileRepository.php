@@ -17,67 +17,122 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
         return User::class;
     }
 
+    // =========================================================================
+    // User
+    // =========================================================================
+
     /**
-     * Update bảng users
+     * Cập nhật bảng users.
+     *
+     * Mặc định phone và email bị chặn để tránh mass-assignment vô tình.
+     * Chỉ set $allowSensitive = true khi đã qua bước xác thực OTP.
      */
-    public function updateUser(User $user, array $data): User
+    public function updateUser(User $user, array $data, bool $allowSensitive = false): User
     {
+        if (!$allowSensitive) {
+            unset($data['phone'], $data['email']);
+        }
+
         $fillable = $user->getFillable();
         $user->update(array_intersect_key($data, array_flip($fillable)));
+
         return $user->refresh();
     }
 
     /**
-     * Update các bảng profile liên quan (customer_profile, driver_profile, merchant_profile).
+     * Cập nhật các bảng profile liên quan (customer, driver, merchant).
+     * Chỉ update profile nào tồn tại và có field phù hợp.
      */
     public function updateProfiles(User $user, array $data): void
     {
-        if ($user->customerProfile) {
-            $fillable = $user->customerProfile->getFillable();
-            $user->customerProfile->update(array_intersect_key($data, array_flip($fillable)));
-        }
+        $profiles = [
+            $user->customerProfile,
+            $user->driverProfile,
+            $user->merchantProfile,
+        ];
 
-        if ($user->driverProfile) {
-            $fillable = $user->driverProfile->getFillable();
-            $user->driverProfile->update(array_intersect_key($data, array_flip($fillable)));
-        }
+        foreach ($profiles as $profile) {
+            if (!$profile) {
+                continue;
+            }
 
-        if ($user->merchantProfile) {
-            $fillable = $user->merchantProfile->getFillable();
-            $user->merchantProfile->update(array_intersect_key($data, array_flip($fillable)));
+            $profileData = array_intersect_key($data, array_flip($profile->getFillable()));
+
+            if (!empty($profileData)) {
+                $profile->update($profileData);
+            }
         }
     }
 
+    // =========================================================================
+    // OTP
+    // =========================================================================
+
     /**
-     * Tìm OTP hợp lệ
+     * Tìm OTP hợp lệ theo user_id (tránh nhầm lẫn khi phone vừa thay đổi).
+     * Chỉ lấy OTP chưa dùng và chưa hết hạn, ưu tiên bản mới nhất.
      */
-    public function findValidOtp(string $phone, UserOtpType $type): ?UserOtp
+    public function findValidOtpByUserId(int $userId, UserOtpType $type): ?UserOtp
     {
-        return UserOtp::where('phone', $phone)
+        return UserOtp::where('user_id', $userId)
             ->where('type', $type)
-            ->whereNull('verified_at')
+            ->whereNull('used_at')
             ->where('expired_at', '>', now())
             ->latest()
             ->first();
     }
 
+    /**
+     * Tìm OTP hợp lệ theo phone (dùng khi chưa có user_id trong flow).
+     */
+    public function findValidOtpByPhone(string $phone, UserOtpType $type): ?UserOtp
+    {
+        return UserOtp::where('phone', $phone)
+            ->where('type', $type)
+            ->whereNull('used_at')
+            ->where('expired_at', '>', now())
+            ->latest()
+            ->first();
+    }
 
     /**
-     * Tăng số lần thử OTP
+     * Tăng số lần nhập OTP sai.
      */
     public function incrementOtpAttempts(UserOtp $userOtp): UserOtp
     {
         $userOtp->increment('attempts');
+
         return $userOtp->fresh();
     }
 
     /**
-     * Đánh OTP thành công
+     * Đánh dấu OTP đã được xác thực và consume.
+     *
+     * - verified_at: thời điểm OTP được nhập đúng
+     * - used_at:     thời điểm OTP được consume (dùng để block tái sử dụng)
+     * Hai thời điểm này ghi cùng lúc vì flow xác thực và consume diễn ra trong
+     * cùng một transaction.
      */
-    public function markOtpAsVerified(UserOtp $otp): void
+    public function markOtpAsUsed(UserOtp $otp): void
     {
+        $now = now();
+
         $otp->update([
-            'verified_at' => now(),
+            'verified_at' => $now,
+            'used_at'     => $now,
         ]);
+    }
+
+    /**
+     * Invalidate tất cả OTP cũ còn hiệu lực của user (cùng type).
+     * Gọi trước khi tạo OTP mới để tránh tồn tại nhiều OTP song song.
+     */
+    public function invalidatePreviousOtps(int $userId, UserOtpType $type): void
+    {
+        UserOtp::where('user_id', $userId)
+            ->where('type', $type)
+            ->whereNull('used_at')
+            ->where('expired_at', '>', now())
+            ->update(['used_at' => now()]);
     }
 }
