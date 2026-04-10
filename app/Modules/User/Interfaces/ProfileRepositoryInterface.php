@@ -21,6 +21,14 @@ interface ProfileRepositoryInterface extends BaseRepositoryInterface
     public function updateUser(User $user, array $data): User;
 
     /**
+     * Cập nhật hồ sơ người dùng (customer_profile, driver_profile, merchant_profile).
+     * @param User $user
+     * @param array $data
+     * @return void
+     */
+    public function updateProfiles(User $user, array $data): void;
+
+    /**
      * Cập nhật các bảng profile liên quan (customer_profile, driver_profile, merchant_profile).
      * @param string $phone
      * @param UserOtpType $type

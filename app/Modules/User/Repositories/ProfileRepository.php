@@ -22,25 +22,29 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
      */
     public function updateUser(User $user, array $data): User
     {
-        $user->update($data);
+        $fillable = $user->getFillable();
+        $user->update(array_intersect_key($data, array_flip($fillable)));
         return $user->refresh();
     }
 
     /**
-     * Update các bảng profile liên quan
+     * Update các bảng profile liên quan (customer_profile, driver_profile, merchant_profile).
      */
     public function updateProfiles(User $user, array $data): void
     {
         if ($user->customerProfile) {
-            $user->customerProfile->update($data);
+            $fillable = $user->customerProfile->getFillable();
+            $user->customerProfile->update(array_intersect_key($data, array_flip($fillable)));
         }
 
         if ($user->driverProfile) {
-            $user->driverProfile->update($data);
+            $fillable = $user->driverProfile->getFillable();
+            $user->driverProfile->update(array_intersect_key($data, array_flip($fillable)));
         }
 
         if ($user->merchantProfile) {
-            $user->merchantProfile->update($data);
+            $fillable = $user->merchantProfile->getFillable();
+            $user->merchantProfile->update(array_intersect_key($data, array_flip($fillable)));
         }
     }
 

@@ -11,6 +11,7 @@ use App\Modules\User\Interfaces\ProfileServiceInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\UserOtpType;
 use App\Modules\User\Model\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Hash;
 
 class ProfileService extends BaseService implements ProfileServiceInterface
@@ -45,7 +46,8 @@ class ProfileService extends BaseService implements ProfileServiceInterface
      */
     public function updateProfile(User $user, array $data): ServiceReturn
     {
-        return $this->execute(function () use ($user, $data) {
+        return $this->execute(
+            callback: function () use ($user, $data) {
 
             if ($user->isLocked()) {
                 $this->throw('Tài khoản của bạn đã bị khóa.', 403);
@@ -54,26 +56,6 @@ class ProfileService extends BaseService implements ProfileServiceInterface
             // 1. Tách dữ liệu
             $sensitiveData = array_intersect_key($data, array_flip(self::SENSITIVE_FIELDS));
             $nonSensitiveData = array_diff_key($data, $sensitiveData);
-
-            // 2. Validate unique
-            if (!empty($sensitiveData['phone']) &&
-                $this->userRepository->findByPhone($sensitiveData['phone']) &&
-                $sensitiveData['phone'] !== $user->phone
-            ) {
-                $this->throw('SĐT đã tồn tại.', 422);
-            }
-
-            if (!empty($sensitiveData['email']) &&
-                $this->userRepository->findByEmail($sensitiveData['email']) &&
-                $sensitiveData['email'] !== $user->email
-            ) {
-                $this->throw('Email đã tồn tại.', 422);
-            }
-
-            // 3. Business logic: reset verify nếu đổi phone
-            if (isset($sensitiveData['phone']) && $sensitiveData['phone'] !== $user->phone) {
-                $sensitiveData['is_phone_verified'] = false;
-            }
 
             // 4. Update non-sensitive
             if (!empty($nonSensitiveData)) {
@@ -132,6 +114,7 @@ class ProfileService extends BaseService implements ProfileServiceInterface
 
         return $this->execute(function () use ($user, $sensitiveData, $userOtp, $otpValid) {
 
+            // 1. Validate OTP
             if (!$userOtp) {
                 $this->throw('OTP không hợp lệ hoặc hết hạn.', 400);
             }
@@ -145,10 +128,41 @@ class ProfileService extends BaseService implements ProfileServiceInterface
                 $this->throw("OTP sai. Còn {$remain} lần.", 400);
             }
 
-            // mark verified
+            // 2. Validate phone unique
+            if (isset($sensitiveData['phone'])) {
+
+                if ($sensitiveData['phone'] === $user->phone) {
+                    $this->throw('SĐT không được đổi.', 400);
+                }
+
+                $existingUser = $this->userRepository->findByPhone($sensitiveData['phone']);
+
+                if ($existingUser && $existingUser->id !== $user->id) {
+                    $this->throw('SĐT đã tồn tại.', 422);
+                }
+
+                // reset verify
+                $sensitiveData['is_phone_verified'] = false;
+            }
+
+            // 3. Validate email unique
+            if (isset($sensitiveData['email'])) {
+
+                if ($sensitiveData['email'] === $user->email) {
+                    $this->throw('Email không được đổi.', 400);
+                }
+
+                $existingUser = $this->userRepository->findByEmail($sensitiveData['email']);
+
+                if ($existingUser && $existingUser->id !== $user->id) {
+                    $this->throw('Email đã tồn tại.', 422);
+                }
+            }
+
+            // 4. Mark OTP used
             $this->profileRepository->markOtpAsVerified($userOtp);
 
-            // update DB
+            // 5. Update user (bảng users)
             $this->profileRepository->updateUser($user, $sensitiveData);
 
             return $user->refresh();
