@@ -27,15 +27,6 @@ interface ProfileServiceInterface
     public function updateProfile(User $user, array $data): ServiceReturn;
 
     /**
-     * Check if sensitive fields (phone, email) have changed.
-     *
-     * @param User $user
-     * @param array $data
-     * @return array Fields that require OTP verification
-     */
-    public function getChangedSensitiveFields(User $user, array $data): array;
-
-    /**
      * Verify OTP and update sensitive fields.
      *
      * @param User $user

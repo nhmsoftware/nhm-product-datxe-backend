@@ -41,7 +41,7 @@ class GoongMapService implements MapServiceInterface
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 // Goong Distance Matrix response structure
                 $element = $data['rows'][0]['elements'][0] ?? null;
 

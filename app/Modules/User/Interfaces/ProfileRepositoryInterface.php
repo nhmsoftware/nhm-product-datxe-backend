@@ -18,11 +18,10 @@ interface ProfileRepositoryInterface extends BaseRepositoryInterface
      * @param array $data
      * @return User
      */
-    public function updateProfile(User $user, array $data): User;
+    public function updateUser(User $user, array $data): User;
 
     /**
-     * Tìm mã OTP hợp lệ.
-     *
+     * Cập nhật các bảng profile liên quan (customer_profile, driver_profile, merchant_profile).
      * @param string $phone
      * @param UserOtpType $type
      * @return UserOtp|null
@@ -30,18 +29,16 @@ interface ProfileRepositoryInterface extends BaseRepositoryInterface
     public function findValidOtp(string $phone, UserOtpType $type): ?UserOtp;
 
     /**
-     * Tăng số lần thử sai của OTP.
-     *
-     * @param UserOtp $otp
-     * @return void
+     * Tăng số lần nhập sai OTP
+     * @param UserOtp $userOtp
+     * @return UserOtp/
+     * @throws \Exception
      */
     public function incrementOtpAttempts(UserOtp $userOtp): UserOtp;
 
     /**
-     * Đánh dấu OTP đã được xác thực.
-     *
+     * Đánh dấu OTP đã xác thực
      * @param UserOtp $otp
-     * @return void
      */
     public function markOtpAsVerified(UserOtp $otp): void;
 }
