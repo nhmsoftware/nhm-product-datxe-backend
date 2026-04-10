@@ -79,6 +79,13 @@ class SavedAddressService extends BaseService implements SavedAddressServiceInte
             // Tạo địa chỉ
             $address = $this->addressRepository->createForCustomer($customerProfile, $data);
 
+            if (!$address) {
+                $this->throw(
+                    message: 'Không thể tạo địa chỉ mới. Vui lòng thử lại.',
+                    code: 500,
+                );
+            }
+
             return $this->formatAddress($address);
         }, useTransaction: true);
     }
@@ -91,14 +98,16 @@ class SavedAddressService extends BaseService implements SavedAddressServiceInte
         return $this->execute(function () use ($user, $addressId, $data) {
             $address = $this->findAndVerifyAddress($user, $addressId);
 
-            // Kiểm tra trùng lặp nếu vị trí thay đổi
             if (isset($data['lat']) || isset($data['lng'])) {
-                $existingAddress = $this->findDuplicateAddress($address->customerProfile, $data, $address->id);
+                $checkData = [
+                    'lat' => $data['lat'] ?? $address->lat,
+                    'lng' => $data['lng'] ?? $address->lng,
+                ];
+
+                $existingAddress = $this->findDuplicateAddress($address->customerProfile, $checkData, $address->id);
+
                 if ($existingAddress) {
-                    $this->throw(
-                        message: 'Địa chỉ này đã được lưu trước đó.',
-                        code: 422,
-                    );
+                    $this->throw(message: 'Địa chỉ này đã tồn tại trong danh sách của bạn.', code: 422);
                 }
             }
 

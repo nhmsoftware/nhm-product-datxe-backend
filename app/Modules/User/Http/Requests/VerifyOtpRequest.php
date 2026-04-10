@@ -29,7 +29,7 @@ class VerifyOtpRequest extends FormRequest
         return [
             'otp' => 'required|string|size:6|regex:/^[0-9]+$/',
             'sensitive_data' => 'nullable|array',
-            'sensitive_data.phone' => ['nullable', 'string', 'regex:/^(0[3|5|7|8|9])+([0-9]{8})$/'],
+            'sensitive_data.phone' => ['required', 'string', 'regex:/^(0[3|5|7|8|9])+([0-9]{8})$/'],
             'sensitive_data.email' => 'nullable|email|max:255',
             'sensitive_data.password' => 'nullable|string|min:8|max:50',
             'sensitive_data.device_id' => 'nullable|string|max:255',
@@ -62,6 +62,7 @@ class VerifyOtpRequest extends FormRequest
             'sensitive_data.is_agree.required' => 'Vui lòng chọn trạng thái đồng ý.',
             'sensitive_data.is_agree.boolean' => 'Vui lòng chọn trạng thái đồng ý hợp lệ.',
             'sensitive_data.phone.regex' => 'Số điện thoại không đúng định dạng (VD: 0912345678).',
+            'sensitive_data.phone.required' => 'Số điện thoại không được để trống.',
         ];
     }
 

@@ -19,8 +19,8 @@ class MerchantProfile extends Model
         'user_id',
         'store_name',
         'store_address',
-        'latitude',
-        'longitude',
+        'lat',
+        'lng',
         'opening_time',
         'closing_time',
         'is_open',
@@ -31,8 +31,8 @@ class MerchantProfile extends Model
     ];
 
     protected $casts = [
-        'latitude' => 'decimal:8',
-        'longitude' => 'decimal:8',
+        'lat' => 'decimal:8',
+        'lng' => 'decimal:8',
         'is_open' => 'boolean',
         'average_rating' => 'decimal:2',
         'total_orders' => 'integer',

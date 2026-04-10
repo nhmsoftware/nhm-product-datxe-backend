@@ -8,6 +8,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 class EditProfileRequest extends FormRequest
 {
@@ -32,11 +33,16 @@ class EditProfileRequest extends FormRequest
             'gender' => 'nullable|integer|in:1,2,3',
             'address' => 'nullable|string|max:500',
             'email' => 'nullable|email|max:255',
-            'phone' => 'required|string|max:11|regex:/^(0[3|5|7|8|9])+([0-9]{8})$/',
+            'phone' => ['required', 'string', 'regex:/^0[35789][0-9]{8}$/'],
             'citizen_id' => 'nullable|string|max:20|regex:/^[0-9]{12}$/',
 
             // Customer-specific (nếu có)
-            'birthday'  => 'nullable|date|before:today|after:' . now()->subYears(100)->format('Y-m-d'),
+            'birthday' => [
+                'nullable',
+                'date',
+                'before:today',
+                'after:' . today()->subYears(100)->format('Y-m-d'),
+            ],
 
             // Driver-specific fields
             'vehicle_name' => 'nullable|string|max:255',

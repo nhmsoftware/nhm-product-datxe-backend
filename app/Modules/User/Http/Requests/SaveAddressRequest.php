@@ -8,7 +8,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
+
 
 class SaveAddressRequest extends FormRequest
 {
@@ -27,34 +27,14 @@ class SaveAddressRequest extends FormRequest
      */
     public function rules(): array
     {
-        $address = $this->route('address');
-
-        // Tạo một quy tắc unique để kiểm tra sự kết hợp của user_id, lat, và lng.
-        // Một người dùng không thể lưu hai địa chỉ có cùng kinh độ và vĩ độ.
-        $uniqueRule = Rule::unique('user_addresses')->where(function ($query) {
-            return $query->where('user_id', $this->user()->id)
-                ->where('lng', $this->input('lng'))
-                ->where('lat', $this->input('lat'));
-        });
-
-        // Nếu đang cập nhật một địa chỉ, chúng ta cần bỏ qua chính địa chỉ đó
-        // để không gây ra lỗi "đã tồn tại" với chính nó.
-        if ($address) {
-            $addressId = is_object($address) ? $address->id : $address;
-            $uniqueRule->ignore($addressId);
-        }
-
         return [
             'label' => 'required|integer|in:1,2,3,4',
             'name' => 'nullable|string|max:100',
             'address_text' => 'required|string|max:500',
-            'lat' => [
-                'required',
-                'numeric',
-                'between:-90,90',
-                $uniqueRule, // Áp dụng quy tắc unique đã tạo
-            ],
+
+            'lat' => 'required|numeric|between:-90,90',
             'lng' => 'required|numeric|between:-180,180',
+
             'receiver_name' => 'nullable|string|max:100',
             'receiver_phone' => 'nullable|string|max:20',
             'note' => 'nullable|string|max:255',

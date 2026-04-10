@@ -108,10 +108,8 @@ class ProfileResource extends JsonResource
         return [
             'store_name' => $this->formatOptionalField($merchant->store_name, 'store_name'),
             'store_address' => $this->formatOptionalField($merchant->store_address, 'store_address'),
-            'location' => [
-                'latitude' => $merchant->latitude,
-                'longitude' => $merchant->longitude,
-            ],
+            'lat' => $merchant->lat,
+            'lng' => $merchant->lng,
             'business_hours' => [
                 'opening_time' => $this->formatOptionalField($merchant->opening_time, 'opening_time'),
                 'closing_time' => $this->formatOptionalField($merchant->closing_time, 'closing_time'),
