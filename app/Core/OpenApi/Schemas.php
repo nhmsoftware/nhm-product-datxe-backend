@@ -120,22 +120,15 @@ class Schemas
     #[OA\Schema(
         schema: 'SavedAddressResponse',
         description: 'Thông tin địa chỉ đã lưu',
-        required: ['id', 'label', 'name', 'address_text', 'location', 'receiver_name', 'receiver_phone', 'is_default'],
+        required: ['id', 'label', 'name', 'address_text', 'lat', 'lng', 'receiver_name', 'receiver_phone', 'is_default'],
         properties: [
             new OA\Property(property: 'id', type: 'integer', example: 1, description: 'ID địa chỉ'),
             new OA\Property(property: 'label', type: 'integer', enum: [1, 2, 3, 4], example: 1, description: 'Nhãn: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác'),
             new OA\Property(property: 'label_text', type: 'string', example: 'Nhà', description: 'Tên nhãn'),
             new OA\Property(property: 'name', type: 'string', maxLength: 200, example: 'Nhà A', description: 'Tên gợi nhớ'),
             new OA\Property(property: 'address_text', type: 'string', maxLength: 500, example: '123 Đường ABC, Phường 5, Quận 1, TP.HCM', description: 'Địa chỉ đầy đủ'),
-            new OA\Property(
-                property: 'location',
-                description: 'Tọa độ địa lý',
-                properties: [
-                    new OA\Property(property: 'lat', type: 'number', format: 'double', example: 10.7629),
-                    new OA\Property(property: 'lng', type: 'number', format: 'double', example: 106.6818)
-                ],
-                type: 'object'
-            ),
+            new OA\Property(property: 'lat', type: 'number', format: 'double', example: 10.7629),
+            new OA\Property(property: 'lng', type: 'number', format: 'double', example: 106.6818),
             new OA\Property(property: 'receiver_name', description: 'Tên người nhận', type: 'string', example: 'Nguyễn Văn A', maxLength: 100),
             new OA\Property(property: 'receiver_phone', type: 'string', example: '0912345678:', maxLength: 20),
             new OA\Property(property: 'note', description: 'Ghi chú', type: 'string', example: 'Gần siêu thị', nullable: true, maxLength: 500),

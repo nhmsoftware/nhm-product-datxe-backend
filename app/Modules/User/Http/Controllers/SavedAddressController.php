@@ -184,7 +184,7 @@ class SavedAddressController extends BaseController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['label', 'name', 'address_text', 'location'],
+                required: ['label', 'name', 'address_text', 'lat', 'lng'],
                 properties: [
                     new OA\Property(property: 'label', description: 'Nhãn địa chỉ: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác', type: 'integer', example: 1, enum: [1, 2, 3, 4]),
                     new OA\Property(property: 'name', description: 'Tên gợi nhớ cho địa chỉ', type: 'string', example: 'Nhà A', maxLength: 200),
@@ -283,7 +283,7 @@ class SavedAddressController extends BaseController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['label', 'name', 'address_text', 'location'],
+                required: ['label', 'name', 'address_text', 'lat', 'lng'],
                 properties: [
                     new OA\Property(property: 'label', type: 'integer', enum: [1, 2, 3, 4], example: 1, description: 'Nhãn địa chỉ: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác'),
                     new OA\Property(property: 'name', type: 'string', maxLength: 200, example: 'Nhà B', description: 'Tên gợi nhớ cho địa chỉ'),

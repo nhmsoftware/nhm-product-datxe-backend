@@ -232,10 +232,8 @@ class SavedAddressService extends BaseService implements SavedAddressServiceInte
             'label_text' => $address->label_text,
             'name' => $address->name ?? $address->label_text,
             'address_text' => $address->address_text,
-            'location' => [
-                'lat' => (float) $address->lat,
-                'lng' => (float) $address->lng,
-            ],
+            'lat' => (float) $address->lat,
+            'lng' => (float) $address->lng,
             'receiver_name' => $address->receiver_name,
             'receiver_phone' => $address->receiver_phone,
             'note' => $address->note,
