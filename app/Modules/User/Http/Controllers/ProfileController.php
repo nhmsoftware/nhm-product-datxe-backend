@@ -103,7 +103,7 @@ class ProfileController extends BaseController
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'new.email@example.com'),
                     new OA\Property(property: 'phone', type: 'string', example: '0123456789'),
                     new OA\Property(property: 'gender', type: 'string', example: 1, enum: [1 => 'male', 2 => 'female', 3 => 'other']),
-                    new OA\Property(property: 'dob', description: 'Ngày (YYYY-MM-DD)', type: 'string', format: 'date', example: '1995-08-15'),
+                    new OA\Property(property: 'birthday', description: 'Ngày (YYYY-MM-DD)', type: 'string', format: 'date', example: '1995-08-15'),
                     new OA\Property(property: 'avatar', description: 'URL ảnh đại diện mới', type: 'string', example: 'https://example.com/avatar.jpg'),
 
                     // --- Driver-Specific Fields ---

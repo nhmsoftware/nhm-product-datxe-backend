@@ -119,8 +119,8 @@ class AuthService extends BaseService implements AuthServiceInterface
                 $this->throw('Mật khẩu không chính xác.', 401);
             }
 
-            if (!$user->is_active) {
-                $this->throw('Tài khoản đã bị khoá.', 403);
+            if ($user->isLocked()) {
+                $this->throw('Tài khoản này đã bị khóa. Vui lòng liên hệ hỗ trợ để được hỗ trợ.', 403);
             }
 
             $this->upsertDeviceIfPresent($user, $data);
@@ -150,8 +150,8 @@ class AuthService extends BaseService implements AuthServiceInterface
             $this->throw('Số điện thoại này chưa được đăng ký trên hệ thống.', 404);
         }
 
-        if (!$user->is_active) {
-            $this->throw('Tài khoản đã bị khoá.', 403);
+        if ($user->isLocked()) {
+            $this->throw('Tài khoản này đã bị khóa. Vui lòng liên hệ hỗ trợ để được hỗ trợ.', 403);
         }
 
         if (Hash::check($data['password'], $user->password)) {
@@ -226,8 +226,8 @@ class AuthService extends BaseService implements AuthServiceInterface
                 ]);
             }
 
-            if (!$user->is_active) {
-                $this->throw('Tài khoản đã bị khóa.', 403);
+            if ($user->isLocked()) {
+                $this->throw('Tài khoản này đã bị khóa. Vui lòng liên hệ hỗ trợ để được hỗ trợ.', 403);
             }
 
             $this->upsertDeviceIfPresent($user, $data);
@@ -285,8 +285,8 @@ class AuthService extends BaseService implements AuthServiceInterface
                 ]);
             }
 
-            if (!$user->is_active) {
-                $this->throw('Tài khoản đã bị khóa.', 403);
+            if ($user->isLocked()) {
+                $this->throw('Tài khoản này đã bị khóa. Vui lòng liên hệ hỗ trợ để được hỗ trợ.', 403);
             }
 
             $this->upsertDeviceIfPresent($user, $data);

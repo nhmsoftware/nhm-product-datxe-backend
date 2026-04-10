@@ -44,12 +44,10 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
      */
     public function findDuplicate(CustomerProfile $customerProfile, float $lat, float $lng, ?int $excludeId = null): ?CustomerSavedAddress
     {
-        // Bán kính khoảng 50 mét
-        $radius = 0.0005;
-
+        // Kiểm tra lat và lng khớp chính xác
         $query = $this->model->where('customer_id', $customerProfile->id)
-            ->whereBetween('lat', [$lat - $radius, $lat + $radius])
-            ->whereBetween('lng', [$lng - $radius, $lng + $radius]);
+            ->where('lat', $lat)
+            ->where('lng', $lng);
 
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);

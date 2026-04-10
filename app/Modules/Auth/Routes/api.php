@@ -15,7 +15,6 @@ Route::post('v1/auth/apple-login', [AuthController::class, 'appleLogin'])->name(
 Route::post('v1/auth/forgot-password', [AuthController::class, 'forgotPassword'])->name('auth.forgot-password');
 
 // Các route cần đăng nhập (ví dụ dùng Sanctum)
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('v1/auth/me', [AuthController::class, 'me'])->name('auth.me');
+Route::middleware(['auth:sanctum', 'check.account.status'])->group(function () {
     Route::post('v1/auth/logout', [AuthController::class, 'logout'])->name('auth.logout');
 });

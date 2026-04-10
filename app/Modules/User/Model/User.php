@@ -129,4 +129,23 @@ class User extends Authenticatable
             ?? $this->customerProfile?->citizen_id
             ?? $this->driverProfile?->citizen_id;
     }
+
+    // ─── Account Status Helpers ──────────────────────────────────
+
+    /**
+     * Kiểm tra tài khoản có bị khóa hay không.
+     * Tài khoản bị khóa khi: is_active = false VÀ deleted_at != null
+     */
+    public function isLocked(): bool
+    {
+        return !$this->is_active && $this->deleted_at !== null;
+    }
+
+    /**
+     * Kiểm tra tài khoản có đang active hay không.
+     */
+    public function isActive(): bool
+    {
+        return $this->is_active && $this->deleted_at === null;
+    }
 }

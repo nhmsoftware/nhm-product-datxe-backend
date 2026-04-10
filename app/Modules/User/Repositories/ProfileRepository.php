@@ -94,9 +94,10 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     /**
      * {@inheritdoc}
      */
-    public function incrementOtpAttempts(UserOtp $otp): void
+    public function incrementOtpAttempts(UserOtp $userOtp): UserOtp
     {
-        $otp->increment('attempts');
+        $userOtp->increment('attempts');
+        return $userOtp->fresh();
     }
 
     /**

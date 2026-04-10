@@ -36,6 +36,7 @@ class ProfileResource extends JsonResource
             'role_label' => $user->role->label(),
             'avatar' => $this->formatOptionalField($user->avatar, 'avatar'),
             'full_name' => $this->formatOptionalField($user->full_name, 'full_name'),
+            'birthday' => $user->customerProfile?->birthday?->toDateString(),
             'phone' => $user->phone ?? null,
             'email' => $this->formatOptionalField($user->email, 'email'),
             'gender' => $this->formatOptionalField($user->gender?->value, 'gender'),
@@ -45,6 +46,8 @@ class ProfileResource extends JsonResource
             'is_verified' => $user->is_verified,
             'is_phone_verified' => $user->is_phone_verified,
             'created_at' => $user->created_at?->toIso8601String(),
+            'updated_at' => $user->updated_at?->toIso8601String(),
+            'deleted_at' => $user->deleted_at?->toIso8601String(),
         ];
 
         // Thông tin riêng theo vai trò

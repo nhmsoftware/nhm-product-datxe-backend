@@ -18,20 +18,6 @@ class EditProfileRequest extends FormRequest
     {
         return true;
     }
-
-    /**
-     * Chuẩn bị dữ liệu để xác thực.
-     */
-    protected function prepareForValidation(): void
-    {
-        // Phối hợp dob vào birthday nếu birthday để trống
-        if ($this->has('dob') && !$this->has('birthday')) {
-            $this->merge([
-                'birthday' => $this->input('dob'),
-            ]);
-        }
-    }
-
     /**
      * Get the validation rules that apply to the request.
      *
@@ -42,16 +28,15 @@ class EditProfileRequest extends FormRequest
         return [
             // Thông tin cơ bản (chung cho tất cả vai trò)
             'avatar' => 'nullable|string|max:500',
-            'full_name' => 'nullable|string|max:100',
+            'full_name' => 'required|string|max:100',
             'gender' => 'nullable|integer|in:1,2,3',
             'address' => 'nullable|string|max:500',
             'email' => 'nullable|email|max:255',
-            'phone' => 'nullable|string|max:20',
+            'phone' => 'required|string|max:11|regex:/^(0[3|5|7|8|9])+([0-9]{8})$/',
             'citizen_id' => 'nullable|string|max:20|regex:/^[0-9]{12}$/',
 
             // Customer-specific (nếu có)
-            'birthday' => 'nullable|date|before:today',
-            'dob' => 'nullable|date|before:today',
+            'birthday'  => 'nullable|date|before:today|after:' . now()->subYears(100)->format('Y-m-d'),
 
             // Driver-specific fields
             'vehicle_name' => 'nullable|string|max:255',
@@ -86,13 +71,26 @@ class EditProfileRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'full_name.max' => 'Họ tên không được vượt quá 100 ký tự.',
-            'gender.in' => 'Giới tính không hợp lệ.',
+            // full_name
+            'full_name.required' => 'Họ tên không được để trống.',
+            'full_name.max'      => 'Họ tên không được vượt quá 100 ký tự.',
+
+            // phone
+            'phone.required' => 'Số điện thoại không được để trống.',
+            'phone.regex'    => 'Số điện thoại không đúng định dạng (VD: 0912345678).',
+
+            // email
             'email.email' => 'Email không đúng định dạng.',
+
+            // citizen_id
             'citizen_id.regex' => 'Căn cước công dân phải có 12 chữ số.',
+
+            // birthday
             'birthday.before' => 'Ngày sinh phải trước ngày hôm nay.',
-            'phone.max' => 'Số điện thoại không được vượt quá 20 ký tự.',
-            'citizen_id.max' => 'Căn cước công dân không được vượt quá 20 ký tự.'
+            'birthday.after'  => 'Tuổi không được vượt quá 100 tuổi.',
+
+            // gender
+            'gender.in' => 'Giới tính không hợp lệ.',
         ];
     }
 

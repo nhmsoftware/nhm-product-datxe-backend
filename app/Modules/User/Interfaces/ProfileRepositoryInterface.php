@@ -35,7 +35,7 @@ interface ProfileRepositoryInterface extends BaseRepositoryInterface
      * @param UserOtp $otp
      * @return void
      */
-    public function incrementOtpAttempts(UserOtp $otp): void;
+    public function incrementOtpAttempts(UserOtp $userOtp): UserOtp;
 
     /**
      * Đánh dấu OTP đã được xác thực.
