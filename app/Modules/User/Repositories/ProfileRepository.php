@@ -10,18 +10,13 @@ use App\Modules\User\Model\CustomerProfile;
 use App\Modules\User\Model\DriverProfile;
 use App\Modules\User\Model\MerchantProfile;
 use App\Modules\User\Model\Enums\UserOtpType;
-use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\User;
 use App\Modules\User\Model\UserOtp;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 
 class ProfileRepository extends BaseRepository implements ProfileRepositoryInterface
 {
-    // Các trường thuộc bảng users
-    private const BASE_FIELDS = [
-        'avatar', 'full_name', 'gender', 'address', 'email', 'citizen_id', 'phone', 'password'
-    ];
-
     // Các trường thuộc bảng customer_profiles
     private const CUSTOMER_FIELDS = [
         'birthday'
@@ -40,42 +35,60 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
      */
     public function updateProfile(User $user, array $data): User
     {
-        // 1. Cập nhật bảng users (chỉ các trường account/system)
-        $userFillable = (new User())->getFillable();
-        $userData = array_intersect_key($data, array_flip($userFillable));
+        return DB::transaction(
+            function () use ($user, $data) {
+            // 1. Cập nhật bảng users (chỉ các trường account/system)
+            $userFillable = $user->getFillable();
+            $userData = array_intersect_key($data, array_flip($userFillable));
 
-        if (!empty($userData)) {
-            $user->update($userData);
-        }
+            if (!empty($userData)) {
+                // LOGIC MỚI: Kiểm tra nếu số điện thoại thay đổi thì hủy trạng thái verified
+                if (isset($userData['phone']) && $userData['phone'] !== $user->phone) {
+                    $userData['is_phone_verified'] = false;
+                }
 
-        // 2. Cập nhật profile tương ứng dựa trên role của user
-        // Chúng ta cập nhật tất cả profile hiện có của user này để đảm bảo đồng bộ
+                $user->update($userData);
+            }
+
+            // 2. Cập nhật profile tương ứng dựa trên các quan hệ hiện có
+            $this->updateRelatedProfiles($user, $data);
+
+            // 3. Nạp lại model kèm theo các quan hệ
+            return $user->refresh()->load(['customerProfile', 'driverProfile', 'merchantProfile']);
+        });
+    }
+
+    /**
+     * Gom nhóm logic cập nhật các bảng profile liên quan
+     */
+    private function updateRelatedProfiles(User $user, array $data): void
+    {
+        // Customer Profile
         if ($user->customerProfile) {
-            $customerFillable = (new CustomerProfile())->getFillable();
+            $customerFillable = $user->customerProfile->getFillable();
             $customerData = array_intersect_key($data, array_flip($customerFillable));
             if (!empty($customerData)) {
-                $user->customerProfile->update($customerData);
+                $this->updateCustomerProfile($user, $customerData);
             }
         }
 
+        // Driver Profile
         if ($user->driverProfile) {
-            $driverFillable = (new DriverProfile())->getFillable();
+            $driverFillable = $user->driverProfile->getFillable();
             $driverData = array_intersect_key($data, array_flip($driverFillable));
             if (!empty($driverData)) {
                 $user->driverProfile->update($driverData);
             }
         }
 
+        // Merchant Profile
         if ($user->merchantProfile) {
-            $merchantFillable = (new MerchantProfile())->getFillable();
+            $merchantFillable = $user->merchantProfile->getFillable();
             $merchantData = array_intersect_key($data, array_flip($merchantFillable));
             if (!empty($merchantData)) {
                 $user->merchantProfile->update($merchantData);
             }
         }
-
-        // 3. Nạp lại model kèm theo các quan hệ để đảm bảo Accessors có dữ liệu mới nhất
-        return $user->refresh()->load(['customerProfile', 'driverProfile', 'merchantProfile']);
     }
 
     /**
