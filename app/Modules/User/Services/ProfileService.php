@@ -6,7 +6,6 @@ namespace App\Modules\User\Services;
 
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
-use App\Modules\User\Events\UserProfileUpdated;
 use App\Modules\User\Interfaces\ProfileRepositoryInterface;
 use App\Modules\User\Interfaces\ProfileServiceInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
@@ -24,11 +23,9 @@ class ProfileService extends BaseService implements ProfileServiceInterface
         protected UserRepositoryInterface    $userRepository,
     ) {}
 
+
     /**
      * Lấy hồ sơ người dùng.
-     *
-     * @param  User $user
-     * @return ServiceReturn
      */
     public function getProfile(User $user): ServiceReturn
     {
@@ -41,12 +38,9 @@ class ProfileService extends BaseService implements ProfileServiceInterface
         });
     }
 
+
     /**
      * Cập nhật hồ sơ người dùng.
-     *
-     * @param  User  $user
-     * @param  array $data
-     * @return ServiceReturn
      */
     public function updateProfile(User $user, array $data): ServiceReturn
     {
@@ -66,7 +60,7 @@ class ProfileService extends BaseService implements ProfileServiceInterface
                 $this->profileRepository->updateProfiles($user, $nonSensitiveData);
             }
 
-            // 3. Kiểm tra các sensitive fields có thay đổi không
+            // 3. Kiểm tra sensitive fields có thực sự thay đổi không
             $changedFields = $this->getChangedSensitiveFields($user, $sensitiveData);
 
             if (!empty($changedFields)) {
@@ -80,42 +74,55 @@ class ProfileService extends BaseService implements ProfileServiceInterface
         }, useTransaction: true);
     }
 
+
     /**
      * Xác thực OTP và cập nhật sensitive fields.
      */
-    public function verifyAndUpdateSensitiveFields(
-        User   $user,
-        string $otp,
-        array  $sensitiveData,
-    ): ServiceReturn {
-        return $this->execute(function () use ($user, $otp, $sensitiveData) {
-
+    public function verifyAndUpdateSensitiveFields(User $user, string $otp, array $sensitiveData): ServiceReturn
+    {
+        // 1. Xác thực OTP - Chạy ngoài transaction của phần update để tránh rollback attempts
+        $verifyResult = $this->execute(function () use ($user, $otp, $sensitiveData) {
             if (empty($sensitiveData)) {
                 $this->throw('Không có dữ liệu cần cập nhật.', 400);
             }
 
-            // 1. Tìm và validate OTP (trong transaction để tránh race condition)
-            $userOtp = $this->profileRepository->findValidOtpByUserId(
-                $user->id,
-                UserOtpType::CHANGE_PROFILE,
-            );
+            // Luôn dùng số điện thoại cũ để xác thực OTP
+            $phoneToVerify = $user->phone;
+
+            $userOtp = $this->profileRepository->findValidOtpByPhone($phoneToVerify, UserOtpType::CHANGE_PROFILE);
 
             if (!$userOtp) {
-                $this->throw('OTP không hợp lệ hoặc hết hạn.', 400);
+                $this->throw('OTP không hợp lệ hoặc đã hết hạn.', 400);
             }
 
             if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
-                $this->throw('OTP bị khóa do nhập sai quá nhiều lần.', 400);
+                $this->throw('OTP bị khóa do nhập sai quá nhiều lần. Vui lòng tạo lại OTP mới.', 400);
             }
 
-            // Dùng hash_equals để tránh timing attack
             if (!$userOtp->checkCode($otp)) {
-                $userOtp  = $this->profileRepository->incrementOtpAttempts($userOtp);
-                $remain   = self::MAX_OTP_ATTEMPTS - $userOtp->attempts;
+                // Tăng số lần thử
+                $userOtp = $this->profileRepository->incrementOtpAttempts($userOtp);
+                $remain = self::MAX_OTP_ATTEMPTS - $userOtp->attempts;
+
+                if ($remain <= 0) {
+                    $this->throw('OTP bị khóa do nhập sai quá nhiều lần. Vui lòng tạo lại OTP mới.', 400);
+                }
+
                 $this->throw("OTP không đúng. Còn {$remain} lần thử.", 400);
             }
 
-            // 2. Validate phone unique
+            return $userOtp;
+        });
+
+        if ($verifyResult->isError()) {
+            return $verifyResult;
+        }
+
+        $userOtp = $verifyResult->getData();
+
+        // 2. Thực hiện cập nhật trong transaction
+        return $this->execute(function () use ($user, $userOtp, $sensitiveData) {
+            // Validate số điện thoại mới (nếu có)
             if (isset($sensitiveData['phone'])) {
                 if ($sensitiveData['phone'] === $user->phone) {
                     $this->throw('Số điện thoại mới phải khác số hiện tại.', 400);
@@ -126,11 +133,10 @@ class ProfileService extends BaseService implements ProfileServiceInterface
                     $this->throw('Số điện thoại đã được sử dụng bởi tài khoản khác.', 422);
                 }
 
-                // Reset trạng thái xác minh khi đổi số
-                $sensitiveData['is_phone_verified'] = false;
+                $sensitiveData['is_phone_verified'] = true; // Đã verify OTP rồi nên set true
             }
 
-            // 3. Validate email unique
+            // Validate email unique (nếu có)
             if (isset($sensitiveData['email'])) {
                 if ($sensitiveData['email'] === $user->email) {
                     $this->throw('Email mới phải khác email hiện tại.', 400);
@@ -142,22 +148,20 @@ class ProfileService extends BaseService implements ProfileServiceInterface
                 }
             }
 
-            // 4. Mark OTP đã dùng
+            // Mark OTP đã dùng
             $this->profileRepository->markOtpAsUsed($userOtp);
 
-            // 5. Cập nhật sensitive fields
+            // Cập nhật sensitive fields
             $this->profileRepository->updateUser($user, $sensitiveData, allowSensitive: true);
 
-            $updatedUser = $user->refresh();
-
-            // 6. Dispatch event để các listener xử lý (notify, sync, v.v.)
-//            event(new UserProfileUpdated($updatedUser, array_keys($sensitiveData)));
-
-            return $updatedUser;
-
+            return $user->refresh();
         }, useTransaction: true);
     }
 
+
+    /**
+     * Thay đổi mật khẩu.
+     */
     public function changePassword(User $user, string $newPassword): ServiceReturn
     {
         return $this->execute(function () use ($user, $newPassword) {
@@ -168,6 +172,7 @@ class ProfileService extends BaseService implements ProfileServiceInterface
             return true;
         }, useTransaction: true);
     }
+
 
     /**
      * Trả về danh sách sensitive fields thực sự thay đổi giá trị.

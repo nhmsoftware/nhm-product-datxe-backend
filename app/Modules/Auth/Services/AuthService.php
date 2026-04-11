@@ -413,8 +413,10 @@ class AuthService extends BaseService implements AuthServiceInterface
                 break;
             case UserOtpType::VERIFY_LOGIN:
             case UserOtpType::VERIFY_FORGOT_PASSWORD:
-            case UserOtpType::CHANGE_PROFILE:
                 if (!$exists) $this->throw('Số điện thoại chưa đăng ký.', 404);
+                break;
+            case UserOtpType::CHANGE_PROFILE:
+                // Cho phép cả số chưa đăng ký và đã đăng ký (xác thực số mới)
                 break;
             default:
                 $this->throw('Loại OTP không hợp lệ.', 400);

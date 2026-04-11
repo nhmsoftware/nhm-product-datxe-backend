@@ -38,27 +38,9 @@ interface ProfileRepositoryInterface extends BaseRepositoryInterface
      */
     public function updateProfiles(User $user, array $data): void;
 
-    // =========================================================================
-    // OTP
-    // =========================================================================
-
     /**
-     * Tìm OTP hợp lệ theo user_id.
-     *
-     * Ưu tiên dùng method này thay vì findValidOtpByPhone() vì tránh nhầm lẫn
-     * khi phone của user vừa được thay đổi trong cùng flow.
-     *
-     * @param  int         $userId
-     * @param  UserOtpType $type
-     * @return UserOtp|null
-     */
-    public function findValidOtpByUserId(int $userId, UserOtpType $type): ?UserOtp;
-
-    /**
-     * Tìm OTP hợp lệ theo phone.
-     *
-     * Dùng cho các flow chưa authenticate (ví dụ: đăng ký, quên mật khẩu)
-     * khi chưa có user_id.
+     * Tìm OTP hợp lệ theo phone và type.
+     * Chỉ trả về OTP chưa dùng (used_at IS NULL) và chưa hết hạn.
      *
      * @param  string      $phone
      * @param  UserOtpType $type
@@ -70,15 +52,12 @@ interface ProfileRepositoryInterface extends BaseRepositoryInterface
      * Tăng số lần nhập OTP sai.
      *
      * @param  UserOtp $userOtp
-     * @return UserOtp  Trả về instance đã được refresh sau khi increment.
+     * @return UserOtp  Trả về instance đã refresh sau khi increment.
      */
     public function incrementOtpAttempts(UserOtp $userOtp): UserOtp;
 
     /**
      * Đánh dấu OTP đã được xác thực và consume.
-     *
-     * Set cả verified_at và used_at trong cùng một lần ghi vì xác thực
-     * và consume diễn ra trong cùng một transaction.
      *
      * @param  UserOtp $otp
      * @return void
@@ -86,14 +65,12 @@ interface ProfileRepositoryInterface extends BaseRepositoryInterface
     public function markOtpAsUsed(UserOtp $otp): void;
 
     /**
-     * Invalidate tất cả OTP còn hiệu lực của user (cùng type).
+     * Invalidate tất cả OTP còn hiệu lực (cùng phone + type).
+     * Gọi trước khi tạo OTP mới để tránh nhiều OTP hợp lệ tồn tại song song.
      *
-     * Gọi trước khi tạo OTP mới để đảm bảo không có nhiều OTP hợp lệ
-     * tồn tại song song.
-     *
-     * @param  int         $userId
+     * @param  string      $phone
      * @param  UserOtpType $type
      * @return void
      */
-    public function invalidatePreviousOtps(int $userId, UserOtpType $type): void;
+    public function invalidatePreviousOtps(string $phone, UserOtpType $type): void;
 }

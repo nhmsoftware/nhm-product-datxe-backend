@@ -6,9 +6,9 @@ namespace App\Modules\User\Repositories;
 
 use App\Core\Repository\BaseRepository;
 use App\Modules\User\Interfaces\ProfileRepositoryInterface;
+use App\Modules\User\Model\Enums\UserOtpType;
 use App\Modules\User\Model\User;
 use App\Modules\User\Model\UserOtp;
-use App\Modules\User\Model\Enums\UserOtpType;
 
 class ProfileRepository extends BaseRepository implements ProfileRepositoryInterface
 {
@@ -16,10 +16,6 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     {
         return User::class;
     }
-
-    // =========================================================================
-    // User
-    // =========================================================================
 
     /**
      * Cập nhật bảng users.
@@ -64,31 +60,14 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
         }
     }
 
-    // =========================================================================
-    // OTP
-    // =========================================================================
-
     /**
-     * Tìm OTP hợp lệ theo user_id (tránh nhầm lẫn khi phone vừa thay đổi).
-     * Chỉ lấy OTP chưa dùng và chưa hết hạn, ưu tiên bản mới nhất.
-     */
-    public function findValidOtpByUserId(int $userId, UserOtpType $type): ?UserOtp
-    {
-        return UserOtp::where('user_id', $userId)
-            ->where('type', $type)
-            ->whereNull('used_at')
-            ->where('expired_at', '>', now())
-            ->latest()
-            ->first();
-    }
-
-    /**
-     * Tìm OTP hợp lệ theo phone (dùng khi chưa có user_id trong flow).
+     * Tìm OTP hợp lệ theo phone và type.
+     * Chỉ trả về OTP chưa dùng (used_at IS NULL) và chưa hết hạn.
      */
     public function findValidOtpByPhone(string $phone, UserOtpType $type): ?UserOtp
     {
         return UserOtp::where('phone', $phone)
-            ->where('type', $type)
+            ->where('type', $type->value)
             ->whereNull('used_at')
             ->where('expired_at', '>', now())
             ->latest()
@@ -107,11 +86,6 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
 
     /**
      * Đánh dấu OTP đã được xác thực và consume.
-     *
-     * - verified_at: thời điểm OTP được nhập đúng
-     * - used_at:     thời điểm OTP được consume (dùng để block tái sử dụng)
-     * Hai thời điểm này ghi cùng lúc vì flow xác thực và consume diễn ra trong
-     * cùng một transaction.
      */
     public function markOtpAsUsed(UserOtp $otp): void
     {
@@ -124,12 +98,12 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     }
 
     /**
-     * Invalidate tất cả OTP cũ còn hiệu lực của user (cùng type).
-     * Gọi trước khi tạo OTP mới để tránh tồn tại nhiều OTP song song.
+     * Invalidate tất cả OTP còn hiệu lực (cùng phone + type).
+     * Gọi trước khi tạo OTP mới để tránh nhiều OTP hợp lệ tồn tại song song.
      */
-    public function invalidatePreviousOtps(int $userId, UserOtpType $type): void
+    public function invalidatePreviousOtps(string $phone, UserOtpType $type): void
     {
-        UserOtp::where('user_id', $userId)
+        UserOtp::where('phone', $phone)
             ->where('type', $type)
             ->whereNull('used_at')
             ->where('expired_at', '>', now())
