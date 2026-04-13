@@ -4,26 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\Repositories;
 
+use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Ride;
 
-class RideRepository implements RideRepositoryInterface
+class RideRepository extends BaseRepository implements RideRepositoryInterface
 {
-    /**
-     * @inheritDoc
-     */
-    public function create(array $data): Ride
+    public function getModel(): string
     {
-        return Ride::create($data);
-    }
-
-    /**
-     * @inheritDoc
-     */
-    public function find(int $id): ?Ride
-    {
-        /** @var Ride|null $ride */
-        $ride = Ride::find($id);
-        return $ride;
+        return Ride::class;
     }
 }

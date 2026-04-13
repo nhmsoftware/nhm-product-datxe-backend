@@ -11,7 +11,10 @@ use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\VehicleType;
+use App\Modules\User\Model\User;
 use Illuminate\Support\Facades\Auth;
+use App\Modules\Ride\DTO\CreateDraftRideDTO;
+use App\Modules\Ride\DTO\RidePricingDTO;
 
 class RideService extends BaseService implements RideServiceInterface
 {
@@ -24,15 +27,15 @@ class RideService extends BaseService implements RideServiceInterface
     /**
      * @inheritDoc
      */
-    public function createDraft(array $data): ServiceReturn
+    public function createDraft(CreateDraftRideDTO $dto): ServiceReturn
     {
-        return $this->execute(function () use ($data) {
-            /** @var \App\Modules\Auth\Model\User $user */
+        return $this->execute(function () use ($dto) {
+            /** @var User $user */
             $user = Auth::user();
 
-            // UC-08 Flow A13: Phone Verification Check
-            // If the user has not verified their phone, we return a 403 error
-            // to signal the client to initiate the OTP verification process.
+            // UC-08 Luồng A13: Kiểm tra xác thực số điện thoại
+            // Nếu người dùng chưa xác thực số điện thoại, chúng tôi trả về lỗi 403
+            // để báo cho client bắt đầu quá trình xác thực OTP.
             if (!$user->is_phone_verified) {
                 return ServiceReturn::error(
                     message: 'Vui lòng xác thực số điện thoại để tiếp tục.',
@@ -41,58 +44,56 @@ class RideService extends BaseService implements RideServiceInterface
                 );
             }
 
-            $pickupLat = (float) $data['pickup_lat'];
-            $pickupLng = (float) $data['pickup_lng'];
-            $destLat = (float) $data['destination_lat'];
-            $destLng = (float) $data['destination_lng'];
-            $vehicleTypeValue = (int) $data['vehicle_type'];
-            
-            $vehicleType = VehicleType::from($vehicleTypeValue);
+            $pickupLat = $dto->pickupLat;
+            $pickupLng = $dto->pickupLng;
+            $destLat = $dto->destinationLat;
+            $destLng = $dto->destinationLng;
+            $vehicleType = $dto->vehicleType;
 
-            // 1. Get Distance and Duration from Goong Map Service
+            // 1. Lấy khoảng cách và thời gian di chuyển từ Goong Map Service
             $matrix = $this->mapService->getDistanceMatrix($pickupLat, $pickupLng, $destLat, $destLng);
-            $distance = $matrix['distance']; // meters
-            $duration = $matrix['duration']; // seconds
+            $distance = $matrix['distance']; // mét
+            $duration = $matrix['duration']; // giây
 
-            // 2. Calculate Pricing (Pricing logic based on UC-10/UC-118 requirements)
-            $pricing = $this->calculatePrice($distance, $vehicleType);
+            // 2. Tính toán giá cước (Logic tính giá dựa trên yêu cầu của UC-10/UC-118)
+            $pricing = $this->calculatePrice((int) $distance, $vehicleType);
 
-            // 3. Create Draft Ride record
+            // 3. Tạo bản nháp cho chuyến đi
             $ride = $this->rideRepository->create([
                 'customer_id' => $user->id,
-                'pickup_address' => $data['pickup_address'],
+                'pickup_address' => $dto->pickupAddress,
                 'pickup_lat' => $pickupLat,
                 'pickup_lng' => $pickupLng,
-                'destination_address' => $data['destination_address'],
+                'destination_address' => $dto->destinationAddress,
                 'destination_lat' => $destLat,
                 'destination_lng' => $destLng,
                 'distance' => (int) $distance,
                 'duration' => (int) $duration,
                 'vehicle_type' => $vehicleType->value,
                 'status' => RideStatus::DRAFT->value,
-                'base_price' => $pricing['base_price'],
-                'distance_price' => $pricing['distance_price'],
-                'total_price' => $pricing['total_price'],
+                'base_price' => $pricing->basePrice,
+                'distance_price' => $pricing->distancePrice,
+                'total_price' => $pricing->totalPrice,
                 'is_paid' => false,
             ]);
 
-            return ServiceReturn::success($ride, 'Vị trí đã được ghi nhận. Vui lòng chọn loại xe.');
-        }, true);
+            return $ride->toArray();
+        }, useTransaction: true);
     }
 
     /**
-     * Calculate estimated price based on distance and vehicle type.
-     * 
-     * Formula (Placeholder based on research):
-     * - BIKE: 12,000 VND (First 2km), then 4,000 VND per km.
-     * - CAR_4_SEATS: 20,000 VND (First 2km), then 12,000 VND per km.
-     * - CAR_7_SEATS: 30,000 VND (First 2km), then 15,000 VND per km.
-     * - CAR_9_SEATS: 40,000 VND (First 2km), then 18,000 VND per km.
+     * Tính toán giá cước ước tính dựa trên khoảng cách và loại xe.
+     *
+     * Công thức (Tạm thời dựa trên nghiên cứu):
+     * - XE MÁY: 12,000 VND (2km đầu tiên), sau đó 4,000 VND mỗi km.
+     * - XE 4 CHỖ: 20,000 VND (2km đầu tiên), sau đó 12,000 VND mỗi km.
+     * - XE 7 CHỖ: 30,000 VND (2km đầu tiên), sau đó 15,000 VND mỗi km.
+     * - XE 9 CHỖ: 40,000 VND (2km đầu tiên), sau đó 18,000 VND mỗi km.
      */
-    protected function calculatePrice(int $distanceMeters, VehicleType $vehicleType): array
+    protected function calculatePrice(int $distanceMeters, VehicleType $vehicleType): RidePricingDTO
     {
         $distanceKm = $distanceMeters / 1000;
-        
+
         $basePrice = 0;
         $ratePerKm = 0;
         $baseDistance = 2.0;
@@ -123,10 +124,10 @@ class RideService extends BaseService implements RideServiceInterface
 
         $totalPrice = $basePrice + $distancePrice;
 
-        return [
-            'base_price' => (float) $basePrice,
-            'distance_price' => (float) $distancePrice,
-            'total_price' => (float) $totalPrice,
-        ];
+        return new RidePricingDTO(
+            basePrice: (float) $basePrice,
+            distancePrice: (float) $distancePrice,
+            totalPrice: (float) $totalPrice
+        );
     }
 }

@@ -6,13 +6,15 @@ namespace App\Modules\Ride\Interfaces;
 
 use App\Core\Services\ServiceReturn;
 
+use App\Modules\Ride\DTO\CreateDraftRideDTO;
+
 interface RideServiceInterface
 {
     /**
      * Create a draft ride booking (UC-08).
      * 
-     * @param array $data
+     * @param CreateDraftRideDTO $dto Thông tin chuyến xe nháp
      * @return ServiceReturn
      */
-    public function createDraft(array $data): ServiceReturn;
+    public function createDraft(CreateDraftRideDTO $dto): ServiceReturn;
 }

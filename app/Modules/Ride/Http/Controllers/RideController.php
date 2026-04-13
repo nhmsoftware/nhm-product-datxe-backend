@@ -7,8 +7,8 @@ namespace App\Modules\Ride\Http\Controllers;
 use App\Core\Controller\BaseController;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Modules\Ride\Http\Requests\CreateDraftRideRequest;
+use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use OpenApi\Attributes as OA;
 
 class RideController extends BaseController
@@ -36,7 +36,7 @@ class RideController extends BaseController
                 new OA\Property(property: 'destination_address', type: 'string', example: 'Vincom Mega Mall Ocean Park, Gia Lâm, Hà Nội'),
                 new OA\Property(property: 'destination_lat', type: 'number', format: 'float', example: 20.9944),
                 new OA\Property(property: 'destination_lng', type: 'number', format: 'float', example: 105.9458),
-                new OA\Property(property: 'vehicle_type', type: 'integer', description: '1: Bike, 2: Car 4 seats, 3: Car 7 seats, 4: Car 9 seats', example: 1),
+                new OA\Property(property: 'vehicle_type', description: '1: Bike, 2: Car 4 seats, 3: Car 7 seats, 4: Car 9 seats', type: 'integer', example: 1),
             ]
         )
     )]
@@ -64,36 +64,26 @@ class RideController extends BaseController
             ]
         )
     )]
-    public function createDraft(Request $request): JsonResponse
+    public function createDraft(CreateDraftRideRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'pickup_address' => 'required|string',
-            'pickup_lat' => 'required|numeric',
-            'pickup_lng' => 'required|numeric',
-            'destination_address' => 'required|string',
-            'destination_lat' => 'required|numeric',
-            'destination_lng' => 'required|numeric',
-            'vehicle_type' => 'required|integer|in:1,2,3,4',
-        ]);
+        // Nhận dữ liệu đã qua validation và khởi tạo DTO
+        $dto = CreateDraftRideDTO::fromArray($request->validated());
 
-        if ($validator->fails()) {
-            return $this->sendError('Dữ liệu không hợp lệ.', 400, $validator->errors()->toArray());
+        // Gửi DTO xuống lớp Service xử lý thay vì array thô
+        $result = $this->rideService->createDraft($dto);
+
+        if ($result->isError()) {
+            return $this->sendError(
+                $result->getMessage(),
+                $result->getCode(),
+            );
         }
 
-        try {
-            $result = $this->rideService->createDraft($request->all());
+        return $this->sendSuccess(
+            data: $result->getData(),
+            message: $result->getMessage(),
+            code: $result->getCode(),
+        );
 
-            if ($result->isError()) {
-                return $this->sendError(
-                    $result->getMessage(),
-                    $result->getCode(),
-                    $result->getData()
-                );
-            }
-
-            return $this->sendSuccess($result->getData(), $result->getMessage());
-        } catch (\Throwable $e) {
-            return $this->sendError($e->getMessage(), 500);
-        }
     }
 }

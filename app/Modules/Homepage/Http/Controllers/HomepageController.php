@@ -54,20 +54,16 @@ class HomepageController extends BaseController
     )]
     public function index(Request $request): JsonResponse
     {
-        try {
-            $user = Auth::guard('sanctum')->user();
-            $lat = $request->query('lat') ? (float) $request->query('lat') : null;
-            $lng = $request->query('lng') ? (float) $request->query('lng') : null;
+        $user = Auth::guard('sanctum')->user();
+        $lat = $request->query('lat') ? (float) $request->query('lat') : null;
+        $lng = $request->query('lng') ? (float) $request->query('lng') : null;
 
-            $result = $this->homepageService->getHomepageData($user, $lat, $lng);
+        $result = $this->homepageService->getHomepageData($user, $lat, $lng);
 
-            if (!$result->isSuccess()) {
-                return $this->sendError($result->getMessage(), $result->getCode() ?: 400);
-            }
-
-            return $this->sendSuccess($result->getData(), 'Lấy dữ liệu trang chủ thành công.');
-        } catch (\Throwable $e) {
-            return $this->sendError('Có lỗi xảy ra: ' . $e->getMessage(), 500);
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode() ?: 400);
         }
+
+        return $this->sendSuccess($result->getData(), 'Lấy dữ liệu trang chủ thành công.');
     }
 }

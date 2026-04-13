@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\Modules\Ride\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
+use App\Modules\Ride\Interfaces\MapServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
-use App\Modules\Ride\Interfaces\MapServiceInterface;
 use App\Modules\Ride\Repositories\RideRepository;
+use App\Modules\Ride\Services\GoongMapService;
 use App\Modules\Ride\Services\RideService;
-use App\Modules\Ride\Services\External\GoongMapService;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Routing\Router;
 

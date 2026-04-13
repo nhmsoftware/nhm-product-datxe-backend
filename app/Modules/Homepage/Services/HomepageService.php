@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Homepage\Services;
 
 use App\Core\Services\BaseService;
+use App\Core\Services\ServiceException;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Homepage\Interfaces\HomepageServiceInterface;
 use App\Modules\User\Interfaces\SavedAddressRepositoryInterface;
@@ -25,6 +26,10 @@ class HomepageService extends BaseService implements HomepageServiceInterface
     public function getHomepageData(?User $user, float $lat = null, float $lng = null): ServiceReturn
     {
         return $this->execute(function () use ($user, $lat, $lng) {
+            if (!$user) {
+                return $this->throw(message: "Không có người dùng", code: 401);
+            }
+
             $data = [
                 'header' => $this->getHeaderData($user),
                 'search_placeholder' => 'Bạn muốn đi đâu?',

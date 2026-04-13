@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Ride\Services\External;
+namespace App\Modules\Ride\Services;
 
 use App\Modules\Ride\Interfaces\MapServiceInterface;
 use Illuminate\Support\Facades\Http;

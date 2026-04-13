@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Ride\Http\Requests;
+
+use App\Core\Traits\HandleApi;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
+
+class CreateDraftRideRequest extends FormRequest
+{
+    use HandleApi;
+
+    /**
+     * Xác định xem người dùng có quyền thực hiện request này không (Authorization).
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Khai báo các quy tắc kiểm tra dữ liệu đầu vào.
+     */
+    public function rules(): array
+    {
+        return [
+            'pickup_address' => 'required|string',
+            'pickup_lat' => 'required|numeric',
+            'pickup_lng' => 'required|numeric',
+            'destination_address' => 'required|string',
+            'destination_lat' => 'required|numeric',
+            'destination_lng' => 'required|numeric',
+            'vehicle_type' => 'required|integer|in:1,2,3,4',
+        ];
+    }
+
+    /**
+     * Xử lý lỗi validation để trả về định dạng JSON chung của hệ thống thay vì redirect.
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException($this->sendValidation('Dữ liệu không hợp lệ.', $validator->errors()->toArray(), 400));
+    }
+}
