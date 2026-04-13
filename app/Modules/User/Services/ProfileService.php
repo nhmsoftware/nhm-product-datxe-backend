@@ -6,6 +6,7 @@ namespace App\Modules\User\Services;
 
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
+use App\Modules\User\DTO\UpdateProfileDTO;
 use App\Modules\User\Interfaces\ProfileRepositoryInterface;
 use App\Modules\User\Interfaces\ProfileServiceInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
@@ -13,7 +14,7 @@ use App\Modules\User\Model\Enums\UserOtpType;
 use App\Modules\User\Model\User;
 use Illuminate\Support\Facades\Hash;
 
-class ProfileService extends BaseService implements ProfileServiceInterface
+final class ProfileService extends BaseService implements ProfileServiceInterface
 {
     private const SENSITIVE_FIELDS  = ['phone', 'email'];
     private const MAX_OTP_ATTEMPTS  = 5;
@@ -42,12 +43,17 @@ class ProfileService extends BaseService implements ProfileServiceInterface
     /**
      * Cập nhật hồ sơ người dùng.
      */
-    public function updateProfile(User $user, array $data): ServiceReturn
+    public function updateProfile(UpdateProfileDTO $dto): ServiceReturn
     {
-        return $this->execute(function () use ($user, $data) {
+        return $this->execute(function () use ($dto) {
+            $user = $this->userRepository->findById($dto->userId);
+            $this->validate($user !== null, 'Không tìm thấy người dùng.', 404);
+            
             if ($user->isLocked()) {
                 $this->throw('Tài khoản của bạn đã bị khóa.', 403);
             }
+            
+            $data = $dto->data;
 
             // 1. Tách dữ liệu sensitive / non-sensitive
             $sensitiveData    = array_intersect_key($data, array_flip(self::SENSITIVE_FIELDS));

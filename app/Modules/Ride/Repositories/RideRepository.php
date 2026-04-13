@@ -8,10 +8,45 @@ use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Ride;
 
-class RideRepository extends BaseRepository implements RideRepositoryInterface
+final class RideRepository extends BaseRepository implements RideRepositoryInterface
 {
     public function getModel(): string
     {
         return Ride::class;
+    }
+
+    /**
+     * Tìm ride draft theo ID và customer ID để xác thực quyền sở hữu.
+     */
+    public function findByIdAndCustomer(int $rideId, int $customerId): ?Ride
+    {
+        /** @var Ride|null */
+        return Ride::where('id', $rideId)
+            ->where('customer_id', $customerId)
+            ->first();
+    }
+
+    /**
+     * Áp dụng voucher vào chuyến đi — lưu mã, discount và giá cuối (UC-11).
+     */
+    public function applyVoucher(int $rideId, string $voucherCode, float $discountAmount, float $finalPrice): bool
+    {
+        return (bool) Ride::where('id', $rideId)->update([
+            'voucher_code'    => $voucherCode,
+            'discount_amount' => $discountAmount,
+            'total_price'     => $finalPrice,
+        ]);
+    }
+
+    /**
+     * Xóa voucher khỏi chuyến đi, khôi phục giá gốc (UC-11 A4).
+     */
+    public function clearVoucher(int $rideId, float $originalPrice): bool
+    {
+        return (bool) Ride::where('id', $rideId)->update([
+            'voucher_code'    => null,
+            'discount_amount' => 0,
+            'total_price'     => $originalPrice,
+        ]);
     }
 }

@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\Model;
 
+use App\Core\Traits\HasBigIntId;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\User\Model\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property int $id
@@ -29,6 +31,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property numeric $distance_price
  * @property numeric $total_price
  * @property int|null $voucher_id
+ * @property string|null $voucher_code
+ * @property numeric $discount_amount
  * @property bool $is_paid
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
@@ -66,7 +70,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class Ride extends Model
 {
-    use SoftDeletes;
+    use HasApiTokens, SoftDeletes, HasBigIntId;
 
     protected $table = 'rides';
 
@@ -87,6 +91,8 @@ class Ride extends Model
         'distance_price',
         'total_price',
         'voucher_id',
+        'voucher_code',
+        'discount_amount',
         'is_paid',
     ];
 
@@ -102,6 +108,7 @@ class Ride extends Model
         'base_price' => 'decimal:2',
         'distance_price' => 'decimal:2',
         'total_price' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
         'is_paid' => 'boolean',
     ];
 

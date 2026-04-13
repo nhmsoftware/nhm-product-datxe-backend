@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\Services;
 
+use App\Modules\Ride\DTO\MapMatrixDTO;
 use App\Modules\Ride\Interfaces\MapServiceInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -21,14 +22,14 @@ class GoongMapService implements MapServiceInterface
     /**
      * @inheritDoc
      */
-    public function getDistanceMatrix(float $originLat, float $originLng, float $destLat, float $destLng): array
+    public function getDistanceMatrix(float $originLat, float $originLng, float $destLat, float $destLng): MapMatrixDTO
     {
         if (empty($this->apiKey)) {
             Log::warning('Goong API Key is missing. Returning mocked distance.');
-            return [
-                'distance' => 5000, // 5km fallback
-                'duration' => 600,  // 10 mins fallback
-            ];
+            return MapMatrixDTO::create(
+                distance: 5000, // 5km fallback
+                duration: 600   // 10 mins fallback
+            );
         }
 
         try {
@@ -46,10 +47,10 @@ class GoongMapService implements MapServiceInterface
                 $element = $data['rows'][0]['elements'][0] ?? null;
 
                 if ($element && isset($element['status']) && $element['status'] === 'OK') {
-                    return [
-                        'distance' => (int) ($element['distance']['value'] ?? 0), // meters
-                        'duration' => (int) ($element['duration']['value'] ?? 0), // seconds
-                    ];
+                    return MapMatrixDTO::create(
+                        distance: (int) ($element['distance']['value'] ?? 0), // meters
+                        duration: (int) ($element['duration']['value'] ?? 0)  // seconds
+                    );
                 }
             }
 
@@ -68,9 +69,9 @@ class GoongMapService implements MapServiceInterface
         }
 
         // Fallback values if API fails
-        return [
-            'distance' => 5000,
-            'duration' => 600,
-        ];
+        return MapMatrixDTO::create(
+            distance: 5000,
+            duration: 600
+        );
     }
 }

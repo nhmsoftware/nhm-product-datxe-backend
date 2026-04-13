@@ -4,37 +4,42 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\DTO;
 
+use App\Modules\Ride\Http\Requests\CreateDraftRideRequest;
 use App\Modules\Ride\Model\Enums\VehicleType;
 
-class CreateDraftRideDTO
+/**
+ * DTO cho request tạo chuyến xe nháp (UC-08).
+ * Factory method fromRequest() nhận trực tiếp FormRequest đã validate.
+ */
+final class CreateDraftRideDTO
 {
     public function __construct(
-        public readonly string $pickupAddress,
-        public readonly float $pickupLat,
-        public readonly float $pickupLng,
-        public readonly string $destinationAddress,
-        public readonly float $destinationLat,
-        public readonly float $destinationLng,
+        public readonly int         $customerId,
+        public readonly string      $pickupAddress,
+        public readonly float       $pickupLat,
+        public readonly float       $pickupLng,
+        public readonly string      $destinationAddress,
+        public readonly float       $destinationLat,
+        public readonly float       $destinationLng,
         public readonly VehicleType $vehicleType,
     ) {
     }
 
     /**
-     * Khởi tạo DTO từ dữ liệu mảng (ví dụ: đã được validate từ Form Request).
-     *
-     * @param array $data Dữ liệu đã validate.
-     * @return self DTO được khởi tạo
+     * Khởi tạo DTO từ FormRequest đã validate.
+     * customerId lấy từ authenticated user — không bao giờ trust client input.
      */
-    public static function fromArray(array $data): self
+    public static function fromRequest(CreateDraftRideRequest $request): self
     {
         return new self(
-            pickupAddress: $data['pickup_address'],
-            pickupLat: (float) $data['pickup_lat'],
-            pickupLng: (float) $data['pickup_lng'],
-            destinationAddress: $data['destination_address'],
-            destinationLat: (float) $data['destination_lat'],
-            destinationLng: (float) $data['destination_lng'],
-            vehicleType: VehicleType::from((int) $data['vehicle_type'])
+            customerId:          (int) $request->user()->id,
+            pickupAddress:       $request->string('pickup_address')->toString(),
+            pickupLat:           (float) $request->input('pickup_lat'),
+            pickupLng:           (float) $request->input('pickup_lng'),
+            destinationAddress:  $request->string('destination_address')->toString(),
+            destinationLat:      (float) $request->input('destination_lat'),
+            destinationLng:      (float) $request->input('destination_lng'),
+            vehicleType:         VehicleType::from((int) $request->input('vehicle_type')),
         );
     }
 }

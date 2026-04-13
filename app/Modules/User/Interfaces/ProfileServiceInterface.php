@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Interfaces;
 
 use App\Core\Services\ServiceReturn;
+use App\Modules\User\DTO\UpdateProfileDTO;
 use App\Modules\User\Model\User;
 
 interface ProfileServiceInterface
@@ -19,12 +20,8 @@ interface ProfileServiceInterface
 
     /**
      * Update user profile with role-specific fields.
-     *
-     * @param User $user
-     * @param array $data
-     * @return ServiceReturn
      */
-    public function updateProfile(User $user, array $data): ServiceReturn;
+    public function updateProfile(UpdateProfileDTO $dto): ServiceReturn;
 
     /**
      * Verify OTP and update sensitive fields.

@@ -38,6 +38,22 @@ class CreateDraftRideRequest extends FormRequest
     }
 
     /**
+     * @return array<string, string>
+     */
+    public function messages(): array {
+        return [
+            'pickup_address.required' => 'Vui lòng nhập địa chỉ.pickup.',
+            'pickup_lat.required' => 'Vui lòng nhập độ纬 độ.pickup.',
+            'pickup_lng.required' => 'Vui lòng nhập độ经 độ.pickup.',
+            'destination_address.required' => 'Vui lòng nhập địa chỉ.destination.',
+            'destination_lat.required' => 'Vui lòng nhập độ纬 độ.destination.',
+            'destination_lng.required' => 'Vui lòng nhập độ经 độ.destination.',
+            'vehicle_type.required' => 'Vui lòng chọn loại xe.',
+            'vehicle_type.in' => 'Vui lòng chọn loại xe hợp lệ.',
+        ];
+    }
+
+    /**
      * Xử lý lỗi validation để trả về định dạng JSON chung của hệ thống thay vì redirect.
      */
     protected function failedValidation(Validator $validator)

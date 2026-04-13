@@ -11,7 +11,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            \App\Modules\Pricing\Interfaces\PricingServiceInterface::class,
+            \App\Modules\Pricing\Services\PricingService::class
+        );
     }
 
     /**

@@ -5,25 +5,30 @@ declare(strict_types=1);
 namespace App\Modules\Auth\Http\Controllers;
 
 use App\Core\Controller\BaseController;
+use App\Modules\Auth\DTO\AppleLoginDTO;
+use App\Modules\Auth\DTO\ForgotPasswordDTO;
+use App\Modules\Auth\DTO\GoogleLoginDTO;
+use App\Modules\Auth\DTO\LoginDTO;
+use App\Modules\Auth\DTO\RegisterDTO;
+use App\Modules\Auth\DTO\SendOtpDTO;
 use App\Modules\Auth\Http\Requests\AppleLoginRequest;
+use App\Modules\Auth\Http\Requests\ForgotPasswordRequest;
 use App\Modules\Auth\Http\Requests\GoogleLoginRequest;
 use App\Modules\Auth\Http\Requests\LoginRequest;
 use App\Modules\Auth\Http\Requests\RegisterRequest;
-use App\Modules\Auth\Http\Requests\ForgotPasswordRequest;
 use App\Modules\Auth\Http\Requests\SendOtpRequest;
 use App\Modules\Auth\Http\Resources\AuthResource;
 use App\Modules\Auth\Interfaces\AuthServiceInterface;
-use App\Modules\User\Model\Enums\UserOtpType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
-use PhpParser\Token;
 
-class AuthController extends BaseController
+final class AuthController extends BaseController
 {
     public function __construct(
-        protected AuthServiceInterface $authService,
-    ) {}
+        private readonly AuthServiceInterface $authService,
+    ) {
+    }
 
 
     #[OA\Post(
@@ -55,24 +60,13 @@ class AuthController extends BaseController
     )]
     public function authenticateOtp(SendOtpRequest $request): JsonResponse
     {
-        $data = $request->validated();
-
-        $result = $this->authService->sendOtp(
-            phone: $data['phone'],
-            type:  UserOtpType::from((int) $data['type']),
-        );
+        $result = $this->authService->sendOtp(SendOtpDTO::fromRequest($request));
 
         if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-                code:    $result->getCode(),
-            );
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
-        return $this->sendSuccess(
-            data:    $result->getData(),
-            message: $result->getMessage(),
-        );
+        return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 
     #[OA\Post(
@@ -104,19 +98,16 @@ class AuthController extends BaseController
     )]
     public function register(RegisterRequest $request): JsonResponse
     {
-        $data = $request->validated();
-        $result = $this->authService->register($data);
+        $result = $this->authService->register(RegisterDTO::fromRequest($request));
 
         if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-                code:    $result->getCode(),
-            );
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
+
         $data = $result->getData();
         return $this->sendSuccess(
-            data:    [
-                'user' => new AuthResource($data['user']),
+            data: [
+                'user'  => new AuthResource($data['user']),
                 'token' => $data['token'],
             ],
             message: $result->getMessage(),
@@ -151,18 +142,16 @@ class AuthController extends BaseController
     )]
     public function login(LoginRequest $request): JsonResponse
     {
-        $result = $this->authService->login($request->validated());
+        $result = $this->authService->login(LoginDTO::fromRequest($request));
 
         if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-                code:    $result->getCode(),
-            );
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
+
         $data = $result->getData();
         return $this->sendSuccess(
-            data:    [
-                'user' => new AuthResource($data['user']),
+            data: [
+                'user'  => new AuthResource($data['user']),
                 'token' => $data['token'],
             ],
             message: $result->getMessage(),
@@ -197,18 +186,16 @@ class AuthController extends BaseController
     )]
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
-        $result = $this->authService->forgotPassword($request->validated());
+        $result = $this->authService->forgotPassword(ForgotPasswordDTO::fromRequest($request));
 
         if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-                code:    $result->getCode(),
-            );
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
+
         $data = $result->getData();
         return $this->sendSuccess(
-            data:    [
-                'user' => new AuthResource($data['user']),
+            data: [
+                'user'  => new AuthResource($data['user']),
                 'token' => $data['token'],
             ],
             message: 'Đặt lại mật khẩu thành công',
@@ -244,15 +231,10 @@ class AuthController extends BaseController
         );
 
         if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-                code:    $result->getCode(),
-            );
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
-        return $this->sendSuccess(
-            message: 'Đăng xuất thành công',
-        );
+        return $this->sendSuccess(message: 'Đăng xuất thành công');
     }
 
     #[OA\Post(
@@ -272,41 +254,23 @@ class AuthController extends BaseController
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Đăng nhập/đăng ký thành công',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(
-                            property: 'data',
-                            properties: [
-                                new OA\Property(property: 'user'),
-                                new OA\Property(property: 'token'),
-                            ],
-                            type: 'object'
-                        )
-                    ]
-                )
-            ),
+            new OA\Response(response: 200, description: 'Đăng nhập/đăng ký thành công'),
             new OA\Response(response: 400, description: 'Token không hợp lệ'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
     public function googleLogin(GoogleLoginRequest $request): JsonResponse
     {
-        $result = $this->authService->googleLogin($request->validated());
+        $result = $this->authService->googleLogin(GoogleLoginDTO::fromRequest($request));
 
         if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-                code: $result->getCode(),
-            );
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         $data = $result->getData();
         return $this->sendSuccess(
             data: [
-                'user' => new AuthResource($data['user']),
+                'user'  => new AuthResource($data['user']),
                 'token' => $data['token'],
             ],
             message: 'Đăng nhập Google thành công',
@@ -331,46 +295,26 @@ class AuthController extends BaseController
         ),
         tags: ['Auth'],
         responses: [
-            new OA\Response(
-                response: 200,
-                description: 'Đăng nhập/đăng ký thành công',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(
-                            property: 'data',
-                            properties: [
-                                new OA\Property(property: 'user'),
-                                new OA\Property(property: 'token'),
-                            ],
-                            type: 'object'
-                        )
-                    ]
-                )
-            ),
+            new OA\Response(response: 200, description: 'Đăng nhập/đăng ký thành công'),
             new OA\Response(response: 400, description: 'Token không hợp lệ'),
             new OA\Response(response: 422, description: 'Validation error'),
         ]
     )]
     public function appleLogin(AppleLoginRequest $request): JsonResponse
     {
-        $result = $this->authService->appleLogin($request->validated());
+        $result = $this->authService->appleLogin(AppleLoginDTO::fromRequest($request));
 
         if ($result->isError()) {
-            return $this->sendError(
-                message: $result->getMessage(),
-                code: $result->getCode(),
-            );
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         $data = $result->getData();
         return $this->sendSuccess(
             data: [
-                'user' => new AuthResource($data['user']),
+                'user'  => new AuthResource($data['user']),
                 'token' => $data['token'],
             ],
-            message: 'Đăng nhập Apple thành công'
+            message: 'Đăng nhập Apple thành công',
         );
     }
-
-
 }

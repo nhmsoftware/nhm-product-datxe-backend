@@ -13,7 +13,7 @@ use App\Modules\User\Model\CustomerSavedAddress;
 use App\Modules\User\Model\User;
 use Illuminate\Support\Facades\DB;
 
-class SavedAddressService extends BaseService implements SavedAddressServiceInterface
+final class SavedAddressService extends BaseService implements SavedAddressServiceInterface
 {
     // Số lượng địa chỉ tối đa cho mỗi khách hàng
     private const MAX_ADDRESSES = 10;

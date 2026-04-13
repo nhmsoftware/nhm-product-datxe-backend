@@ -10,12 +10,13 @@ use App\Modules\User\Http\Requests\EditProfileRequest;
 use App\Modules\User\Http\Requests\VerifyOtpRequest;
 use App\Modules\User\Http\Resources\ProfileResource;
 use App\Modules\User\Interfaces\ProfileServiceInterface;
+use App\Modules\User\DTO\UpdateProfileDTO;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
-class ProfileController extends BaseController
+final class ProfileController extends BaseController
 {
     public function __construct(
         private readonly ProfileServiceInterface $profileService
@@ -166,7 +167,9 @@ class ProfileController extends BaseController
     )]
     public function update(EditProfileRequest $request): JsonResponse
     {
-        $serviceReturn = $this->profileService->updateProfile($request->user(), $request->validated());
+        $serviceReturn = $this->profileService->updateProfile(
+            UpdateProfileDTO::fromRequest($request)
+        );
 
         if ($serviceReturn->isError()) {
             return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode());
