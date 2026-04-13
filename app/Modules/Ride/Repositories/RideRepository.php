@@ -6,6 +6,7 @@ namespace App\Modules\Ride\Repositories;
 
 use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
+use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Ride;
 
 final class RideRepository extends BaseRepository implements RideRepositoryInterface
@@ -47,6 +48,17 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             'voucher_code'    => null,
             'discount_amount' => 0,
             'total_price'     => $originalPrice,
+        ]);
+    }
+
+    /**
+     * Xác nhận đặt xe, chuyển trạng thái sang PENDING và chốt giá (UC-12).
+     */
+    public function confirmBooking(int $rideId, float $finalPrice): bool
+    {
+        return (bool) Ride::where('id', $rideId)->update([
+            'status'      => RideStatus::PENDING->value,
+            'total_price' => $finalPrice,
         ]);
     }
 }

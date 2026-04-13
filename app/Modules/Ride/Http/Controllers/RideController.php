@@ -6,8 +6,10 @@ namespace App\Modules\Ride\Http\Controllers;
 
 use App\Core\Controller\BaseController;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
+use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\Http\Requests\ApplyVoucherRequest;
+use App\Modules\Ride\Http\Requests\ConfirmBookingRequest;
 use App\Modules\Ride\Http\Requests\CreateDraftRideRequest;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use Illuminate\Http\JsonResponse;
@@ -71,7 +73,7 @@ final class RideController extends BaseController
     #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
     public function getVehicleOptions(int $rideId, Request $request): JsonResponse
     {
-        $result = $this->rideService->getVehicleOptions($rideId, (int) $request->user()->id);
+        $result = $this->rideService->getVehicleOptions($rideId, $request->user()->id);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
@@ -89,9 +91,9 @@ final class RideController extends BaseController
     )]
     #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     #[OA\Response(response: 200, description: 'Chi tiết giá cước')]
-    public function getPriceEstimate(int $rideId, CreateDraftRideRequest $request): JsonResponse
+    public function getPriceEstimate(int $rideId, Request $request): JsonResponse
     {
-        $result = $this->rideService->getPriceEstimate($rideId, (int) $request->user()->id);
+        $result = $this->rideService->getPriceEstimate($rideId, $request->user()->id);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
@@ -150,5 +152,37 @@ final class RideController extends BaseController
         }
 
         return $this->sendSuccess($result->getData(), 'Voucher đã được hủy.');
+    }
+
+    #[OA\Post(
+        path: '/api/v1/ride/{rideId}/confirm',
+        description: 'Xác nhận đặt xe dựa trên giá trị draft. Hệ thống sẽ tính lại giá và so sánh với expected_price từ FE để báo lệch giá nếu có.',
+        summary: 'Xác nhận đặt xe (UC-12)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['expected_price'],
+            properties: [
+                new OA\Property(property: 'expected_price', type: 'number', format: 'float', example: 25000),
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Booking confirmed (Đang tìm tài xế)')]
+    #[OA\Response(response: 409, description: 'Giá đã thay đổi hoặc voucher không hợp lệ')]
+    public function confirmBooking(int $rideId, ConfirmBookingRequest $request): JsonResponse
+    {
+        $result = $this->rideService->confirmBooking(
+            ConfirmBookingDTO::fromRequest($request, $rideId)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), 'Đặt xe thành công. Đang tìm tài xế.');
     }
 }

@@ -19,4 +19,7 @@ Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->
     // UC-11: Áp dụng / Xóa voucher
     Route::post('{rideId}/voucher', [RideController::class, 'applyVoucher'])->name('ride.voucher.apply');
     Route::delete('{rideId}/voucher', [RideController::class, 'removeVoucher'])->name('ride.voucher.remove');
+
+    // UC-12: Xác nhận đặt xe
+    Route::post('{rideId}/confirm', [RideController::class, 'confirmBooking'])->name('ride.confirm');
 });

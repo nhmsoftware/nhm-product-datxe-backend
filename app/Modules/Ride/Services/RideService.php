@@ -10,9 +10,11 @@ use App\Modules\Pricing\DTO\PricingRequestDTO;
 use App\Modules\Pricing\DTO\PricingResultDTO;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
+use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\PriceEstimateDTO;
 use App\Modules\Ride\DTO\VehicleOptionDTO;
+use App\Modules\Ride\Events\RideBooked;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
@@ -163,10 +165,10 @@ final class RideService extends BaseService implements RideServiceInterface
                 rideId:          $ride->id,
                 distanceKm:      (float) $ride->distance / 1000,
                 durationMinutes: (int) round((float) $ride->duration / 60),
-                baseFare:        $pricingData->baseFare,
-                distanceFare:    $pricingData->distanceFare,
-                timeFare:        $pricingData->timeFare,
-                surgeMultiplier: $pricingData->surgeMultiplier,
+                baseFare:        $pricingData->baseFare, // Giá vé cơ bản
+                distanceFare:    $pricingData->distanceFare, // Giá vé theo khoảng cách
+                timeFare:        $pricingData->timeFare, // Giá vé theo thời gian
+                surgeMultiplier: $pricingData->surgeMultiplier, //
                 originalFare:    $pricingData->originalFare,
                 finalFare:       $finalFare,
                 voucherCode:     $ride->voucher_code,
@@ -190,10 +192,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'Không thể áp dụng voucher cho chuyến xe này.'
             );
 
-            // Validate và lấy giá trị discount
-            $discountAmount = $this->resolveVoucherDiscount($dto->voucherCode, $ride);
-
-            // Tính lại giá gốc
+            // Tính giá cước hiện tại
             $pricingResult = $this->calculatePriceFor(
                 distanceMeters: $ride->distance,
                 durationSeconds: $ride->duration,
@@ -203,7 +202,12 @@ final class RideService extends BaseService implements RideServiceInterface
 
             /** @var PricingResultDTO $pricingData */
             $pricingData = $pricingResult->getData();
-            $finalFare   = max(0, $pricingData->finalFare - $discountAmount);
+
+            // Validate voucher với giá cước hiện tại và lấy giá trị discount
+            $discountAmount = $this->resolveVoucherDiscount($dto->voucherCode, $pricingData->finalFare);
+            $this->validate($discountAmount !== null, 'Mã giảm giá không hợp lệ hoặc không thể áp dụng.');
+
+            $finalFare = max(0, $pricingData->finalFare - $discountAmount);
 
             // Cập nhật DB qua domain-named method
             $this->rideRepository->applyVoucher(
@@ -250,6 +254,72 @@ final class RideService extends BaseService implements RideServiceInterface
     }
 
     /**
+     * UC-12: Xác nhận đặt xe
+     */
+    public function confirmBooking(ConfirmBookingDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): ServiceReturn {
+            $ride = $this->rideRepository->findByIdAndCustomer($dto->rideId, $dto->customerId);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+
+            $this->validate(
+                $ride->status === RideStatus::DRAFT,
+                'Chuyến xe đã được xác nhận hoặc không hợp lệ.'
+            );
+
+            // 1. A1 - Tính toán lại giá cước để kiểm tra có thay đổi không
+            $pricingResult = $this->calculatePriceFor(
+                distanceMeters: $ride->distance,
+                durationSeconds: $ride->duration,
+                vehicleType: $ride->vehicle_type
+            );
+            $this->validate(!$pricingResult->isError(), $pricingResult->getMessage());
+
+            /** @var PricingResultDTO $pricingData */
+            $pricingData = $pricingResult->getData();
+            $discountAmount = 0.0;
+
+            // 2. A2 - Kiểm tra Voucher nếu có
+            if (!empty($ride->voucher_code)) {
+                $discountAmount = $this->resolveVoucherDiscount($ride->voucher_code, $pricingData->finalFare);
+
+                // Nếu voucher không hợp lệ (hết hạn/ko đủ min_fare)
+                if ($discountAmount === null) {
+                    // Hủy voucher và yêu cầu xác nhận lại
+                    $this->rideRepository->clearVoucher($dto->rideId, $pricingData->finalFare);
+                    $this->throw('Voucher không còn khả dụng. Giá cước đã thay đổi, vui lòng xác nhận lại.', 409);
+                }
+            }
+
+            $finalFare = max(0, $pricingData->finalFare - $discountAmount);
+
+            // 3. A1 - Kiểm tra xem giá có bị thay đổi so với $dto->expectedPrice không (cho phép sai số 1đ)
+            if (abs($finalFare - $dto->expectedPrice) > 1.0) {
+                // Update giá mới nhất vào draft
+                // We use update here temporarily for fixing the price, normally we do save/update.
+                // Using clearVoucher/applyVoucher correctly updates total_price, but let's just update directly or through applyVoucher.
+                if (!empty($ride->voucher_code)) {
+                    $this->rideRepository->applyVoucher($dto->rideId, $ride->voucher_code, $discountAmount, $finalFare);
+                } else {
+                    $this->rideRepository->clearVoucher($dto->rideId, $finalFare);
+                }
+
+                $this->throw('Giá cước đã thay đổi do tình hình giao thông, vui lòng xác nhận lại giá mới.', 409);
+            }
+
+            // 4. Nếu mọi thứ đúng, xác nhận chuyến đi (PENDING)
+            $this->rideRepository->confirmBooking($dto->rideId, $finalFare);
+
+            // 5. Kích hoạt Domain Event để hệ thống tìm tài xế (A4, A6 sẽ được handle async/background)
+            event(new RideBooked($dto->rideId, $dto->customerId));
+
+            // Return thông tin (sẽ pass qua getPriceEstimate hoặc mảng tùy ý, trả về mảng info cơ bản là okay)
+            $ride->refresh();
+            return $this->success($ride->toArray(), 'Đặt xe thành công. Đang tìm tài xế.');
+        }, useTransaction: true);
+    }
+
+    /**
      * Tính giá cước qua PricingService.
      * Private helper để tránh lặp code — chuyển đổi đơn vị và gọi service.
      */
@@ -267,27 +337,37 @@ final class RideService extends BaseService implements RideServiceInterface
 
     /**
      * Kiểm tra tính hợp lệ của voucher và trả về số tiền giảm (UC-11).
+     * Trả về null nếu voucher không hợp lệ.
      * TODO: Khi có VoucherModule, inject VoucherServiceInterface để thay thế mock này.
+     *
+     * @param string $code Mã voucher
+     * @param float $currentFare Giá cước hiện tại để kiểm tra điều kiện min_fare
+     * @return float|null Số tiền giảm giá hoặc null nếu không hợp lệ
      */
-    private function resolveVoucherDiscount(string $code, Ride $ride): float
+    private function resolveVoucherDiscount(string $code, float $currentFare): ?float
     {
-        $this->validate(strlen(trim($code)) >= 3, 'Mã giảm giá không hợp lệ.');
+        if (strlen(trim($code)) < 3) {
+            return null;
+        }
 
+        // Đây là mock data, trong thực tế sẽ query từ DB hoặc service khác
         $mockVouchers = [
-            'DEMO10'  => ['discount_amount' => 100,  'min_fare' => 300],
-            'DEMO50'  => ['discount_amount' => 500,  'min_fare' => 100],
-            'DEMO100' => ['discount_amount' => 1000, 'min_fare' => 2000],
+            'DEMO10'  => ['discount_amount' => 10000, 'min_fare' => 50000],
+            'DEMO50'  => ['discount_amount' => 50000, 'min_fare' => 150000],
+            'DEMO100' => ['discount_amount' => 100000, 'min_fare' => 300000],
         ];
 
         $upperCode = strtoupper(trim($code));
 
-        $this->validate(isset($mockVouchers[$upperCode]), 'Mã giảm giá không hợp lệ.');
+        if (!isset($mockVouchers[$upperCode])) {
+            $this->throw('Voucher không tồn tại.', 409);
+        }
 
         $voucher = $mockVouchers[$upperCode];
-        $this->validate(
-            (float) $ride->total_price >= (float) $voucher['min_fare'],
-            'Voucher không áp dụng cho chuyến đi này. Giá cước phải lớn hơn hoặc bằng giá tối thiểu của voucher.'
-        );
+
+        if ($currentFare < (float) $voucher['min_fare']) {
+            $this->throw('Voucher không còn khả dụng. Giá cước không đủ để áp dụng voucher.', 409);
+        }
 
         return (float) $voucher['discount_amount'];
     }

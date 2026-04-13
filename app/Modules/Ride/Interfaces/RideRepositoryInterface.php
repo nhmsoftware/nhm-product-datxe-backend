@@ -23,4 +23,9 @@ interface RideRepositoryInterface
      * Xóa voucher khỏi chuyến đi, khôi phục giá gốc (UC-11 A4).
      */
     public function clearVoucher(int $rideId, float $originalPrice): bool;
+
+    /**
+     * Xác nhận đặt xe, chuyển trạng thái sang PENDING và chốt giá (UC-12).
+     */
+    public function confirmBooking(int $rideId, float $finalPrice): bool;
 }

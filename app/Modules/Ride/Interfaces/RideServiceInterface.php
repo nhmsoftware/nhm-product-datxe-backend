@@ -6,6 +6,7 @@ namespace App\Modules\Ride\Interfaces;
 
 use App\Core\Services\ServiceReturn;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
+use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 
 interface RideServiceInterface
@@ -55,4 +56,12 @@ interface RideServiceInterface
      * @return ServiceReturn PriceEstimateDTO sau khi đã xóa giảm giá
      */
     public function removeVoucher(int $rideId, int $customerId): ServiceReturn;
+
+    /**
+     * Xác nhận đặt xe (UC-12).
+     *
+     * @param ConfirmBookingDTO $dto
+     * @return ServiceReturn
+     */
+    public function confirmBooking(ConfirmBookingDTO $dto): ServiceReturn;
 }
