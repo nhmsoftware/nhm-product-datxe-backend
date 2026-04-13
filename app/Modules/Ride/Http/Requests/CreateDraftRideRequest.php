@@ -43,11 +43,11 @@ class CreateDraftRideRequest extends FormRequest
     public function messages(): array {
         return [
             'pickup_address.required' => 'Vui lòng nhập địa chỉ.pickup.',
-            'pickup_lat.required' => 'Vui lòng nhập độ纬 độ.pickup.',
-            'pickup_lng.required' => 'Vui lòng nhập độ经 độ.pickup.',
+            'pickup_lat.required' => 'Vui lòng nhập độ độ.pickup.',
+            'pickup_lng.required' => 'Vui lòng nhập độ độ.pickup.',
             'destination_address.required' => 'Vui lòng nhập địa chỉ.destination.',
-            'destination_lat.required' => 'Vui lòng nhập độ纬 độ.destination.',
-            'destination_lng.required' => 'Vui lòng nhập độ经 độ.destination.',
+            'destination_lat.required' => 'Vui lòng nhập tọa độ destination.',
+            'destination_lng.required' => 'Vui lòng nhập tọa độ destination.',
             'vehicle_type.required' => 'Vui lòng chọn loại xe.',
             'vehicle_type.in' => 'Vui lòng chọn loại xe hợp lệ.',
         ];

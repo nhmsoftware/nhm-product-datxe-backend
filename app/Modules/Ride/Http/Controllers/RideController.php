@@ -11,6 +11,7 @@ use App\Modules\Ride\Http\Requests\ApplyVoucherRequest;
 use App\Modules\Ride\Http\Requests\CreateDraftRideRequest;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 final class RideController extends BaseController
@@ -68,7 +69,7 @@ final class RideController extends BaseController
     #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
     #[OA\Response(response: 200, description: 'Danh sách xe và giá ước tính')]
     #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
-    public function getVehicleOptions(int $rideId, CreateDraftRideRequest $request): JsonResponse
+    public function getVehicleOptions(int $rideId, Request $request): JsonResponse
     {
         $result = $this->rideService->getVehicleOptions($rideId, (int) $request->user()->id);
 
