@@ -1,6 +1,10 @@
 <?php
 
 use App\Modules\Auth\Providers\AuthServiceProvider;
+use App\Modules\Finance\Providers\FinanceServiceProvider;
+use App\Modules\Homepage\Providers\HomepageServiceProvider;
+use App\Modules\Pricing\Providers\PricingServiceProviders;
+use App\Modules\Ride\Providers\RideServiceProvider;
 use App\Modules\User\Providers\UserServiceProvider;
 use App\Providers\AppServiceProvider;
 use Laravel\Socialite\SocialiteServiceProvider;
@@ -11,8 +15,10 @@ return [
     AppServiceProvider::class,
     AuthServiceProvider::class,
     UserServiceProvider::class,
-    \App\Modules\Homepage\Providers\HomepageServiceProvider::class,
-    App\Modules\Ride\Providers\RideServiceProvider::class,
+    HomepageServiceProvider::class,
+    RideServiceProvider::class,
+    FinanceServiceProvider::class,
+    PricingServiceProviders::class,
     SocialiteServiceProvider::class,
 
 ];

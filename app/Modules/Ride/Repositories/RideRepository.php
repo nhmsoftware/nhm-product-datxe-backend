@@ -8,6 +8,7 @@ use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Ride;
+use Carbon\Carbon;
 
 final class RideRepository extends BaseRepository implements RideRepositoryInterface
 {
@@ -22,7 +23,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function findByIdAndCustomer(int $rideId, int $customerId): ?Ride
     {
         /** @var Ride|null */
-        return Ride::where('id', $rideId)
+        return $this->model->where('id', $rideId)
             ->where('customer_id', $customerId)
             ->first();
     }
@@ -32,7 +33,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function applyVoucher(int $rideId, string $voucherCode, float $discountAmount, float $finalPrice): bool
     {
-        return (bool) Ride::where('id', $rideId)->update([
+        return (bool) $this->model->where('id', $rideId)->update([
             'voucher_code'    => $voucherCode,
             'discount_amount' => $discountAmount,
             'total_price'     => $finalPrice,
@@ -44,7 +45,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function clearVoucher(int $rideId, float $originalPrice): bool
     {
-        return (bool) Ride::where('id', $rideId)->update([
+        return (bool) $this->model->where('id', $rideId)->update([
             'voucher_code'    => null,
             'discount_amount' => 0,
             'total_price'     => $originalPrice,
@@ -56,7 +57,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function confirmBooking(int $rideId, float $finalPrice): bool
     {
-        return (bool) Ride::where('id', $rideId)->update([
+        return (bool) $this->model->where('id', $rideId)->update([
             'status'      => RideStatus::PENDING->value,
             'total_price' => $finalPrice,
         ]);
@@ -67,10 +68,28 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function cancel(int $rideId, ?string $reason, float $cancellationFee): bool
     {
-        return (bool) Ride::where('id', $rideId)->update([
+        return (bool) $this->model->where('id', $rideId)->update([
             'status'           => RideStatus::CANCELLED->value,
             'cancel_reason'    => $reason,
             'cancellation_fee' => $cancellationFee,
         ]);
+    }
+
+    /**
+     * Tính toán tổng chi tiêu của khách hàng trong một khoảng thời gian (UC-23).
+     */
+    public function getSpendingSummary(int $customerId, Carbon $start, Carbon $end): array
+    {
+        $data = $this->model
+            ->where('customer_id', $customerId)
+            ->where('status', RideStatus::COMPLETED->value)
+            ->whereBetween('created_at', [$start, $end])
+            ->selectRaw('SUM(total_price) as total_amount, COUNT(*) as total_count')
+            ->first();
+
+        return [
+            'total_amount' => (float) ($data->total_amount ?? 0),
+            'total_count'  => (int) ($data->total_count ?? 0),
+        ];
     }
 }
