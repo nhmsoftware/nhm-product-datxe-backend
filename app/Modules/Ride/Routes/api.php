@@ -22,4 +22,7 @@ Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->
 
     // UC-12: Xác nhận đặt xe
     Route::post('{rideId}/confirm', [RideController::class, 'confirmBooking'])->name('ride.confirm');
+
+    // UC-15: Hủy chuyến xe
+    Route::post('{id}/cancel', [RideController::class, 'cancel'])->name('ride.cancel');
 });

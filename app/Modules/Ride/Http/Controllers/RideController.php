@@ -8,9 +8,11 @@ use App\Core\Controller\BaseController;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
+use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\Http\Requests\ApplyVoucherRequest;
 use App\Modules\Ride\Http\Requests\ConfirmBookingRequest;
 use App\Modules\Ride\Http\Requests\CreateDraftRideRequest;
+use App\Modules\Ride\Http\Requests\CancelRideRequest;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -184,5 +186,37 @@ final class RideController extends BaseController
         }
 
         return $this->sendSuccess($result->getData(), 'Đặt xe thành công. Đang tìm tài xế.');
+    }
+
+    #[OA\Post(
+        path: '/api/v1/ride/{id}/cancel',
+        description: 'Hủy chuyến xe sau khi đã đặt hoặc khi đang tìm tài xế.',
+        summary: 'Hủy chuyến xe (UC-15)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    #[OA\Parameter(name: 'id', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\RequestBody(
+        required: false,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'reason', type: 'string', example: 'Thay đổi kế hoạch'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Hủy chuyến thành công')]
+    #[OA\Response(response: 400, description: 'Không thể hủy chuyến')]
+    #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
+    public function cancel(int $id, CancelRideRequest $request): JsonResponse
+    {
+        $result = $this->rideService->cancelRide(
+            CancelRideDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), 'Bạn đã hủy chuyến thành công.');
     }
 }

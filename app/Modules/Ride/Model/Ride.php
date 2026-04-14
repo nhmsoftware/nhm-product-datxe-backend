@@ -89,11 +89,14 @@ class Ride extends Model
         'status',
         'base_price',
         'distance_price',
+        'time_fare',
         'total_price',
         'voucher_id',
         'voucher_code',
         'discount_amount',
         'is_paid',
+        'cancel_reason',
+        'cancellation_fee',
     ];
 
     protected $casts = [
@@ -107,9 +110,11 @@ class Ride extends Model
         'status' => RideStatus::class,
         'base_price' => 'decimal:2',
         'distance_price' => 'decimal:2',
+        'time_fare' => 'decimal:2',
         'total_price' => 'decimal:2',
         'discount_amount' => 'decimal:2',
         'is_paid' => 'boolean',
+        'cancellation_fee' => 'decimal:2',
     ];
 
     /**

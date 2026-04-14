@@ -61,4 +61,16 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             'total_price' => $finalPrice,
         ]);
     }
+
+    /**
+     * Hủy chuyến đi, cập nhật lý do và phí hủy nếu có (UC-15).
+     */
+    public function cancel(int $rideId, ?string $reason, float $cancellationFee): bool
+    {
+        return (bool) Ride::where('id', $rideId)->update([
+            'status'           => RideStatus::CANCELLED->value,
+            'cancel_reason'    => $reason,
+            'cancellation_fee' => $cancellationFee,
+        ]);
+    }
 }

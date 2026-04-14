@@ -8,6 +8,7 @@ use App\Core\Services\ServiceReturn;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
+use App\Modules\Ride\DTO\CancelRideDTO;
 
 interface RideServiceInterface
 {
@@ -60,8 +61,15 @@ interface RideServiceInterface
     /**
      * Xác nhận đặt xe (UC-12).
      *
-     * @param ConfirmBookingDTO $dto
      * @return ServiceReturn
      */
     public function confirmBooking(ConfirmBookingDTO $dto): ServiceReturn;
+
+    /**
+     * Hủy chuyến xe (UC-15).
+     *
+     * @param CancelRideDTO $dto Thông tin yêu cầu hủy
+     * @return ServiceReturn
+     */
+    public function cancelRide(CancelRideDTO $dto): ServiceReturn;
 }

@@ -12,9 +12,11 @@ use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
+use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\DTO\PriceEstimateDTO;
 use App\Modules\Ride\DTO\VehicleOptionDTO;
 use App\Modules\Ride\Events\RideBooked;
+use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
@@ -84,6 +86,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'status'              => RideStatus::DRAFT->value,
                 'base_price'          => $pricingData->baseFare,
                 'distance_price'      => $pricingData->distanceFare,
+                'time_fare'          => $pricingData->timeFare,
                 'total_price'         => $pricingData->finalFare,
                 'discount_amount'     => 0,
                 'is_paid'             => false,
@@ -311,7 +314,9 @@ final class RideService extends BaseService implements RideServiceInterface
             $this->rideRepository->confirmBooking($dto->rideId, $finalFare);
 
             // 5. Kích hoạt Domain Event để hệ thống tìm tài xế (A4, A6 sẽ được handle async/background)
-            event(new RideBooked($dto->rideId, $dto->customerId));
+//            event(new RideBooked($dto->rideId, $dto->customerId));
+
+//            dd($ride);
 
             // Return thông tin (sẽ pass qua getPriceEstimate hoặc mảng tùy ý, trả về mảng info cơ bản là okay)
             $ride->refresh();
@@ -320,8 +325,54 @@ final class RideService extends BaseService implements RideServiceInterface
     }
 
     /**
+     * UC-15: Hủy chuyến xe
+     */
+    public function cancelRide(CancelRideDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            $ride = $this->rideRepository->findByIdAndCustomer($dto->rideId, $dto->customerId);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+
+            // A2: Chuyến đã bắt đầu (không cho phép hủy)
+            $this->validate(
+                $ride->status !== RideStatus::IN_PROGRESS,
+                'Không thể hủy chuyến khi đã bắt đầu di chuyển.'
+            );
+
+            // Kiểm tra xem đã kết thúc hay đã hủy chưa
+            $this->validate(
+                !$ride->status->isTerminal(),
+                'Chuyến xe này đã hoàn thành hoặc đã bị hủy trước đó.'
+            );
+
+            $cancellationFee = 0.0;
+
+            // A3: Áp dụng phí hủy chuyến (Nếu đã có driver nhận - ACCEPTED)
+            if ($ride->status === RideStatus::ACCEPTED) {
+                // TODO: Lấy phí hủy từ hệ thống config hoặc module Pricing
+                $cancellationFee = 10000.0; // Phí mặc định 10k
+            }
+
+            // Thực hiện hủy trong DB
+            $this->rideRepository->cancel($dto->rideId, $dto->reason, $cancellationFee);
+
+            // Raise Domain Event để thông báo cho Driver (Nếu có)
+//            event(new RideCanceled($dto->rideId, $dto->customerId, $ride->driver_id));
+
+            return [
+                'ride_id'          => $dto->rideId,
+                'status'           => RideStatus::CANCELLED->getLabel(),
+                'cancellation_fee' => $cancellationFee,
+            ];
+        }, useTransaction: true);
+    }
+
+    /**
      * Tính giá cước qua PricingService.
      * Private helper để tránh lặp code — chuyển đổi đơn vị và gọi service.
+     * @param int $distanceMeters Khoảng cách (mét)
+     * @param int $durationSeconds Thời gian (giây)
+     * @param VehicleType $vehicleType Loại xe
      */
     private function calculatePriceFor(int $distanceMeters, int $durationSeconds, VehicleType $vehicleType): ServiceReturn
     {
