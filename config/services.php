@@ -52,4 +52,8 @@ return [
 
     // hiện thị OTP trong response (mặc định: false)
     'otp_expose' => env('OTP_EXPOSE_IN_RESPONSE', false),
+
+    'goong' => [
+        'api_key' => env('GOONG_API_KEY'),
+    ],
 ];

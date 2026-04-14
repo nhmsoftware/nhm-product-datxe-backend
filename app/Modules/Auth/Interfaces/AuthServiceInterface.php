@@ -5,59 +5,54 @@ declare(strict_types=1);
 namespace App\Modules\Auth\Interfaces;
 
 use App\Core\Services\ServiceReturn;
+use App\Modules\Auth\DTO\AppleLoginDTO;
+use App\Modules\Auth\DTO\ForgotPasswordDTO;
+use App\Modules\Auth\DTO\GoogleLoginDTO;
+use App\Modules\Auth\DTO\LoginDTO;
+use App\Modules\Auth\DTO\RegisterDTO;
+use App\Modules\Auth\DTO\SendOtpDTO;
 use App\Modules\User\Model\User;
-use App\Modules\User\Model\Enums\UserOtpType;
 
 interface AuthServiceInterface
 {
     /**
      * POST /authenticate-otp
-     * @param string $phone
-     * @param UserOtpType $type
-     * @return ServiceReturn
+     * Gửi mã OTP dựa trên context (đăng ký / đăng nhập / quên mật khẩu).
      */
+    public function sendOtp(SendOtpDTO $dto): ServiceReturn;
 
-    public function sendOtp(string $phone, UserOtpType $type): ServiceReturn;
     /**
      * POST /register
-     * @param array $data
-     * @return ServiceReturn
+     * Xác minh OTP → tạo user + profile + device → trả token.
      */
-    public function register(array $data): ServiceReturn;
+    public function register(RegisterDTO $dto): ServiceReturn;
 
     /**
      * POST /login
-     * @param array $data
-     * @return ServiceReturn
+     * Kiểm tra SĐT + Mật khẩu → kiểm tra trạng thái → trả token.
      */
-    public function login(array $data): ServiceReturn;
+    public function login(LoginDTO $dto): ServiceReturn;
 
     /**
      * POST /logout
-     * @param User $user
-     * @param bool $logoutAll
-     * @return ServiceReturn
      */
     public function logout(User $user, bool $logoutAll = false): ServiceReturn;
 
     /**
      * POST /google-login
-     * @param array $data
-     * @return ServiceReturn
+     * Đăng nhập / tạo tài khoản bằng Google OAuth.
      */
-    public function googleLogin(array $data): ServiceReturn;
+    public function googleLogin(GoogleLoginDTO $dto): ServiceReturn;
 
     /**
      * POST /apple-login
-     * @param array $data
-     * @return ServiceReturn
+     * Đăng nhập / tạo tài khoản bằng Apple Sign In.
      */
-    public function appleLogin(array $data): ServiceReturn;
+    public function appleLogin(AppleLoginDTO $dto): ServiceReturn;
 
     /**
-     * POST /reset-password
-     * @param array $data
-     * @return ServiceReturn
+     * POST /forgot-password
+     * Xác thực OTP → đặt lại mật khẩu → trả token.
      */
-    public function forgotPassword(array $data): ServiceReturn;
+    public function forgotPassword(ForgotPasswordDTO $dto): ServiceReturn;
 }

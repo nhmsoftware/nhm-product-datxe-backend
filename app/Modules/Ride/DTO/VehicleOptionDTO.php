@@ -1,0 +1,74 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Ride\DTO;
+
+use App\Modules\Ride\Model\Enums\VehicleType;
+
+/**
+ * DTO đại diện cho một loại xe trong danh sách lựa chọn (UC-09).
+ * Chứa thông tin hiển thị cho khách hàng.
+ */
+final class VehicleOptionDTO
+{
+    public function __construct(
+        public readonly int    $vehicleType,
+        public readonly string $name,
+        public readonly string $description,
+        public readonly int    $capacity,
+        public readonly float  $estimatedFare,
+        public readonly string $estimatedWaitTime,
+        public readonly bool   $isAvailable,
+    ) {
+    }
+
+    public static function create(
+        int    $vehicleType,
+        string $name,
+        string $description,
+        int    $capacity,
+        float  $estimatedFare,
+        string $estimatedWaitTime,
+        bool   $isAvailable
+    ): self {
+        return new self(
+            $vehicleType,
+            $name,
+            $description,
+            $capacity,
+            $estimatedFare,
+            $estimatedWaitTime,
+            $isAvailable
+        );
+    }
+
+    /**
+     * Khởi tạo từ VehicleType enum và giá đã tính toán.
+     */
+    public static function fromVehicleType(VehicleType $type, float $estimatedFare): self
+    {
+        return new self(
+            vehicleType:       $type->value,
+            name:              $type->getLabel(),
+            description:       $type->getDescription(),
+            capacity:          $type->getCapacity(),
+            estimatedFare:     $estimatedFare,
+            estimatedWaitTime: $type->getEstimatedWaitTime(),
+            isAvailable:       true,
+        );
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'vehicle_type'        => $this->vehicleType,
+            'name'                => $this->name,
+            'description'         => $this->description,
+            'capacity'            => $this->capacity,
+            'estimated_fare'      => $this->estimatedFare,
+            'estimated_wait_time' => $this->estimatedWaitTime,
+            'is_available'        => $this->isAvailable,
+        ];
+    }
+}

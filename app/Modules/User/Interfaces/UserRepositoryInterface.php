@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Interfaces;
 
+use App\Core\Interfaces\BaseRepositoryInterface;
 use App\Modules\User\Model\CustomerProfile;
 use App\Modules\User\Model\User;
 
-interface UserRepositoryInterface
+interface UserRepositoryInterface extends BaseRepositoryInterface
 {
     /**
      * Tìm kiếm user theo số điện thoại

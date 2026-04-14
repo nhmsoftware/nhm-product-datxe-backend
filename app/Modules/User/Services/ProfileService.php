@@ -6,140 +6,172 @@ namespace App\Modules\User\Services;
 
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
+use App\Modules\User\DTO\UpdateProfileDTO;
 use App\Modules\User\Interfaces\ProfileRepositoryInterface;
 use App\Modules\User\Interfaces\ProfileServiceInterface;
-use App\Modules\User\Model\Enums\UserRole;
+use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\UserOtpType;
 use App\Modules\User\Model\User;
 use Illuminate\Support\Facades\Hash;
-class ProfileService extends BaseService implements ProfileServiceInterface
-{
-    // Sensitive fields that require OTP verification
-    private const SENSITIVE_FIELDS = ['phone', 'email'];
 
-    private const MAX_OTP_ATTEMPTS = 5;
+final class ProfileService extends BaseService implements ProfileServiceInterface
+{
+    private const SENSITIVE_FIELDS  = ['phone', 'email'];
+    private const MAX_OTP_ATTEMPTS  = 5;
 
     public function __construct(
-        private readonly ProfileRepositoryInterface $profileRepository
-    ) {
-    }
+        protected ProfileRepositoryInterface $profileRepository,
+        protected UserRepositoryInterface    $userRepository,
+    ) {}
+
 
     /**
-     * Get user profile with role-specific details.
+     * Lấy hồ sơ người dùng.
      */
     public function getProfile(User $user): ServiceReturn
     {
-        return $this->execute(
-            callback: function () use ($user) {
-            if (!$user->is_active) {
-                $this->throw('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.', 403);
+        return $this->execute(function () use ($user) {
+            if ($user->isLocked()) {
+                $this->throw('Tài khoản của bạn đã bị khóa.', 403);
             }
 
-            $profile = $this->buildBaseProfile($user);
-
-            return match ($user->role) {
-                UserRole::Customer => $this->buildCustomerProfile($profile, $user),
-                UserRole::Driver => $this->buildDriverProfile($profile, $user),
-                UserRole::Merchants => $this->buildMerchantProfile($profile, $user),
-                default => $profile,
-            };
+            return $user;
         });
     }
 
+
     /**
-     * Update user profile with role-specific fields.
+     * Cập nhật hồ sơ người dùng.
      */
-    public function updateProfile(User $user, array $data): ServiceReturn
+    public function updateProfile(UpdateProfileDTO $dto): ServiceReturn
     {
-        return $this->execute(function () use ($user, $data) {
-            if (!$user->is_active) {
-                $this->throw('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.', 403);
+        return $this->execute(function () use ($dto) {
+            $user = $this->userRepository->findById($dto->userId);
+            $this->validate($user !== null, 'Không tìm thấy người dùng.', 404);
+            
+            if ($user->isLocked()) {
+                $this->throw('Tài khoản của bạn đã bị khóa.', 403);
+            }
+            
+            $data = $dto->data;
+
+            // 1. Tách dữ liệu sensitive / non-sensitive
+            $sensitiveData    = array_intersect_key($data, array_flip(self::SENSITIVE_FIELDS));
+            $nonSensitiveData = array_diff_key($data, $sensitiveData);
+
+            // 2. Update non-sensitive fields
+            if (!empty($nonSensitiveData)) {
+                $userData = array_intersect_key($nonSensitiveData, array_flip($user->getFillable()));
+                $this->profileRepository->updateUser($user, $userData);
+                $this->profileRepository->updateProfiles($user, $nonSensitiveData);
             }
 
-            // Check for sensitive field changes
-            $sensitiveChanges = $this->getChangedSensitiveFields($user, $data);
+            // 3. Kiểm tra sensitive fields có thực sự thay đổi không
+            $changedFields = $this->getChangedSensitiveFields($user, $sensitiveData);
 
-            // If there are sensitive changes, they need OTP verification
-            if (!empty($sensitiveChanges)) {
-                $this->throw(
-                    'Có thay đổi thông tin nhạy cảm. Vui lòng xác thực OTP.',
-                    422,
-                    ['requires_otp' => true, 'sensitive_fields' => $sensitiveChanges]
+            if (!empty($changedFields)) {
+                return $this->success(
+                    data: $user->refresh(),
+                    message: 'Cần xác thực OTP cho: ' . implode(', ', $changedFields),
                 );
             }
 
-            // Update non-sensitive fields
-            $user = $this->profileRepository->updateProfile($user, $data);
-
-            return $this->buildProfile($user);
+            return $user->refresh();
         }, useTransaction: true);
     }
 
-    /**
-     * Check if sensitive fields (phone, email) have changed.
-     */
-    public function getChangedSensitiveFields(User $user, array $data): array
-    {
-        $changedFields = [];
-
-        foreach (self::SENSITIVE_FIELDS as $field) {
-            if (isset($data[$field]) && $data[$field] !== $user->{$field}) {
-                $changedFields[] = $field;
-            }
-        }
-
-        return $changedFields;
-    }
 
     /**
-     * Xác minh OTP và cập nhật các trường nhạy cảm.
+     * Xác thực OTP và cập nhật sensitive fields.
      */
     public function verifyAndUpdateSensitiveFields(User $user, string $otp, array $sensitiveData): ServiceReturn
     {
-        if (!$user->is_active) {
-            $this->throw('Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ.', 403);
-        }
-
-        // Tìm OTP hợp lệ (Xác thực ngoài transaction để tránh rollback attempts)
-        $userOtp = $this->profileRepository->findValidOtp($user->phone, UserOtpType::CHANGE_PROFILE);
-
-        if (!$userOtp) {
-            $this->throw('Mã OTP không hợp lệ hoặc đã hết hạn.', 400);
-        }
-
-        if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
-            $this->throw('Bạn đã nhập sai mã OTP quá' . self::MAX_OTP_ATTEMPTS . 'lần. Mã này đã bị khóa, vui lòng yêu cầu mã mới.', 400);
-        }
-
-        if (!$userOtp->checkCode($otp)) {
-            $this->profileRepository->incrementOtpAttempts($userOtp);
-
-            if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
-                $this->throw('Bạn đã nhập sai mã OTP quá' . self::MAX_OTP_ATTEMPTS . 'lần.', 400);
+        // 1. Xác thực OTP - Chạy ngoài transaction của phần update để tránh rollback attempts
+        $verifyResult = $this->execute(function () use ($user, $otp, $sensitiveData) {
+            if (empty($sensitiveData)) {
+                $this->throw('Không có dữ liệu cần cập nhật.', 400);
             }
 
-            $remaining = self::MAX_OTP_ATTEMPTS - $userOtp->attempts;
-            $this->throw("Mã OTP không đúng. Bạn còn {$remaining}.", 400);
+            // Luôn dùng số điện thoại cũ để xác thực OTP
+            $phoneToVerify = $user->phone;
+
+            $userOtp = $this->profileRepository->findValidOtpByPhone($phoneToVerify, UserOtpType::CHANGE_PROFILE);
+
+            if (!$userOtp) {
+                $this->throw('OTP không hợp lệ hoặc đã hết hạn.', 400);
+            }
+
+            if ($userOtp->attempts >= self::MAX_OTP_ATTEMPTS) {
+                $this->throw('OTP bị khóa do nhập sai quá nhiều lần. Vui lòng tạo lại OTP mới.', 400);
+            }
+
+            if (!$userOtp->checkCode($otp)) {
+                // Tăng số lần thử
+                $userOtp = $this->profileRepository->incrementOtpAttempts($userOtp);
+                $remain = self::MAX_OTP_ATTEMPTS - $userOtp->attempts;
+
+                if ($remain <= 0) {
+                    $this->throw('OTP bị khóa do nhập sai quá nhiều lần. Vui lòng tạo lại OTP mới.', 400);
+                }
+
+                $this->throw("OTP không đúng. Còn {$remain} lần thử.", 400);
+            }
+
+            return $userOtp;
+        });
+
+        if ($verifyResult->isError()) {
+            return $verifyResult;
         }
 
+        $userOtp = $verifyResult->getData();
+
+        // 2. Thực hiện cập nhật trong transaction
         return $this->execute(function () use ($user, $userOtp, $sensitiveData) {
-            // Đánh dấu OTP đã được xác thực
-            $this->profileRepository->markOtpAsVerified($userOtp);
+            // Validate số điện thoại mới (nếu có)
+            if (isset($sensitiveData['phone'])) {
+                if ($sensitiveData['phone'] === $user->phone) {
+                    $this->throw('Số điện thoại mới phải khác số hiện tại.', 400);
+                }
 
-            // Cập nhật các trường nhạy cảm
-            $user = $this->profileRepository->updateProfile($user, $sensitiveData);
+                $existingUser = $this->userRepository->findByPhone($sensitiveData['phone']);
+                if ($existingUser && $existingUser->id !== $user->id) {
+                    $this->throw('Số điện thoại đã được sử dụng bởi tài khoản khác.', 422);
+                }
 
-            return $this->buildProfile($user);
+                $sensitiveData['is_phone_verified'] = true; // Đã verify OTP rồi nên set true
+            }
+
+            // Validate email unique (nếu có)
+            if (isset($sensitiveData['email'])) {
+                if ($sensitiveData['email'] === $user->email) {
+                    $this->throw('Email mới phải khác email hiện tại.', 400);
+                }
+
+                $existingUser = $this->userRepository->findByEmail($sensitiveData['email']);
+                if ($existingUser && $existingUser->id !== $user->id) {
+                    $this->throw('Email đã được sử dụng bởi tài khoản khác.', 422);
+                }
+            }
+
+            // Mark OTP đã dùng
+            $this->profileRepository->markOtpAsUsed($userOtp);
+
+            // Cập nhật sensitive fields
+            $this->profileRepository->updateUser($user, $sensitiveData, allowSensitive: true);
+
+            return $user->refresh();
         }, useTransaction: true);
     }
 
+
     /**
-     * Change user password.
+     * Thay đổi mật khẩu.
      */
     public function changePassword(User $user, string $newPassword): ServiceReturn
     {
         return $this->execute(function () use ($user, $newPassword) {
-            $this->profileRepository->updateProfile($user, [
+            $this->profileRepository->updateUser($user, [
                 'password' => Hash::make($newPassword),
             ]);
 
@@ -147,116 +179,20 @@ class ProfileService extends BaseService implements ProfileServiceInterface
         }, useTransaction: true);
     }
 
-    /**
-     * Xây dựng dữ liệu hồ sơ hoàn chỉnh.
-     */
-    private function buildProfile(User $user): array
-    {
-        $profile = $this->buildBaseProfile($user);
-
-        return match ($user->role) {
-            UserRole::Customer => $this->buildCustomerProfile($profile, $user),
-            UserRole::Driver => $this->buildDriverProfile($profile, $user),
-            UserRole::Merchants => $this->buildMerchantProfile($profile, $user),
-            default => $profile,
-        };
-    }
 
     /**
-     * Xây dựng dữ liệu hồ sơ cơ bản chung cho tất cả các vai trò.
+     * Trả về danh sách sensitive fields thực sự thay đổi giá trị.
      */
-    private function buildBaseProfile(User $user): array
+    private function getChangedSensitiveFields(User $user, array $data): array
     {
-        return [
-            'id' => $user->id,
-            'role' => $user->role->value,
-            'role_label' => $user->role->label(),
-            'avatar' => $user->avatar ?? null,
-            'full_name' => $user->full_name ?? null,
-            'phone' => $user->phone,
-            'email' => $user->email ?? null,
-            'gender' => $user->gender?->value ?? null,
-            'gender_label' => $user->gender?->label() ?? null,
-            'address' => $user->address ?? null,
-            'citizen_id' => $user->citizen_id ?? null,
-            'is_verified' => $user->is_verified,
-            'is_phone_verified' => $user->is_phone_verified,
-            'is_active' => $user->is_active,
-            'created_at' => $user->created_at?->toIso8601String(),
-        ];
+        $changed = [];
+
+        foreach (self::SENSITIVE_FIELDS as $field) {
+            if (isset($data[$field]) && $data[$field] !== $user->{$field}) {
+                $changed[] = $field;
+            }
+        }
+
+        return $changed;
     }
-
-    /**
-     * Xây dựng dữ liệu hồ sơ dành riêng cho khách hàng.
-     */
-    private function buildCustomerProfile(array $profile, User $user): array
-    {
-        $customerProfile = $user->customerProfile;
-
-        $profile['customer_specific'] = [
-            'birthday' => $customerProfile?->birthday?->toDateString() ?? null,
-        ];
-
-        return $profile;
-    }
-
-    /**
-     * Xây dựng dữ liệu hồ sơ dành riêng cho tài xế.
-     */
-    private function buildDriverProfile(array $profile, User $user): array
-    {
-        $driverProfile = $user->driverProfile;
-
-        $profile['driver_specific'] = [
-            'full_name' => $driverProfile?->full_name ?? null,
-            'vehicle_info' => [
-                'name' => $driverProfile?->vehicle_name ?? null,
-                'type' => $driverProfile?->vehicle_type ?? null,
-                'color' => $driverProfile?->vehicle_color ?? null,
-                'number' => $driverProfile?->vehicle_number ?? null,
-            ],
-            'license' => [
-                'number' => $driverProfile?->license_number ?? null,
-                'front_image' => $driverProfile?->license_front_image ?? null,
-                'back_image' => $driverProfile?->license_back_image ?? null,
-            ],
-            'stats' => [
-                'average_rating' => $driverProfile?->average_rating ?? 0,
-                'total_trips' => $driverProfile?->total_trips ?? 0,
-            ],
-            'banking' => [
-                'bank_name' => $driverProfile?->bank_name ?? null,
-                'account_number' => $driverProfile?->bank_account_number ?? null,
-                'account_holder' => $driverProfile?->bank_account_holder ?? null,
-            ],
-        ];
-
-        return $profile;
-    }
-
-    /**
-     * Xây dựng dữ liệu hồ sơ dành riêng cho đối tác.
-     */
-    private function buildMerchantProfile(array $profile, User $user): array
-    {
-        $merchantProfile = $user->merchantProfile;
-
-        $profile['merchant_specific'] = [
-            'store_name' => $merchantProfile?->store_name ?? null,
-            'store_address' => $merchantProfile?->store_address ?? null,
-            'store_latitude' => $merchantProfile?->latitude ?? null,
-            'store_longitude' => $merchantProfile?->longitude ?? null,
-            'opening_time' => $merchantProfile?->opening_time ?? null,
-            'closing_time' => $merchantProfile?->closing_time ?? null,
-            'is_open' => $merchantProfile?->is_open ?? true,
-            'business_license' => $merchantProfile?->business_license ?? null,
-            'business_license_image' => $merchantProfile?->business_license_image ?? null,
-            'average_rating' => $merchantProfile?->average_rating ?? null,
-            'total_orders' => $merchantProfile?->total_orders ?? 0,
-        ];
-
-        return $profile;
-    }
-
-
 }

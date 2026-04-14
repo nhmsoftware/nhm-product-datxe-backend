@@ -13,7 +13,7 @@ use App\Modules\User\Model\CustomerSavedAddress;
 use App\Modules\User\Model\User;
 use Illuminate\Support\Facades\DB;
 
-class SavedAddressService extends BaseService implements SavedAddressServiceInterface
+final class SavedAddressService extends BaseService implements SavedAddressServiceInterface
 {
     // Số lượng địa chỉ tối đa cho mỗi khách hàng
     private const MAX_ADDRESSES = 10;
@@ -32,7 +32,7 @@ class SavedAddressService extends BaseService implements SavedAddressServiceInte
             $customerProfile = $this->getCustomerProfile($user);
             $addresses = $this->addressRepository->getByCustomer($customerProfile);
             return $addresses->map(fn ($address) => $this->formatAddress($address))->toArray();
-        });
+        }, useTransaction: true);
     }
 
     /**
@@ -57,17 +57,18 @@ class SavedAddressService extends BaseService implements SavedAddressServiceInte
             // A4 - Kiểm tra giới hạn tối đa
             if ($this->addressRepository->countByCustomer($customerProfile) >= self::MAX_ADDRESSES) {
                 $this->throw(
-                    "Bạn chỉ có thể lưu tối đa " . self::MAX_ADDRESSES . " địa chỉ. Vui lòng xóa bớt địa chỉ cũ để thêm mới.",
-                    400
+                    message: "Bạn chỉ có thể lưu tối đa " . self::MAX_ADDRESSES . " địa chỉ. Vui lòng xóa bớt địa chỉ cũ để thêm mới.",
+                    code: 400
                 );
             }
 
             // Kiểm tra địa chỉ trùng lặp
             $existingAddress = $this->findDuplicateAddress($customerProfile, $data);
             if ($existingAddress) {
-                $this->throw('Địa chỉ này đã được lưu trước đó.', 422, [
-                    'existing_address_id' => $existingAddress->id,
-                ]);
+                $this->throw(
+                    message: 'Địa chỉ này đã được lưu trước đó.',
+                    code: 422,
+                );
             }
 
             // Nếu địa chỉ này được đặt làm mặc định, bỏ mặc định các địa chỉ khác trước
@@ -77,6 +78,13 @@ class SavedAddressService extends BaseService implements SavedAddressServiceInte
 
             // Tạo địa chỉ
             $address = $this->addressRepository->createForCustomer($customerProfile, $data);
+
+            if (!$address) {
+                $this->throw(
+                    message: 'Không thể tạo địa chỉ mới. Vui lòng thử lại.',
+                    code: 500,
+                );
+            }
 
             return $this->formatAddress($address);
         }, useTransaction: true);
@@ -90,11 +98,16 @@ class SavedAddressService extends BaseService implements SavedAddressServiceInte
         return $this->execute(function () use ($user, $addressId, $data) {
             $address = $this->findAndVerifyAddress($user, $addressId);
 
-            // Kiểm tra trùng lặp nếu vị trí thay đổi
             if (isset($data['lat']) || isset($data['lng'])) {
-                $existingAddress = $this->findDuplicateAddress($address->customerProfile, $data, $address->id);
+                $checkData = [
+                    'lat' => $data['lat'] ?? $address->lat,
+                    'lng' => $data['lng'] ?? $address->lng,
+                ];
+
+                $existingAddress = $this->findDuplicateAddress($address->customerProfile, $checkData, $address->id);
+
                 if ($existingAddress) {
-                    $this->throw('Địa chỉ này đã được lưu trước đó.', 422);
+                    $this->throw(message: 'Địa chỉ này đã tồn tại trong danh sách của bạn.', code: 422);
                 }
             }
 
@@ -219,10 +232,8 @@ class SavedAddressService extends BaseService implements SavedAddressServiceInte
             'label_text' => $address->label_text,
             'name' => $address->name ?? $address->label_text,
             'address_text' => $address->address_text,
-            'location' => [
-                'lat' => (float) $address->lat,
-                'lng' => (float) $address->lng,
-            ],
+            'lat' => (float) $address->lat,
+            'lng' => (float) $address->lng,
             'receiver_name' => $address->receiver_name,
             'receiver_phone' => $address->receiver_phone,
             'note' => $address->note,

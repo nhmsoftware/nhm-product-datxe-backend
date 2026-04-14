@@ -7,98 +7,106 @@ namespace App\Modules\User\Repositories;
 use App\Core\Repository\BaseRepository;
 use App\Modules\User\Interfaces\ProfileRepositoryInterface;
 use App\Modules\User\Model\Enums\UserOtpType;
-use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\User;
 use App\Modules\User\Model\UserOtp;
-use Illuminate\Support\Arr;
 
 class ProfileRepository extends BaseRepository implements ProfileRepositoryInterface
 {
-    // Các trường thuộc bảng users
-    private const BASE_FIELDS = [
-        'avatar', 'full_name', 'gender', 'address', 'email', 'citizen_id', 'phone', 'password'
-    ];
-
-    // Các trường thuộc bảng customer_profiles
-    private const CUSTOMER_FIELDS = [
-        'birthday'
-    ];
-
-    /**
-     * {@inheritdoc}
-     */
     public function getModel(): string
     {
         return User::class;
     }
 
     /**
-     * {@inheritdoc}
+     * Cập nhật bảng users.
+     *
+     * Mặc định phone và email bị chặn để tránh mass-assignment vô tình.
+     * Chỉ set $allowSensitive = true khi đã qua bước xác thực OTP.
      */
-    public function updateProfile(User $user, array $data): User
+    public function updateUser(User $user, array $data, bool $allowSensitive = false): User
     {
-        // 1. Tách dữ liệu cho bảng users và bảng profile tương ứng
-        $baseData = Arr::only($data, self::BASE_FIELDS);
-        $profileData = Arr::except($data, self::BASE_FIELDS);
-
-        // 2. Cập nhật bảng users nếu có dữ liệu
-        if (!empty($baseData)) {
-            $user->update($baseData);
+        if (!$allowSensitive) {
+            unset($data['phone'], $data['email']);
         }
 
-        // 3. Cập nhật bảng profile tương ứng với vai trò
-        if (!empty($profileData)) {
-            match ($user->role) {
-                UserRole::Customer => $this->updateCustomerProfile($user, $profileData),
-                // Thêm logic cho Driver, Merchant ở đây nếu cần
-                // UserRole::Driver => $this->updateDriverProfile($user, $profileData),
-                // UserRole::Merchants => $this->updateMerchantProfile($user, $profileData),
-                default => null,
-            };
-        }
+        $fillable = $user->getFillable();
+        $user->update(array_intersect_key($data, array_flip($fillable)));
 
-        return $user->fresh();
+        return $user->refresh();
     }
 
     /**
-     * {@inheritdoc}
+     * Cập nhật các bảng profile liên quan (customer, driver, merchant).
+     * Chỉ update profile nào tồn tại và có field phù hợp.
      */
-    public function findValidOtp(string $phone, UserOtpType $type): ?UserOtp
+    public function updateProfiles(User $user, array $data): void
+    {
+        $profiles = [
+            $user->customerProfile,
+            $user->driverProfile,
+            $user->merchantProfile,
+        ];
+
+        foreach ($profiles as $profile) {
+            if (!$profile) {
+                continue;
+            }
+
+            $profileData = array_intersect_key($data, array_flip($profile->getFillable()));
+
+            if (!empty($profileData)) {
+                $profile->update($profileData);
+            }
+        }
+    }
+
+    /**
+     * Tìm OTP hợp lệ theo phone và type.
+     * Chỉ trả về OTP chưa dùng (used_at IS NULL) và chưa hết hạn.
+     */
+    public function findValidOtpByPhone(string $phone, UserOtpType $type): ?UserOtp
     {
         return UserOtp::where('phone', $phone)
-            ->where('type', $type)
-            ->whereNull('verified_at')
+            ->where('type', $type->value)
+            ->whereNull('used_at')
             ->where('expired_at', '>', now())
             ->latest()
             ->first();
     }
 
     /**
-     * {@inheritdoc}
+     * Tăng số lần nhập OTP sai.
      */
-    public function incrementOtpAttempts(UserOtp $otp): void
+    public function incrementOtpAttempts(UserOtp $userOtp): UserOtp
     {
-        $otp->increment('attempts');
+        $userOtp->increment('attempts');
+
+        return $userOtp->fresh();
     }
 
     /**
-     * {@inheritdoc}
+     * Đánh dấu OTP đã được xác thực và consume.
      */
-    public function markOtpAsVerified(UserOtp $otp): void
+    public function markOtpAsUsed(UserOtp $otp): void
     {
+        $now = now();
+
         $otp->update([
-            'verified_at' => now(),
+            'verified_at' => $now,
+            'used_at'     => $now,
         ]);
     }
 
     /**
-     * Cập nhật hồ sơ khách hàng.
+     * Invalidate tất cả OTP còn hiệu lực (cùng phone + type).
+     * Gọi trước khi tạo OTP mới để tránh nhiều OTP hợp lệ tồn tại song song.
      */
-    private function updateCustomerProfile(User $user, array $data): void
+    public function invalidatePreviousOtps(string $phone, UserOtpType $type): void
     {
-        $customerData = Arr::only($data, self::CUSTOMER_FIELDS);
-        if (!empty($customerData)) {
-            $user->customerProfile()->updateOrCreate(['user_id' => $user->id], $customerData);
-        }
+        UserOtp::where('phone', $phone)
+            ->where('type', $type)
+            ->whereNull('used_at')
+            ->where('expired_at', '>', now())
+            ->update(['used_at' => now()]);
     }
 }

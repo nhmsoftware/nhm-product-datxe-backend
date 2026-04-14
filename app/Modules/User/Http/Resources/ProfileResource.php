@@ -27,35 +27,40 @@ class ProfileResource extends JsonResource
      */
     private function buildProfileData(): array
     {
+        $user = $this->resource;
+
         $data = [
             // Thông tin cơ bản (chung cho tất cả vai trò)
-            'id' => $this->resource['id'] ?? null,
-            'role' => $this->resource['role'] ?? null,
-            'role_label' => $this->resource['role_label'] ?? null,
-            'avatar' => $this->formatOptionalField($this->resource['avatar'] ?? null, 'avatar'),
-            'full_name' => $this->formatOptionalField($this->resource['full_name'] ?? null, 'full_name'),
-            'phone' => $this->resource['phone'],
-            'email' => $this->formatOptionalField($this->resource['email'] ?? null, 'email'),
-            'gender' => $this->formatOptionalField($this->resource['gender'] ?? null, 'gender'),
-            'gender_label' => $this->resource['gender_label'] ?? null,
-            'address' => $this->formatOptionalField($this->resource['address'] ?? null, 'address'),
-            'citizen_id' => $this->formatOptionalField($this->resource['citizen_id'] ?? null, 'citizen_id'),
-            'is_verified' => $this->resource['is_verified'] ?? false,
-            'is_phone_verified' => $this->resource['is_phone_verified'] ?? false,
-            'created_at' => $this->resource['created_at'] ?? null,
+            'id' => $user->id,
+            'role' => $user->role->value,
+            'role_label' => $user->role->label(),
+            'avatar' => $this->formatOptionalField($user->avatar, 'avatar'),
+            'full_name' => $this->formatOptionalField($user->full_name, 'full_name'),
+            'birthday' => $user->customerProfile?->birthday?->toDateString(),
+            'phone' => $user->phone ?? null,
+            'email' => $this->formatOptionalField($user->email, 'email'),
+            'gender' => $this->formatOptionalField($user->gender?->value, 'gender'),
+            'gender_label' => $user->gender?->label(),
+            'address' => $this->formatOptionalField($user->address, 'address'),
+            'citizen_id' => $this->formatOptionalField($user->citizen_id, 'citizen_id'),
+            'is_verified' => $user->is_verified,
+            'is_phone_verified' => $user->is_phone_verified,
+            'created_at' => $user->created_at?->toIso8601String(),
+            'updated_at' => $user->updated_at?->toIso8601String(),
+            'deleted_at' => $user->deleted_at?->toIso8601String(),
         ];
 
         // Thông tin riêng theo vai trò
-        if (isset($this->resource['driver_specific'])) {
-            $data['driver_specific'] = $this->buildDriverSpecific();
+        if ($user->driverProfile) {
+            $data['driver_specific'] = $this->buildDriverSpecific($user->driverProfile);
         }
 
-        if (isset($this->resource['merchant_specific'])) {
-            $data['merchant_specific'] = $this->buildMerchantSpecific();
+        if ($user->merchantProfile) {
+            $data['merchant_specific'] = $this->buildMerchantSpecific($user->merchantProfile);
         }
 
-        if (isset($this->resource['customer_specific'])) {
-            $data['customer_specific'] = $this->buildCustomerSpecific();
+        if ($user->customerProfile) {
+            $data['customer_specific'] = $this->buildCustomerSpecific($user->customerProfile);
         }
 
         return $data;
@@ -66,31 +71,29 @@ class ProfileResource extends JsonResource
      *
      * @return array
      */
-    private function buildDriverSpecific(): array
+    private function buildDriverSpecific($driver): array
     {
-        $driver = $this->resource['driver_specific'] ?? [];
-
         return [
-            'full_name' => $this->formatOptionalField($driver['full_name'] ?? null, 'full_name'),
+            'full_name' => $this->formatOptionalField($driver->full_name, 'full_name'),
             'vehicle_info' => [
-                'name' => $this->formatOptionalField($driver['vehicle_info']['name'] ?? null, 'vehicle_name'),
-                'type' => $this->formatOptionalField($driver['vehicle_info']['type'] ?? null, 'vehicle_type'),
-                'color' => $this->formatOptionalField($driver['vehicle_info']['color'] ?? null, 'vehicle_color'),
-                'number' => $this->formatOptionalField($driver['vehicle_info']['number'] ?? null, 'vehicle_number'),
+                'name' => $this->formatOptionalField($driver->vehicle_name, 'vehicle_name'),
+                'type' => $this->formatOptionalField($driver->vehicle_type, 'vehicle_type'),
+                'color' => $this->formatOptionalField($driver->vehicle_color, 'vehicle_color'),
+                'number' => $this->formatOptionalField($driver->vehicle_number, 'vehicle_number'),
             ],
             'license' => [
-                'number' => $this->formatOptionalField($driver['license']['number'] ?? null, 'license_number'),
-                'front_image' => $driver['license']['front_image'] ?? null,
-                'back_image' => $driver['license']['back_image'] ?? null,
+                'number' => $this->formatOptionalField($driver->license_number, 'license_number'),
+                'front_image' => $driver->license_front_image,
+                'back_image' => $driver->license_back_image,
             ],
             'stats' => [
-                'average_rating' => $this->formatOptionalField($driver['stats']['average_rating'] ?? null, 'average_rating'),
-                'total_trips' => $driver['stats']['total_trips'] ?? 0,
+                'average_rating' => $this->formatOptionalField($driver->average_rating, 'average_rating'),
+                'total_trips' => $driver->total_trips ?? 0,
             ],
             'banking' => [
-                'bank_name' => $this->formatOptionalField($driver['banking']['bank_name'] ?? null, 'bank_name'),
-                'account_number' => $this->formatOptionalField($driver['banking']['account_number'] ?? null, 'bank_account_number'),
-                'account_holder' => $this->formatOptionalField($driver['banking']['account_holder'] ?? null, 'bank_account_holder'),
+                'bank_name' => $this->formatOptionalField($driver->bank_name, 'bank_name'),
+                'account_number' => $this->formatOptionalField($driver->bank_account_number, 'bank_account_number'),
+                'account_holder' => $this->formatOptionalField($driver->bank_account_holder, 'bank_account_holder'),
             ],
         ];
     }
@@ -100,32 +103,28 @@ class ProfileResource extends JsonResource
      *
      * @return array
      */
-    private function buildMerchantSpecific(): array
+    private function buildMerchantSpecific($merchant): array
     {
-        $merchant = $this->resource['merchant_specific'] ?? [];
-
         return [
-            'store_name' => $this->formatOptionalField($merchant['store_name'] ?? null, 'store_name'),
-            'store_address' => $this->formatOptionalField($merchant['store_address'] ?? null, 'store_address'),
-            'location' => [
-                'latitude' => $merchant['store_latitude'] ?? null,
-                'longitude' => $merchant['store_longitude'] ?? null,
-            ],
+            'store_name' => $this->formatOptionalField($merchant->store_name, 'store_name'),
+            'store_address' => $this->formatOptionalField($merchant->store_address, 'store_address'),
+            'lat' => $merchant->lat,
+            'lng' => $merchant->lng,
             'business_hours' => [
-                'opening_time' => $this->formatOptionalField($merchant['opening_time'] ?? null, 'opening_time'),
-                'closing_time' => $this->formatOptionalField($merchant['closing_time'] ?? null, 'closing_time'),
+                'opening_time' => $this->formatOptionalField($merchant->opening_time, 'opening_time'),
+                'closing_time' => $this->formatOptionalField($merchant->closing_time, 'closing_time'),
             ],
             'status' => [
-                'is_open' => $merchant['is_open'] ?? true,
-                'label' => ($merchant['is_open'] ?? true) ? 'Mở cửa' : 'Đóng cửa',
+                'is_open' => $merchant->is_open ?? true,
+                'label' => ($merchant->is_open ?? true) ? 'Mở cửa' : 'Đóng cửa',
             ],
             'license' => [
-                'number' => $this->formatOptionalField($merchant['business_license'] ?? null, 'business_license'),
-                'image' => $merchant['business_license_image'] ?? null,
+                'number' => $this->formatOptionalField($merchant->business_license, 'business_license'),
+                'image' => $merchant->business_license_image,
             ],
             'stats' => [
-                'average_rating' => $this->formatOptionalField($merchant['average_rating'] ?? null, 'average_rating'),
-                'total_orders' => $merchant['total_orders'] ?? 0,
+                'average_rating' => $this->formatOptionalField($merchant->average_rating, 'average_rating'),
+                'total_orders' => $merchant->total_orders ?? 0,
             ],
         ];
     }
@@ -135,10 +134,11 @@ class ProfileResource extends JsonResource
      *
      * @return array
      */
-    private function buildCustomerSpecific(): array
+    private function buildCustomerSpecific($customer): array
     {
-        // Customer chỉ hiển thị thông tin cơ bản
-        return [];
+        return [
+            'birthday' => $this->formatOptionalField($customer->birthday?->toDateString(), 'birthday'),
+        ];
     }
 
     /**

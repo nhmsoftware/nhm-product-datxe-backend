@@ -53,6 +53,8 @@ class UpdateAddressRequest extends FormRequest
             'lng.between' => 'Kinh độ không hợp lệ.',
             'receiver_phone.max' => 'Số điện thoại không được vượt quá 20 ký tự.',
             'note.max' => 'Ghi chú không được vượt quá 255 ký tự.',
+            'lat.numeric' => 'Vĩ độ phải là một số.',
+            'lng.numeric' => 'Kinh độ phải là một số.',
         ];
     }
 

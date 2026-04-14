@@ -34,4 +34,9 @@ interface SavedAddressRepositoryInterface extends BaseRepositoryInterface
      * Tìm địa chỉ đầu tiên của khách hàng (để set default mới).
      */
     public function findFirstByCustomer(CustomerProfile $customerProfile): ?CustomerSavedAddress;
+
+    /**
+     * Tạo địa chỉ mới cho khách hàng.
+     */
+    public function createForCustomer(CustomerProfile $customerProfile, array $data): CustomerSavedAddress;
 }

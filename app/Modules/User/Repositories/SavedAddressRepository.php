@@ -44,18 +44,14 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
      */
     public function findDuplicate(CustomerProfile $customerProfile, float $lat, float $lng, ?int $excludeId = null): ?CustomerSavedAddress
     {
-        // Bán kính khoảng 50 mét
-        $radius = 0.0005;
-
-        $query = $this->model->where('customer_id', $customerProfile->id)
-            ->whereBetween('lat', [$lat - $radius, $lat + $radius])
-            ->whereBetween('lng', [$lng - $radius, $lng + $radius]);
-
-        if ($excludeId) {
-            $query->where('id', '!=', $excludeId);
-        }
-
-        return $query->first();
+        return $this->model
+            ->where('customer_id', $customerProfile->id)
+            ->where('lat', $lat)
+            ->where('lng', $lng)
+            ->when($excludeId, function ($query) use ($excludeId) {
+                $query->where('id', '!=', $excludeId);
+            })
+            ->first();
     }
 
     /**
@@ -79,5 +75,24 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
     public function findFirstByCustomer(CustomerProfile $customerProfile): ?CustomerSavedAddress
     {
         return $this->model->where('customer_id', $customerProfile->id)->first();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function createForCustomer(CustomerProfile $customerProfile, array $data): CustomerSavedAddress
+    {
+        return $this->model->create([
+            'customer_id' => $customerProfile->id,
+            'label' => $data['label'],
+            'name' => $data['name'] ?? null,
+            'address_text' => $data['address_text'],
+            'lat' => $data['lat'],
+            'lng' => $data['lng'],
+            'is_default' => $data['is_default'] ?? false,
+            'receiver_name' => $data['receiver_name'] ?? null,
+            'receiver_phone' => $data['receiver_phone'] ?? null,
+            'note' => $data['note'] ?? null,
+        ]);
     }
 }

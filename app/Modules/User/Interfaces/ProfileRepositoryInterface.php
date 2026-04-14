@@ -11,37 +11,66 @@ use App\Modules\User\Model\UserOtp;
 
 interface ProfileRepositoryInterface extends BaseRepositoryInterface
 {
+    // =========================================================================
+    // User
+    // =========================================================================
+
     /**
-     * Cập nhật dữ liệu người dùng và hồ sơ liên quan (customer, driver, etc.).
+     * Cập nhật bảng users.
      *
-     * @param User $user
-     * @param array $data
+     * Mặc định phone và email bị chặn để tránh mass-assignment vô tình.
+     * Chỉ set $allowSensitive = true khi đã qua bước xác thực OTP.
+     *
+     * @param  User  $user
+     * @param  array $data
+     * @param  bool  $allowSensitive
      * @return User
      */
-    public function updateProfile(User $user, array $data): User;
+    public function updateUser(User $user, array $data, bool $allowSensitive = false): User;
 
     /**
-     * Tìm mã OTP hợp lệ.
+     * Cập nhật các bảng profile liên quan (customer_profile, driver_profile, merchant_profile).
+     * Chỉ update profile nào tồn tại và có field phù hợp với $data.
      *
-     * @param string $phone
-     * @param UserOtpType $type
+     * @param  User  $user
+     * @param  array $data
+     * @return void
+     */
+    public function updateProfiles(User $user, array $data): void;
+
+    /**
+     * Tìm OTP hợp lệ theo phone và type.
+     * Chỉ trả về OTP chưa dùng (used_at IS NULL) và chưa hết hạn.
+     *
+     * @param  string      $phone
+     * @param  UserOtpType $type
      * @return UserOtp|null
      */
-    public function findValidOtp(string $phone, UserOtpType $type): ?UserOtp;
+    public function findValidOtpByPhone(string $phone, UserOtpType $type): ?UserOtp;
 
     /**
-     * Tăng số lần thử sai của OTP.
+     * Tăng số lần nhập OTP sai.
      *
-     * @param UserOtp $otp
-     * @return void
+     * @param  UserOtp $userOtp
+     * @return UserOtp  Trả về instance đã refresh sau khi increment.
      */
-    public function incrementOtpAttempts(UserOtp $otp): void;
+    public function incrementOtpAttempts(UserOtp $userOtp): UserOtp;
 
     /**
-     * Đánh dấu OTP đã được xác thực.
+     * Đánh dấu OTP đã được xác thực và consume.
      *
-     * @param UserOtp $otp
+     * @param  UserOtp $otp
      * @return void
      */
-    public function markOtpAsVerified(UserOtp $otp): void;
+    public function markOtpAsUsed(UserOtp $otp): void;
+
+    /**
+     * Invalidate tất cả OTP còn hiệu lực (cùng phone + type).
+     * Gọi trước khi tạo OTP mới để tránh nhiều OTP hợp lệ tồn tại song song.
+     *
+     * @param  string      $phone
+     * @param  UserOtpType $type
+     * @return void
+     */
+    public function invalidatePreviousOtps(string $phone, UserOtpType $type): void;
 }

@@ -22,8 +22,6 @@ class LoginRequest extends FormRequest
         return [
             'phone'        => ['required', 'string', 'regex:/^0[3-9]\d{8}$/'],
             'password'     => ['required', 'string', 'min:8'],
-            'password_confirmation' => ['required', 'string', 'min:8'],
-            'otp'          => ['required', 'string', 'regex:/^\d{6}$/'],
             'device_id'    => ['nullable', 'string', 'max:255'],
             'device_token' => ['nullable', 'string', 'max:500'],
             'device_type'  => ['nullable', 'string', 'max:50'],
@@ -46,7 +44,6 @@ class LoginRequest extends FormRequest
             'password.string'   => 'Mật khẩu phải là chuỗi.',
             'password.max'      => 'Mật khẩu không được quá 255 kí tự.',
             'password.min'      => 'Mật khẩu phải có 8 kí tự.',
-            'password.confirmed' => 'Mật khẩu không khớp với xác nhận mật khẩu.',
             'password.same'       => 'Mật khẩu không khớp với xác nhận mật khẩu.',
             'device_id.max' => 'Device ID không được quá 255 kí tự.',
             'device_token.max' => 'Device Token không được quá 500 kí tự.',

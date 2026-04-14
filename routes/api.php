@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Route;
 //})->middleware('auth:sanctum');
 
 // Nhóm các route yêu cầu phải đăng nhập
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'check.account.status'])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
 });
 
