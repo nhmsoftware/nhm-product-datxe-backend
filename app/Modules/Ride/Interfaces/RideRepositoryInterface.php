@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Ride\Interfaces;
 
 use App\Modules\Ride\Model\Ride;
+use Carbon\Carbon;
 
 interface RideRepositoryInterface
 {
@@ -51,4 +52,14 @@ interface RideRepositoryInterface
      * @return bool
      */
     public function cancel(int $rideId, ?string $reason, float $cancellationFee): bool;
+
+    /**
+     * Tính toán tổng chi tiêu của khách hàng trong một khoảng thời gian (UC-23).
+     *
+     * @param int $customerId
+     * @param Carbon $start
+     * @param Carbon $end
+     * @return array{total_amount: float, total_count: int}
+     */
+    public function getSpendingSummary(int $customerId, Carbon $start, Carbon $end): array;
 }

@@ -11,7 +11,6 @@ use App\Modules\User\Model\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @property int $id
@@ -70,7 +69,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 class Ride extends Model
 {
-    use HasApiTokens, SoftDeletes, HasBigIntId;
+    use SoftDeletes, HasBigIntId;
 
     protected $table = 'rides';
 
