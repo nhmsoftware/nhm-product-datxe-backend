@@ -9,7 +9,6 @@ use App\Modules\Finance\Model\Enums\VoucherDiscountType;
 use App\Modules\Finance\Model\Enums\VoucherServiceType;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Laravel\Sanctum\HasApiTokens;
 
 /**
  * Model quản lý Voucher (Mã giảm giá).
@@ -30,7 +29,7 @@ use Laravel\Sanctum\HasApiTokens;
  */
 final class Voucher extends Model
 {
-    use HasApiTokens, SoftDeletes, HasBigIntId;
+    use SoftDeletes, HasBigIntId;
 
     protected $table = 'vouchers';
 

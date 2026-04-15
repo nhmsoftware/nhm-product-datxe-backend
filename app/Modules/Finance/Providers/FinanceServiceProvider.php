@@ -5,11 +5,19 @@ declare(strict_types=1);
 namespace App\Modules\Finance\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
+use App\Modules\Finance\Interfaces\RewardRepositoryInterface;
+use App\Modules\Finance\Interfaces\RewardServiceInterface;
+use App\Modules\Finance\Interfaces\RewardWalletRepositoryInterface;
+use App\Modules\Finance\Interfaces\SpendingServiceInterface;
 use App\Modules\Finance\Interfaces\VoucherRepositoryInterface;
 use App\Modules\Finance\Interfaces\VoucherServiceInterface;
 use App\Modules\Finance\Interfaces\VoucherWalletRepositoryInterface;
+use App\Modules\Finance\Repositories\RewardRepository;
+use App\Modules\Finance\Repositories\RewardWalletRepository;
 use App\Modules\Finance\Repositories\VoucherRepository;
 use App\Modules\Finance\Repositories\VoucherWalletRepository;
+use App\Modules\Finance\Services\RewardService;
+use App\Modules\Finance\Services\SpendingService;
 use App\Modules\Finance\Services\VoucherService;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Routing\Router;
@@ -30,10 +38,13 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         // ── Repositories ──────
         $this->app->singleton(VoucherRepositoryInterface::class, VoucherRepository::class);
         $this->app->singleton(VoucherWalletRepositoryInterface::class, VoucherWalletRepository::class);
+        $this->app->singleton(RewardRepositoryInterface::class, RewardRepository::class);
+        $this->app->singleton(RewardWalletRepositoryInterface::class, RewardWalletRepository::class);
 
         // ── Services ──────
         $this->app->singleton(VoucherServiceInterface::class, VoucherService::class);
-        $this->app->singleton(\App\Modules\Finance\Interfaces\SpendingServiceInterface::class, \App\Modules\Finance\Services\SpendingService::class);
+        $this->app->singleton(SpendingServiceInterface::class, SpendingService::class);
+        $this->app->singleton(RewardServiceInterface::class, RewardService::class);
 
     }
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Finance\Routes;
 
+use App\Modules\Finance\Http\Controllers\RewardController;
 use App\Modules\Finance\Http\Controllers\SpendingController;
 use App\Modules\Finance\Http\Controllers\VoucherController;
 use Illuminate\Support\Facades\Route;
@@ -20,4 +21,9 @@ Route::prefix('v1/vouchers')->middleware(['auth:sanctum', 'check.account.status'
 Route::prefix('v1/finance')->middleware(['auth:sanctum', 'check.account.status'])->group(function () {
     // UC-23: View Spending Summary
     Route::get('spending-summary', [SpendingController::class, 'viewSummary'])->name('finance.spending-summary');
+
+    // UC-24: View Reward History
+    Route::get('rewards/overview', [RewardController::class, 'overview'])->name('finance.rewards.overview');
+    Route::get('rewards/history', [RewardController::class, 'history'])->name('finance.rewards.history');
+    Route::get('rewards/history/{transactionId}', [RewardController::class, 'showDetail'])->name('finance.rewards.detail');
 });

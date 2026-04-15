@@ -8,24 +8,20 @@ use App\Core\Traits\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-/**
- * Model quản lý ví voucher của khách hàng.
- */
-final class VoucherWallet extends Model
+class RewardWallet extends Model
 {
     use SoftDeletes, HasBigIntId;
 
-    protected $table = 'voucher_wallets';
-
     protected $fillable = [
         'customer_id',
-        'voucher_id',
-        'saved_at',
-        'used_at',
+        'balance',
+        'total_earned',
+        'total_used',
     ];
 
     protected $casts = [
-        'saved_at' => 'datetime',
-        'used_at' => 'datetime',
+        'balance' => 'integer',
+        'total_earned' => 'integer',
+        'total_used' => 'integer',
     ];
 }

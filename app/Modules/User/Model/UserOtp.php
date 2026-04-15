@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Model;
 
 use App\Modules\User\Model\Enums\UserOtpType;
+use App\Core\Traits\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 
@@ -42,6 +43,7 @@ use Illuminate\Support\Facades\Hash;
  */
 class UserOtp extends Model
 {
+    use HasBigIntId;
 
     protected $table = 'user_otp';
     protected $fillable = [
