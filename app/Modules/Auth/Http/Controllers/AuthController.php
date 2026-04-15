@@ -42,7 +42,7 @@ final class AuthController extends BaseController
                     new OA\Property(property: 'phone', type: 'string',  example: '0901234567'),
                     new OA\Property(
                         property: 'type',
-                        description: '1=Đăng ký, 2=Đăng nhập, 3=Quên mật khẩu, 4=Thay đổi thông tin',
+                        description: '1=Đăng ký, 2=Đăng nhập, 3=Quên mật khẩu, 4=Thay đổi thông tin, 5=Xác thực thông tin tài xế',
                         type: 'integer',
                         example: 1,
                     ),
@@ -85,6 +85,7 @@ final class AuthController extends BaseController
                     new OA\Property(property: 'device_id',    type: 'string', example: 'abc123'),
                     new OA\Property(property: 'device_token', type: 'string', example: 'fcm_token_here'),
                     new OA\Property(property: 'device_type',  type: 'string', example: 'android'),
+                    new OA\Property(property: 'role', description: '1=Admin, 2=Customer, 3=Driver, 4=Merchant', type: 'integer', example: 1),
                 ]
             )
         ),

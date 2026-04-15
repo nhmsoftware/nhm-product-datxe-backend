@@ -7,10 +7,12 @@ namespace App\Modules\Driver\Providers;
 use App\Core\Providers\BaseModuleServiceProvider;
 use App\Modules\Driver\Interfaces\DriverRegistrationRepositoryInterface;
 use App\Modules\Driver\Interfaces\DriverRegistrationServiceInterface;
+use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
 use App\Modules\Driver\Interfaces\FileRecordRepositoryInterface;
 use App\Modules\Driver\Repositories\DriverRegistrationRepository;
 use App\Modules\Driver\Repositories\FileRecordRepository;
 use App\Modules\Driver\Services\DriverRegistrationService;
+use App\Modules\Driver\Services\DriverOperationService;
 
 class DriverServiceProvider extends BaseModuleServiceProvider
 {
@@ -36,6 +38,11 @@ class DriverServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(
             DriverRegistrationServiceInterface::class,
             DriverRegistrationService::class
+        );
+
+        $this->app->singleton(
+            DriverOperationServiceInterface::class,
+            DriverOperationService::class
         );
     }
 

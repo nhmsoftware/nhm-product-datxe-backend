@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
+use App\Modules\User\Model\Enums\DriverStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -104,12 +105,13 @@ class DriverProfile extends Model
     ];
 
     protected $casts = [
-        'is_online' => 'boolean',
-        'current_lat' => 'decimal:8',
-        'current_lng' => 'decimal:8',
+        'is_online'      => 'boolean',
+        'current_lat'    => 'decimal:8',
+        'current_lng'    => 'decimal:8',
         'average_rating' => 'decimal:2',
-        'total_trips' => 'integer',
+        'total_trips'    => 'integer',
         'cooldown_until' => 'datetime',
+        'status'         => DriverStatus::class,
     ];
 
     /**

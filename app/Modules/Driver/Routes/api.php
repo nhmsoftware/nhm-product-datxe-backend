@@ -3,6 +3,7 @@
 namespace App\Modules\Driver\Routes;
 
 use App\Modules\Driver\Http\Controllers\DriverController;
+use App\Modules\Driver\Http\Controllers\DriverOperationController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,11 +16,11 @@ Route::prefix('v1/driver')
     ->middleware(['auth:sanctum', 'check.account.status'])
     ->group(function () {
 
-        // UC-30 Bước 1 — Validate thông tin cá nhân + phương tiện → gửi OTP
-        Route::post('register/send-otp', [DriverController::class, 'sendOtp'])
-            ->name('register.send-otp');
-
-        // UC-30 Bước 2 — Xác thực OTP + upload tài liệu → tạo hồ sơ Pending
+        // UC-30 — Nộp hồ sơ đăng ký tài xế (Thông tin + KYC)
         Route::post('register/submit', [DriverController::class, 'submit'])
             ->name('register.submit');
+
+        // UC-31 — Cập nhật trạng thái Go Online / Go Offline
+        Route::put('status', [DriverOperationController::class, 'toggleStatus'])
+            ->name('status.toggle');
     });

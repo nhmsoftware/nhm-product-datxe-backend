@@ -9,7 +9,6 @@ use App\Modules\Driver\Interfaces\DriverRegistrationRepositoryInterface;
 use App\Modules\Driver\Model\Enums\KycStatus;
 use App\Modules\Driver\Model\Enums\KycType;
 use App\Modules\Driver\Model\UserReviewApplication;
-use Illuminate\Support\Facades\Log;
 
 final class DriverRegistrationRepository extends BaseRepository implements DriverRegistrationRepositoryInterface
 {
@@ -71,24 +70,13 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
         array   $snapshotData,
         KycType $kycType,
     ): UserReviewApplication {
-        try {
-            /** @var UserReviewApplication */
-            return $this->model->create([
-                'user_id'       => $userId,
-                'snapshot_data' => $snapshotData,
-                'kyc_type'      => $kycType->value,
-                'kyc_status'    => KycStatus::PENDING->value,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('DriverRegistrationRepository::createDriverApplication failed', [
-                'user_id'   => $userId,
-                'exception' => $e->getMessage(),
-            ]);
-            throw new \App\Core\Exceptions\InfrastructureException(
-                'Không thể tạo hồ sơ. Vui lòng thử lại.',
-                500
-            );
-        }
+        /** @var UserReviewApplication */
+        return $this->model->create([
+            'user_id'       => $userId,
+            'snapshot_data' => $snapshotData,
+            'kyc_type'      => $kycType->value,
+            'kyc_status'    => KycStatus::PENDING->value,
+        ]);
     }
 
     /**

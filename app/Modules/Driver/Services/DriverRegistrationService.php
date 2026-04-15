@@ -6,8 +6,6 @@ namespace App\Modules\Driver\Services;
 
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
-use App\Modules\Auth\Interfaces\AuthOtpRepositoryInterface;
-use App\Modules\Driver\DTO\RegisterDriverInitiateDTO;
 use App\Modules\Driver\DTO\RegisterDriverSubmitDTO;
 use App\Modules\Driver\Events\DriverApplicationSubmitted;
 use App\Modules\Driver\Interfaces\DriverRegistrationRepositoryInterface;
@@ -17,102 +15,31 @@ use App\Modules\Driver\Model\Enums\FileableType;
 use App\Modules\Driver\Model\Enums\FileDisk;
 use App\Modules\Driver\Model\Enums\KycType;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
-use App\Modules\User\Model\Enums\UserOtpType;
-use App\Modules\User\Model\UserOtp;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
 final class DriverRegistrationService extends BaseService implements DriverRegistrationServiceInterface
 {
-    private const RETRY_AFTER_SECONDS = 180;
-    private const MAX_SEND_PER_DAY   = 5;
-    private const MAX_OTP_ATTEMPTS   = 5;
-    private const STORAGE_PATH       = 'driver-kyc'; // local disk — KYC docs không public
+    private const STORAGE_PATH = 'driver-kyc'; // local disk — KYC docs không public
 
     public function __construct(
         private readonly DriverRegistrationRepositoryInterface $driverRegistrationRepository,
         private readonly FileRecordRepositoryInterface         $fileRecordRepository,
-        private readonly AuthOtpRepositoryInterface            $authOtpRepository,
         private readonly UserRepositoryInterface               $userRepository,
     ) {}
 
-    // =========================================================================
-    // UC-30 Bước 1: Validate thông tin + gửi OTP (Normal Flow 1–13)
-    // =========================================================================
-
-    public function initiateRegistration(RegisterDriverInitiateDTO $dto): ServiceReturn
-    {
-        return $this->execute(function () use ($dto) {
-
-            // 1. Kiểm tra user tồn tại
-            $user = $this->userRepository->findById($dto->userId);
-            $this->validate($user !== null, 'Không tìm thấy tài khoản.', 404);
-
-            // 2. UC-30 A9 — đã là tài xế (role = Driver)
-            $this->validate(
-                !$user->isDriver(),
-                'Bạn đã là tài xế. Không thể đăng ký thêm.',
-                409
-            );
-
-            // 3. Kiểm tra hồ sơ đang chờ duyệt (Pending/Approved)
-            $this->validate(
-                $this->driverRegistrationRepository->findActiveApplicationByUser(
-                    $dto->userId, KycType::DRIVER
-                ) === null,
-                'Bạn đã có hồ sơ đang chờ xét duyệt. Vui lòng chờ kết quả.',
-                409
-            );
-
-            // 4. UC-30 A6 — CCCD không được trùng
-            $this->validate(
-                !$this->driverRegistrationRepository->existsByCitizenId($dto->citizenId, $dto->userId),
-                'CCCD đã được sử dụng bởi tài khoản khác.',
-                422
-            );
-
-            // 5. UC-30 A7 — Biển số không được trùng
-            $this->validate(
-                !$this->driverRegistrationRepository->existsByVehicleNumber($dto->vehicleNumber, $dto->userId),
-                'Phương tiện đã được đăng ký bởi tài khoản khác.',
-                422
-            );
-
-            // 6. Gửi OTP (UC-30 bước 12–13)
-            $otpRecord = $this->dispatchOtp($dto->phone);
-
-            $response = [
-                'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
-                'expires_at'          => $otpRecord->expired_at,
-                'message'             => 'Mã OTP đã được gửi đến số ' . $dto->phone,
-            ];
-
-            // Dev mode chỉ — expose OTP để test (không chạy ở production)
-            if (config('services.otp_expose') === true && !app()->isProduction()) {
-                $response['otp_code'] = $otpRecord->plain_code;
-            }
-
-            return $response;
-        });
-    }
-
-    // =========================================================================
-    // UC-30 Bước 2: Xác thực OTP + upload file + tạo hồ sơ (Normal Flow 14–19)
-    // =========================================================================
-
+    /**
+     * UC-30 Nộp tài liệu → tạo hồ sơ Pending.
+     * Alternative Flows: A3, A4, A8, A13.
+     */
     public function submitRegistration(RegisterDriverSubmitDTO $dto): ServiceReturn
     {
-        // Xác thực OTP NGOÀI transaction — để attempts không bị rollback (UC-30 A10, A11)
-        $otpResult = $this->verifyOtp($dto->phone, $dto->otp);
-        if ($otpResult->isError()) {
-            return $otpResult;
-        }
-
         return $this->execute(function () use ($dto) {
 
-            // 1. Kiểm tra lại user
+            // 1. Kiểm tra user tồn tại và đang hoạt động
             $user = $this->userRepository->findById($dto->userId);
             $this->validate($user !== null, 'Không tìm thấy tài khoản.', 404);
+            $this->validate($user->isActive(), 'Tài khoản của bạn đã bị vô hiệu hóa.', 403);
 
             // 2. Double-check business rules trong transaction (atomic)
             $this->validate(!$user->isDriver(), 'Bạn đã là tài xế.', 409);
@@ -150,23 +77,20 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
                 'submitted_at'   => now()->toISOString(),
             ];
 
-            // 4. Tạo hồ sơ Pending (UC-30 bước 17–18)
+            // 4. Tạo hồ sơ Pending (UC-30)
             $application = $this->driverRegistrationRepository->createDriverApplication(
                 userId:       $dto->userId,
                 snapshotData: $snapshotData,
                 kycType:      KycType::DRIVER,
             );
 
-            // 5. Upload + lưu metadata tài liệu (UC-30 bước 7, A3, A4, A13)
+            // 5. Upload + lưu metadata tài liệu (UC-30)
             $this->storeAllDocuments($application->id, $dto->files);
 
-            // 6. Đánh dấu OTP đã dùng — tránh replay attack
-            $this->authOtpRepository->markLatestAsUsed($dto->phone, UserOtpType::VERIFY_DRIVER_REGISTER);
-
-            // 7. Raise Domain Event — Admin nhận thông báo hồ sơ mới
+            // 6. Raise Domain Event — Admin nhận thông báo hồ sơ mới
             event(new DriverApplicationSubmitted($application->id, $dto->userId));
 
-            // 8. Response (UC-30 bước 19)
+            // 7. Response
             return $this->success(
                 data: [
                     'application_id' => $application->id,
@@ -179,73 +103,8 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
         }, useTransaction: true);
     }
 
-    // =========================================================================
-    // Private Helpers
-    // =========================================================================
-
-    /**
-     * Gửi OTP — throttle 3 phút/lần, tối đa 5 lần/ngày.
-     * UC-30 bước 12–13, A12.
-     */
-    private function dispatchOtp(string $phone): UserOtp
-    {
-        $lastOtp = $this->authOtpRepository->getLastOtp($phone, UserOtpType::VERIFY_DRIVER_REGISTER);
-
-        if ($lastOtp && $lastOtp->created_at->addSeconds(self::RETRY_AFTER_SECONDS)->isFuture()) {
-            $left = now()->diffInSeconds($lastOtp->created_at->addSeconds(self::RETRY_AFTER_SECONDS));
-            $this->throw("Vui lòng đợi {$left} giây trước khi yêu cầu mã OTP mới.", 429);
-        }
-
-        $sentToday = $this->authOtpRepository->countSentToday($phone, UserOtpType::VERIFY_DRIVER_REGISTER);
-        if ($sentToday >= self::MAX_SEND_PER_DAY) {
-            $this->throw('Quá số lần gửi OTP trong ngày. Vui lòng thử lại vào ngày mai.', 429);
-        }
-
-        return $this->authOtpRepository->generateOtp($phone, UserOtpType::VERIFY_DRIVER_REGISTER);
-    }
-
-    /**
-     * Xác thực OTP — chạy NGOÀI transaction để giữ attempts count.
-     * UC-30 A10 (sai), A11 (hết hạn).
-     */
-    private function verifyOtp(string $phone, string $code): ServiceReturn
-    {
-        return $this->execute(function () use ($phone, $code) {
-
-            $otpRecord = $this->authOtpRepository->getLastOtp($phone, UserOtpType::VERIFY_DRIVER_REGISTER);
-
-            if (!$otpRecord) {
-                $this->throw('Mã OTP không tồn tại. Vui lòng yêu cầu gửi lại.', 400);
-            }
-
-            if ($otpRecord->used_at) {
-                $this->throw('Mã OTP đã được sử dụng.', 400);
-            }
-
-            // UC-30 A11 — hết hạn
-            if ($otpRecord->isExpired()) {
-                $this->throw('Mã OTP đã hết hạn. Vui lòng yêu cầu gửi lại.', 400);
-            }
-
-            if ($otpRecord->attempts >= self::MAX_OTP_ATTEMPTS) {
-                $this->throw('Mã OTP đã bị khóa do nhập sai quá nhiều. Vui lòng yêu cầu mã mới.', 400);
-            }
-
-            // UC-30 A10 — sai OTP
-            if (!$otpRecord->checkCode($code)) {
-                $this->authOtpRepository->incrementAttempts($otpRecord);
-                $remaining = self::MAX_OTP_ATTEMPTS - ($otpRecord->attempts + 1);
-                $this->throw("Mã OTP không chính xác. Còn {$remaining} lần thử.", 400);
-            }
-
-            $this->authOtpRepository->markAsVerified($otpRecord);
-            return true;
-        });
-    }
-
     /**
      * Upload toàn bộ 8 tài liệu và lưu metadata qua FileRecordRepository.
-     * UC-30 bước 7, A3, A4, A13.
      *
      * @param array<string, UploadedFile|null> $files
      */
@@ -288,7 +147,6 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
 
     /**
      * Upload file lên local disk.
-     * UC-30 A13 — throw InfrastructureException nếu thất bại.
      */
     private function uploadToStorage(UploadedFile $file, int $applicationId): string
     {

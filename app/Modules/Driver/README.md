@@ -9,8 +9,8 @@
 
 | UC | Tên | Endpoint | Status |
 |----|-----|----------|--------|
-| UC-30 | Register Driver — Bước 1 (Gửi OTP) | `POST /api/v1/driver/register/send-otp` | ✅ |
-| UC-30 | Register Driver — Bước 2 (Nộp hồ sơ) | `POST /api/v1/driver/register/submit` | ✅ |
+| UC-30 | Register Driver — Nộp hồ sơ | `POST /api/v1/driver/register/submit` | ✅ |
+| UC-31 | Go Online / Go Offline | `PUT /api/v1/driver/status` | ✅ |
 
 ---
 
@@ -19,19 +19,22 @@
 ```
 app/Modules/Driver/
 ├── DTO/
-│   ├── RegisterDriverInitiateDTO.php     ← UC-30 Step 1: validate thông tin
-│   └── RegisterDriverSubmitDTO.php       ← UC-30 Step 2: OTP + 8 files
+│   ├── RegisterDriverSubmitDTO.php       ← UC-30: Thông tin + 8 files
+│   └── ToggleOnlineStatusDTO.php         ← UC-31
 ├── Events/
 │   └── DriverApplicationSubmitted.php   ← Dispatch sau khi tạo hồ sơ
 ├── Http/
-│   ├── Controllers/DriverController.php
+│   ├── Controllers/
+│   │   ├── DriverController.php
+│   │   └── DriverOperationController.php
 │   └── Requests/
-│       ├── RegisterDriverInitiateRequest.php
-│       └── RegisterDriverSubmitRequest.php
+│       ├── RegisterDriverSubmitRequest.php
+│       └── ToggleOnlineStatusRequest.php
 ├── Interfaces/
 │   ├── DriverRegistrationRepositoryInterface.php
 │   ├── FileRecordRepositoryInterface.php
-│   └── DriverRegistrationServiceInterface.php
+│   ├── DriverRegistrationServiceInterface.php
+│   └── DriverOperationServiceInterface.php
 ├── Model/
 │   ├── Enums/
 │   │   ├── KycType.php        (1=Driver, 2=Merchants, 3=Change_Vehicle)
@@ -49,35 +52,43 @@ app/Modules/Driver/
 ├── Routes/
 │   └── api.php
 └── Services/
-    └── DriverRegistrationService.php
+    ├── DriverRegistrationService.php
+    └── DriverOperationService.php
 ```
 
 ---
 
 ## UC-30 Flow
 
-```
-POST /api/v1/driver/register/send-otp
-  → RegisterDriverInitiateRequest  (validate cá nhân + phương tiện + vehicle_year)
-  → RegisterDriverInitiateDTO
-  → DriverRegistrationService::initiateRegistration()
-     ├── findById() → $user->isDriver() [A9]
-     ├── findActiveApplicationByUser() [A9/pending]
-     ├── existsByCitizenId() [A6]
-     ├── existsByVehicleNumber() [A7]
-     └── generateOtp() — throttle 3 phút, tối đa 5/ngày [A12]
+> [!NOTE]
+> Tài xế đã được xác thực mã OTP ở cấp độ tài khoản người dùng trước khi truy cập tính năng này.
 
+```
 POST /api/v1/driver/register/submit  (multipart/form-data)
-  → RegisterDriverSubmitRequest    (validate OTP + tất cả fields + 8 files)
+  → RegisterDriverSubmitRequest    (validate tất cả fields + 8 files)
   → RegisterDriverSubmitDTO
   → DriverRegistrationService::submitRegistration()
-     ├── verifyOtp() — NGOÀI transaction [A10, A11]
+     ├── double check User isActive() + !isDriver()
+     ├── check active application pending
+     ├── check CCCD / Biển số trùng
      └── execute(useTransaction: true)
-         ├── Double-check business rules [atomic]
          ├── createDriverApplication() → user_review_applications (Pending)
          ├── storeAllDocuments() → files table (local disk)
-         ├── markLatestAsUsed()
          └── event(DriverApplicationSubmitted)
+```
+
+## UC-31 Flow
+
+```
+PUT /api/v1/driver/status
+  → ToggleOnlineStatusRequest        (boolean is_online, lat/lng nếu true)
+  → ToggleOnlineStatusDTO
+  → DriverOperationService::toggleOnlineStatus()
+     ├── check User isActive()
+     ├── DriverProfileRepository::findByUserId() [A1]
+     ├── check profile->status (ACTIVE/BANNED/COOLDOWN) [A5]
+     ├── RideRepository::hasActiveRideByDriver() [A3]
+     └── DriverProfileRepository::updateOnlineStatus()
 ```
 
 ---
@@ -104,9 +115,8 @@ POST /api/v1/driver/register/submit  (multipart/form-data)
 
 | Module | Thứ gì | Lý do |
 |--------|--------|-------|
-| `User` | `UserRepositoryInterface` | `findById()` để fetch User + `isDriver()` check (A9) |
-| `Auth` | `AuthOtpRepositoryInterface` | OTP generate, verify, throttle |
-| `Ride` | `VehicleType` enum | Dùng chung enum — cùng backing values trong DB |
+| `User` | `UserRepositoryInterface`, `DriverProfileRepositoryInterface` | Quản lý Profile, tài khoản và trạng thái hoạt động online / offline. |
+| `Ride` | `RideRepositoryInterface`, `VehicleType` | Kiểm tra chuyến xe đang chạy (A3), map Enum thông tin xe |
 
 ---
 
@@ -116,5 +126,4 @@ POST /api/v1/driver/register/submit  (multipart/form-data)
 |------|---------|
 | `user_review_applications` | Hồ sơ KYC (snapshot_data jsonb) |
 | `files` | Tài liệu đính kèm |
-| `user_otp` | OTP type=5 (VERIFY_DRIVER_REGISTER) |
 | `driver_profiles` | Tạo sau khi Admin duyệt (UC tương lai) |

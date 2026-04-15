@@ -10,7 +10,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
- * UC-30 Bước 2: Validate OTP + 8 file tài liệu bắt buộc → tạo hồ sơ.
+ * UC-30: nộp tài liệu bắt buộc → tạo hồ sơ.
  * UC-30 A3: thiếu tài liệu, A4: file không hợp lệ, A13: upload gián đoạn.
  */
 class RegisterDriverSubmitRequest extends FormRequest
@@ -30,9 +30,6 @@ class RegisterDriverSubmitRequest extends FormRequest
         $maxYear = now()->year;
 
         return [
-            // OTP (UC-30 bước 15)
-            'otp' => 'required|string|digits:6',
-
             // Thông tin cá nhân
             'full_name'    => 'required|string|max:100',
             'phone'        => ['required', 'string', 'regex:/^(0[3|5|7|8|9])+([0-9]{8})$/'],
@@ -60,9 +57,6 @@ class RegisterDriverSubmitRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'otp.required' => 'Vui lòng nhập mã OTP.',
-            'otp.digits'   => 'Mã OTP phải gồm 6 chữ số.',
-
             'full_name.required'    => 'Vui lòng nhập họ tên.',
             'phone.required'        => 'Vui lòng nhập số điện thoại.',
             'phone.regex'           => 'Số điện thoại không đúng định dạng.',

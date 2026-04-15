@@ -10,7 +10,7 @@ use App\Modules\Ride\Model\Enums\VehicleType;
 use Illuminate\Http\UploadedFile;
 
 /**
- * DTO cho bước 2 UC-30: Xác thực OTP + nộp tài liệu + tạo hồ sơ.
+ * DTO cho UC-30: nộp tài liệu + tạo hồ sơ.
  *
  * @property array<string, UploadedFile> $files
  */
@@ -18,7 +18,6 @@ final class RegisterDriverSubmitDTO
 {
     public function __construct(
         public readonly int          $userId,
-        public readonly string       $otp,
         public readonly string       $fullName,
         public readonly string       $phone,
         public readonly string       $citizenId,
@@ -34,7 +33,6 @@ final class RegisterDriverSubmitDTO
     {
         return new self(
             userId:        (int) $request->user()->id,
-            otp:           $request->string('otp')->toString(),
             fullName:      $request->string('full_name')->toString(),
             phone:         $request->string('phone')->toString(),
             citizenId:     $request->string('citizen_id')->toString(),

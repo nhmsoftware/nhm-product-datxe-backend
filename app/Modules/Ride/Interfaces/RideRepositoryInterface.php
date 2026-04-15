@@ -62,4 +62,11 @@ interface RideRepositoryInterface
      * @return array{total_amount: float, total_count: int}
      */
     public function getSpendingSummary(int $customerId, Carbon $start, Carbon $end): array;
+
+    /**
+     * Kiểm tra tài xế có chuyến đi nào đang diễn ra không (UC-31).
+     * @param int $driverId ID tài khoản tài xế
+     * @return bool
+     */
+    public function hasActiveRideByDriver(int $driverId): bool;
 }

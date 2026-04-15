@@ -92,4 +92,15 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             'total_count'  => (int) ($data->total_count ?? 0),
         ];
     }
+
+    /**
+     * Kiểm tra tài xế có chuyến đi nào đang diễn ra không (UC-31).
+     */
+    public function hasActiveRideByDriver(int $driverId): bool
+    {
+        return $this->model
+            ->where('driver_id', $driverId)
+            ->whereIn('status', [RideStatus::ACCEPTED->value, RideStatus::IN_PROGRESS->value])
+            ->exists();
+    }
 }
