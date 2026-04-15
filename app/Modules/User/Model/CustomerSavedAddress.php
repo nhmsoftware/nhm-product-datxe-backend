@@ -9,6 +9,47 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int $id
+ * @property int $customer_id
+ * @property int $label
+ * @property string|null $name
+ * @property string $address_text
+ * @property numeric $lat
+ * @property numeric $lng
+ * @property bool $is_default
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $receiver_name
+ * @property string|null $receiver_phone
+ * @property string|null $note
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read \App\Modules\User\Model\CustomerProfile|null $customerProfile
+ * @property-read string $label_text
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress default()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress forCustomer(int $customerId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress onlyTrashed()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereAddressText($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereCustomerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereIsDefault($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereLabel($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereLat($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereLng($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereNote($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereReceiverName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereReceiverPhone($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress withoutTrashed()
+ * @mixin \Eloquent
+ */
 class CustomerSavedAddress extends Model
 {
     use HasBigIntId, SoftDeletes;

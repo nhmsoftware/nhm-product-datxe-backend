@@ -80,8 +80,8 @@ return new class extends Migration
             $table->foreignId('user_id')->unique()->constrained()->onDelete('cascade');
             $table->string('store_name', 255)->nullable();
             $table->string('store_address', 500)->nullable();
-            $table->decimal('latitude', 10, 8)->nullable();
-            $table->decimal('longitude', 11, 8)->nullable();
+            $table->decimal('lat', 10, 8)->nullable();
+            $table->decimal('lng', 11, 8)->nullable();
             $table->time('opening_time')->nullable();
             $table->time('closing_time')->nullable();
             $table->boolean('is_open')->default(true);

@@ -283,6 +283,116 @@
 
 # ---G2: Service
 
+# ---G3: Finance
+
+## Các enums trong module này
+
+### VoucherServiceType
+```
+1: Ride (Chuyến đi)
+2: Food (Giao đồ ăn)
+3: Both (Cả hai)
+```
+
+### VoucherDiscountType
+```
+1: Fixed (Giảm giá cố định)
+2: Percent (Giảm giá theo phần trăm)
+```
+
+### RewardTransactionType
+```
+1: Earn (Tích điểm từ đơn hàng)
+2: Redeem (Tiêu điểm)
+3: Expire (Điểm hết hạn)
+```
+
+## vouchers
+```
+    # note
+    - Bảng vouchers quản lý thông tin các mã giảm giá của hệ thống.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - code (varchar(255), unique) -- Mã voucher hiển thị
+    - service_type (unsigned tinyint) -- Loại dịch vụ áp dụng (VoucherServiceType)
+    - discount_type (unsigned tinyint) -- Loại giảm giá (VoucherDiscountType)
+    - discount_value (decimal 15,2) -- Giá trị giảm (số tiền hoặc %)
+    - min_order_amount (decimal 15,2, default 0) -- Giá trị đơn tối thiểu để áp dụng
+    - max_discount_amount (decimal 15,2, nullable) -- Giảm tối đa (dùng cho loại Percent)
+    - valid_from (timestamp) -- Ngày bắt đầu
+    - valid_until (timestamp) -- Ngày kết thúc
+    - total_usage_limit (unsigned integer, nullable) -- Tổng số lượt sử dụng tối đa
+    - used_count (unsigned integer, default 0) -- Số lượt đã dùng
+    - is_active (boolean, default true)
+    - description (text, nullable)
+    - timestamps
+    - softDeletes
+
+    # index
+    - index(service_type, is_active, valid_until)
+```
+
+## voucher_wallets
+```
+    # note
+    - Bảng voucher_wallets quản lý các voucher mà khách hàng đã lưu, và trạng thái sử dụng của từng mã.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - customer_id (unsigned bigint, FK -> users)
+    - voucher_id (unsigned bigint, FK -> vouchers)
+    - saved_at (timestamp)
+    - used_at (timestamp, nullable) -- Nếu null là chưa dùng
+    - timestamps
+    - softDeletes
+
+    # index
+    - unique(customer_id, voucher_id)
+    - index(customer_id)
+```
+
+## reward_wallets
+```
+    # note
+    - Bảng reward_wallets quản lý tổng số điểm thưởng hiện tại của mỗi khách hàng.
+    - Mỗi khách hàng chỉ có 1 ví điểm thưởng.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - customer_id (unsigned bigint, FK -> users) -- Khách hàng sở hữu ví
+    - balance (unsigned integer, default 0) -- Số điểm khả dụng hiện tại
+    - total_earned (unsigned integer, default 0) -- Tổng điểm đã tích lũy từ trước đến nay
+    - total_used (unsigned integer, default 0) -- Tổng điểm đã tiêu
+    - timestamps
+    - softDeletes
+
+    # index
+    - unique(customer_id)
+```
+
+## reward_transactions
+```
+    # note
+    - Bảng reward_transactions ghi lại lịch sử giao dịch cộng, trừ điểm của khách hàng.
+    - Sử dụng reference_type và reference_id để liên kết đến giao dịch gốc (chuyến đi, đơn hàng...).
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - customer_id (unsigned bigint, FK -> users) -- Khách hàng thực hiện giao dịch
+    - type (unsigned tinyint) -- Loại giao dịch (RewardTransactionType: Earn, Redeem, Expire)
+    - points (integer) -- Số điểm giao dịch (dương cho tích, âm cho sử dụng/hết hạn)
+    - description (varchar 255) -- Ghi chú hiển thị cho user (Vd: Tích điểm từ đơn hàng XE-123)
+    - reference_type (varchar 255, nullable) -- Loại entity liên quan (Morphs type: Ride, FoodOrder)
+    - reference_id (unsigned bigint, nullable) -- ID của entity liên quan (Morphs ID)
+    - timestamps
+    - softDeletes
+
+    # index
+    - index(customer_id, type)
+    - index(reference_type, reference_id)
+```
+
 # ---G5: System - Shared
 **Các enums trong module này**
 

@@ -49,11 +49,58 @@ Mọi hành động có thay đổi dữ liệu (Create/Update/Delete) trong Ser
 
 ```php
 return $this->execute(function() {
-    // Logic của bạn ở đây
+    // Validate điều kiện
+    $this->validate($condition, 'Thông báo lỗi');
+    // Hoặc ném lỗi có HTTP code
+    $this->throw('Bạn không có quyền.', 403);
+
+    $model = $this->repository->create($data);
+
+    // Trả về thành công
+    return $this->success($model->toArray(), 'Tạo thành công.');
 }, useTransaction: true);
 ```
 
-### 4.2. Database
+### 4.2. 🚫 CẤM dùng `ServiceReturn::` trực tiếp trong Service
+
+Trong class Service, **tuyệt đối không** được gọi `ServiceReturn::success()` hay `ServiceReturn::error()` thủ công. Phải sử dụng các abstract method mà `BaseService` đã cung cấp:
+
+| Method | Công dụng |
+|--------|----------|
+| `$this->success($data, $message)` | Trả kết quả thành công |
+| `$this->throw($message, $code)` | Ném lỗi có HTTP status code |
+| `$this->validate($condition, $message)` | Ném lỗi nếu điều kiện không đúng |
+
+```php
+// ❌ SAI — Không được làm thế này
+return ServiceReturn::error('Không tìm thấy.', code: 404);
+
+// ✅ ĐÚNG — Phải làm thế này
+$this->validate($model !== null, 'Không tìm thấy.');
+// hoặc
+$this->throw('Không tìm thấy.', 404);
+```
+
+### 4.3. 🚫 CẤM dùng `Auth::` (Auth facade) trực tiếp trong Service
+
+Lớp Service phải hoàn toàn "thuần khiết" (Pure) và không phụ thuộc vào trạng thái session của trình duyệt. Mọi thông tin người dùng (ID) phải được truyền vào từ Controller.
+
+* **Lý do:** Đảm bảo Service có thể chạy được từ Queue, Job, Console Command và dễ dàng Unit Test.
+* **Quy tắc:** Chỉ lấy `User ID` tại Controller và truyền xuống Service. Nếu Service cần Model User, hãy dùng `UserRepository` để tìm theo ID đã truyền.
+
+```php
+// ❌ SAI (Trong Service)
+$user = Auth::user();
+
+// ✅ ĐÚNG (Trong Controller)
+$customerId = (int) Auth::id();
+$this->rideService->createDraft($dto, $customerId);
+
+// ✅ ĐÚNG (Trong Service)
+$user = $this->userRepository->findById($customerId);
+```
+
+### 4.4. Database
 
 Soft Deletes: Tất cả các bảng quan trọng phải sử dụng SoftDeletes.
 

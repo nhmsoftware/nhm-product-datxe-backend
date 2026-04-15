@@ -1,0 +1,2260 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "NHM Product Dat Xe Backend API",
+        "description": "API documentation for NHM Product Dat Xe Backend",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "",
+            "description": "API Server"
+        }
+    ],
+    "paths": {
+        "/api/v1/auth/authenticate-otp": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Gửi mã OTP",
+                "operationId": "52cf7c097e768c88c12023ec578837e6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "type": {
+                                        "description": "1=Đăng ký, 2=Đăng nhập, 3=Quên mật khẩu",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Gửi OTP thành công"
+                    },
+                    "404": {
+                        "description": "Số điện thoại không tồn tại (type=2)"
+                    },
+                    "409": {
+                        "description": "Số điện thoại đã đăng ký (type=1)"
+                    },
+                    "422": {
+                        "description": "Số điện thoại không đúng định dạng"
+                    },
+                    "429": {
+                        "description": "Gửi quá nhiều lần"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/register": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Xác minh OTP và đăng ký tài khoản",
+                "operationId": "4cd3927d4aaa29337fec6553b20c0d95",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "otp",
+                                    "full_name"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "Password123!@"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "Password123!@"
+                                    },
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A"
+                                    },
+                                    "device_id": {
+                                        "type": "string",
+                                        "example": "abc123"
+                                    },
+                                    "device_token": {
+                                        "type": "string",
+                                        "example": "fcm_token_here"
+                                    },
+                                    "device_type": {
+                                        "type": "string",
+                                        "example": "android"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Đăng ký thành công, trả về token"
+                    },
+                    "400": {
+                        "description": "OTP sai hoặc hết hạn"
+                    },
+                    "409": {
+                        "description": "Số điện thoại đã tồn tại"
+                    },
+                    "422": {
+                        "description": "Số điện thoại không đúng định dạng"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đăng nhập bằng số điện thoại và mật khẩu",
+                "operationId": "700af33d5ccf2328cc0f87c0c355f2cd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "Password123!"
+                                    },
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "device_token": {
+                                        "type": "string"
+                                    },
+                                    "device_type": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng nhập thành công"
+                    },
+                    "401": {
+                        "description": "Mật khẩu không đúng"
+                    },
+                    "403": {
+                        "description": "Tài khoản đã bị khóa"
+                    },
+                    "404": {
+                        "description": "Số điện thoại chưa đăng ký"
+                    },
+                    "422": {
+                        "description": "Số điện thoại không đúng định dạng"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/forgot-password": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đặt lại mật khẩu (Forgot Password)",
+                "operationId": "3c1bff9291a653a3dc1346e8eb3286cb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "phone",
+                                    "otp",
+                                    "password",
+                                    "password_confirmation"
+                                ],
+                                "properties": {
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "otp": {
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "NewPass123!"
+                                    },
+                                    "password_confirmation": {
+                                        "type": "string",
+                                        "example": "NewPass123!"
+                                    },
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "device_token": {
+                                        "type": "string"
+                                    },
+                                    "device_type": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đặt lại mật khẩu thành công"
+                    },
+                    "400": {
+                        "description": "OTP sai hoặc hết hạn"
+                    },
+                    "404": {
+                        "description": "Số điện thoại chưa được đăng ký"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/me": {
+            "get": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Thông tin người dùng hiện tại",
+                "operationId": "3498279f7407630fbe5a79163e4bffaa",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/logout": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đăng xuất",
+                "operationId": "9414c694a96e59705b912a6296d073be",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "logout_all": {
+                                        "description": "true = thu hồi tất cả token trên mọi thiết bị",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng xuất thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/auth/google-login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đăng nhập/đăng ký bằng Google",
+                "operationId": "baddda4e3f2e8941439c4e9897c25179",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id_token"
+                                ],
+                                "properties": {
+                                    "id_token": {
+                                        "type": "string",
+                                        "example": "google_id_token"
+                                    },
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "device_token": {
+                                        "type": "string"
+                                    },
+                                    "device_type": {
+                                        "type": "string",
+                                        "example": "android"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng nhập/đăng ký thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "user": {},
+                                                "token": {}
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Token không hợp lệ"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/auth/apple-login": {
+            "post": {
+                "tags": [
+                    "Auth"
+                ],
+                "summary": "Đăng nhập/đăng ký bằng Apple",
+                "operationId": "011a940ab71665dcc6104cdf7a9b806b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "id_token"
+                                ],
+                                "properties": {
+                                    "id_token": {
+                                        "type": "string",
+                                        "example": "apple_id_token"
+                                    },
+                                    "user": {
+                                        "type": "string"
+                                    },
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "device_token": {
+                                        "type": "string"
+                                    },
+                                    "device_type": {
+                                        "type": "string",
+                                        "example": "ios"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng nhập/đăng ký thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "user": {},
+                                                "token": {}
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Token không hợp lệ"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                }
+            }
+        },
+        "/api/v1/user/profile": {
+            "get": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "UC-04: Xem thông tin hồ sơ",
+                "description": "Cho phép người dùng đã đăng nhập (Customer, Driver hoặc Merchant) xem thông tin tài khoản cá nhân của mình.",
+                "operationId": "659095265fa4f1781266507221087fe9",
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Trả về thông tin hồ sơ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProfileResponse"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lấy thông tin hồ sơ thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa (A5)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Tài khoản của bạn đã bị khóa. Vui lòng liên hệ hỗ trợ."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi tải dữ liệu (A4)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không thể tải thông tin hồ sơ. Vui lòng kiểm tra kết nối và thử lại."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "UC-05: Cập nhật thông tin hồ sơ",
+                "description": "Cập nhật thông tin cá nhân của người dùng. Nếu thay đổi số điện thoại hoặc email, hệ thống sẽ yêu cầu xác thực OTP. Các trường driver-specific và merchant-specific sẽ được cập nhật tương ứng với vai trò.\n\n**Preconditions:** Người dùng đã đăng nhập. Tài khoản đang hoạt động. Token hợp lệ.\n\n**Postconditions:** Nếu thành công: Thông tin hồ sơ được cập nhật, trả về profile mới. Nếu có thay đổi nhạy cảm: Yêu cầu xác thực OTP qua endpoint /verify-otp.\n\n**Alternative Flows:**\nA1: Thay đổi số điện thoại → Gửi OTP đến số mới.\nA2: Thay đổi email → Gửi OTP xác thực.\nA5: Validation error → Trả về danh sách lỗi.\nA7: Lỗi server → Thông báo và cho thử lại.",
+                "operationId": "77748350a35b9420525e9cd35db25194",
+                "requestBody": {
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Cập nhật thông tin thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProfileResponse"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật thông tin thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "202": {
+                        "description": "Yêu cầu xác thực OTP - Có thay đổi thông tin nhạy cảm (A1/A2)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/OtpRequiredResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error (A5) - Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server (A7) - Không thể cập nhật thông tin",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServerErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/profile/verify-otp": {
+            "post": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "UC-05: Xác thực OTP cho thông tin nhạy cảm",
+                "description": "Xác thực mã OTP để hoàn tất cập nhật thông tin nhạy cảm như số điện thoại hoặc email. Mã OTP được gửi qua SMS/email và có hiệu lực trong 5 phút.",
+                "operationId": "0549f424085fa87297a353e661319b4e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VerifyOtpProfileRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Xác thực OTP và cập nhật thông tin thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/ProfileResponse"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật thông tin thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "OTP không hợp lệ hoặc đã hết hạn (A3/A4)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServerErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/profile/change-password": {
+            "post": {
+                "tags": [
+                    "User Profile"
+                ],
+                "summary": "UC-05: Thay đổi mật khẩu",
+                "description": "Thay đổi mật khẩu của người dùng. Yêu cầu nhập mật khẩu hiện tại để xác thực.",
+                "operationId": "5400e0f1894fb5c5621fb30c7c10410b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ChangePasswordRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Đổi mật khẩu thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đổi mật khẩu thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Tài khoản bị khóa",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Mật khẩu mới không hợp lệ (A3/A4)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ValidationErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServerErrorResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/addresses": {
+            "get": {
+                "tags": [
+                    "Saved Addresses"
+                ],
+                "summary": "UC-06: Lấy danh sách địa chỉ đã lưu",
+                "description": "Trả về danh sách tất cả địa chỉ đã lưu của khách hàng hiện tại. Chỉ áp dụng cho vai trò Customer. Mỗi khách hàng có thể lưu tối đa 10 địa chỉ.\n\n**Preconditions:** Người dùng đã đăng nhập với vai trò Customer. Tài khoản đang hoạt động.\n\n**Postconditions:** Trả về danh sách các địa chỉ đã lưu của khách hàng, sắp xếp theo thứ tự địa chỉ mặc định trước.",
+                "operationId": "999c28939a21b5b682839e7cf940a218",
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Trả về danh sách địa chỉ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/SavedAddressResponse"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lấy danh sách địa chỉ thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền - Người dùng không phải là Customer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Chỉ khách hàng mới có thể sử dụng chức năng này."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy thông tin khách hàng",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không tìm thấy thông tin khách hàng."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không thể tải danh sách địa chỉ. Vui lòng thử lại."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Saved Addresses"
+                ],
+                "summary": "UC-06: Tạo mới địa chỉ đã lưu",
+                "description": "Tạo mới một địa chỉ đã lưu cho khách hàng. Nếu không cung cấp tên người nhận, hệ thống sẽ tự động lấy từ thông tin tài khoản. Mỗi khách hàng có thể lưu tối đa 10 địa chỉ.\n\n**Preconditions:** Người dùng đã đăng nhập với vai trò Customer. Chưa đạt giới hạn 10 địa chỉ. Tài khoản đang hoạt động.\n\n**Postconditions:** Địa chỉ mới được tạo và lưu vào danh sách. Nếu is_default=true, địa chỉ này sẽ được đặt làm mặc định.\n\n**Alternative Flows:**\nA2: Địa chỉ đã tồn tại → Trả về thông báo và ID địa chỉ đã tồn tại. A4: Đạt giới hạn 10 địa chỉ → Yêu cầu xóa bớt trước.",
+                "operationId": "6c0ca3917ebf38b8f0ad853850f11571",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "label",
+                                    "name",
+                                    "address_text",
+                                    "location"
+                                ],
+                                "properties": {
+                                    "label": {
+                                        "description": "Nhãn địa chỉ: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "enum": [
+                                            1,
+                                            2,
+                                            3,
+                                            4
+                                        ]
+                                    },
+                                    "name": {
+                                        "description": "Tên gợi nhớ cho địa chỉ",
+                                        "type": "string",
+                                        "example": "Nhà A",
+                                        "maxLength": 200
+                                    },
+                                    "address_text": {
+                                        "description": "Địa chỉ đầy đủ dạng text",
+                                        "type": "string",
+                                        "example": "123 Đường ABC, Phường 5, Quận 1, TP.HCM",
+                                        "maxLength": 500
+                                    },
+                                    "location": {
+                                        "description": "Tọa độ địa lý",
+                                        "properties": {
+                                            "latitude": {
+                                                "description": "Vĩ độ",
+                                                "type": "number",
+                                                "format": "double",
+                                                "example": 10.7629
+                                            },
+                                            "longitude": {
+                                                "description": "Kinh độ",
+                                                "type": "number",
+                                                "format": "double",
+                                                "example": 106.6818
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "receiver_name": {
+                                        "description": "Tên người nhận (mặc định: full_name của user)",
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A",
+                                        "maxLength": 100
+                                    },
+                                    "receiver_phone": {
+                                        "description": "Số điện thoại người nhận (mặc định: phone của user)",
+                                        "type": "string",
+                                        "example": "0912345678",
+                                        "maxLength": 20
+                                    },
+                                    "note": {
+                                        "description": "Ghi chú thêm cho tài xế",
+                                        "type": "string",
+                                        "example": "Gần siêu thị",
+                                        "maxLength": 500
+                                    },
+                                    "is_default": {
+                                        "description": "Đặt làm địa chỉ mặc định",
+                                        "type": "boolean",
+                                        "example": false
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Tạo địa chỉ thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SavedAddressResponse"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Địa chỉ đã được lưu thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền - Người dùng không phải là Customer",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Chỉ khách hàng mới có thể sử dụng chức năng này."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy thông tin khách hàng",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không tìm thấy thông tin khách hàng."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ - Địa chỉ đã tồn tại (A2) hoặc đã đạt giới hạn tối đa (A4).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không thể lưu địa chỉ lúc này. Vui lòng thử lại sau."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/addresses/{id}": {
+            "get": {
+                "tags": [
+                    "Saved Addresses"
+                ],
+                "summary": "UC-06: Xem chi tiết địa chỉ đã lưu",
+                "description": "Trả về thông tin chi tiết của một địa chỉ đã lưu theo ID. Người dùng chỉ có thể xem địa chỉ thuộc về tài khoản của mình.\n\n**Preconditions:** Người dùng đã đăng nhập với vai trò Customer. Địa chỉ tồn tại và thuộc về tài khoản người dùng.\n\n**Postconditions:** Trả về thông tin chi tiết của địa chỉ được yêu cầu.",
+                "operationId": "286582b6d5c18a04400472efac7f0405",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của địa chỉ",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Trả về thông tin địa chỉ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SavedAddressResponse"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lấy thông tin địa chỉ thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền xem địa chỉ này",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bạn không có quyền xem địa chỉ này."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy địa chỉ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không tìm thấy địa chỉ."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không thể tải thông tin địa chỉ. Vui lòng thử lại."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Saved Addresses"
+                ],
+                "summary": "UC-06: Cập nhật địa chỉ đã lưu",
+                "description": "Cập nhật thông tin của một địa chỉ đã lưu. Người dùng chỉ có thể cập nhật địa chỉ thuộc về tài khoản của mình.\n\n**Preconditions:** Người dùng đã đăng nhập với vai trò Customer. Địa chỉ tồn tại và thuộc về tài khoản người dùng.\n\n**Postconditions:** Thông tin địa chỉ được cập nhật thành công với dữ liệu mới.",
+                "operationId": "b2e724cf50c3b6421a9ee3ac97b71b4b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của địa chỉ cần cập nhật",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "label",
+                                    "name",
+                                    "address_text",
+                                    "location"
+                                ],
+                                "properties": {
+                                    "label": {
+                                        "description": "Nhãn địa chỉ: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "enum": [
+                                            1,
+                                            2,
+                                            3,
+                                            4
+                                        ]
+                                    },
+                                    "name": {
+                                        "description": "Tên gợi nhớ cho địa chỉ",
+                                        "type": "string",
+                                        "example": "Nhà B",
+                                        "maxLength": 200
+                                    },
+                                    "address_text": {
+                                        "description": "Địa chỉ đầy đủ dạng text",
+                                        "type": "string",
+                                        "example": "456 Đường XYZ, Phường 3, Quận 2, TP.HCM",
+                                        "maxLength": 500
+                                    },
+                                    "location": {
+                                        "description": "Tọa độ địa lý",
+                                        "properties": {
+                                            "latitude": {
+                                                "description": "Vĩ độ",
+                                                "type": "number",
+                                                "format": "double",
+                                                "example": 10.789
+                                            },
+                                            "longitude": {
+                                                "description": "Kinh độ",
+                                                "type": "number",
+                                                "format": "double",
+                                                "example": 106.7
+                                            }
+                                        },
+                                        "type": "object"
+                                    },
+                                    "receiver_name": {
+                                        "description": "Tên người nhận",
+                                        "type": "string",
+                                        "example": "Nguyễn Văn B",
+                                        "maxLength": 100
+                                    },
+                                    "receiver_phone": {
+                                        "description": "Số điện thoại người nhận",
+                                        "type": "string",
+                                        "example": "0987654321",
+                                        "maxLength": 20
+                                    },
+                                    "note": {
+                                        "description": "Ghi chú thêm cho tài xế",
+                                        "type": "string",
+                                        "example": "Gần trường học",
+                                        "maxLength": 500
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Cập nhật địa chỉ thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SavedAddressResponse"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật địa chỉ thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền cập nhật địa chỉ này",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bạn không có quyền chỉnh sửa địa chỉ này."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy địa chỉ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không tìm thấy địa chỉ."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error - Dữ liệu không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message",
+                                        "errors"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Dữ liệu không hợp lệ."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không thể cập nhật địa chỉ lúc này. Vui lòng thử lại sau."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Saved Addresses"
+                ],
+                "summary": "UC-06: Xóa địa chỉ đã lưu",
+                "description": "Xóa một địa chỉ đã lưu khỏi danh sách của khách hàng. Người dùng chỉ có thể xóa địa chỉ thuộc về tài khoản của mình. Nếu xóa địa chỉ mặc định, hệ thống sẽ tự động chọn địa chỉ khác làm mặc định (nếu có).\n\n**Preconditions:** Người dùng đã đăng nhập với vai trò Customer. Địa chỉ tồn tại và thuộc về tài khoản người dùng.\n\n**Postconditions:** Địa chỉ được xóa khỏi danh sách. Nếu là địa chỉ mặc định, địa chỉ đầu tiên còn lại sẽ được chọn làm mặc định.",
+                "operationId": "9b53d39721e6c722c87d28f7ed646b7d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của địa chỉ cần xóa",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Xóa địa chỉ thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Xóa địa chỉ thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền xóa địa chỉ này",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bạn không có quyền xóa địa chỉ này."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy địa chỉ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không tìm thấy địa chỉ."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không thể xóa địa chỉ lúc này. Vui lòng thử lại sau."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/addresses/{id}/default": {
+            "post": {
+                "tags": [
+                    "Saved Addresses"
+                ],
+                "summary": "UC-06: Đặt địa chỉ mặc định",
+                "description": "Đặt một địa chỉ đã lưu làm địa chỉ mặc định cho việc giao hàng. Địa chỉ mặc định sẽ được tự động chọn khi tạo đơn hàng mới. Chỉ có thể đặt địa chỉ thuộc về tài khoản người dùng.\n\n**Preconditions:** Người dùng đã đăng nhập với vai trò Customer. Địa chỉ tồn tại và thuộc về tài khoản người dùng.\n\n**Postconditions:** Địa chỉ được chọn sẽ trở thành địa chỉ mặc định. Địa chỉ mặc định trước đó sẽ bị hủy.",
+                "operationId": "a20039d3dce8d7f557932d6580d6ba0d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của địa chỉ cần đặt làm mặc định",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Đặt địa chỉ mặc định thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "data",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "$ref": "#/components/schemas/SavedAddressResponse"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đặt địa chỉ mặc định thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Không có quyền cập nhật địa chỉ này",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Bạn không có quyền cập nhật địa chỉ này."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy địa chỉ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không tìm thấy địa chỉ."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Lỗi server",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "success",
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Không thể cập nhật địa chỉ lúc này. Vui lòng thử lại sau."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "ProfileResponse": {
+                "description": "Thông tin hồ sơ người dùng",
+                "required": [
+                    "id",
+                    "role",
+                    "phone",
+                    "is_verified",
+                    "is_phone_verified"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "ID người dùng",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "role": {
+                        "description": "Vai trò: 1=Driver, 2=Customer, 3=Merchant",
+                        "type": "integer",
+                        "example": 2,
+                        "enum": [
+                            1,
+                            2,
+                            3
+                        ]
+                    },
+                    "role_label": {
+                        "description": "Tên vai trò",
+                        "type": "string",
+                        "example": "Khách hàng"
+                    },
+                    "avatar": {
+                        "description": "Ảnh đại diện",
+                        "properties": {
+                            "value": {
+                                "type": "string",
+                                "example": "https://example.com/avatar.jpg",
+                                "nullable": true
+                            },
+                            "display": {
+                                "type": "string",
+                                "example": "Chưa cập nhật"
+                            },
+                            "field": {
+                                "type": "string",
+                                "example": "avatar"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "full_name": {
+                        "properties": {
+                            "value": {
+                                "type": "string",
+                                "example": "Nguyễn Văn A",
+                                "nullable": true
+                            },
+                            "display": {
+                                "type": "string",
+                                "example": "Nguyễn Văn A"
+                            },
+                            "field": {
+                                "type": "string",
+                                "example": "full_name"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "phone": {
+                        "description": "Số điện thoại",
+                        "type": "string",
+                        "example": "0912345678"
+                    },
+                    "email": {
+                        "properties": {
+                            "value": {
+                                "type": "string",
+                                "example": "user@example.com",
+                                "nullable": true
+                            },
+                            "display": {
+                                "type": "string",
+                                "example": "Chưa cập nhật"
+                            },
+                            "field": {
+                                "type": "string",
+                                "example": "email"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "gender": {
+                        "properties": {
+                            "value": {
+                                "type": "integer",
+                                "example": 1,
+                                "nullable": true,
+                                "enum": [
+                                    1,
+                                    2,
+                                    3
+                                ]
+                            },
+                            "display": {
+                                "type": "string",
+                                "example": "Nam"
+                            },
+                            "field": {
+                                "type": "string",
+                                "example": "gender"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "gender_label": {
+                        "type": "string",
+                        "example": "Nam",
+                        "nullable": true
+                    },
+                    "address": {
+                        "properties": {
+                            "value": {
+                                "type": "string",
+                                "example": "123 Đường ABC, Quận 1, TP.HCM",
+                                "nullable": true
+                            },
+                            "display": {
+                                "type": "string",
+                                "example": "Chưa cập nhật"
+                            },
+                            "field": {
+                                "type": "string",
+                                "example": "address"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "citizen_id": {
+                        "properties": {
+                            "value": {
+                                "type": "string",
+                                "example": "123456789012",
+                                "nullable": true
+                            },
+                            "display": {
+                                "type": "string",
+                                "example": "Chưa cập nhật"
+                            },
+                            "field": {
+                                "type": "string",
+                                "example": "citizen_id"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "is_verified": {
+                        "description": "Đã xác thực tài khoản",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_phone_verified": {
+                        "description": "Đã xác thực số điện thoại",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:30:00Z",
+                        "nullable": true
+                    },
+                    "customer_specific": {
+                        "description": "Thông tin riêng cho Customer",
+                        "properties": {
+                            "birthday": {
+                                "type": "string",
+                                "example": "1990-01-15",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "driver_specific": {
+                        "description": "Thông tin riêng cho Driver",
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "merchant_specific": {
+                        "description": "Thông tin riêng cho Merchant",
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "SavedAddressResponse": {
+                "description": "Thông tin địa chỉ đã lưu",
+                "required": [
+                    "id",
+                    "label",
+                    "name",
+                    "address_text",
+                    "location",
+                    "receiver_name",
+                    "receiver_phone",
+                    "is_default"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "ID địa chỉ",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "label": {
+                        "description": "Nhãn: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác",
+                        "type": "integer",
+                        "example": 1,
+                        "enum": [
+                            1,
+                            2,
+                            3,
+                            4
+                        ]
+                    },
+                    "label_text": {
+                        "description": "Tên nhãn",
+                        "type": "string",
+                        "example": "Nhà"
+                    },
+                    "name": {
+                        "description": "Tên gợi nhớ",
+                        "type": "string",
+                        "example": "Nhà A",
+                        "maxLength": 200
+                    },
+                    "address_text": {
+                        "description": "Địa chỉ đầy đủ",
+                        "type": "string",
+                        "example": "123 Đường ABC, Phường 5, Quận 1, TP.HCM",
+                        "maxLength": 500
+                    },
+                    "location": {
+                        "description": "Tọa độ địa lý",
+                        "properties": {
+                            "latitude": {
+                                "type": "number",
+                                "format": "double",
+                                "example": 10.7629
+                            },
+                            "longitude": {
+                                "type": "number",
+                                "format": "double",
+                                "example": 106.6818
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "receiver_name": {
+                        "description": "Tên người nhận",
+                        "type": "string",
+                        "example": "Nguyễn Văn A",
+                        "maxLength": 100
+                    },
+                    "receiver_phone": {
+                        "description": "SĐT người nhận",
+                        "type": "string",
+                        "example": "0912345678",
+                        "maxLength": 20
+                    },
+                    "note": {
+                        "description": "Ghi chú",
+                        "type": "string",
+                        "example": "Gần siêu thị",
+                        "nullable": true,
+                        "maxLength": 500
+                    },
+                    "is_default": {
+                        "description": "Là địa chỉ mặc định",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:30:00Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-15T10:30:00Z"
+                    }
+                },
+                "type": "object"
+            },
+            "OtpRequiredResponse": {
+                "description": "Response yêu cầu xác thực OTP",
+                "required": [
+                    "success",
+                    "data",
+                    "message"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "OTP Required Response Schema\nSchema cho response yêu cầu xác thực OTP",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "data": {
+                        "properties": {
+                            "requires_otp": {
+                                "type": "boolean",
+                                "example": true
+                            },
+                            "sensitive_fields": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "example": [
+                                    "phone",
+                                    "email"
+                                ]
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Có thay đổi thông tin nhạy cảm. Vui lòng xác thực OTP."
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorResponse": {
+                "description": "Response lỗi",
+                "required": [
+                    "success",
+                    "message"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "Error Response Schema\nSchema cho response lỗi",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Có lỗi xảy ra."
+                    },
+                    "errors": {
+                        "description": "Danh sách lỗi validation",
+                        "type": "object",
+                        "nullable": true,
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ForbiddenResponse": {
+                "description": "Lỗi không có quyền truy cập hoặc tài khoản bị khóa",
+                "required": [
+                    "success",
+                    "message"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "Forbidden Response Schema",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Tài khoản của bạn đã bị khóa hoặc bạn không có quyền thực hiện hành động này."
+                    }
+                },
+                "type": "object"
+            },
+            "ValidationErrorResponse": {
+                "description": "Lỗi dữ liệu đầu vào không hợp lệ",
+                "required": [
+                    "success",
+                    "message",
+                    "errors"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "Validation Error Response Schema",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Dữ liệu không hợp lệ."
+                    },
+                    "errors": {
+                        "type": "object",
+                        "additionalProperties": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "ServerErrorResponse": {
+                "description": "Lỗi server nội bộ",
+                "required": [
+                    "success",
+                    "message"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "Server Error Response Schema",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Có lỗi xảy ra trên hệ thống. Vui lòng thử lại sau."
+                    }
+                },
+                "type": "object"
+            },
+            "UnauthorizedResponse": {
+                "description": "Lỗi chưa đăng nhập hoặc token hết hạn",
+                "required": [
+                    "success",
+                    "message"
+                ],
+                "properties": {
+                    "success": {
+                        "description": "Unauthorized Response Schema",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Vui lòng đăng nhập để thực hiện hành động này."
+                    }
+                },
+                "type": "object"
+            },
+            "VerifyOtpProfileRequest": {
+                "description": "Request body để xác thực OTP khi thay đổi thông tin nhạy cảm",
+                "required": [
+                    "otp"
+                ],
+                "properties": {
+                    "otp": {
+                        "description": "Mã OTP gồm 6 chữ số",
+                        "type": "string",
+                        "example": "123456"
+                    },
+                    "sensitive_data": {
+                        "description": "Dữ liệu nhạy cảm cần cập nhật (ví dụ: phone hoặc email)",
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ChangePasswordRequest": {
+                "description": "Request body để thay đổi mật khẩu",
+                "required": [
+                    "current_password",
+                    "new_password",
+                    "new_password_confirmation"
+                ],
+                "properties": {
+                    "current_password": {
+                        "description": "Mật khẩu hiện tại",
+                        "type": "string",
+                        "example": "OldPassword123!"
+                    },
+                    "new_password": {
+                        "description": "Mật khẩu mới (tối thiểu 8 ký tự, bao gồm chữ và số)",
+                        "type": "string",
+                        "example": "NewPassword123!"
+                    },
+                    "new_password_confirmation": {
+                        "description": "Xác nhận mật khẩu mới",
+                        "type": "string",
+                        "example": "NewPassword123!"
+                    }
+                },
+                "type": "object"
+            }
+        },
+        "securitySchemes": {
+            "sanctum": {
+                "type": "apiKey",
+                "description": "Enter token in format (Bearer <token>)",
+                "name": "Authorization",
+                "in": "header"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Auth",
+            "description": "Auth"
+        },
+        {
+            "name": "User Profile",
+            "description": "User Profile"
+        },
+        {
+            "name": "Saved Addresses",
+            "description": "Saved Addresses"
+        }
+    ]
+}

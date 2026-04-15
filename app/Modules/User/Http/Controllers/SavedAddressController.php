@@ -8,7 +8,6 @@ use App\Core\Controller\BaseController;
 use App\Modules\User\Http\Requests\SaveAddressRequest;
 use App\Modules\User\Http\Requests\UpdateAddressRequest;
 use App\Modules\User\Interfaces\SavedAddressServiceInterface;
-use App\Modules\User\Model\CustomerSavedAddress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
@@ -83,16 +82,17 @@ class SavedAddressController extends BaseController
     )]
     public function index(Request $request): JsonResponse
     {
-        try {
-            $serviceReturn = $this->savedAddressService->getAddresses($request->user());
+        $serviceReturn = $this->savedAddressService->getAddresses($request->user());
 
-            return $this->sendSuccess(
-                data: $serviceReturn->getData(),
-                message: 'Lấy danh sách địa chỉ thành công.'
-            );
-        } catch (ServiceException $e) {
-            return $this->sendError($e->getMessage(), $e->getCode());
+        if ($serviceReturn->isError()) {
+            return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode() ?: 400);
         }
+
+        return $this->sendSuccess(
+            data: $serviceReturn->getData(),
+            message: 'Lấy danh sách địa chỉ thành công.'
+        );
+
     }
 
     /**
@@ -158,16 +158,18 @@ class SavedAddressController extends BaseController
     )]
     public function show(int $id, Request $request): JsonResponse
     {
-        try {
-            $serviceReturn = $this->savedAddressService->getAddress($request->user(), $id);
 
-            return $this->sendSuccess(
-                data: $serviceReturn->getData(),
-                message: 'Lấy thông tin địa chỉ thành công.'
-            );
-        } catch (ServiceException $e) {
-            return $this->sendError($e->getMessage(), $e->getCode());
+        $serviceReturn = $this->savedAddressService->getAddress($request->user(), $id);
+
+        if ($serviceReturn->isError()) {
+            return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode() ?: 400);
         }
+
+        return $this->sendSuccess(
+            data: $serviceReturn->getData(),
+            message: 'Lấy thông tin địa chỉ thành công.'
+        );
+
     }
 
     /**
@@ -182,20 +184,13 @@ class SavedAddressController extends BaseController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['label', 'name', 'address_text', 'location'],
+                required: ['label', 'name', 'address_text', 'lat', 'lng'],
                 properties: [
-                    new OA\Property(property: 'label', type: 'integer', enum: [1, 2, 3, 4], example: 1, description: 'Nhãn địa chỉ: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác'),
-                    new OA\Property(property: 'name', type: 'string', maxLength: 200, example: 'Nhà A', description: 'Tên gợi nhớ cho địa chỉ'),
-                    new OA\Property(property: 'address_text', type: 'string', maxLength: 500, example: '123 Đường ABC, Phường 5, Quận 1, TP.HCM', description: 'Địa chỉ đầy đủ dạng text'),
-                    new OA\Property(
-                        property: 'location',
-                        description: 'Tọa độ địa lý',
-                        properties: [
-                            new OA\Property(property: 'latitude', type: 'number', format: 'double', example: 10.7629, description: 'Vĩ độ'),
-                            new OA\Property(property: 'longitude', type: 'number', format: 'double', example: 106.6818, description: 'Kinh độ')
-                        ],
-                        type: 'object'
-                    ),
+                    new OA\Property(property: 'label', description: 'Nhãn địa chỉ: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác', type: 'integer', example: 1, enum: [1, 2, 3, 4]),
+                    new OA\Property(property: 'name', description: 'Tên gợi nhớ cho địa chỉ', type: 'string', example: 'Nhà A', maxLength: 200),
+                    new OA\Property(property: 'address_text', description: 'Địa chỉ đầy đủ dạng text', type: 'string', example: '123 Đường ABC, Phường 5, Quận 1, TP.HCM', maxLength: 500),
+                    new OA\Property(property: 'lat', type: 'number', example: 10.7890, description: 'Vĩ độ'),
+                    new OA\Property(property: 'lng', type: 'number', example: 106.7000, description: 'Kinh độ'),
                     new OA\Property(property: 'receiver_name', type: 'string', maxLength: 100, example: 'Nguyễn Văn A', description: 'Tên người nhận (mặc định: full_name của user)'),
                     new OA\Property(property: 'receiver_phone', type: 'string', maxLength: 20, example: '0912345678', description: 'Số điện thoại người nhận (mặc định: phone của user)'),
                     new OA\Property(property: 'note', type: 'string', maxLength: 500, example: 'Gần siêu thị', description: 'Ghi chú thêm cho tài xế'),
@@ -261,19 +256,19 @@ class SavedAddressController extends BaseController
     )]
     public function store(SaveAddressRequest $request): JsonResponse
     {
-        try {
-            $serviceReturn = $this->savedAddressService->createAddress(
-                $request->user(),
-                $request->validated()
-            );
+        $serviceReturn = $this->savedAddressService->createAddress(
+            $request->user(),
+            $request->validated()
+        );
 
-            return $this->sendSuccess(
-                data: $serviceReturn->getData(),
-                message: 'Địa chỉ đã được lưu thành công.'
-            );
-        } catch (ServiceException $e) {
-            return $this->sendError($e->getMessage(), $e->getCode());
+        if ($serviceReturn->isError()) {
+            return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode() ?: 400);
         }
+
+        return $this->sendSuccess(
+            data: $serviceReturn->getData(),
+            message: 'Địa chỉ đã được lưu thành công.'
+        );
     }
 
     /**
@@ -288,20 +283,13 @@ class SavedAddressController extends BaseController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['label', 'name', 'address_text', 'location'],
+                required: ['label', 'name', 'address_text', 'lat', 'lng'],
                 properties: [
                     new OA\Property(property: 'label', type: 'integer', enum: [1, 2, 3, 4], example: 1, description: 'Nhãn địa chỉ: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác'),
                     new OA\Property(property: 'name', type: 'string', maxLength: 200, example: 'Nhà B', description: 'Tên gợi nhớ cho địa chỉ'),
                     new OA\Property(property: 'address_text', type: 'string', maxLength: 500, example: '456 Đường XYZ, Phường 3, Quận 2, TP.HCM', description: 'Địa chỉ đầy đủ dạng text'),
-                    new OA\Property(
-                        property: 'location',
-                        description: 'Tọa độ địa lý',
-                        properties: [
-                            new OA\Property(property: 'latitude', type: 'number', format: 'double', example: 10.7890, description: 'Vĩ độ'),
-                            new OA\Property(property: 'longitude', type: 'number', format: 'double', example: 106.7000, description: 'Kinh độ')
-                        ],
-                        type: 'object'
-                    ),
+                    new OA\Property(property: 'lat', type: 'number', example: 10.7890, description: 'Vĩ độ'),
+                    new OA\Property(property: 'lng', type: 'number', example: 106.7000, description: 'Kinh độ'),
                     new OA\Property(property: 'receiver_name', type: 'string', maxLength: 100, example: 'Nguyễn Văn B', description: 'Tên người nhận'),
                     new OA\Property(property: 'receiver_phone', type: 'string', maxLength: 20, example: '0987654321', description: 'Số điện thoại người nhận'),
                     new OA\Property(property: 'note', type: 'string', maxLength: 500, example: 'Gần trường học', description: 'Ghi chú thêm cho tài xế')
@@ -374,20 +362,21 @@ class SavedAddressController extends BaseController
     )]
     public function update(int $id, UpdateAddressRequest $request): JsonResponse
     {
-        try {
-            $serviceReturn = $this->savedAddressService->updateAddress(
-                $request->user(),
-                $id,
-                $request->validated()
-            );
 
-            return $this->sendSuccess(
-                data: $serviceReturn->getData(),
-                message: 'Cập nhật địa chỉ thành công.'
-            );
-        } catch (ServiceException $e) {
-            return $this->sendError($e->getMessage(), $e->getCode());
+        $serviceReturn = $this->savedAddressService->updateAddress(
+            $request->user(),
+            $id,
+            $request->validated()
+        );
+
+        if ($serviceReturn->isError()) {
+            return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode() ?: 400);
         }
+
+        return $this->sendSuccess(
+            data: $serviceReturn->getData(),
+            message: 'Cập nhật địa chỉ thành công.'
+        );
     }
 
     /**
@@ -452,15 +441,17 @@ class SavedAddressController extends BaseController
     )]
     public function destroy(int $id, Request $request): JsonResponse
     {
-        try {
-            $this->savedAddressService->deleteAddress($request->user(), $id);
+        $serviceReturn = $this->savedAddressService->deleteAddress($request->user(), $id);
 
-            return $this->sendSuccess(
-                message: 'Xóa địa chỉ thành công.'
-            );
-        } catch (ServiceException $e) {
-            return $this->sendError($e->getMessage(), $e->getCode());
+        if ($serviceReturn->isError()) {
+            return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode() ?: 400);
         }
+
+        return $this->sendSuccess(
+            data: $serviceReturn->getData(),
+            message: 'Xóa địa chỉ thành công.'
+        );
+
     }
 
     /**
@@ -526,15 +517,15 @@ class SavedAddressController extends BaseController
     )]
     public function setDefault(int $id, Request $request): JsonResponse
     {
-        try {
-            $serviceReturn = $this->savedAddressService->setAsDefault($request->user(), $id);
+        $serviceReturn = $this->savedAddressService->setAsDefault($request->user(), $id);
 
-            return $this->sendSuccess(
-                data: $serviceReturn->getData(),
-                message: 'Đặt địa chỉ mặc định thành công.'
-            );
-        } catch (ServiceException $e) {
-            return $this->sendError($e->getMessage(), $e->getCode());
+        if ($serviceReturn->isError()) {
+            return $this->sendError(message: $serviceReturn->getMessage(), code: $serviceReturn->getCode() ?: 400);
         }
+
+        return $this->sendSuccess(
+            data: $serviceReturn->getData(),
+            message: 'Đặt địa chỉ mặc định thành công.'
+        );
     }
 }

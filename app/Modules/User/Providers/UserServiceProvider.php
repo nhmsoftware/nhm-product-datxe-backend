@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
+use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use App\Modules\User\Interfaces\ProfileRepositoryInterface;
 use App\Modules\User\Interfaces\ProfileServiceInterface;
 use App\Modules\User\Interfaces\SavedAddressRepositoryInterface;
@@ -15,6 +16,7 @@ use App\Modules\User\Repositories\SavedAddressRepository;
 use App\Modules\User\Repositories\UserRepository;
 use App\Modules\User\Services\ProfileService;
 use App\Modules\User\Services\SavedAddressService;
+use Illuminate\Routing\Router;
 
 class UserServiceProvider extends BaseModuleServiceProvider
 {
@@ -37,6 +39,11 @@ class UserServiceProvider extends BaseModuleServiceProvider
 
     public function boot(): void
     {
+        // Đăng ký middleware kiểm tra trạng thái tài khoản
+        /** @var Router $router */
+        $router = $this->app['router'];
+        $router->aliasMiddleware('check.account.status', CheckAccountStatus::class);
+
         parent::boot();
     }
 }

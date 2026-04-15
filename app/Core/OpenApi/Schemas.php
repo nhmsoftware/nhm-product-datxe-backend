@@ -120,26 +120,19 @@ class Schemas
     #[OA\Schema(
         schema: 'SavedAddressResponse',
         description: 'Thông tin địa chỉ đã lưu',
-        required: ['id', 'label', 'name', 'address_text', 'location', 'receiver_name', 'receiver_phone', 'is_default'],
+        required: ['id', 'label', 'name', 'address_text', 'lat', 'lng', 'receiver_name', 'receiver_phone', 'is_default'],
         properties: [
             new OA\Property(property: 'id', type: 'integer', example: 1, description: 'ID địa chỉ'),
             new OA\Property(property: 'label', type: 'integer', enum: [1, 2, 3, 4], example: 1, description: 'Nhãn: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác'),
             new OA\Property(property: 'label_text', type: 'string', example: 'Nhà', description: 'Tên nhãn'),
             new OA\Property(property: 'name', type: 'string', maxLength: 200, example: 'Nhà A', description: 'Tên gợi nhớ'),
             new OA\Property(property: 'address_text', type: 'string', maxLength: 500, example: '123 Đường ABC, Phường 5, Quận 1, TP.HCM', description: 'Địa chỉ đầy đủ'),
-            new OA\Property(
-                property: 'location',
-                description: 'Tọa độ địa lý',
-                properties: [
-                    new OA\Property(property: 'latitude', type: 'number', format: 'double', example: 10.7629),
-                    new OA\Property(property: 'longitude', type: 'number', format: 'double', example: 106.6818)
-                ],
-                type: 'object'
-            ),
-            new OA\Property(property: 'receiver_name', type: 'string', maxLength: 100, example: 'Nguyễn Văn A', description: 'Tên người nhận'),
-            new OA\Property(property: 'receiver_phone', type: 'string', maxLength: 20, example: '0912345678', description: 'SĐT người nhận'),
-            new OA\Property(property: 'note', type: 'string', nullable: true, maxLength: 500, example: 'Gần siêu thị', description: 'Ghi chú'),
-            new OA\Property(property: 'is_default', type: 'boolean', example: true, description: 'Là địa chỉ mặc định'),
+            new OA\Property(property: 'lat', type: 'number', format: 'double', example: 10.7629),
+            new OA\Property(property: 'lng', type: 'number', format: 'double', example: 106.6818),
+            new OA\Property(property: 'receiver_name', description: 'Tên người nhận', type: 'string', example: 'Nguyễn Văn A', maxLength: 100),
+            new OA\Property(property: 'receiver_phone', type: 'string', example: '0912345678:', maxLength: 20),
+            new OA\Property(property: 'note', description: 'Ghi chú', type: 'string', example: 'Gần siêu thị', nullable: true, maxLength: 500),
+            new OA\Property(property: 'is_default', description: 'Là địa chỉ mặc định', type: 'boolean', example: true),
             new OA\Property(property: 'created_at', type: 'string', format: 'date-time', example: '2024-01-15T10:30:00Z'),
             new OA\Property(property: 'updated_at', type: 'string', format: 'date-time', example: '2024-01-15T10:30:00Z')
         ]
@@ -269,9 +262,10 @@ class Schemas
         description: 'Request body để xác thực OTP khi thay đổi thông tin nhạy cảm',
         required: ['otp'],
         properties: [
-            new OA\Property(property: 'otp', type: 'string', example: '123456', description: 'Mã OTP gồm 6 chữ số'),
+            new OA\Property(property: 'otp', description: 'Mã OTP gồm 6 chữ số', type: 'string', example: '123456'),
             new OA\Property(
                 property: 'sensitive_data',
+                title: 'Dữ liệu nhạy cảm cần cập nhật',
                 description: 'Dữ liệu nhạy cảm cần cập nhật (ví dụ: phone hoặc email)',
                 type: 'object',
                 nullable: true

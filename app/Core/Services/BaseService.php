@@ -89,15 +89,18 @@ abstract class BaseService
     }
 
     /**
-     * Validate điều kiện
-     * @param bool $condition
-     * @param string $errorMessage
+     * Validate điều kiện — ném ServiceException nếu sai.
+     * Sử dụng thay thế cho `ServiceReturn::error()` trong Service.
+     *
+     * @param bool   $condition    Điều kiện cần thỏa mãn. Nếu false, sế throw.
+     * @param string $errorMessage Thông điệp lỗi trả về cho client.
+     * @param int    $code         HTTP status code (mặc định 400). VD: 404, 403, 422.
      * @throws ServiceException
      */
-    protected function validate(bool $condition, string $errorMessage): void
+    protected function validate(bool $condition, string $errorMessage, int $code = 400): void
     {
         if (!$condition) {
-            throw new ServiceException($errorMessage,400);
+            throw new ServiceException($errorMessage, $code);
         }
     }
     /**
