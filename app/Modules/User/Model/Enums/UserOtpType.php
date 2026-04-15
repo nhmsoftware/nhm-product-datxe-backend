@@ -14,14 +14,16 @@ enum UserOtpType: int
     case VERIFY_LOGIN = 2;
     case VERIFY_FORGOT_PASSWORD = 3;
     case CHANGE_PROFILE = 4;
+    case VERIFY_DRIVER_REGISTER = 5;
 
     public function label(): string
     {
         return match ($this) {
-            self::VERIFY_REGISTER => 'Xác nhận đăng ký',
-            self::VERIFY_LOGIN => 'Xác nhận đăng nhập',
+            self::VERIFY_REGISTER        => 'Xác nhận đăng ký',
+            self::VERIFY_LOGIN           => 'Xác nhận đăng nhập',
             self::VERIFY_FORGOT_PASSWORD => 'Xác nhận quên mật khẩu',
-            self::CHANGE_PROFILE => 'Xác nhận thay đổi thông tin',
+            self::CHANGE_PROFILE         => 'Xác nhận thay đổi thông tin',
+            self::VERIFY_DRIVER_REGISTER => 'Xác nhận đăng ký tài xế',
         };
     }
 }

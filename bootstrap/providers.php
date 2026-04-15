@@ -1,6 +1,7 @@
 <?php
 
 use App\Modules\Auth\Providers\AuthServiceProvider;
+use App\Modules\Driver\Providers\DriverServiceProvider;
 use App\Modules\Finance\Providers\FinanceServiceProvider;
 use App\Modules\Homepage\Providers\HomepageServiceProvider;
 use App\Modules\Pricing\Providers\PricingServiceProviders;
@@ -20,5 +21,5 @@ return [
     FinanceServiceProvider::class,
     PricingServiceProviders::class,
     SocialiteServiceProvider::class,
-
+    DriverServiceProvider::class,
 ];
