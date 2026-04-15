@@ -6,10 +6,20 @@ namespace App\Modules\Ride\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
 use App\Modules\Ride\Interfaces\MapServiceInterface;
+use App\Modules\Ride\Interfaces\RideCallLogRepositoryInterface;
+use App\Modules\Ride\Interfaces\RideChatMessageRepositoryInterface;
+use App\Modules\Ride\Interfaces\RideCommunicationRealtimeInterface;
+use App\Modules\Ride\Interfaces\RideCommunicationServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
+use App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface;
+use App\Modules\Ride\Repositories\RideCallLogRepository;
+use App\Modules\Ride\Repositories\RideChatMessageRepository;
 use App\Modules\Ride\Repositories\RideRepository;
 use App\Modules\Ride\Services\GoongMapService;
+use App\Modules\Ride\Services\RedisRideCommunicationRealtimeService;
+use App\Modules\Ride\Services\RideCommunicationService;
+use App\Modules\Ride\Services\RedisRideTrackingRealtimeService;
 use App\Modules\Ride\Services\RideService;
 use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Ride\Events\RideCancellationRequested;
@@ -33,10 +43,15 @@ class RideServiceProvider extends BaseModuleServiceProvider
     {
         // ── Repositories ──
         $this->app->singleton(RideRepositoryInterface::class, RideRepository::class);
+        $this->app->singleton(RideChatMessageRepositoryInterface::class, RideChatMessageRepository::class);
+        $this->app->singleton(RideCallLogRepositoryInterface::class, RideCallLogRepository::class);
 
         // ── Services ──────
         $this->app->singleton(RideServiceInterface::class, RideService::class);
+        $this->app->singleton(RideCommunicationServiceInterface::class, RideCommunicationService::class);
         $this->app->singleton(MapServiceInterface::class, GoongMapService::class);
+        $this->app->singleton(RideTrackingRealtimeInterface::class, RedisRideTrackingRealtimeService::class);
+        $this->app->singleton(RideCommunicationRealtimeInterface::class, RedisRideCommunicationRealtimeService::class);
     }
 
     public function boot(): void
