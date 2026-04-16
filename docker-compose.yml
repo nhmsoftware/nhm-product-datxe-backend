@@ -62,6 +62,25 @@ services:
       timeout: 3s
       retries: 5
 
+  realtime:
+    build:
+      context: ../nhm-product-datxe-realtime
+      dockerfile: Dockerfile
+    container_name: nhm-realtime
+    restart: unless-stopped
+    volumes:
+      - ../nhm-product-datxe-realtime:/app
+      - /app/node_modules
+    ports:
+      - "8002:3001"
+    env_file: ../nhm-product-datxe-realtime/.env
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_healthy
+
 volumes:
   vendor:
   postgres_data:  # ✅
