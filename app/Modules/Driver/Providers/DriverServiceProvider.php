@@ -14,6 +14,12 @@ use App\Modules\Driver\Repositories\FileRecordRepository;
 use App\Modules\Driver\Services\DriverRegistrationService;
 use App\Modules\Driver\Services\DriverOperationService;
 
+use App\Modules\Driver\Events\RideAccepted;
+use App\Modules\Driver\Events\RideCancelled;
+use App\Modules\Driver\Listeners\NotifyRealtimeOnRideAccepted;
+use App\Modules\Driver\Listeners\NotifyRealtimeOnRideCancelled;
+use Illuminate\Support\Facades\Event;
+
 class DriverServiceProvider extends BaseModuleServiceProvider
 {
     protected function getModuleName(): string
@@ -49,5 +55,16 @@ class DriverServiceProvider extends BaseModuleServiceProvider
     public function boot(): void
     {
         parent::boot(); // Auto-load Routes/api.php và Config/
+
+        // Register event listeners
+        Event::listen(
+            RideAccepted::class,
+            NotifyRealtimeOnRideAccepted::class
+        );
+
+        Event::listen(
+            RideCancelled::class,
+            NotifyRealtimeOnRideCancelled::class
+        );
     }
 }

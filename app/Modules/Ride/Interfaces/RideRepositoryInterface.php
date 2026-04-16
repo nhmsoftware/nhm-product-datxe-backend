@@ -69,4 +69,28 @@ interface RideRepositoryInterface
      * @return bool
      */
     public function hasActiveRideByDriver(int $driverId): bool;
+
+    /**
+     * Tài xế nhận chuyến đi — cập nhật status ACCEPTED và gán driver_id (UC-32).
+     * @param int $rideId ID chuyến đi
+     * @param int $driverId ID tài khoản tài xế
+     * @return bool
+     */
+    public function acceptByDriver(int $rideId, int $driverId): bool;
+
+    /**
+     * Tài xế từ chối nhận đơn (UC-33 Reject).
+     * @param int $rideId
+     * @param int $driverId
+     * @return bool
+     */
+    public function rejectByDriver(int $rideId, int $driverId): bool;
+
+    /**
+     * Tài xế hủy chuyến sau khi đã nhận (UC-33 Cancel).
+     * @param int $rideId
+     * @param int $reasonId
+     * @return bool
+     */
+    public function cancelByDriver(int $rideId, int $reasonId): bool;
 }

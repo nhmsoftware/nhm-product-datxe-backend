@@ -34,7 +34,7 @@
                                         "example": "0901234567"
                                     },
                                     "type": {
-                                        "description": "1=Đăng ký, 2=Đăng nhập, 3=Quên mật khẩu",
+                                        "description": "1=Đăng ký, 2=Đăng nhập, 3=Quên mật khẩu, 4=Thay đổi thông tin, 5=Xác thực thông tin tài xế",
                                         "type": "integer",
                                         "example": 1
                                     }
@@ -112,6 +112,11 @@
                                     "device_type": {
                                         "type": "string",
                                         "example": "android"
+                                    },
+                                    "role": {
+                                        "description": "1=Admin, 2=Customer, 3=Driver, 4=Merchant",
+                                        "type": "integer",
+                                        "example": 1
                                     }
                                 },
                                 "type": "object"
@@ -260,28 +265,6 @@
                 }
             }
         },
-        "/api/v1/auth/me": {
-            "get": {
-                "tags": [
-                    "Auth"
-                ],
-                "summary": "Thông tin người dùng hiện tại",
-                "operationId": "3498279f7407630fbe5a79163e4bffaa",
-                "responses": {
-                    "200": {
-                        "description": "OK"
-                    },
-                    "401": {
-                        "description": "Chưa đăng nhập"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
         "/api/v1/auth/logout": {
             "post": {
                 "tags": [
@@ -355,23 +338,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Đăng nhập/đăng ký thành công",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "properties": {
-                                                "user": {},
-                                                "token": {}
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Đăng nhập/đăng ký thành công"
                     },
                     "400": {
                         "description": "Token không hợp lệ"
@@ -423,23 +390,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Đăng nhập/đăng ký thành công",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "properties": {
-                                                "user": {},
-                                                "token": {}
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Đăng nhập/đăng ký thành công"
                     },
                     "400": {
                         "description": "Token không hợp lệ"
@@ -448,6 +399,1074 @@
                         "description": "Validation error"
                     }
                 }
+            }
+        },
+        "/api/v1/driver/register/submit": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-30: Nộp hồ sơ đăng ký tài xế (Thông tin + KYC)",
+                "description": "UC-30 Nộp hồ sơ đăng ký tài xế (Thông tin cá nhân, phương tiện, KYC).",
+                "operationId": "59f77736e26ad5a33f06e5459376180f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "full_name",
+                                    "phone",
+                                    "citizen_id",
+                                    "vehicle_type",
+                                    "vehicle_name",
+                                    "vehicle_color",
+                                    "vehicle_number",
+                                    "vehicle_year",
+                                    "cccd_front",
+                                    "cccd_back",
+                                    "driver_license",
+                                    "vehicle_reg",
+                                    "criminal_record",
+                                    "health_cert",
+                                    "portrait",
+                                    "insurance"
+                                ],
+                                "properties": {
+                                    "full_name": {
+                                        "description": "Họ và tên",
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A"
+                                    },
+                                    "phone": {
+                                        "description": "Số điện thoại",
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "citizen_id": {
+                                        "description": "Số CMND",
+                                        "type": "string",
+                                        "example": "001234567890"
+                                    },
+                                    "vehicle_type": {
+                                        "description": "1: Bike, 2: Car 4 seats, 3: Car 7 seats, 4: Car 9 seats",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "vehicle_name": {
+                                        "description": "Tên phương tiện",
+                                        "type": "string",
+                                        "example": "Honda Wave Alpha"
+                                    },
+                                    "vehicle_color": {
+                                        "description": "Màu xe: 0=Khác, 1=Đỏ, 2=Xanh lá, 3=Xanh dương, 4=Vàng, 5=Cam, 6=Tím, 7=Nâu, 8=Đen, 9=Trắng",
+                                        "type": "integer",
+                                        "example": 8
+                                    },
+                                    "vehicle_number": {
+                                        "description": "Biển số xe",
+                                        "type": "string",
+                                        "example": "51K-12345"
+                                    },
+                                    "vehicle_year": {
+                                        "description": "Năm xuất xứ xe",
+                                        "type": "integer",
+                                        "example": 2020
+                                    },
+                                    "cccd_front": {
+                                        "description": "CCCD trước",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "cccd_back": {
+                                        "description": "CCCD sau",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "driver_license": {
+                                        "description": "Bằng lái xe",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "vehicle_reg": {
+                                        "description": "đăng ký xe",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "criminal_record": {
+                                        "description": "Lý lịch tư pháp",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "health_cert": {
+                                        "description": "Giấy chứng nhận sức khỏe",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "portrait": {
+                                        "description": "Hình ảnh",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "insurance": {
+                                        "description": "Bảo hiểm xe",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hồ sơ đăng ký tạo thành công — Pending Approval"
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ"
+                    },
+                    "403": {
+                        "description": "Tài khoản không được quyền đăng ký"
+                    },
+                    "409": {
+                        "description": "Đã là tài xế / hồ sơ đang pending"
+                    },
+                    "422": {
+                        "description": "File không hợp lệ / CCCD trùng / Biển số trùng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/status": {
+            "put": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-31: Cập nhật trạng thái Go Online / Go Offline",
+                "operationId": "800c64bb5a49044aae8e087ebe3ec0ab",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_online"
+                                ],
+                                "properties": {
+                                    "is_online": {
+                                        "description": "True để Online, False để Offline",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "current_lat": {
+                                        "description": "Bắt buộc nếu is_online = true",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.776889
+                                    },
+                                    "current_lng": {
+                                        "description": "Bắt buộc nếu is_online = true",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.700806
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ"
+                    },
+                    "403": {
+                        "description": "Tài khoản chưa được duyệt hoặc bị khóa"
+                    },
+                    "422": {
+                        "description": "Không thể cập nhật khi đang có chuyến"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/accept": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-32: Chấp nhận đơn hàng/chuyến xe",
+                "operationId": "519c3194f7234a35cfae24430a69939f",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "current_lat",
+                                    "current_lng"
+                                ],
+                                "properties": {
+                                    "current_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.776889
+                                    },
+                                    "current_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.700806
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Nhận đơn thành công"
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ"
+                    },
+                    "403": {
+                        "description": "Không đủ điều kiện nhận đơn"
+                    },
+                    "422": {
+                        "description": "Đơn không còn khả dụng hoặc driver đang bận"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/reject": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-33: Từ chối đơn hàng (Trước khi nhận)",
+                "operationId": "fc32e58825231b8b5b786b9ea5ec8189",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Từ chối thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    },
+                    "422": {
+                        "description": "Đơn không ở trạng thái chờ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/cancel": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-33: Hủy chuyến đi (Sau khi đã nhận)",
+                "operationId": "e0e1a8bc462e227f5491d4cdc940b1a4",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason_id"
+                                ],
+                                "properties": {
+                                    "reason_id": {
+                                        "description": "ID lý do hủy",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "current_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.776889
+                                    },
+                                    "current_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.700806
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hủy thành công"
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ"
+                    },
+                    "403": {
+                        "description": "Không có quyền hủy hoặc bị phạt"
+                    },
+                    "422": {
+                        "description": "Trạng thái đơn không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/rewards/overview": {
+            "get": {
+                "tags": [
+                    "Finance - Rewards"
+                ],
+                "summary": "Lấy tổng quan điểm thưởng (UC-24)",
+                "operationId": "514ccb6726bd0b32f62e15a50c5c3d63",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/rewards/history": {
+            "get": {
+                "tags": [
+                    "Finance - Rewards"
+                ],
+                "summary": "Lấy lịch sử giao dịch điểm (UC-24-4)",
+                "operationId": "6c8434cfb7e83f35cbf94175e584183d",
+                "parameters": [
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Loại giao dịch",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "enum": [
+                                1,
+                                2,
+                                3
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Ngày bắt đầu",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Ngày kết thúc",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số lượng giao dịch mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/rewards/history/{transactionId}": {
+            "get": {
+                "tags": [
+                    "Finance - Rewards"
+                ],
+                "summary": "Lấy chi tiết giao dịch điểm (UC-24-5)",
+                "operationId": "17e08c26a2256e43851dae2b3f5b25cf",
+                "parameters": [
+                    {
+                        "name": "transactionId",
+                        "in": "path",
+                        "description": "ID giao dịch",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/spending-summary": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Xem thống kê chi tiêu (UC-23)",
+                "description": "Lấy thông tin tổng hợp chi tiêu của khách hàng hiện tại theo khoảng thời gian (ngày/tuần/tháng/tùy chọn)",
+                "operationId": "c43d822cc58a177815868c0ac280c768",
+                "parameters": [
+                    {
+                        "name": "range",
+                        "in": "query",
+                        "description": "Loại khoảng thời gian: day (hôm nay), week (tuần này), month (tháng này), custom (tùy chọn)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "day",
+                                "week",
+                                "month",
+                                "custom"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Ngày bắt đầu (bắt buộc khi range=custom). Định dạng: Y-m-d",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Ngày kết thúc (bắt buộc khi range=custom). Định dạng: Y-m-d. Phải >= start_date",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công - Trả về thông tin tổng hợp chi tiêu"
+                    },
+                    "401": {
+                        "description": "Unauthorized - Token không hợp lệ hoặc đã hết hạn"
+                    },
+                    "422": {
+                        "description": "Validation Error - Dữ liệu không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vouchers": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Xem danh sách voucher (UC-21)",
+                "description": "Lấy danh sách các voucher đang hoạt động, có thể lọc theo loại dịch vụ (ride/food).",
+                "operationId": "d9cad419582a2a5e9d4e6b9db5dc1db7",
+                "parameters": [
+                    {
+                        "name": "service_type",
+                        "in": "query",
+                        "description": "Loại dịch vụ (ride hoặc food)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách voucher"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vouchers/{id}": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Xem chi tiết voucher (UC-21)",
+                "description": "Xem chi tiết điều kiện áp dụng và mô tả của một voucher cụ thể.",
+                "operationId": "b3d3172229e26fef298c0c2e34bea47f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của voucher",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chi tiết voucher"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy voucher"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vouchers/{id}/save": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Lưu voucher (UC-21 A5)",
+                "description": "Lưu voucher vào ví cá nhân để sử dụng sau.",
+                "operationId": "2bea8938b937a3f014910292a27c6173",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của voucher",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Đã lưu voucher thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/vouchers/{id}/apply-quick": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Áp dụng nhanh voucher (UC-22)",
+                "description": "Kiểm tra voucher và trả về màn hình đích tương ứng (Ride/Food/Delivery) để chuyển hướng.",
+                "operationId": "5411b6dd9444e747702d69ca6fdbba40",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của voucher",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin chuyển hướng và voucher"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/homepage": {
+            "get": {
+                "tags": [
+                    "Homepage"
+                ],
+                "summary": "Lấy dữ liệu trang chủ (UC-07)",
+                "description": "Trả về dữ liệu trang chủ bao gồm header, dịch vụ, địa chỉ đã lưu, banner, khuyến mãi và gợi ý quán ngon. Hỗ trợ cả Guest và Customer.",
+                "operationId": "290bd54f91cef7ccf9d9e9b8b3c0f938",
+                "parameters": [
+                    {
+                        "name": "lat",
+                        "in": "query",
+                        "description": "Vĩ độ hiện tại của người dùng",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "lng",
+                        "in": "query",
+                        "description": "Kinh độ hiện tại của người dùng",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/draft": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Tạo chuyến xe tạm thời (UC-08)",
+                "description": "Tạo một chuyến xe tạm thời (draft) sau khi người dùng nhập địa điểm và chọn loại xe. Hỗ trợ kiểm tra xác thực số điện thoại (A13 flow).",
+                "operationId": "062bc96934a9efc9c19324c891de71cb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "pickup_address",
+                                    "pickup_lat",
+                                    "pickup_lng",
+                                    "destination_address",
+                                    "destination_lat",
+                                    "destination_lng",
+                                    "vehicle_type"
+                                ],
+                                "properties": {
+                                    "pickup_address": {
+                                        "type": "string",
+                                        "example": "Số 1 Đào Duy Anh, Đống Đa, Hà Nội"
+                                    },
+                                    "pickup_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 21.0072
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.8428
+                                    },
+                                    "destination_address": {
+                                        "type": "string",
+                                        "example": "Vincom Mega Mall Ocean Park, Gia Lâm, Hà Nội"
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20.9944
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.9458
+                                    },
+                                    "vehicle_type": {
+                                        "description": "1: Bike, 2: Car 4 seats, 3: Car 7 seats, 4: Car 9 seats",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Chuyến xe tạm thời được tạo thành công"
+                    },
+                    "403": {
+                        "description": "Chưa xác thực số điện thoại (A13)"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/vehicles": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Lấy danh sách loại xe (UC-09)",
+                "description": "Lấy danh sách loại xe khả dụng kèm giá ước tính và thời gian chờ dựa trên tuyến đường của chuyến xe nháp.",
+                "operationId": "3307fa95b098850b22396b6738005131",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của ride draft",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách xe và giá ước tính"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/price": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Xem giá ước tính (UC-10)",
+                "description": "Xem chi tiết giá cước ước tính cho chuyến đi bao gồm cấu thành giá, khoảng cách, thời gian và mã giảm giá (nếu có).",
+                "operationId": "1c031d3a6c6698d85386f212ff05fbdd",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của ride draft",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chi tiết giá cước"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/voucher": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Áp dụng voucher (UC-11)",
+                "description": "Áp dụng mã giảm giá vào chuyến đi.",
+                "operationId": "484b632d8301b1b740635c6327985d20",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của ride draft",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "voucher_code"
+                                ],
+                                "properties": {
+                                    "voucher_code": {
+                                        "type": "string",
+                                        "example": "DEMO10"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Voucher được áp dụng thành công"
+                    },
+                    "422": {
+                        "description": "Voucher không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Xóa voucher (UC-11 A4)",
+                "description": "Hủy áp dụng voucher đã chọn, giá cước sẽ được khôi phục về giá gốc.",
+                "operationId": "2dfd26931a4469f86697a1ae0283e55e",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của ride draft",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Voucher đã được xóa, trả về giá gốc"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/confirm": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Xác nhận đặt xe (UC-12)",
+                "description": "Xác nhận đặt xe dựa trên giá trị draft. Hệ thống sẽ tính lại giá và so sánh với expected_price từ FE để báo lệch giá nếu có.",
+                "operationId": "3381684cb7f81eb00e88814a18bd3230",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của ride draft",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "expected_price"
+                                ],
+                                "properties": {
+                                    "expected_price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 25000
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Booking confirmed (Đang tìm tài xế)"
+                    },
+                    "409": {
+                        "description": "Giá đã thay đổi hoặc voucher không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Hủy chuyến xe (UC-15)",
+                "description": "Hủy chuyến xe sau khi đã đặt hoặc khi đang tìm tài xế.",
+                "operationId": "dafa2d153d472551bed7530132a0ecf0",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Thay đổi kế hoạch"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hủy chuyến thành công"
+                    },
+                    "400": {
+                        "description": "Không thể hủy chuyến"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/user/profile": {
@@ -547,10 +1566,85 @@
                     "User Profile"
                 ],
                 "summary": "UC-05: Cập nhật thông tin hồ sơ",
-                "description": "Cập nhật thông tin cá nhân của người dùng. Nếu thay đổi số điện thoại hoặc email, hệ thống sẽ yêu cầu xác thực OTP. Các trường driver-specific và merchant-specific sẽ được cập nhật tương ứng với vai trò.\n\n**Preconditions:** Người dùng đã đăng nhập. Tài khoản đang hoạt động. Token hợp lệ.\n\n**Postconditions:** Nếu thành công: Thông tin hồ sơ được cập nhật, trả về profile mới. Nếu có thay đổi nhạy cảm: Yêu cầu xác thực OTP qua endpoint /verify-otp.\n\n**Alternative Flows:**\nA1: Thay đổi số điện thoại → Gửi OTP đến số mới.\nA2: Thay đổi email → Gửi OTP xác thực.\nA5: Validation error → Trả về danh sách lỗi.\nA7: Lỗi server → Thông báo và cho thử lại.",
+                "description": "Cập nhật thông tin cá nhân của người dùng. Nếu thay đổi số điện thoại hoặc email, hệ thống sẽ yêu cầu xác thực OTP. Các trường driver-specific và merchant-specific sẽ được cập nhật tương ứng với vai trò.\n\n**Preconditions:** Người dùng đã đăng nhập. Tài khoản đang hoạt động. Token hợp lệ.\n\n**Postconditions:** Nếu thành công: Thông tin hồ sơ được cập nhật, trả về profile mới. Nếu có thay đổi nhạy cảm: Yêu cầu xác thực OTP qua endpoint /verify-otp.\n\n**Alternative Flows:**\nA1: Thay đổi số điện thoại → Gửi OTP đến số mới.\nA5: Validation error → Trả về danh sách lỗi.\nA7: Lỗi server → Thông báo và cho thử lại.",
                 "operationId": "77748350a35b9420525e9cd35db25194",
                 "requestBody": {
-                    "required": true
+                    "description": "Các trường thông tin cần cập nhật. Chỉ cần gửi những trường muốn thay đổi.",
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "full_name": {
+                                        "type": "string",
+                                        "example": "Nguyễn Văn B"
+                                    },
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "new.email@example.com"
+                                    },
+                                    "phone": {
+                                        "type": "string",
+                                        "example": "0123456789"
+                                    },
+                                    "gender": {
+                                        "type": "string",
+                                        "example": 1,
+                                        "enum": [
+                                            "male",
+                                            "female",
+                                            "other"
+                                        ]
+                                    },
+                                    "birthday": {
+                                        "description": "Ngày (YYYY-MM-DD)",
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "1995-08-15"
+                                    },
+                                    "avatar": {
+                                        "description": "URL ảnh đại diện mới",
+                                        "type": "string",
+                                        "example": "https://example.com/avatar.jpg"
+                                    },
+                                    "address": {
+                                        "description": "(Driver) thường trú",
+                                        "example": "123 Đường ABC, Quận 1, TP. HCM"
+                                    },
+                                    "identity_number": {
+                                        "description": "(Driver) Số CMND/CCCD",
+                                        "type": "string",
+                                        "example": "012345678912"
+                                    },
+                                    "license_plate": {
+                                        "description": "(Driver) Biển số xe",
+                                        "type": "string",
+                                        "example": "59-T1 123.45"
+                                    },
+                                    "vehicle_type_id": {
+                                        "description": "(Driver) ID loại xe",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "store_name": {
+                                        "description": "(Merchant) Tên cửa hàng",
+                                        "example": "Cửa hàng tiện lợi XYZ"
+                                    },
+                                    "store_address": {
+                                        "description": "(Merchant) thường trú",
+                                        "example": "456 Đường DEF, Quận 3, TP. HCM"
+                                    },
+                                    "tax_code": {
+                                        "description": "(Merchant) Mã số thuế",
+                                        "type": "string",
+                                        "example": "0312345678"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
                 },
                 "responses": {
                     "200": {
@@ -925,7 +2019,8 @@
                                     "label",
                                     "name",
                                     "address_text",
-                                    "location"
+                                    "lat",
+                                    "lng"
                                 ],
                                 "properties": {
                                     "label": {
@@ -951,23 +2046,15 @@
                                         "example": "123 Đường ABC, Phường 5, Quận 1, TP.HCM",
                                         "maxLength": 500
                                     },
-                                    "location": {
-                                        "description": "Tọa độ địa lý",
-                                        "properties": {
-                                            "latitude": {
-                                                "description": "Vĩ độ",
-                                                "type": "number",
-                                                "format": "double",
-                                                "example": 10.7629
-                                            },
-                                            "longitude": {
-                                                "description": "Kinh độ",
-                                                "type": "number",
-                                                "format": "double",
-                                                "example": 106.6818
-                                            }
-                                        },
-                                        "type": "object"
+                                    "lat": {
+                                        "description": "Vĩ độ",
+                                        "type": "number",
+                                        "example": 10.789
+                                    },
+                                    "lng": {
+                                        "description": "Kinh độ",
+                                        "type": "number",
+                                        "example": 106.7
                                     },
                                     "receiver_name": {
                                         "description": "Tên người nhận (mặc định: full_name của user)",
@@ -1273,7 +2360,8 @@
                                     "label",
                                     "name",
                                     "address_text",
-                                    "location"
+                                    "lat",
+                                    "lng"
                                 ],
                                 "properties": {
                                     "label": {
@@ -1299,23 +2387,15 @@
                                         "example": "456 Đường XYZ, Phường 3, Quận 2, TP.HCM",
                                         "maxLength": 500
                                     },
-                                    "location": {
-                                        "description": "Tọa độ địa lý",
-                                        "properties": {
-                                            "latitude": {
-                                                "description": "Vĩ độ",
-                                                "type": "number",
-                                                "format": "double",
-                                                "example": 10.789
-                                            },
-                                            "longitude": {
-                                                "description": "Kinh độ",
-                                                "type": "number",
-                                                "format": "double",
-                                                "example": 106.7
-                                            }
-                                        },
-                                        "type": "object"
+                                    "lat": {
+                                        "description": "Vĩ độ",
+                                        "type": "number",
+                                        "example": 10.789
+                                    },
+                                    "lng": {
+                                        "description": "Kinh độ",
+                                        "type": "number",
+                                        "example": 106.7
                                     },
                                     "receiver_name": {
                                         "description": "Tên người nhận",
@@ -1941,7 +3021,8 @@
                     "label",
                     "name",
                     "address_text",
-                    "location",
+                    "lat",
+                    "lng",
                     "receiver_name",
                     "receiver_phone",
                     "is_default"
@@ -1980,21 +3061,15 @@
                         "example": "123 Đường ABC, Phường 5, Quận 1, TP.HCM",
                         "maxLength": 500
                     },
-                    "location": {
-                        "description": "Tọa độ địa lý",
-                        "properties": {
-                            "latitude": {
-                                "type": "number",
-                                "format": "double",
-                                "example": 10.7629
-                            },
-                            "longitude": {
-                                "type": "number",
-                                "format": "double",
-                                "example": 106.6818
-                            }
-                        },
-                        "type": "object"
+                    "lat": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 10.7629
+                    },
+                    "lng": {
+                        "type": "number",
+                        "format": "double",
+                        "example": 106.6818
                     },
                     "receiver_name": {
                         "description": "Tên người nhận",
@@ -2003,9 +3078,8 @@
                         "maxLength": 100
                     },
                     "receiver_phone": {
-                        "description": "SĐT người nhận",
                         "type": "string",
-                        "example": "0912345678",
+                        "example": "0912345678:",
                         "maxLength": 20
                     },
                     "note": {
@@ -2200,6 +3274,7 @@
                         "example": "123456"
                     },
                     "sensitive_data": {
+                        "title": "Dữ liệu nhạy cảm cần cập nhật",
                         "description": "Dữ liệu nhạy cảm cần cập nhật (ví dụ: phone hoặc email)",
                         "type": "object",
                         "nullable": true
@@ -2247,6 +3322,26 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Driver",
+            "description": "Driver"
+        },
+        {
+            "name": "Finance - Rewards",
+            "description": "Finance - Rewards"
+        },
+        {
+            "name": "Finance",
+            "description": "Finance"
+        },
+        {
+            "name": "Homepage",
+            "description": "Homepage"
+        },
+        {
+            "name": "Ride",
+            "description": "Ride"
         },
         {
             "name": "User Profile",

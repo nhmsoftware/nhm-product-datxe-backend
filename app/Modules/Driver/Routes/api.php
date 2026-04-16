@@ -20,7 +20,19 @@ Route::prefix('v1/driver')
         Route::post('register/submit', [DriverController::class, 'submit'])
             ->name('register.submit');
 
-        // UC-31 — Cập nhật trạng thái Go Online / Go Offline
+        // UC-31: Cập nhật trạng thái Go Online / Go Offline
         Route::put('status', [DriverOperationController::class, 'toggleStatus'])
-            ->name('status.toggle');
+            ->name('driver.status.toggle');
+
+        // UC-32: Chấp nhận đơn hàng/chuyến xe
+        Route::post('ride/{rideId}/accept', [DriverOperationController::class, 'acceptOrder'])
+            ->name('driver.ride.accept');
+
+        // UC-33: Từ chối đơn hàng (Trước khi nhận)
+        Route::post('ride/{rideId}/reject', [DriverOperationController::class, 'rejectOrder'])
+            ->name('driver.ride.reject');
+
+        // UC-33: Hủy chuyến đi (Sau khi đã nhận)
+        Route::post('ride/{rideId}/cancel', [DriverOperationController::class, 'cancelOrder'])
+            ->name('driver.ride.cancel');
     });

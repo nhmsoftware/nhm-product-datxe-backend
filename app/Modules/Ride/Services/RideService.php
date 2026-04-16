@@ -25,14 +25,18 @@ use App\Modules\Ride\Model\Ride;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\User;
 use App\Modules\Ride\Interfaces\MapServiceInterface;
+use App\Modules\Finance\Interfaces\VoucherRepositoryInterface;
+use App\Modules\Finance\Model\Enums\VoucherDiscountType;
+use App\Modules\Finance\Model\Enums\VoucherServiceType;
 
 final class RideService extends BaseService implements RideServiceInterface
 {
     public function __construct(
-        private readonly RideRepositoryInterface $rideRepository,
-        private readonly MapServiceInterface     $mapService,
-        private readonly PricingServiceInterface $pricingService,
-        private readonly UserRepositoryInterface $userRepository
+        private readonly RideRepositoryInterface     $rideRepository,
+        private readonly MapServiceInterface          $mapService,
+        private readonly PricingServiceInterface      $pricingService,
+        private readonly UserRepositoryInterface      $userRepository,
+        private readonly VoucherRepositoryInterface   $voucherRepository
     ) {
     }
 
@@ -386,10 +390,10 @@ final class RideService extends BaseService implements RideServiceInterface
         return $this->pricingService->calculatePrice($pricingRequest);
     }
 
+
     /**
      * Kiểm tra tính hợp lệ của voucher và trả về số tiền giảm (UC-11).
      * Trả về null nếu voucher không hợp lệ.
-     * TODO: Khi có VoucherModule, inject VoucherServiceInterface để thay thế mock này.
      *
      * @param string $code Mã voucher
      * @param float $currentFare Giá cước hiện tại để kiểm tra điều kiện min_fare
@@ -397,29 +401,52 @@ final class RideService extends BaseService implements RideServiceInterface
      */
     private function resolveVoucherDiscount(string $code, float $currentFare): ?float
     {
-        if (strlen(trim($code)) < 3) {
+        $code = strtoupper(trim($code));
+        if (strlen($code) < 3) {
             return null;
         }
 
-        // Đây là mock data, trong thực tế sẽ query từ DB hoặc service khác
-        $mockVouchers = [
-            'DEMO10'  => ['discount_amount' => 10000, 'min_fare' => 50000],
-            'DEMO50'  => ['discount_amount' => 50000, 'min_fare' => 150000],
-            'DEMO100' => ['discount_amount' => 100000, 'min_fare' => 300000],
-        ];
+        $voucher = $this->voucherRepository->findByCode($code);
 
-        $upperCode = strtoupper(trim($code));
-
-        if (!isset($mockVouchers[$upperCode])) {
-            $this->throw('Voucher không tồn tại.', 409);
+        if (!$voucher) {
+            $this->throw('Mã giảm giá không tồn tại.', 409);
         }
 
-        $voucher = $mockVouchers[$upperCode];
-
-        if ($currentFare < (float) $voucher['min_fare']) {
-            $this->throw('Voucher không còn khả dụng. Giá cước không đủ để áp dụng voucher.', 409);
+        // 1. Kiểm tra tính hợp lệ cơ bản (Active, Thời hạn, Số lượng)
+        if (!$voucher->isValid()) {
+            if ($voucher->isExpired()) {
+                $this->throw('Mã giảm giá đã hết hạn hoặc hết lượt sử dụng.', 409);
+            }
+            $this->throw('Mã giảm giá không khả dụng hiện tại.', 409);
         }
 
-        return (float) $voucher['discount_amount'];
+        // 2. Kiểm tra loại dịch vụ (Phải áp dụng cho Ride)
+        $allowedServices = [VoucherServiceType::RIDE, VoucherServiceType::BOTH, VoucherServiceType::ALL];
+        if (!in_array($voucher->service_type, $allowedServices)) {
+            $this->throw('Mã giảm giá không áp dụng cho dịch vụ đặt xe.', 409);
+        }
+
+        // 3. Kiểm tra Min Order Amount
+        if ($currentFare < $voucher->min_order_amount) {
+            $this->throw(
+                sprintf('Giá trị đơn hàng chưa đủ để áp dụng mã này (Tối thiểu %s VNĐ).', number_format($voucher->min_order_amount)),
+                409
+            );
+        }
+
+        // 4. Tính toán số tiền giảm
+        $discount = 0.0;
+        if ($voucher->discount_type === VoucherDiscountType::FIXED) {
+            $discount = $voucher->discount_value;
+        } elseif ($voucher->discount_type === VoucherDiscountType::PERCENT) {
+            $discount = ($currentFare * $voucher->discount_value) / 100;
+
+            // Áp dụng trần giảm giá nếu có
+            if ($voucher->max_discount_amount > 0) {
+                $discount = min($discount, $voucher->max_discount_amount);
+            }
+        }
+
+        return (float) $discount;
     }
 }
