@@ -14,8 +14,10 @@ use App\Modules\Driver\Repositories\FileRecordRepository;
 use App\Modules\Driver\Services\DriverRegistrationService;
 use App\Modules\Driver\Services\DriverOperationService;
 
+use App\Modules\Driver\Events\DriverApplicationApproved;
 use App\Modules\Driver\Events\RideAccepted;
 use App\Modules\Driver\Events\RideCancelled;
+use App\Modules\Driver\Listeners\NotifyRealtimeOnDriverApproved;
 use App\Modules\Driver\Listeners\NotifyRealtimeOnRideAccepted;
 use App\Modules\Driver\Listeners\NotifyRealtimeOnRideCancelled;
 use Illuminate\Support\Facades\Event;
@@ -65,6 +67,11 @@ class DriverServiceProvider extends BaseModuleServiceProvider
         Event::listen(
             RideCancelled::class,
             NotifyRealtimeOnRideCancelled::class
+        );
+
+        Event::listen(
+            DriverApplicationApproved::class,
+            NotifyRealtimeOnDriverApproved::class
         );
     }
 }

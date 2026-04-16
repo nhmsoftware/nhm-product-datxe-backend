@@ -8,6 +8,7 @@ use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Driver\DTO\ApproveRegistrationDTO;
 use App\Modules\Driver\DTO\RegisterDriverSubmitDTO;
+use App\Modules\Driver\Events\DriverApplicationApproved;
 use App\Modules\Driver\Events\DriverApplicationSubmitted;
 use App\Modules\Driver\Interfaces\DriverRegistrationRepositoryInterface;
 use App\Modules\Driver\Interfaces\DriverRegistrationServiceInterface;
@@ -145,6 +146,9 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
                 'is_online'         => false,
                 'status'            => DriverStatus::ACTIVE->value, // Sẵn sàng hoạt động
             ]);
+
+            // - Raise Domain Event — Thông báo realtime cho frontend
+            event(new DriverApplicationApproved($application->id, (int) $userId));
 
             return [
                 'user_id'        => $userId,
