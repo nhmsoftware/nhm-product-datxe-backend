@@ -34,7 +34,7 @@
                                         "example": "0901234567"
                                     },
                                     "type": {
-                                        "description": "1=Đăng ký, 2=Đăng nhập, 3=Quên mật khẩu, 4=Thay đổi thông tin, 5=Xác thực thông tin tài xế",
+                                        "description": "Loại mã OTP. 1: Xác nhận đăng ký, 2: Xác nhận đăng nhập, 3: Xác nhận quên mật khẩu, 4: Xác nhận thay đổi thông tin, 5: Xác nhận đăng ký tài xế",
                                         "type": "integer",
                                         "example": 1
                                     }
@@ -114,9 +114,9 @@
                                         "example": "android"
                                     },
                                     "role": {
-                                        "description": "1=Admin, 2=Customer, 3=Driver, 4=Merchant",
+                                        "description": "Vai trò người dùng. 1: Quản trị viên (Admin), 2: Khách hàng (Customer), 3: Tài xế (Driver), 4: Quán ăn (Merchant)",
                                         "type": "integer",
-                                        "example": 1
+                                        "example": 2
                                     }
                                 },
                                 "type": "object"
@@ -449,7 +449,7 @@
                                         "example": "001234567890"
                                     },
                                     "vehicle_type": {
-                                        "description": "1: Bike, 2: Car 4 seats, 3: Car 7 seats, 4: Car 9 seats",
+                                        "description": "Loại phương tiện. 1: Xe Máy (Bike), 2: Ô Tô 4 Chỗ (Car 4 Seats), 3: Ô Tô 7 Chỗ (Car 7 Seats), 4: Ô Tô 9 Chỗ (Car 9 Seats)",
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -459,7 +459,7 @@
                                         "example": "Honda Wave Alpha"
                                     },
                                     "vehicle_color": {
-                                        "description": "Màu xe: 0=Khác, 1=Đỏ, 2=Xanh lá, 3=Xanh dương, 4=Vàng, 5=Cam, 6=Tím, 7=Nâu, 8=Đen, 9=Trắng",
+                                        "description": "Màu sắc xe tiêu chuẩn. 0: Màu Khác, 1: Đỏ, 2: Xanh lá, 3: Xanh dương, 4: Vàng, 5: Cam, 6: Tím, 7: Nâu, 8: Đen, 9: Trắng",
                                         "type": "integer",
                                         "example": 8
                                     },
@@ -732,7 +732,7 @@
                                 ],
                                 "properties": {
                                     "reason_id": {
-                                        "description": "ID lý do hủy",
+                                        "description": "ID lý do hủy chuyến. 1: Khách không ra (Customer No Show), 2: Xe hỏng (Vehicle Broken), 3: Đặt sai điểm (Wrong Location), 4: Khác (Other)",
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -803,7 +803,7 @@
                     {
                         "name": "type",
                         "in": "query",
-                        "description": "Loại giao dịch",
+                        "description": "Loại giao dịch điểm. 1: Tích điểm (Earn), 2: Sử dụng điểm (Redeem), 3: Điểm hết hạn (Expire)",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -846,7 +846,17 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Thành công"
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/RewardTransactionResponse"
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -961,16 +971,30 @@
                     {
                         "name": "service_type",
                         "in": "query",
-                        "description": "Loại dịch vụ (ride hoặc food)",
+                        "description": "Lọc voucher theo dịch vụ. \"ride\": Chuyến xe, \"food\": Đồ ăn. Nếu để trống sẽ lấy tất cả.",
                         "required": false,
                         "schema": {
-                            "type": "string"
+                            "type": "string",
+                            "enum": [
+                                "ride",
+                                "food"
+                            ]
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Danh sách voucher"
+                        "description": "Danh sách voucher",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/VoucherResponse"
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1190,7 +1214,7 @@
                                         "example": 105.9458
                                     },
                                     "vehicle_type": {
-                                        "description": "1: Bike, 2: Car 4 seats, 3: Car 7 seats, 4: Car 9 seats",
+                                        "description": "Loại phương tiện hỗ trợ. 1: Xe Máy (Bike), 2: Ô Tô 4 Chỗ (Car 4 Seats), 3: Ô Tô 7 Chỗ (Car 7 Seats), 4: Ô Tô 9 Chỗ (Car 9 Seats)",
                                         "type": "integer",
                                         "example": 1
                                     }
@@ -1270,7 +1294,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Chi tiết giá cước"
+                        "description": "Chi tiết giá cước",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PriceEstimateResponse"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1403,7 +1434,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Booking confirmed (Đang tìm tài xế)"
+                        "description": "Booking confirmed (Đang tìm tài xế)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RideResponse"
+                                }
+                            }
+                        }
                     },
                     "409": {
                         "description": "Giá đã thay đổi hoặc voucher không hợp lệ"
@@ -1589,13 +1627,9 @@
                                         "example": "0123456789"
                                     },
                                     "gender": {
-                                        "type": "string",
-                                        "example": 1,
-                                        "enum": [
-                                            "male",
-                                            "female",
-                                            "other"
-                                        ]
+                                        "description": "Giới tính. 1: Nam (Male), 2: Nữ (Female), 3: Khác (Other)",
+                                        "type": "integer",
+                                        "example": 1
                                     },
                                     "birthday": {
                                         "description": "Ngày (YYYY-MM-DD)",
@@ -1623,7 +1657,7 @@
                                         "example": "59-T1 123.45"
                                     },
                                     "vehicle_type_id": {
-                                        "description": "(Driver) ID loại xe",
+                                        "description": "(Driver) ID loại xe. 1: Xe Máy, 2: Ô Tô 4 Chỗ, 3: Ô Tô 7 Chỗ, 4: Ô Tô 9 Chỗ",
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -3304,6 +3338,224 @@
                         "description": "Xác nhận mật khẩu mới",
                         "type": "string",
                         "example": "NewPassword123!"
+                    }
+                },
+                "type": "object"
+            },
+            "VoucherResponse": {
+                "description": "Thông tin chi tiết mã giảm giá",
+                "required": [
+                    "id",
+                    "code",
+                    "service_type",
+                    "discount_type",
+                    "discount_value"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "code": {
+                        "type": "string",
+                        "example": "DEMO10"
+                    },
+                    "service_type": {
+                        "description": "Loại dịch vụ áp dụng. 1: Chuyến xe, 2: Đồ ăn, 3: Đa dịch vụ, 4: Giao hàng, 5: Tất cả",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "discount_type": {
+                        "description": "Loại giảm giá. 1: Giảm tiền mặt cố định, 2: Giảm theo phần trăm",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "discount_value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10000
+                    },
+                    "min_order_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000
+                    },
+                    "max_discount_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000,
+                        "nullable": true
+                    },
+                    "valid_until": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "description": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_saved": {
+                        "description": "Đã lưu vào ví hay chưa",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "status": {
+                        "description": "Trạng thái: Available, Expired, Used",
+                        "type": "string",
+                        "example": "Available"
+                    }
+                },
+                "type": "object"
+            },
+            "RewardTransactionResponse": {
+                "description": "Lịch sử giao dịch điểm thưởng",
+                "required": [
+                    "id",
+                    "type",
+                    "amount"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Reward Transaction Response Schema",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "type": {
+                        "description": "Loại giao dịch. 1: Tích điểm (Earn), 2: Sử dụng điểm (Redeem), 3: Điểm hết hạn (Expire)",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "type_label": {
+                        "type": "string",
+                        "example": "Tích điểm"
+                    },
+                    "amount": {
+                        "type": "integer",
+                        "example": 100
+                    },
+                    "balance_before": {
+                        "type": "integer",
+                        "example": 500
+                    },
+                    "balance_after": {
+                        "type": "integer",
+                        "example": 600
+                    },
+                    "note": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "RideResponse": {
+                "description": "Thông tin chi tiết chuyến xe",
+                "required": [
+                    "id",
+                    "status",
+                    "vehicle_type",
+                    "pickup_address",
+                    "destination_address"
+                ],
+                "properties": {
+                    "id": {
+                        "description": "Ride Response Schema",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "status": {
+                        "description": "Trạng thái chuyến xe. 1: Nháp, 2: Đang tìm tài xế, 3: Tài xế đã nhận, 4: Đang di chuyển, 5: Hoàn thành, 6: Đã hủy",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "example": "Đang tìm tài xế"
+                    },
+                    "vehicle_type": {
+                        "description": "Loại xe. 1: Xe Máy, 2: Ô Tô 4 Chỗ, 3: Ô Tô 7 Chỗ, 4: Ô Tô 9 Chỗ",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "pickup_address": {
+                        "type": "string"
+                    },
+                    "destination_address": {
+                        "type": "string"
+                    },
+                    "distance_km": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 5.2
+                    },
+                    "duration_minutes": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "total_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 35000
+                    },
+                    "discount_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 5000
+                    },
+                    "final_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 30000
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "PriceEstimateResponse": {
+                "description": "Thông tin ước tính giá cước",
+                "properties": {
+                    "base_fare": {
+                        "description": "Price Estimate Response Schema",
+                        "type": "number",
+                        "format": "float",
+                        "example": 15000
+                    },
+                    "distance_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 20000
+                    },
+                    "duration_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0
+                    },
+                    "surge_multiplier": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1
+                    },
+                    "subtotal": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 35000
+                    },
+                    "discount_amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 0
+                    },
+                    "total_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 35000
                     }
                 },
                 "type": "object"

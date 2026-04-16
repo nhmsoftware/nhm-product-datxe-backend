@@ -37,9 +37,19 @@ final class DriverController extends BaseController
                         new OA\Property(property: 'full_name', description: 'Họ và tên', type: 'string', example: 'Nguyễn Văn A'),
                         new OA\Property(property: 'phone', description: 'Số điện thoại', type: 'string', example: '0901234567'),
                         new OA\Property(property: 'citizen_id', description: 'Số CMND', type: 'string', example: '001234567890'),
-                        new OA\Property(property: 'vehicle_type', description: '1: Bike, 2: Car 4 seats, 3: Car 7 seats, 4: Car 9 seats', type: 'integer', example: 1),
+                        new OA\Property(
+                            property: 'vehicle_type', 
+                            description: 'Loại phương tiện. 1: Xe Máy (Bike), 2: Ô Tô 4 Chỗ (Car 4 Seats), 3: Ô Tô 7 Chỗ (Car 7 Seats), 4: Ô Tô 9 Chỗ (Car 9 Seats)', 
+                            type: 'integer', 
+                            example: 1
+                        ),
                         new OA\Property(property: 'vehicle_name', description: 'Tên phương tiện', type: 'string', example: 'Honda Wave Alpha'),
-                        new OA\Property(property: 'vehicle_color', description: 'Màu xe: 0=Khác, 1=Đỏ, 2=Xanh lá, 3=Xanh dương, 4=Vàng, 5=Cam, 6=Tím, 7=Nâu, 8=Đen, 9=Trắng', type: 'integer', example: 8),
+                        new OA\Property(
+                            property: 'vehicle_color', 
+                            description: 'Màu sắc xe tiêu chuẩn. 0: Màu Khác, 1: Đỏ, 2: Xanh lá, 3: Xanh dương, 4: Vàng, 5: Cam, 6: Tím, 7: Nâu, 8: Đen, 9: Trắng', 
+                            type: 'integer', 
+                            example: 8
+                        ),
                         new OA\Property(property: 'vehicle_number', description: 'Biển số xe', type: 'string', example: '51K-12345'),
                         new OA\Property(property: 'vehicle_year', description: 'Năm xuất xứ xe', type: 'integer', example: 2020),
                         new OA\Property(property: 'cccd_front', description: 'CCCD trước', type: 'string', format: 'binary'),

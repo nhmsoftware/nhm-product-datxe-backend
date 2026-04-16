@@ -43,7 +43,12 @@ final class RideController extends BaseController
                 new OA\Property(property: 'destination_address', type: 'string', example: 'Vincom Mega Mall Ocean Park, Gia Lâm, Hà Nội'),
                 new OA\Property(property: 'destination_lat', type: 'number', format: 'float', example: 20.9944),
                 new OA\Property(property: 'destination_lng', type: 'number', format: 'float', example: 105.9458),
-                new OA\Property(property: 'vehicle_type', description: '1: Bike, 2: Car 4 seats, 3: Car 7 seats, 4: Car 9 seats', type: 'integer', example: 1),
+                new OA\Property(
+                    property: 'vehicle_type', 
+                    description: 'Loại phương tiện hỗ trợ. 1: Xe Máy (Bike), 2: Ô Tô 4 Chỗ (Car 4 Seats), 3: Ô Tô 7 Chỗ (Car 7 Seats), 4: Ô Tô 9 Chỗ (Car 9 Seats)', 
+                    type: 'integer', 
+                    example: 1
+                ),
             ]
         )
     )]
@@ -92,7 +97,11 @@ final class RideController extends BaseController
         tags: ['Ride']
     )]
     #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
-    #[OA\Response(response: 200, description: 'Chi tiết giá cước')]
+    #[OA\Response(
+        response: 200, 
+        description: 'Chi tiết giá cước',
+        content: new OA\JsonContent(ref: '#/components/schemas/PriceEstimateResponse')
+    )]
     public function getPriceEstimate(int $rideId, Request $request): JsonResponse
     {
         $result = $this->rideService->getPriceEstimate($rideId, $request->user()->id);
@@ -173,7 +182,11 @@ final class RideController extends BaseController
             ]
         )
     )]
-    #[OA\Response(response: 200, description: 'Booking confirmed (Đang tìm tài xế)')]
+    #[OA\Response(
+        response: 200, 
+        description: 'Booking confirmed (Đang tìm tài xế)',
+        content: new OA\JsonContent(ref: '#/components/schemas/RideResponse')
+    )]
     #[OA\Response(response: 409, description: 'Giá đã thay đổi hoặc voucher không hợp lệ')]
     public function confirmBooking(int $rideId, ConfirmBookingRequest $request): JsonResponse
     {

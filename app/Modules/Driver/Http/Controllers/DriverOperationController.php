@@ -134,7 +134,12 @@ final class DriverOperationController extends BaseController
             content: new OA\JsonContent(
                 required: ['reason_id'],
                 properties: [
-                    new OA\Property(property: 'reason_id', description: 'ID lý do hủy', type: 'integer', example: 1),
+                    new OA\Property(
+                        property: 'reason_id', 
+                        description: 'ID lý do hủy chuyến. 1: Khách không ra (Customer No Show), 2: Xe hỏng (Vehicle Broken), 3: Đặt sai điểm (Wrong Location), 4: Khác (Other)', 
+                        type: 'integer', 
+                        example: 1
+                    ),
                     new OA\Property(property: 'current_lat', type: 'number', format: 'float', example: 10.776889),
                     new OA\Property(property: 'current_lng', type: 'number', format: 'float', example: 106.700806),
                 ]
