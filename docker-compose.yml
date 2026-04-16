@@ -1,23 +1,22 @@
 # =============================================================================
-# docker-compose.yml — Local development
+# docker-compose.yml — Local development (FULL STACK)
 #
 # Cách dùng:
-#   docker compose up -d
-#   docker compose logs -f app
-#
-# Dừng an toàn (giữ DB):   docker compose down
-# Xoá sạch hoàn toàn:      docker compose down && rm -rf ./data
+#   docker compose up -d --build
+#   docker compose logs -f realtime   (Xem log của Node.js)
+#   docker compose logs -f app        (Xem log của Laravel)
 # =============================================================================
 
 services:
 
+  # 1. Dịch vụ Backend (Laravel)
   app:
     build: .
-    container_name: nhm-app
+    container_name: nhm-app-local
     restart: unless-stopped
     volumes:
-      - .:/var/www                      # source code từ host → hot-reload
-      - vendor:/var/www/vendor          # vendor tách riêng, không bị override
+      - .:/var/www                      
+      - vendor:/var/www/vendor          
     ports:
       - "8000:8000"
     env_file: .env
@@ -32,9 +31,30 @@ services:
       redis:
         condition: service_healthy
 
+  # 2. Dịch vụ Realtime (Node.js) - THÊM VÀO ĐỂ TEST LOCAL
+  realtime:
+    build:
+      context: ../nhm-product-datxe-realtime
+      dockerfile: Dockerfile
+    container_name: nhm-realtime-local
+    restart: unless-stopped
+    volumes:
+      - ../nhm-product-datxe-realtime:/app
+      - /app/node_modules
+    ports:
+      - "8002:3001"
+    env_file: ../nhm-product-datxe-realtime/.env
+    environment:
+      REDIS_HOST: redis     # Cùng mạng Docker nên gọi tên service là 'redis'
+      REDIS_PORT: 6379
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # 3. Cơ sở dữ liệu PostgreSQL
   postgres:
     image: postgres:16-alpine
-    container_name: nhm-postgres
+    container_name: nhm-postgres-local
     restart: unless-stopped
     environment:
       POSTGRES_DB:       nhm_datxe
@@ -50,9 +70,10 @@ services:
       timeout: 5s
       retries: 10
 
+  # 4. Redis Server
   redis:
     image: redis:7-alpine
-    container_name: nhm-redis
+    container_name: nhm-redis-local
     restart: unless-stopped
     ports:
       - "6379:6379"
@@ -64,4 +85,4 @@ services:
 
 volumes:
   vendor:
-  postgres_data:  # ✅
+  postgres_data:

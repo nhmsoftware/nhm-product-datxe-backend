@@ -401,6 +401,46 @@
                 }
             }
         },
+        "/api/v1/admin/driver/applications/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin|Driver"
+                ],
+                "summary": "Duyệt hồ sơ tài xế",
+                "description": "Duyệt hồ sơ đăng ký tài xế.",
+                "operationId": "723c74da5546cffa1d07af301a2d3c56",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của hồ sơ cần duyệt",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Duyệt thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy hồ sơ"
+                    },
+                    "400": {
+                        "description": "Hồ sơ không ở trạng thái chờ duyệt"
+                    },
+                    "403": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/driver/register/submit": {
             "post": {
                 "tags": [
@@ -1378,6 +1418,15 @@
                         "required": true,
                         "schema": {
                             "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "voucher_code",
+                        "in": "query",
+                        "description": "Mã voucher",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
                         }
                     }
                 ],
@@ -3574,6 +3623,10 @@
         {
             "name": "Auth",
             "description": "Auth"
+        },
+        {
+            "name": "Admin|Driver",
+            "description": "Admin|Driver"
         },
         {
             "name": "Driver",

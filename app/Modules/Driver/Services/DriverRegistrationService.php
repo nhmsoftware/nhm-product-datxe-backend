@@ -6,6 +6,7 @@ namespace App\Modules\Driver\Services;
 
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
+use App\Modules\Driver\DTO\ApproveRegistrationDTO;
 use App\Modules\Driver\DTO\RegisterDriverSubmitDTO;
 use App\Modules\Driver\Events\DriverApplicationSubmitted;
 use App\Modules\Driver\Interfaces\DriverRegistrationRepositoryInterface;
@@ -13,8 +14,13 @@ use App\Modules\Driver\Interfaces\DriverRegistrationServiceInterface;
 use App\Modules\Driver\Interfaces\FileRecordRepositoryInterface;
 use App\Modules\Driver\Model\Enums\FileableType;
 use App\Modules\Driver\Model\Enums\FileDisk;
+use App\Modules\Driver\Model\Enums\KycStatus;
 use App\Modules\Driver\Model\Enums\KycType;
+use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
+use App\Modules\User\Model\Enums\DriverGroupType;
+use App\Modules\User\Model\Enums\DriverStatus;
+use App\Modules\User\Model\Enums\UserRole;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
@@ -26,6 +32,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
         private readonly DriverRegistrationRepositoryInterface $driverRegistrationRepository,
         private readonly FileRecordRepositoryInterface         $fileRecordRepository,
         private readonly UserRepositoryInterface               $userRepository,
+        private readonly DriverProfileRepositoryInterface       $driverProfileRepository,
     ) {}
 
     /**
@@ -100,6 +107,50 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
                 message: 'Đăng ký thành công. Vui lòng chờ xét duyệt.'
             );
 
+        }, useTransaction: true);
+    }
+
+    /**
+     * Admin duyệt hồ sơ tài xế.
+     * Quy trình: Approve KYC -> Upgrade User Role -> Create Driver Profile.
+     */
+    public function approveRegistration(ApproveRegistrationDTO $dto): ServiceReturn
+    {
+        return $this->execute(callback: function () use ($dto) {
+            // 1. Tìm hồ sơ
+            $application = $this->driverRegistrationRepository->findById($dto->applicationId);
+            $this->validate($application !== null, 'Không tìm thấy hồ sơ đăng ký.', 404);
+            $this->validate($application->kyc_status->isPending(), 'Hồ sơ này không ở trạng thái chờ duyệt.', 400);
+
+            $userId       = $application->user_id;
+            $snapshotData = $application->snapshot_data;
+
+            // 2. Chạy giao dịch các bảng liên quan
+            // - Cập nhật trạng thái hồ sơ
+            $this->driverRegistrationRepository->updateStatus($application->id, KycStatus::APPROVED);
+
+            // - Nâng cấp vai trò user sang Driver
+            $this->userRepository->updateRole($userId, UserRole::Driver);
+
+            // - Tạo hồ sơ vận hành (DriverProfile)
+            // Lấy thông tin từ snapshot để đảm bảo tính nhất quán
+            $this->driverProfileRepository->create([
+                'user_id'           => $userId,
+                'full_name'         => $snapshotData['full_name'] ?? 'Driver ' . $userId,
+                'driver_group_type' => DriverGroupType::PARTNER->value, // Mặc định là Partners
+                'vehicle_type'      => (int) ($snapshotData['vehicle_type'] ?? 1),
+                'vehicle_name'      => $snapshotData['vehicle_name'] ?? 'N/A',
+                'vehicle_color'     => (int) ($snapshotData['vehicle_color'] ?? 0),
+                'vehicle_number'    => $snapshotData['vehicle_number'] ?? 'N/A',
+                'is_online'         => false,
+                'status'            => DriverStatus::ACTIVE->value, // Sẵn sàng hoạt động
+            ]);
+
+            return [
+                'user_id'        => $userId,
+                'application_id' => $application->id,
+                'status'         => 'Approved successfully',
+            ];
         }, useTransaction: true);
     }
 

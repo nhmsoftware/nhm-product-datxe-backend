@@ -4,6 +4,7 @@ namespace App\Modules\Driver\Routes;
 
 use App\Modules\Driver\Http\Controllers\DriverController;
 use App\Modules\Driver\Http\Controllers\DriverOperationController;
+use App\Modules\Driver\Http\Controllers\AdminDriverController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -32,7 +33,14 @@ Route::prefix('v1/driver')
         Route::post('ride/{rideId}/reject', [DriverOperationController::class, 'rejectOrder'])
             ->name('driver.ride.reject');
 
-        // UC-33: Hủy chuyến đi (Sau khi đã nhận)
         Route::post('ride/{rideId}/cancel', [DriverOperationController::class, 'cancelOrder'])
             ->name('driver.ride.cancel');
+    });
+
+// Admin Routes
+Route::prefix('v1/admin/driver')
+    ->middleware(['auth:sanctum'])
+    ->group(function () {
+        Route::post('applications/{id}/approve', [AdminDriverController::class, 'approve'])
+            ->name('admin.driver.application.approve');
     });

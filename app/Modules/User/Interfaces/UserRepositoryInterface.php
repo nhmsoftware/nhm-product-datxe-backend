@@ -70,4 +70,9 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
      * Check if user exists by apple_id
      */
     public function existsByAppleId(string $appleId): bool;
+
+    /**
+     * Cập nhật vai trò của user.
+     */
+    public function updateRole(int $userId, \App\Modules\User\Model\Enums\UserRole $role): bool;
 }
