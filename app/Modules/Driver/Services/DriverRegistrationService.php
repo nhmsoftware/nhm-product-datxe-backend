@@ -48,8 +48,8 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
             $this->validate($user !== null, 'Không tìm thấy tài khoản.', 404);
             $this->validate($user->isActive(), 'Tài khoản của bạn đã bị vô hiệu hóa.', 403);
 
-            // 2. Double-check business rules trong transaction (atomic)
-            $this->validate(!$user->isDriver(), 'Bạn đã là tài xế.', 409);
+            // 2. Kiểm tra kỹ các quy tắc nghiệp vụ trong giao dịch (nguyên tử)
+            $this->validate($user->driverProfile === null, 'Tài khoản của bạn đã là tài xế chính thức.', 409);
 
             $this->validate(
                 $this->driverRegistrationRepository->findActiveApplicationByUser(
@@ -149,7 +149,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
             return [
                 'user_id'        => $userId,
                 'application_id' => $application->id,
-                'status'         => 'Approved successfully',
+                'status'         => 'Đã phê duyệt thành công',
             ];
         }, useTransaction: true);
     }
