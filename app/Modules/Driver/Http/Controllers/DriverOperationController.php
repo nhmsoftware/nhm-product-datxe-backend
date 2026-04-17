@@ -25,7 +25,8 @@ final class DriverOperationController extends BaseController
 
     #[OA\Put(
         path: '/api/v1/driver/status',
-        summary: 'UC-31: Cập nhật trạng thái Go Online / Go Offline',
+        summary: 'UC-31: Bật/Tắt trạng thái hoạt động (Go Online/Offline)',
+        description: 'Tài xế có thể bật/tắt trạng thái bất cứ lúc nào. Nếu tắt Offline khi đang có chuyến, tài xế vẫn hoàn thành chuyến cũ nhưng sẽ không được gán thêm chuyến mới.',
         security: [['sanctum' => []]],
         requestBody: new OA\RequestBody(
             required: true,
@@ -40,10 +41,10 @@ final class DriverOperationController extends BaseController
         ),
         tags: ['Driver'],
         responses: [
-            new OA\Response(response: 200, description: 'Cập nhật thành công'),
+            new OA\Response(response: 200, description: 'Cập nhật trạng thái thành công'),
             new OA\Response(response: 400, description: 'Dữ liệu không hợp lệ'),
-            new OA\Response(response: 403, description: 'Tài khoản chưa được duyệt hoặc bị khóa'),
-            new OA\Response(response: 422, description: 'Không thể cập nhật khi đang có chuyến'),
+            new OA\Response(response: 403, description: 'Tài khoản chưa được duyệt, bị khóa hoặc đang chờ (Cooldown)'),
+            new OA\Response(response: 422, description: 'Lỗi xử lý nghiệp vụ'),
         ]
     )]
     public function toggleStatus(ToggleOnlineStatusRequest $request): JsonResponse

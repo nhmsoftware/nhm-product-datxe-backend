@@ -22,4 +22,5 @@ return [
     PricingServiceProviders::class,
     SocialiteServiceProvider::class,
     DriverServiceProvider::class,
+    App\Modules\Operation\Providers\OperationServiceProvider::class,
 ];

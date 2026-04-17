@@ -588,7 +588,8 @@
                 "tags": [
                     "Driver"
                 ],
-                "summary": "UC-31: Cập nhật trạng thái Go Online / Go Offline",
+                "summary": "UC-31: Bật/Tắt trạng thái hoạt động (Go Online/Offline)",
+                "description": "Tài xế có thể bật/tắt trạng thái bất cứ lúc nào. Nếu tắt Offline khi đang có chuyến, tài xế vẫn hoàn thành chuyến cũ nhưng sẽ không được gán thêm chuyến mới.",
                 "operationId": "800c64bb5a49044aae8e087ebe3ec0ab",
                 "requestBody": {
                     "required": true,
@@ -624,16 +625,16 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Cập nhật thành công"
+                        "description": "Cập nhật trạng thái thành công"
                     },
                     "400": {
                         "description": "Dữ liệu không hợp lệ"
                     },
                     "403": {
-                        "description": "Tài khoản chưa được duyệt hoặc bị khóa"
+                        "description": "Tài khoản chưa được duyệt, bị khóa hoặc đang chờ (Cooldown)"
                     },
                     "422": {
-                        "description": "Không thể cập nhật khi đang có chuyến"
+                        "description": "Lỗi xử lý nghiệp vụ"
                     }
                 },
                 "security": [
@@ -1193,6 +1194,97 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/operation/location": {
+            "post": {
+                "tags": [
+                    "Operation"
+                ],
+                "summary": "UC-35: Cập nhật vị trí hiện tại (Driver/Customer)",
+                "description": "API để User (Tài xế/Khách hàng) cập nhật tọa độ GPS. Hệ thống sử dụng Redis để lưu trữ real-time và đồng bộ DB có tiết lưu (60s/lần) để đảm bảo hiệu năng cao cho 10.000+ user.",
+                "operationId": "360bb0c9fad772341e3ff3fe9939c88b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "lat",
+                                    "lng"
+                                ],
+                                "properties": {
+                                    "lat": {
+                                        "description": "Vĩ độ",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.762622
+                                    },
+                                    "lng": {
+                                        "description": "Kinh độ",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.660172
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "422": {
+                        "description": "Dữ liệu tọa độ không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/operation/navigation/{rideId}": {
+            "get": {
+                "tags": [
+                    "Operation"
+                ],
+                "summary": "UC-34: Lấy thông tin dẫn đường (Polyline/Distance/Duration)",
+                "description": "Lấy dữ liệu dẫn đường thông minh: Tài xế sẽ thấy đường đến Pickup (nếu vừa nhận) hoặc Destination (nếu đang chở khách). Khách hàng sẽ thấy đường từ Tài xế đến mình để theo dõi.",
+                "operationId": "d44d6873ed668bf620af46b52f5bb4d7",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy dữ liệu thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền xem chuyến xe này"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
                     }
                 },
                 "security": [
@@ -3643,6 +3735,10 @@
         {
             "name": "Homepage",
             "description": "Homepage"
+        },
+        {
+            "name": "Operation",
+            "description": "Operation"
         },
         {
             "name": "Ride",

@@ -52,13 +52,6 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 }
             }
 
-            // UC-31 A3: Driver đang có chuyến (Check by User ID)
-            $hasActiveRide = $this->rideRepository->hasActiveRideByDriver($driverProfile->user_id);
-            $this->validate(
-                !$hasActiveRide,
-                'Không thể cập nhật trạng thái khi đang có chuyến.',
-                422
-            );
 
             // Thực hiện cập nhật
             $this->driverProfileRepository->updateOnlineStatus(
