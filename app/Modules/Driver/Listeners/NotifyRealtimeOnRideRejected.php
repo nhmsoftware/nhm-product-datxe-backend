@@ -6,6 +6,7 @@ namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\RideRejected;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
 
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Log;
  * Listener xử lý thông báo realtime khi tài xế từ chối chuyến xe.
  * Gửi tín hiệu qua Redis channel 'ride.communication.events'.
  */
-final class NotifyRealtimeOnRideRejected
+final class NotifyRealtimeOnRideRejected implements ShouldQueue
 {
     public function __construct(
         private readonly DriverProfileRepositoryInterface $driverProfileRepository

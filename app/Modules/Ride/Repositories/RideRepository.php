@@ -24,9 +24,6 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function findByIdAndCustomer(int $rideId, int $customerId): ?Ride
     {
-//        dd($this->model->where('id', $rideId)
-//            ->where('customer_id', $customerId)->toRawSql());
-
         /** @var Ride|null */
         return $this->model->where('id', $rideId)
             ->where('customer_id', $customerId)

@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\RideCancelled;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
 
-final class NotifyRealtimeOnRideCancelled
+final class NotifyRealtimeOnRideCancelled implements ShouldQueue
 {
     public function handle(RideCancelled $event): void
     {

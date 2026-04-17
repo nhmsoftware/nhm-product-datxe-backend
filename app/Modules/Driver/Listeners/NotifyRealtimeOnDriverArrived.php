@@ -6,13 +6,14 @@ namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\DriverArrivedAtPickup;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Listener thông báo cho Khách hàng khi Tài xế bấm "Tôi đã đến".
  */
-final class NotifyRealtimeOnDriverArrived
+final class NotifyRealtimeOnDriverArrived implements ShouldQueue
 {
     public function __construct(
         private readonly DriverProfileRepositoryInterface $driverProfileRepository

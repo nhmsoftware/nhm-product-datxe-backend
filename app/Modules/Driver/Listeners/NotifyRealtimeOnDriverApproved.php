@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\DriverApplicationApproved;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
@@ -14,7 +15,7 @@ use App\Modules\Driver\Notifications\DriverApplicationApprovedNotification;
  * Listener xử lý thông báo realtime khi hồ sơ tài xế được duyệt.
  * Gửi tín hiệu qua Redis để nhm-realtime service chuyển tiếp tới frontend.
  */
-final class NotifyRealtimeOnDriverApproved
+final class NotifyRealtimeOnDriverApproved implements ShouldQueue
 {
     /**
      * Tên Redis channel dùng chung cho các sự kiện truyền thông.

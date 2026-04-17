@@ -212,19 +212,19 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             }
 
             // Kiểm tra xem tài xế đã có chuyến đi nào đang diễn ra chưa
-//            $hasActiveRide = $this->rideRepository->hasActiveRideByDriver($driverProfile->user_id);
-//            $this->validate(!$hasActiveRide, 'Bạn đang có một chuyến đi khác chưa hoàn thành.', 422);
+            $hasActiveRide = $this->rideRepository->hasActiveRideByDriver($driverProfile->user_id);
+            $this->validate(!$hasActiveRide, 'Bạn đang có một chuyến đi khác chưa hoàn thành.', 422);
 
             // 2. Kiểm tra chuyến đi
             $ride = $this->rideRepository->findById($dto->rideId);
             $this->validate($ride !== null, 'Chuyến xe không tồn tại hoặc đã hết hạn.', 404);
 
-//            // Kiểm tra trạng thái tranh chấp (Double booking)
-//            $this->validate(
-//                $ride->status === RideStatus::PENDING && $ride->driver_id === null,
-//                'Đơn hàng đã được tài xế khác tiếp nhận trước đó.',
-//                422
-//            );
+            // Kiểm tra trạng thái tranh chấp (Double booking)
+            $this->validate(
+                $ride->status === RideStatus::PENDING && $ride->driver_id === null,
+                'Đơn hàng đã được tài xế khác tiếp nhận trước đó.',
+                422
+            );
 
             // 3. Thực hiện chuyển đổi trạng thái (Giao dịch DB)
             $rideUpdated = $this->rideRepository->acceptByDriver((int)$ride->id, (int)$driverProfile->user_id);

@@ -268,9 +268,6 @@ final class RideService extends BaseService implements RideServiceInterface
         return $this->execute(function () use ($dto): ServiceReturn {
             $ride = $this->rideRepository->findByIdAndCustomer($dto->rideId, $dto->customerId);
 
-//            dd($dto->rideId, $dto->customerId);
-//            dd($ride);
-
             $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
 
             $this->validate(
@@ -322,9 +319,7 @@ final class RideService extends BaseService implements RideServiceInterface
             $this->rideRepository->confirmBooking($dto->rideId, $finalFare);
 
             // 5. Kích hoạt Domain Event để hệ thống tìm tài xế (A4, A6 sẽ được handle async/background)
-//            event(new RideBooked($dto->rideId, $dto->customerId));
-
-//            dd($ride);
+            event(new RideBooked($dto->rideId, $dto->customerId));
 
             // Return thông tin (sẽ pass qua getPriceEstimate hoặc mảng tùy ý, trả về mảng info cơ bản là okay)
             $ride->refresh();

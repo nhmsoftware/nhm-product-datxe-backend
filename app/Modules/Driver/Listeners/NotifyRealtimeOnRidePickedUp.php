@@ -6,13 +6,14 @@ namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\RidePickedUp;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Listener xử lý việc thông báo Realtime cho Khách hàng khi Tài xế đã đón khách thành công.
  */
-final class NotifyRealtimeOnRidePickedUp
+final class NotifyRealtimeOnRidePickedUp implements ShouldQueue
 {
     public function __construct(
         private readonly DriverProfileRepositoryInterface $driverProfileRepository

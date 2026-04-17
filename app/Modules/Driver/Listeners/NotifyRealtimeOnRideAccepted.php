@@ -6,10 +6,11 @@ namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\RideAccepted;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
 
-final class NotifyRealtimeOnRideAccepted
+final class NotifyRealtimeOnRideAccepted implements ShouldQueue
 {
     public function __construct(
         private readonly DriverProfileRepositoryInterface $driverProfileRepository
