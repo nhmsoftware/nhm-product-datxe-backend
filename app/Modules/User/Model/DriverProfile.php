@@ -105,6 +105,7 @@ class DriverProfile extends Model
     ];
 
     protected $casts = [
+        'id'                => 'string',
         'is_online'      => 'boolean',
         'current_lat'    => 'decimal:8',
         'current_lng'    => 'decimal:8',

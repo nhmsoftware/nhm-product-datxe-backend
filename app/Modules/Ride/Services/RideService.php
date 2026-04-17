@@ -267,6 +267,10 @@ final class RideService extends BaseService implements RideServiceInterface
     {
         return $this->execute(function () use ($dto): ServiceReturn {
             $ride = $this->rideRepository->findByIdAndCustomer($dto->rideId, $dto->customerId);
+
+//            dd($dto->rideId, $dto->customerId);
+//            dd($ride);
+
             $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
 
             $this->validate(

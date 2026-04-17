@@ -15,12 +15,16 @@ use App\Modules\Driver\Services\DriverRegistrationService;
 use App\Modules\Driver\Services\DriverOperationService;
 
 use App\Modules\Driver\Events\DriverApplicationApproved;
+use App\Modules\Driver\Events\DriverArrivedAtPickup;
 use App\Modules\Driver\Events\RideAccepted;
 use App\Modules\Driver\Events\RideCancelled;
+use App\Modules\Driver\Events\RidePickedUp;
 use App\Modules\Driver\Events\RideRejected;
 use App\Modules\Driver\Listeners\NotifyRealtimeOnDriverApproved;
+use App\Modules\Driver\Listeners\NotifyRealtimeOnDriverArrived;
 use App\Modules\Driver\Listeners\NotifyRealtimeOnRideAccepted;
 use App\Modules\Driver\Listeners\NotifyRealtimeOnRideCancelled;
+use App\Modules\Driver\Listeners\NotifyRealtimeOnRidePickedUp;
 use App\Modules\Driver\Listeners\NotifyRealtimeOnRideRejected;
 use Illuminate\Support\Facades\Event;
 
@@ -79,6 +83,16 @@ class DriverServiceProvider extends BaseModuleServiceProvider
         Event::listen(
             RideRejected::class,
             NotifyRealtimeOnRideRejected::class
+        );
+
+        Event::listen(
+            RidePickedUp::class,
+            NotifyRealtimeOnRidePickedUp::class
+        );
+
+        Event::listen(
+            DriverArrivedAtPickup::class,
+            NotifyRealtimeOnDriverArrived::class
         );
     }
 }

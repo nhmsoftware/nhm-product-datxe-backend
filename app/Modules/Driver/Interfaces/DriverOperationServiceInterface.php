@@ -8,10 +8,25 @@ use App\Core\Services\ServiceReturn;
 use App\Modules\Driver\DTO\AcceptOrderDTO;
 use App\Modules\Driver\DTO\CancelOrderDTO;
 use App\Modules\Driver\DTO\RejectOrderDTO;
+use App\Modules\Driver\DTO\PickupRideDTO;
 use App\Modules\Driver\DTO\ToggleOnlineStatusDTO;
 
 interface DriverOperationServiceInterface
 {
+    /**
+     * Thông báo tài xế đã đến điểm đón (A1 UC-36).
+     * @param PickupRideDTO $dto
+     * @return ServiceReturn
+     */
+    public function notifyArrived(PickupRideDTO $dto): ServiceReturn;
+
+    /**
+     * Xác nhận đã đón khách (UC-36).
+     * @param PickupRideDTO $dto
+     * @return ServiceReturn
+     */
+    public function pickupRide(PickupRideDTO $dto): ServiceReturn;
+
     /**
      * Cập nhật trạng thái trực tuyến của Driver (UC-31).
      */

@@ -95,6 +95,7 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
+        'id'                => 'string',
         'role'              => UserRole::class,
         'gender'            => Gender::class,
         'is_verified'       => 'boolean',

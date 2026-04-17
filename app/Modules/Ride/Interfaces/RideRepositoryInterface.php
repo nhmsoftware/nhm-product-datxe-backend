@@ -93,4 +93,11 @@ interface RideRepositoryInterface
      * @return bool
      */
     public function cancelByDriver(int $rideId, int $reasonId): bool;
+
+    /**
+     * Tài xế xác nhận đã đón khách thành công (UC-36).
+     * @param int $rideId
+     * @return bool
+     */
+    public function pickup(int $rideId): bool;
 }

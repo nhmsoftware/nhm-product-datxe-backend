@@ -24,6 +24,9 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function findByIdAndCustomer(int $rideId, int $customerId): ?Ride
     {
+//        dd($this->model->where('id', $rideId)
+//            ->where('customer_id', $customerId)->toRawSql());
+
         /** @var Ride|null */
         return $this->model->where('id', $rideId)
             ->where('customer_id', $customerId)
@@ -136,6 +139,15 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         return (bool) $this->model->where('id', $rideId)->update([
             'status'        => RideStatus::CANCELLED->value,
             'cancel_reason' => (string) $reasonId, // Lưu ID lý do hoặc map sang label
+        ]);
+    }
+    /**
+     * Tài xế xác nhận đã đón khách sau khi đã nhận (UC-36).
+     */
+    public function pickup(int $rideId): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'status' => RideStatus::PICKED_UP->value,
         ]);
     }
 }

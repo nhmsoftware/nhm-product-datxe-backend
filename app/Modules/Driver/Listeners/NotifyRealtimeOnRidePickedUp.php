@@ -4,18 +4,22 @@ declare(strict_types=1);
 
 namespace App\Modules\Driver\Listeners;
 
-use App\Modules\Driver\Events\RideAccepted;
+use App\Modules\Driver\Events\RidePickedUp;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
 
-final class NotifyRealtimeOnRideAccepted
+/**
+ * Listener xử lý việc thông báo Realtime cho Khách hàng khi Tài xế đã đón khách thành công.
+ */
+final class NotifyRealtimeOnRidePickedUp
 {
     public function __construct(
         private readonly DriverProfileRepositoryInterface $driverProfileRepository
-    ) {}
+    ) {
+    }
 
-    public function handle(RideAccepted $event): void
+    public function handle(RidePickedUp $event): void
     {
         try {
             $driverProfile = $this->driverProfileRepository->findById($event->driverId);
@@ -25,30 +29,26 @@ final class NotifyRealtimeOnRideAccepted
             }
 
             $payload = [
-                'event'   => 'ride.accepted',
+                'event'   => 'ride.picked_up',
                 'ride_id' => (string) $event->rideId,
                 'driver'  => [
                     'id'             => (string) $driverProfile->id,
                     'full_name'      => $driverProfile->full_name,
-                    'vehicle_name'   => $driverProfile->vehicle_name,
-                    'vehicle_number' => $driverProfile->vehicle_number,
-                    'vehicle_type'   => $driverProfile->vehicle_type,
                     'current_lat'    => (float) $driverProfile->current_lat,
                     'current_lng'    => (float) $driverProfile->current_lng,
                 ],
                 'occurred_at' => now()->toIso8601String(),
             ];
 
-            // Publish to Redis channel expected by nhm-realtime service
+            // Publish vào Redis channel mà nhm-realtime service đang nghe
             Redis::publish('ride.communication.events', json_encode($payload));
 
-            Log::info('Realtime notification sent: ride.accepted', [
+            Log::info('Realtime notification sent: ride.picked_up', [
                 'ride_id'   => $event->rideId,
                 'driver_id' => $event->driverId
             ]);
-
         } catch (\Exception $e) {
-            Log::error('NotifyRealtimeOnRideAccepted failed', [
+            Log::error('NotifyRealtimeOnRidePickedUp failed', [
                 'error'   => $e->getMessage(),
                 'ride_id' => $event->rideId
             ]);

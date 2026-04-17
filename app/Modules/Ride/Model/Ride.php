@@ -99,6 +99,9 @@ class Ride extends Model
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'customer_id' => 'string',
+        'driver_id' => 'string',
         'pickup_lat' => 'decimal:7',
         'pickup_lng' => 'decimal:7',
         'destination_lat' => 'decimal:7',
