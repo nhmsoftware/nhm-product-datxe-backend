@@ -9,7 +9,7 @@ use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\CustomerProfile;
 use App\Modules\User\Model\User;
 
-class UserRepository extends BaseRepository implements UserRepositoryInterface
+final class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
     public function getModel(): string
     {
@@ -104,6 +104,15 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
             'token'       => $data['token'],
             'device_type' => $data['device_type'] ?? null,
         ]);
+    }
 
+    /**
+     * Cập nhật vai trò của user.
+     */
+    public function updateRole(int $userId, \App\Modules\User\Model\Enums\UserRole $role): bool
+    {
+        return (bool) $this->model->where('id', $userId)->update([
+            'role' => $role->value,
+        ]);
     }
 }

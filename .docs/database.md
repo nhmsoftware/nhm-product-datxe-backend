@@ -44,6 +44,8 @@
 1: Verify_Register (Xác thực đăng ký)
 2: Verify_Login (Xác thực đăng nhập)
 3: Verify_Forgot_Password (Xác thực quên mật khẩu)
+4: Change_Profile (Xác nhận thay đổi thông tin)
+5: Verify_Driver_Register (Xác thực đăng ký tài xế — UC-30)
 ```
 ### Gender
 ```
@@ -405,11 +407,14 @@
 ### FileableType
 ```
 1: Avatar (Ảnh đại diện)
-2: Driver_Review_Application_CCCD_Front (Hồ sơ duyệt tài xế CCCD trước)
-3: Driver_Review_Application_CCCD_Back (Hồ sơ duyệt tài xế CCCD sau)
-4: Driver_Review_Application_License (Hồ sơ duyệt tài xế giấy phép)
-5: Driver_Review_Application_Vehicle_Registration (Hồ sơ duyệt xe)
-...
+2: Driver_Review_CCCD_Front (Hồ sơ tài xế - CCCD mặt trước)
+3: Driver_Review_CCCD_Back (Hồ sơ tài xế - CCCD mặt sau)
+4: Driver_Review_License (Hồ sơ tài xế - Bằng lái xe)
+5: Driver_Review_Vehicle_Reg (Hồ sơ tài xế - Giấy đăng ký xe)
+6: Driver_Review_Criminal_Record (Hồ sơ tài xế - Lý lịch tư pháp)
+7: Driver_Review_Health_Cert (Hồ sơ tài xế - Giấy khám sức khỏe)
+8: Driver_Review_Portrait (Ảnh chân dung tài xế)
+9: Driver_Review_Insurance (Bảo hiểm trách nhiệm dân sự)
 ```
 
 ## files

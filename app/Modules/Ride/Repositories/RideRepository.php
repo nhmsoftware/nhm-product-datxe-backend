@@ -10,6 +10,8 @@ use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Ride;
 use Carbon\Carbon;
 
+use Illuminate\Support\Facades\DB;
+
 final class RideRepository extends BaseRepository implements RideRepositoryInterface
 {
     public function getModel(): string
@@ -91,5 +93,49 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             'total_amount' => (float) ($data->total_amount ?? 0),
             'total_count'  => (int) ($data->total_count ?? 0),
         ];
+    }
+
+    /**
+     * Kiểm tra tài xế có chuyến đi nào đang diễn ra không (UC-31).
+     */
+    public function hasActiveRideByDriver(int $driverId): bool
+    {
+        return $this->model
+            ->where('driver_id', $driverId)
+            ->whereIn('status', [RideStatus::ACCEPTED->value, RideStatus::IN_PROGRESS->value])
+            ->exists();
+    }
+
+    /**
+     * Tài xế nhận chuyến đi — cập nhật status ACCEPTED và gán driver_id (UC-32).
+     */
+    public function acceptByDriver(int $rideId, int $driverId): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'status'    => RideStatus::ACCEPTED->value,
+            'driver_id' => $driverId,
+        ]);
+    }
+
+    /**
+     * Tài xế từ chối nhận đơn (UC-33 Reject).
+     */
+    public function rejectByDriver(int $rideId, int $driverId): bool
+    {
+        return DB::table('ride_rejects')->updateOrInsert(
+            ['ride_id' => $rideId, 'driver_id' => $driverId],
+            ['updated_at' => now(), 'created_at' => now()]
+        );
+    }
+
+    /**
+     * Tài xế hủy chuyến sau khi đã nhận (UC-33 Cancel).
+     */
+    public function cancelByDriver(int $rideId, int $reasonId): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'status'        => RideStatus::CANCELLED->value,
+            'cancel_reason' => (string) $reasonId, // Lưu ID lý do hoặc map sang label
+        ]);
     }
 }

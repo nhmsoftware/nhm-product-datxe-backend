@@ -26,8 +26,21 @@ final class VoucherController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Finance']
     )]
-    #[OA\Parameter(name: 'service_type', description: 'Loại dịch vụ (ride hoặc food)', in: 'query', required: false, schema: new OA\Schema(type: 'string'))]
-    #[OA\Response(response: 200, description: 'Danh sách voucher')]
+    #[OA\Parameter(
+        name: 'service_type', 
+        description: 'Lọc voucher theo dịch vụ. "ride": Chuyến xe, "food": Đồ ăn. Nếu để trống sẽ lấy tất cả.', 
+        in: 'query', 
+        required: false, 
+        schema: new OA\Schema(type: 'string', enum: ['ride', 'food'])
+    )]
+    #[OA\Response(
+        response: 200, 
+        description: 'Danh sách voucher',
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/VoucherResponse')
+        )
+    )]
     public function index(Request $request): JsonResponse
     {
         $result = $this->voucherService->listVouchers(

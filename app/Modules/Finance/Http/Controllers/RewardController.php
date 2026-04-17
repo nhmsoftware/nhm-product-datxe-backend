@@ -42,11 +42,24 @@ final class RewardController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Finance - Rewards']
     )]
-    #[OA\Parameter(name: 'type', description: 'Loại giao dịch', in: 'query', required: false, schema: new OA\Schema(type: 'integer', enum: [1,2,3]))]
+    #[OA\Parameter(
+        name: 'type', 
+        description: 'Loại giao dịch điểm. 1: Tích điểm (Earn), 2: Sử dụng điểm (Redeem), 3: Điểm hết hạn (Expire)', 
+        in: 'query', 
+        required: false, 
+        schema: new OA\Schema(type: 'integer', enum: [1, 2, 3])
+    )]
     #[OA\Parameter(name: 'start_date', description: 'Ngày bắt đầu', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date'))]
     #[OA\Parameter(name: 'end_date', description: 'Ngày kết thúc', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date'))]
     #[OA\Parameter(name: 'per_page', description: 'Số lượng giao dịch mỗi trang', in: 'query', required: false, schema: new OA\Schema(type: 'integer'))]
-    #[OA\Response(response: 200, description: 'Thành công')]
+    #[OA\Response(
+        response: 200, 
+        description: 'Thành công',
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/RewardTransactionResponse')
+        )
+    )]
     public function history(ViewRewardHistoryRequest $request): JsonResponse
     {
         $result = $this->rewardService->getHistory(

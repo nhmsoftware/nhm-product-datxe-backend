@@ -69,7 +69,8 @@ final class AuthService extends BaseService implements AuthServiceInterface
     public function register(RegisterDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {
-            $this->verifyOtpOrFail($dto->phone, $dto->otp, UserOtpType::VERIFY_REGISTER);
+            $otpType = $dto->role === UserRole::Driver ? UserOtpType::VERIFY_DRIVER_REGISTER : UserOtpType::VERIFY_REGISTER;
+            $this->verifyOtpOrFail($dto->phone, $dto->otp, $otpType);
 
             if ($this->userRepository->existsByPhone($dto->phone)) {
                 $this->throw('Số điện thoại đã được đăng ký.', 409);
@@ -84,17 +85,21 @@ final class AuthService extends BaseService implements AuthServiceInterface
                 'is_active'         => true,
             ]);
 
+            // Mọi user mới đều khởi tạo CustomerProfile cơ bản (họ tên, giới tính)
             $this->userRepository->createCustomerProfile($user, [
                 'full_name' => $dto->fullName,
                 'gender'    => Gender::Other->value,
             ]);
 
             $this->upsertDeviceIfPresent($user, $dto->deviceId, $dto->deviceToken, $dto->deviceType);
-            $this->authOtpRepository->markLatestAsUsed($dto->phone, UserOtpType::VERIFY_REGISTER);
+            $this->authOtpRepository->markLatestAsUsed($dto->phone, $otpType);
             $token = $this->generateTokenAuth($user);
 
+            // Tải profile tương ứng với role (nếu là Driver thì chưa có driverProfile, chỉ có customerProfile vừa tạo)
+            $user->load($this->getProfileRelation($user->role));
+
             return [
-                'user'  => $user->load('customerProfile'),
+                'user'  => $user,
                 'token' => $token,
             ];
         });
@@ -372,7 +377,8 @@ final class AuthService extends BaseService implements AuthServiceInterface
         $exists = $this->userRepository->existsByPhone($phone);
 
         match ($type) {
-            UserOtpType::VERIFY_REGISTER => $exists ? $this->throw('Số điện thoại đã đăng ký.', 409) : null,
+            UserOtpType::VERIFY_REGISTER,
+            UserOtpType::VERIFY_DRIVER_REGISTER => $exists ? $this->throw('Số điện thoại đã đăng ký.', 409) : null,
             UserOtpType::VERIFY_LOGIN,
             UserOtpType::VERIFY_FORGOT_PASSWORD => !$exists ? $this->throw('Số điện thoại chưa đăng ký.', 404) : null,
             UserOtpType::CHANGE_PROFILE => null, // Cho phép cả số chưa và đã đăng ký

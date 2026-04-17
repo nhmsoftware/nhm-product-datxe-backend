@@ -103,7 +103,12 @@ final class ProfileController extends BaseController
                     new OA\Property(property: 'full_name', type: 'string', example: 'Nguyễn Văn B'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'new.email@example.com'),
                     new OA\Property(property: 'phone', type: 'string', example: '0123456789'),
-                    new OA\Property(property: 'gender', type: 'string', example: 1, enum: [1 => 'male', 2 => 'female', 3 => 'other']),
+                    new OA\Property(
+                        property: 'gender', 
+                        description: 'Giới tính. 1: Nam (Male), 2: Nữ (Female), 3: Khác (Other)', 
+                        type: 'integer', 
+                        example: 1
+                    ),
                     new OA\Property(property: 'birthday', description: 'Ngày (YYYY-MM-DD)', type: 'string', format: 'date', example: '1995-08-15'),
                     new OA\Property(property: 'avatar', description: 'URL ảnh đại diện mới', type: 'string', example: 'https://example.com/avatar.jpg'),
 
@@ -111,7 +116,12 @@ final class ProfileController extends BaseController
                     new OA\Property(property: 'address', description: '(Driver) thường trú', example: '123 Đường ABC, Quận 1, TP. HCM'),
                     new OA\Property(property: 'identity_number', description: '(Driver) Số CMND/CCCD', type: 'string', example: '012345678912'),
                     new OA\Property(property: 'license_plate', description: '(Driver) Biển số xe', type: 'string', example: '59-T1 123.45'),
-                    new OA\Property(property: 'vehicle_type_id', description: '(Driver) ID loại xe', type: 'integer', example: 1),
+                    new OA\Property(
+                        property: 'vehicle_type_id', 
+                        description: '(Driver) ID loại xe. 1: Xe Máy, 2: Ô Tô 4 Chỗ, 3: Ô Tô 7 Chỗ, 4: Ô Tô 9 Chỗ', 
+                        type: 'integer', 
+                        example: 1
+                    ),
 
                     // --- Merchant-Specific Fields ---
                     new OA\Property(property: 'store_name', description: '(Merchant) Tên cửa hàng', example: 'Cửa hàng tiện lợi XYZ'),

@@ -31,7 +31,7 @@ class RegisterRequest extends FormRequest
         return [
             'phone'        => ['required', 'string', 'regex:/^0[3-9]\d{8}$/'],
             'otp'          => ['required', 'string', 'size:6'],
-            'full_name'    => ['required', 'string', 'max:100'],
+            'full_name'    => ['nullable', 'string', 'max:100'],
             'password'     => [
                 'required',
                 'string',

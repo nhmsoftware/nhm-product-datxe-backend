@@ -48,11 +48,11 @@ final class ProfileService extends BaseService implements ProfileServiceInterfac
         return $this->execute(function () use ($dto) {
             $user = $this->userRepository->findById($dto->userId);
             $this->validate($user !== null, 'Không tìm thấy người dùng.', 404);
-            
+
             if ($user->isLocked()) {
                 $this->throw('Tài khoản của bạn đã bị khóa.', 403);
             }
-            
+
             $data = $dto->data;
 
             // 1. Tách dữ liệu sensitive / non-sensitive
@@ -82,7 +82,7 @@ final class ProfileService extends BaseService implements ProfileServiceInterfac
 
 
     /**
-     * Xác thực OTP và cập nhật sensitive fields.
+     * Xác thực OTP và cập nhật các trường nhạy cảm.
      */
     public function verifyAndUpdateSensitiveFields(User $user, string $otp, array $sensitiveData): ServiceReturn
     {
