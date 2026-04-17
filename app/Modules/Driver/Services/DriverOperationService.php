@@ -12,6 +12,7 @@ use App\Modules\Driver\DTO\RejectOrderDTO;
 use App\Modules\Driver\DTO\ToggleOnlineStatusDTO;
 use App\Modules\Driver\Events\RideAccepted;
 use App\Modules\Driver\Events\RideCancelled;
+use App\Modules\Driver\Events\RideRejected;
 use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
@@ -51,8 +52,8 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 }
             }
 
-            // UC-31 A3: Driver đang có chuyến
-            $hasActiveRide = $this->rideRepository->hasActiveRideByDriver($driverProfile->id);
+            // UC-31 A3: Driver đang có chuyến (Check by User ID)
+            $hasActiveRide = $this->rideRepository->hasActiveRideByDriver($driverProfile->user_id);
             $this->validate(
                 !$hasActiveRide,
                 'Không thể cập nhật trạng thái khi đang có chuyến.',
@@ -109,8 +110,8 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 }
             }
 
-            // A5: Driver đang bận (đã có đơn khác)
-            $hasActiveRide = $this->rideRepository->hasActiveRideByDriver($driverProfile->id);
+            // A5: Driver đang bận (đã có đơn khác) - Check by User ID
+            $hasActiveRide = $this->rideRepository->hasActiveRideByDriver($driverProfile->user_id);
             $this->validate(!$hasActiveRide, 'Bạn đang có đơn khác.', 422);
 
             // A7: GPS không hoạt động — Kiểm tra tọa độ từ DTO (đã validate ở FormRequest)
@@ -129,8 +130,8 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             );
 
             // 4. Ghi dữ liệu (Sử dụng execute với useTransaction: true)
-            // Cập nhật Ride: status = ACCEPTED, driver_id
-            $rideUpdated = $this->rideRepository->acceptByDriver($ride->id, $driverProfile->id);
+            // Cập nhật Ride: status = ACCEPTED, driver_id (Referencing User ID)
+            $rideUpdated = $this->rideRepository->acceptByDriver($ride->id, $driverProfile->user_id);
             $this->validate($rideUpdated, 'Không thể nhận đơn. Vui lòng thử lại.', 500);
 
             // Cập nhật Driver Status: status = BUSY
@@ -160,7 +161,11 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             $this->validate($ride !== null, 'Đơn hàng không tồn tại.', 404);
             $this->validate($ride->status === RideStatus::PENDING, 'Đơn không khả dụng để từ chối.', 422);
 
-            $this->rideRepository->rejectByDriver($ride->id, $driverProfile->id);
+            // Từ chối (Check by User ID)
+            $this->rideRepository->rejectByDriver($ride->id, $driverProfile->user_id);
+
+            // Phát sự kiện để hệ thống biết tài xế từ chối đơn
+            event(new RideRejected($ride->id, $driverProfile->id));
 
             return $this->success([], 'Đã từ chối đơn hàng.');
         }, useTransaction: true);
@@ -187,8 +192,8 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 $this->throw('Đơn đã bị hủy trước đó.', 422);
             }
 
-            // Kiểm tra tính sở hữu và trạng thái cho phép hủy
-            $this->validate($ride->driver_id === $driverProfile->id, 'Bạn không có quyền hủy đơn này.', 403);
+            // Kiểm tra tính sở hữu và trạng thái cho phép hủy (rides.driver_id is User ID)
+            $this->validate($ride->driver_id === $driverProfile->user_id, 'Bạn không có quyền hủy đơn này.', 403);
 
             // A6: Không thể hủy ở trạng thái hiện tại (ví dụ: đã hoàn thành)
             $this->validate(
