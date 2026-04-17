@@ -16,8 +16,8 @@ final class NotifyRealtimeOnRideCancelled implements ShouldQueue
         try {
             $payload = [
                 'event'   => 'ride.cancelled',
-                'ride_id' => $event->rideId,
-                'driver_id' => $event->driverId,
+                'ride_id' => (string) $event->rideId,
+                'driver_id' => (string) $event->driverId,
                 'reason'  => $event->reason,
                 'occurred_at' => now()->toIso8601String(),
             ];
@@ -29,7 +29,7 @@ final class NotifyRealtimeOnRideCancelled implements ShouldQueue
                 'ride_id'   => $event->rideId,
                 'driver_id' => $event->driverId
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('NotifyRealtimeOnRideCancelled failed', [
                 'error'   => $e->getMessage(),

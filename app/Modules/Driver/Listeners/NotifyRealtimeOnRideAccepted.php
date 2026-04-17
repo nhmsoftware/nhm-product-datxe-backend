@@ -20,16 +20,16 @@ final class NotifyRealtimeOnRideAccepted implements ShouldQueue
     {
         try {
             $driverProfile = $this->driverProfileRepository->findById($event->driverId);
-            
+
             if (!$driverProfile) {
                 return;
             }
 
             $payload = [
                 'event'   => 'ride.accepted',
-                'ride_id' => $event->rideId,
+                'ride_id' => (string) $event->rideId,
                 'driver'  => [
-                    'id'             => $driverProfile->id,
+                    'id'             => (string) $driverProfile->id,
                     'full_name'      => $driverProfile->full_name,
                     'vehicle_name'   => $driverProfile->vehicle_name,
                     'vehicle_number' => $driverProfile->vehicle_number,
@@ -47,7 +47,7 @@ final class NotifyRealtimeOnRideAccepted implements ShouldQueue
                 'ride_id'   => $event->rideId,
                 'driver_id' => $event->driverId
             ]);
-            
+
         } catch (\Exception $e) {
             Log::error('NotifyRealtimeOnRideAccepted failed', [
                 'error'   => $e->getMessage(),
