@@ -34,7 +34,7 @@ final class AdminDriverController extends BaseController
                 description: 'ID của hồ sơ cần duyệt',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(type: 'string', example: '1')
             )
         ],
         responses: [

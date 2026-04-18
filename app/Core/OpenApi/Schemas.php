@@ -22,7 +22,7 @@ class Schemas
         description: 'Thông tin hồ sơ người dùng',
         required: ['id', 'role', 'phone', 'is_verified', 'is_phone_verified'],
         properties: [
-            new OA\Property(property: 'id', type: 'integer', example: 1, description: 'ID người dùng'),
+            new OA\Property(property: 'id', type: 'string', example: '1', description: 'ID người dùng'),
             new OA\Property(property: 'role', type: 'integer', enum: [1, 2, 3], example: 2, description: 'Vai trò: 1=Driver, 2=Customer, 3=Merchant'),
             new OA\Property(property: 'role_label', type: 'string', example: 'Khách hàng', description: 'Tên vai trò'),
             new OA\Property(
@@ -122,7 +122,7 @@ class Schemas
         description: 'Thông tin địa chỉ đã lưu',
         required: ['id', 'label', 'name', 'address_text', 'lat', 'lng', 'receiver_name', 'receiver_phone', 'is_default'],
         properties: [
-            new OA\Property(property: 'id', type: 'integer', example: 1, description: 'ID địa chỉ'),
+            new OA\Property(property: 'id', type: 'string', example: '1', description: 'ID địa chỉ'),
             new OA\Property(property: 'label', type: 'integer', enum: [1, 2, 3, 4], example: 1, description: 'Nhãn: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác'),
             new OA\Property(property: 'label_text', type: 'string', example: 'Nhà', description: 'Tên nhãn'),
             new OA\Property(property: 'name', type: 'string', maxLength: 200, example: 'Nhà A', description: 'Tên gợi nhớ'),
@@ -295,7 +295,7 @@ class Schemas
         description: 'Thông tin chi tiết mã giảm giá',
         required: ['id', 'code', 'service_type', 'discount_type', 'discount_value'],
         properties: [
-            new OA\Property(property: 'id', type: 'integer', example: 1),
+            new OA\Property(property: 'id', type: 'string', example: '1'),
             new OA\Property(property: 'code', type: 'string', example: 'DEMO10'),
             new OA\Property(
                 property: 'service_type', 
@@ -328,7 +328,7 @@ class Schemas
         description: 'Lịch sử giao dịch điểm thưởng',
         required: ['id', 'type', 'amount'],
         properties: [
-            new OA\Property(property: 'id', type: 'integer', example: 1),
+            new OA\Property(property: 'id', type: 'string', example: '1'),
             new OA\Property(
                 property: 'type', 
                 description: 'Loại giao dịch. 1: Tích điểm (Earn), 2: Sử dụng điểm (Redeem), 3: Điểm hết hạn (Expire)', 
@@ -353,7 +353,7 @@ class Schemas
         description: 'Thông tin chi tiết chuyến xe',
         required: ['id', 'status', 'vehicle_type', 'pickup_address', 'destination_address'],
         properties: [
-            new OA\Property(property: 'id', type: 'integer', example: 1),
+            new OA\Property(property: 'id', type: 'string', example: '1'),
             new OA\Property(
                 property: 'status', 
                 description: 'Trạng thái chuyến xe. 1: Nháp, 2: Đang tìm tài xế, 3: Tài xế đã nhận, 4: Đang di chuyển, 5: Hoàn thành, 6: Đã hủy', 

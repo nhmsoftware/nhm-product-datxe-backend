@@ -23,7 +23,7 @@ final class GetNavigationDTO
         return new self(
             rideId: $rideId,
             userId: (string) $request->user()->id,
-            role:   (int) $request->user()->role,
+            role:   $request->user()->role->value,
         );
     }
 }

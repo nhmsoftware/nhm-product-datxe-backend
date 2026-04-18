@@ -35,16 +35,16 @@ final class OperationService extends BaseService implements OperationServiceInte
      */
     public function updateLocation(UpdateLocationDTO $dto): ServiceReturn
     {
-        return $this->execute(function () use ($dto): bool {
+        return $this->execute(function () use ($dto): array {
             /** @var User $user */
             $user = auth()->user(); // Lấy user từ context (mặc dù DTO có ID nhưng ta dùng auth cho an toàn role)
 
             $updated = false;
 
             // 1. Cập nhật DB dựa trên role
-            if ($dto->userId && $user && $user->role === UserRole::Driver->value) {
+            if ($dto->userId && $user && $user->role === UserRole::Driver) {
                 $updated = $this->locationRepository->updateDriverLocation($dto->userId, $dto->lat, $dto->lng);
-            } elseif ($dto->userId && $user && $user->role === UserRole::Customer->value) {
+            } elseif ($dto->userId && $user && $user->role === UserRole::Customer) {
                 $updated = $this->locationRepository->updateCustomerLocation($dto->userId, $dto->lat, $dto->lng);
             }
 
@@ -52,13 +52,15 @@ final class OperationService extends BaseService implements OperationServiceInte
             if ($user) {
                 event(new UserLocationUpdated(
                     userId: $dto->userId,
-                    role:   $user->role,
+                    role:   $user->role->value,
                     lat:    $dto->lat,
                     lng:    $dto->lng
                 ));
             }
 
-            return $updated;
+            return [
+                'updated' => $updated,
+            ];
         }, useTransaction: true);
     }
 
