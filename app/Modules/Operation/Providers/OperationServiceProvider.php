@@ -9,6 +9,9 @@ use App\Modules\Operation\Interfaces\OperationServiceInterface;
 use App\Modules\Operation\Interfaces\LocationRepositoryInterface;
 use App\Modules\Operation\Services\OperationService;
 use App\Modules\Operation\Repositories\LocationRepository;
+use App\Modules\Operation\Events\UserLocationUpdated;
+use App\Modules\Operation\Listeners\NotifyRealtimeOnLocationUpdated;
+use Illuminate\Support\Facades\Event;
 
 /**
  * Service Provider cho module Operation.
@@ -39,5 +42,10 @@ class OperationServiceProvider extends BaseModuleServiceProvider
     public function boot(): void
     {
         parent::boot();
+
+        Event::listen(
+            UserLocationUpdated::class,
+            NotifyRealtimeOnLocationUpdated::class
+        );
     }
 }

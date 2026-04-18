@@ -49,12 +49,21 @@ final class OperationService extends BaseService implements OperationServiceInte
             }
 
             // 2. Phát sự kiện realtime (Redis/Socket.io)
-            if ($user) {
+            if ($user && $dto->userId) {
+                // Lấy chuyến xe hiện tại để gán ride_id vào event (giúp realtime server định tuyến tới đúng room)
+                $activeRide = null;
+                if ($user->role === UserRole::Driver) {
+                    $activeRide = $this->rideRepository->findActiveByDriver($dto->userId);
+                } else {
+                    $activeRide = $this->rideRepository->findActiveByCustomer($dto->userId);
+                }
+
                 event(new UserLocationUpdated(
                     userId: $dto->userId,
                     role:   $user->role->value,
                     lat:    $dto->lat,
-                    lng:    $dto->lng
+                    lng:    $dto->lng,
+                    rideId: $activeRide?->id
                 ));
             }
 
