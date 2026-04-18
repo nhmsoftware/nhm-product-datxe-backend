@@ -19,7 +19,7 @@ final class ConfirmBookingDTO
     {
         return new self(
             rideId:        $rideId,
-            customerId:    $request->user()->id->toString(),
+            customerId:    $request->user()->id,
             expectedPrice: $request->float('expected_price')
         );
     }

@@ -25,7 +25,7 @@ final class ApplyVoucherDTO
     public static function fromRequest(ApplyVoucherRequest $request, string $rideId): self
     {
         return new self(
-            customerId:   $request->user()->id->toString(),
+            customerId:   $request->user()->id,
             rideId:       $rideId,
             voucherCode:  $request->string('voucher_code')->toString(),
         );

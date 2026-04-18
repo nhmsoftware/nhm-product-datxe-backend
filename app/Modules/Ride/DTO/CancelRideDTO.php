@@ -29,7 +29,7 @@ final class CancelRideDTO
     {
         return new self(
             rideId: $request->route('id'),
-            customerId: $request->user()->id->toString(),
+            customerId: $request->user()->id,
             reason: $request->input('reason'),
         );
     }
