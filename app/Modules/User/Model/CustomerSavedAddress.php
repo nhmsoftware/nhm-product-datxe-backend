@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property int $id
- * @property int $customer_id
+ * @property string $id
+ * @property string $customer_id
  * @property int $label
  * @property string|null $name
  * @property string $address_text
@@ -27,7 +27,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property-read \App\Modules\User\Model\CustomerProfile|null $customerProfile
  * @property-read string $label_text
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress default()
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress forCustomer(int $customerId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress forCustomer(string $customerId)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CustomerSavedAddress onlyTrashed()
@@ -70,6 +70,8 @@ class CustomerSavedAddress extends Model
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'customer_id' => 'string',
         'lat' => 'decimal:8',
         'lng' => 'decimal:8',
         'is_default' => 'boolean',
@@ -114,7 +116,7 @@ class CustomerSavedAddress extends Model
     /**
      * Scope to get addresses for a specific customer.
      */
-    public function scopeForCustomer($query, int $customerId)
+    public function scopeForCustomer($query, string $customerId)
     {
         return $query->where('customer_id', $customerId);
     }

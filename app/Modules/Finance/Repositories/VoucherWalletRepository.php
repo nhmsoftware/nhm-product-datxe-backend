@@ -18,7 +18,7 @@ final class VoucherWalletRepository extends BaseRepository implements VoucherWal
     /**
      * @inheritDoc
      */
-    public function isSavedByCustomer(int $customerId, int $voucherId): bool
+    public function isSavedByCustomer(string $customerId, string $voucherId): bool
     {
         return $this->model
             ->where('customer_id', $customerId)
@@ -29,7 +29,7 @@ final class VoucherWalletRepository extends BaseRepository implements VoucherWal
     /**
      * @inheritDoc
      */
-    public function saveToWallet(int $customerId, int $voucherId): bool
+    public function saveToWallet(string $customerId, string $voucherId): bool
     {
         return (bool) $this->model->updateOrCreate(
             ['customer_id' => $customerId, 'voucher_id' => $voucherId],

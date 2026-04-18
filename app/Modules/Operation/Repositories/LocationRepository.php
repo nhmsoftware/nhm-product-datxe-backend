@@ -21,7 +21,7 @@ final class LocationRepository implements LocationRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function updateDriverLocation(int $userId, float $lat, float $lng): bool
+    public function updateDriverLocation(string $userId, float $lat, float $lng): bool
     {
         // 1. Ghi vào Redis (Instant)
         $key = "location:driver:{$userId}";
@@ -43,7 +43,7 @@ final class LocationRepository implements LocationRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function updateCustomerLocation(int $userId, float $lat, float $lng): bool
+    public function updateCustomerLocation(string $userId, float $lat, float $lng): bool
     {
         // 1. Ghi vào Redis (Instant)
         $key = "location:customer:{$userId}";
@@ -62,7 +62,7 @@ final class LocationRepository implements LocationRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function getDriverLocation(int $userId): ?array
+    public function getDriverLocation(string $userId): ?array
     {
         $data = Redis::hgetall("location:driver:{$userId}");
 
@@ -88,7 +88,7 @@ final class LocationRepository implements LocationRepositoryInterface
     /**
      * @inheritDoc
      */
-    public function getCustomerLocation(int $userId): ?array
+    public function getCustomerLocation(string $userId): ?array
     {
         $data = Redis::hgetall("location:customer:{$userId}");
 
@@ -114,7 +114,7 @@ final class LocationRepository implements LocationRepositoryInterface
     /**
      * Helper kiểm tra và thực hiện đồng bộ DB có tiết lưu (Throttling).
      */
-    private function throttleDbUpdate(int $userId, int $role, float $lat, float $lng): void
+    private function throttleDbUpdate(string $userId, int $role, float $lat, float $lng): void
     {
         $lockKey = "location:sync_lock:{$userId}";
 

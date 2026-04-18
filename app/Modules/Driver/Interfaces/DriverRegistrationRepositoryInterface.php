@@ -15,26 +15,26 @@ interface DriverRegistrationRepositoryInterface extends BaseRepositoryInterface
      * Tìm hồ sơ KYC Pending/Approved của user.
      * UC-30 A9 (pending check), A14/A15 (sau xét duyệt).
      */
-    public function findActiveApplicationByUser(int $userId, KycType $kycType): ?UserReviewApplication;
+    public function findActiveApplicationByUser(string $userId, KycType $kycType): ?UserReviewApplication;
 
     /**
      * Kiểm tra CCCD đã được đăng ký trong hồ sơ Pending/Approved chưa.
      * UC-30 A6 — kết thúc use case nếu trùng.
      */
-    public function existsByCitizenId(string $citizenId, int $excludeUserId = 0): bool;
+    public function existsByCitizenId(string $citizenId, string $excludeUserId = '0'): bool;
 
     /**
      * Kiểm tra biển số xe đã được đăng ký chưa.
      * UC-30 A7 — yêu cầu user nhập lại.
      */
-    public function existsByVehicleNumber(string $vehicleNumber, int $excludeUserId = 0): bool;
+    public function existsByVehicleNumber(string $vehicleNumber, string $excludeUserId = '0'): bool;
 
     /**
      * Tạo hồ sơ đăng ký tài xế trạng thái Pending.
      * UC-30 Normal Flow bước 17–18.
      */
     public function createDriverApplication(
-        int     $userId,
+        string  $userId,
         array   $snapshotData,
         KycType $kycType,
     ): UserReviewApplication;
@@ -43,7 +43,7 @@ interface DriverRegistrationRepositoryInterface extends BaseRepositoryInterface
      * Cập nhật trạng thái (Admin duyệt/từ chối — UC-30 A14).
      */
     public function updateStatus(
-        int         $applicationId,
+        string      $applicationId,
         KycStatus   $status,
         ?string     $cancelReason = null,
     ): bool;

@@ -12,7 +12,7 @@ use App\Modules\Operation\Http\Requests\UpdateLocationRequest;
 final class UpdateLocationDTO
 {
     public function __construct(
-        public readonly int $userId,
+        public readonly string $userId,
         public readonly float $lat,
         public readonly float $lng,
     ) {
@@ -24,7 +24,7 @@ final class UpdateLocationDTO
     public static function fromRequest(UpdateLocationRequest $request): self
     {
         return new self(
-            userId: (int) $request->user()->id,
+            userId: (string) $request->user()->id,
             lat: (float) $request->input('lat'),
             lng: (float) $request->input('lng'),
         );

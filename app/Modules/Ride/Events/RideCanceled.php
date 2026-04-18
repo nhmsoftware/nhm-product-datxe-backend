@@ -16,9 +16,9 @@ final class RideCanceled
     use Dispatchable, SerializesModels;
 
     public function __construct(
-        public readonly int $rideId,
-        public readonly int $customerId,
-        public readonly ?int $driverId = null,
+        public readonly string $rideId,
+        public readonly string $customerId,
+        public readonly ?string $driverId = null,
     ) {
     }
 }

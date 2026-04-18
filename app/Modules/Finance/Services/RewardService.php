@@ -21,7 +21,7 @@ final class RewardService extends BaseService implements RewardServiceInterface
     /**
      * Lấy tổng quan điểm thưởng (số dư, tổng nhận, tổng tiêu) (UC-24)
      */
-    public function getRewardOverview(int $customerId): ServiceReturn
+    public function getRewardOverview(string $customerId): ServiceReturn
     {
         return $this->execute(function () use ($customerId): array {
             $wallet = $this->rewardWalletRepository->findByCustomerId($customerId);
@@ -74,7 +74,7 @@ final class RewardService extends BaseService implements RewardServiceInterface
     /**
      * Lấy chi tiết một giao dịch điểm (UC-24-5)
      */
-    public function getTransactionDetail(int $customerId, int $transactionId): ServiceReturn
+    public function getTransactionDetail(string $customerId, string $transactionId): ServiceReturn
     {
         return $this->execute(function () use ($customerId, $transactionId): array {
             $transaction = $this->rewardRepository->getTransactionDetail($transactionId, $customerId);

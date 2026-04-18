@@ -76,7 +76,7 @@ final class DriverOperationController extends BaseController
         ),
         tags: ['Driver'],
         parameters: [
-            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
         ],
         responses: [
             new OA\Response(response: 200, description: 'Nhận đơn thành công'),
@@ -86,7 +86,7 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
         ]
     )]
-    public function acceptOrder(int $rideId, AcceptOrderRequest $request): JsonResponse
+    public function acceptOrder(string $rideId, AcceptOrderRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->acceptOrder(
             AcceptOrderDTO::fromRequest($request, $rideId)
@@ -105,7 +105,7 @@ final class DriverOperationController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Driver'],
         parameters: [
-            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
         ],
         responses: [
             new OA\Response(response: 200, description: 'Từ chối thành công'),
@@ -113,7 +113,7 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 422, description: 'Đơn không ở trạng thái chờ'),
         ]
     )]
-    public function rejectOrder(int $rideId, RejectOrderRequest $request): JsonResponse
+    public function rejectOrder(string $rideId, RejectOrderRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->rejectOrder(
             RejectOrderDTO::fromRequest($request, $rideId)
@@ -148,7 +148,7 @@ final class DriverOperationController extends BaseController
         ),
         tags: ['Driver'],
         parameters: [
-            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
         ],
         responses: [
             new OA\Response(response: 200, description: 'Hủy thành công'),
@@ -157,7 +157,7 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 422, description: 'Trạng thái đơn không hợp lệ'),
         ]
     )]
-    public function cancelOrder(int $rideId, CancelOrderRequest $request): JsonResponse
+    public function cancelOrder(string $rideId, CancelOrderRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->cancelOrder(
             CancelOrderDTO::fromRequest($request, $rideId)

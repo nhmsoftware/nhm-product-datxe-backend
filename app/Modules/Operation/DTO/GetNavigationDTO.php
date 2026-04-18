@@ -12,17 +12,17 @@ use Illuminate\Http\Request;
 final class GetNavigationDTO
 {
     public function __construct(
-        public readonly int $rideId,
-        public readonly int $userId,
+        public readonly string $rideId,
+        public readonly string $userId,
         public readonly int $role,
     ) {
     }
 
-    public static function fromRequest(int $rideId, Request $request): self
+    public static function fromRequest(string $rideId, Request $request): self
     {
         return new self(
             rideId: $rideId,
-            userId: (int) $request->user()->id,
+            userId: (string) $request->user()->id,
             role:   (int) $request->user()->role,
         );
     }

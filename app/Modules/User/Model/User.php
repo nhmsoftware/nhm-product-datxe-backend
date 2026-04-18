@@ -17,7 +17,7 @@ use Illuminate\Notifications\Notifiable;
 
 
 /**
- * @property int $id
+ * @property string $id
  * @property string|null $phone
  * @property string|null $email
  * @property bool $is_verified

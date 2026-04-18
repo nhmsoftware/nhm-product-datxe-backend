@@ -46,7 +46,7 @@ interface RideRepositoryInterface
 
     /**
      * Hủy chuyến đi, cập nhật lý do và phí hủy nếu có (UC-15).
-     * @param int $rideId ID chuyến chuyến
+     * @param string $rideId ID chuyến chuyến
      * @param string|null $reason Lý do hủy
      * @param float $cancellationFee Phi phí hủy
      * @return bool

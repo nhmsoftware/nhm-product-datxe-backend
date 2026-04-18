@@ -10,7 +10,7 @@ use Carbon\Carbon;
 final class ViewSpendingSummaryDTO
 {
     public function __construct(
-        public readonly int $customerId,
+        public readonly string $customerId,
         public readonly Carbon $startDate,
         public readonly Carbon $endDate,
         public readonly string $rangeLabel
@@ -48,7 +48,7 @@ final class ViewSpendingSummaryDTO
         }
 
         return new self(
-            customerId: (int) $request->user()->id,
+            customerId: (string) $request->user()->id,
             startDate: $startDate,
             endDate: $endDate,
             rangeLabel: $label

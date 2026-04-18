@@ -20,7 +20,7 @@ interface BaseRepositoryInterface
     /**
      * Tìm theo ID với đầy đủ columns và relations
      */
-    public function findById(int $id, array $columns = ['*'], array $relations = []): ?Model;
+    public function findById(string|int $id, array $columns = ['*'], array $relations = []): ?Model;
 
     /**
      * Tìm một bản ghi theo điều kiện array

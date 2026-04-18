@@ -109,7 +109,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
     /**
      * Cập nhật vai trò của user.
      */
-    public function updateRole(int $userId, \App\Modules\User\Model\Enums\UserRole $role): bool
+    public function updateRole(string $userId, \App\Modules\User\Model\Enums\UserRole $role): bool
     {
         return (bool) $this->model->where('id', $userId)->update([
             'role' => $role->value,

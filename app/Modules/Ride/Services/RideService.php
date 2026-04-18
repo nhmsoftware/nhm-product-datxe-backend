@@ -360,7 +360,7 @@ final class RideService extends BaseService implements RideServiceInterface
             $this->rideRepository->cancel($dto->rideId, $dto->reason, $cancellationFee);
 
             // Raise Domain Event để thông báo cho Driver (Nếu có)
-//            event(new RideCanceled($dto->rideId, $dto->customerId, $ride->driver_id));
+            event(new RideCanceled($dto->rideId, $dto->customerId, $ride->driver_id));
 
             return [
                 'ride_id'          => $dto->rideId,

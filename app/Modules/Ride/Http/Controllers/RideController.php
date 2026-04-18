@@ -75,13 +75,13 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Response(response: 200, description: 'Danh sách xe và giá ước tính')]
     #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
-    public function getVehicleOptions(int $rideId, Request $request): JsonResponse
+    public function getVehicleOptions(string $rideId, Request $request): JsonResponse
     {
 //        dd($request);
-        $result = $this->rideService->getVehicleOptions($rideId, (int) $request->user()->id);
+        $result = $this->rideService->getVehicleOptions($rideId, (string) $request->user()->id);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
@@ -97,15 +97,15 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Response(
         response: 200,
         description: 'Chi tiết giá cước',
         content: new OA\JsonContent(ref: '#/components/schemas/PriceEstimateResponse')
     )]
-    public function getPriceEstimate(int $rideId, Request $request): JsonResponse
+    public function getPriceEstimate(string $rideId, Request $request): JsonResponse
     {
-        $result = $this->rideService->getPriceEstimate($rideId, $request->user()->id);
+        $result = $this->rideService->getPriceEstimate($rideId, (string) $request->user()->id);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
@@ -121,7 +121,7 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
@@ -133,7 +133,7 @@ final class RideController extends BaseController
     )]
     #[OA\Response(response: 200, description: 'Voucher được áp dụng thành công')]
     #[OA\Response(response: 422, description: 'Voucher không hợp lệ')]
-    public function applyVoucher(ApplyVoucherRequest $request, int $rideId): JsonResponse
+    public function applyVoucher(ApplyVoucherRequest $request, string $rideId): JsonResponse
     {
         $result = $this->rideService->applyVoucher(
             ApplyVoucherDTO::fromRequest($request, $rideId)
@@ -153,12 +153,12 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Parameter(name: 'voucher_code', description: 'Mã voucher', in: 'query', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Response(response: 200, description: 'Voucher đã được xóa, trả về giá gốc')]
-    public function removeVoucher(int $rideId, ApplyVoucherRequest $request): JsonResponse
+    public function removeVoucher(string $rideId, ApplyVoucherRequest $request): JsonResponse
     {
-        $result = $this->rideService->removeVoucher($rideId, (int) $request->user()->id);
+        $result = $this->rideService->removeVoucher($rideId, (string) $request->user()->id);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
@@ -174,7 +174,7 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
@@ -190,7 +190,7 @@ final class RideController extends BaseController
         content: new OA\JsonContent(ref: '#/components/schemas/RideResponse')
     )]
     #[OA\Response(response: 409, description: 'Giá đã thay đổi hoặc voucher không hợp lệ')]
-    public function confirmBooking(int $rideId, ConfirmBookingRequest $request): JsonResponse
+    public function confirmBooking(string $rideId, ConfirmBookingRequest $request): JsonResponse
     {
         $result = $this->rideService->confirmBooking(
             ConfirmBookingDTO::fromRequest($request, $rideId)
@@ -210,7 +210,7 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'id', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'id', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\RequestBody(
         required: false,
         content: new OA\JsonContent(
@@ -222,7 +222,7 @@ final class RideController extends BaseController
     #[OA\Response(response: 200, description: 'Hủy chuyến thành công')]
     #[OA\Response(response: 400, description: 'Không thể hủy chuyến')]
     #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
-    public function cancel(int $id, CancelRideRequest $request): JsonResponse
+    public function cancel(string $id, CancelRideRequest $request): JsonResponse
     {
         $result = $this->rideService->cancelRide(
             CancelRideDTO::fromRequest($request)

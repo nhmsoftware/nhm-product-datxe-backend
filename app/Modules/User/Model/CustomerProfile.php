@@ -12,8 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property int $id
- * @property int $user_id
+ * @property string $id
+ * @property string $user_id
  * @property string $full_name
  * @property Gender|null $gender
  * @property numeric|null $current_lat
@@ -60,6 +60,8 @@ class CustomerProfile extends Model
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'user_id' => 'string',
         'gender' => Gender::class,
         'birthday' => 'date',
         'current_lat' => 'decimal:7',

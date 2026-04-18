@@ -10,7 +10,7 @@ use App\Modules\Finance\Model\Enums\RewardTransactionType;
 final class RewardHistoryDTO
 {
     public function __construct(
-        public readonly int $customerId,
+        public readonly string $customerId,
         public readonly ?RewardTransactionType $type,
         public readonly ?string $startDate,
         public readonly ?string $endDate,
@@ -26,7 +26,7 @@ final class RewardHistoryDTO
         $type = $typeVal ? RewardTransactionType::from((int) $typeVal) : null;
 
         return new self(
-            customerId: (int) $request->user()->id,
+            customerId: (string) $request->user()->id,
             type: $type,
             startDate: $request->input('start_date'),
             endDate: $request->input('end_date'),

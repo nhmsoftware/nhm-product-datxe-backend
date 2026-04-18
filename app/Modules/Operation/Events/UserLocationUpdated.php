@@ -17,11 +17,11 @@ final class UserLocationUpdated
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public readonly int $userId,
+        public readonly string $userId,
         public readonly int $role,
         public readonly float $lat,
         public readonly float $lng,
-        public readonly ?int $rideId = null, // Gắn kèm ID chuyến xe nếu đang trong chuyến
+        public readonly ?string $rideId = null, // Gắn kèm ID chuyến xe nếu đang trong chuyến
     ) {
     }
 }

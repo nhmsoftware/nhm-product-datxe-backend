@@ -12,8 +12,8 @@ use App\Modules\Finance\Http\Requests\ApplyVoucherQuickRequest;
 final readonly class ApplyVoucherQuickDTO
 {
     public function __construct(
-        public int $customerId,
-        public int $voucherId
+        public string $customerId,
+        public string $voucherId
     ) {
     }
 
@@ -23,8 +23,8 @@ final readonly class ApplyVoucherQuickDTO
     public static function fromRequest(ApplyVoucherQuickRequest $request): self
     {
         return new self(
-            customerId: (int) $request->user()->id,
-            voucherId: (int) $request->route('id')
+            customerId: (string) $request->user()->id,
+            voucherId: (string) $request->route('id')
         );
     }
 }

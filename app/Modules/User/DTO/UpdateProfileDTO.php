@@ -13,7 +13,7 @@ use App\Modules\User\Http\Requests\EditProfileRequest;
 final class UpdateProfileDTO
 {
     public function __construct(
-        public readonly int   $userId,
+        public readonly string $userId,
         public readonly array $data,
     ) {
     }
@@ -21,7 +21,7 @@ final class UpdateProfileDTO
     public static function fromRequest(EditProfileRequest $request): self
     {
         return new self(
-            userId: (int) $request->user()->id,
+            userId: (string) $request->user()->id,
             data:   $request->validated(),
         );
     }

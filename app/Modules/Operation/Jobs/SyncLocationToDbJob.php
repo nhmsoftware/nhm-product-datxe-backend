@@ -22,13 +22,13 @@ final class SyncLocationToDbJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * @param int $userId ID người dùng
+     * @param string $userId ID người dùng
      * @param int $role Role người dùng (UserRole)
      * @param float $lat Vĩ độ
      * @param float $lng Kinh độ
      */
     public function __construct(
-        private readonly int $userId,
+        private readonly string $userId,
         private readonly int $role,
         private readonly float $lat,
         private readonly float $lng

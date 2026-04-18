@@ -11,15 +11,15 @@ use App\Modules\Ride\Model\Enums\RideCancelReason;
 final class RejectOrderDTO
 {
     public function __construct(
-        public readonly int $rideId,
-        public readonly int $userId,
+        public readonly string $rideId,
+        public readonly string $userId,
     ) {}
 
-    public static function fromRequest(RejectOrderRequest $request, int $rideId): self
+    public static function fromRequest(RejectOrderRequest $request, string $rideId): self
     {
         return new self(
             rideId: $rideId,
-            userId: (int) $request->user()->id,
+            userId: (string) $request->user()->id,
         );
     }
 }

@@ -13,9 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property int $id
- * @property int $customer_id
- * @property int|null $driver_id
+ * @property string $id
+ * @property string $customer_id
+ * @property string|null $driver_id
  * @property string $pickup_address
  * @property numeric $pickup_lat
  * @property numeric $pickup_lng

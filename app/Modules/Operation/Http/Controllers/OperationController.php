@@ -65,7 +65,7 @@ final class OperationController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Operation'],
         parameters: [
-            new OA\Parameter(name: 'rideId', in: 'path', description: 'ID chuyến xe', required: true, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'rideId', in: 'path', description: 'ID chuyến xe', required: true, schema: new OA\Schema(type: 'string'))
         ],
         responses: [
             new OA\Response(response: 200, description: 'Lấy dữ liệu thành công'),
@@ -73,7 +73,7 @@ final class OperationController extends BaseController
             new OA\Response(response: 404, description: 'Không tìm thấy chuyến xe'),
         ]
     )]
-    public function getNavigation(int $rideId, Request $request): JsonResponse
+    public function getNavigation(string $rideId, Request $request): JsonResponse
     {
         $result = $this->operationService->getNavigation(
             GetNavigationDTO::fromRequest($rideId, $request)

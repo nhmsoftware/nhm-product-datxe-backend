@@ -12,8 +12,8 @@ use App\Modules\Driver\Http\Requests\PickupRideRequest;
 final readonly class PickupRideDTO
 {
     public function __construct(
-        public int $rideId,
-        public int $userId,
+        public string $rideId,
+        public string $userId,
         public float $lat,
         public float $lng
     ) {
@@ -22,11 +22,11 @@ final readonly class PickupRideDTO
     /**
      * Tạo DTO từ FormRequest.
      */
-    public static function fromRequest(PickupRideRequest $request, int $rideId): self
+    public static function fromRequest(PickupRideRequest $request, string $rideId): self
     {
         return new self(
             rideId: $rideId,
-            userId: (int) auth()->id(),
+            userId: (string) auth()->id(),
             lat: (float) $request->input('lat'),
             lng: (float) $request->input('lng')
         );

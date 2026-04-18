@@ -42,7 +42,7 @@ final class RewardRepository extends BaseRepository implements RewardRepositoryI
     /**
      * Lấy chi tiết một giao dịch điểm của khách hàng (UC-24-5)
      */
-    public function getTransactionDetail(int $transactionId, int $customerId): ?RewardTransaction
+    public function getTransactionDetail(string $transactionId, string $customerId): ?RewardTransaction
     {
         /** @var RewardTransaction|null */
         return $this->model

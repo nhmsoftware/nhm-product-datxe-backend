@@ -12,7 +12,7 @@ interface RewardServiceInterface
     /**
      * Lấy tổng quan điểm thưởng (số dư, tổng nhận, tổng tiêu) (UC-24)
      */
-    public function getRewardOverview(int $customerId): ServiceReturn;
+    public function getRewardOverview(string $customerId): ServiceReturn;
 
     /**
      * Lấy danh sách lịch sử giao dịch điểm (UC-24)
@@ -22,5 +22,5 @@ interface RewardServiceInterface
     /**
      * Lấy chi tiết một giao dịch điểm (UC-24-5)
      */
-    public function getTransactionDetail(int $customerId, int $transactionId): ServiceReturn;
+    public function getTransactionDetail(string $customerId, string $transactionId): ServiceReturn;
 }

@@ -27,7 +27,7 @@ final class RewardController extends BaseController
     #[OA\Response(response: 200, description: 'Thành công')]
     public function overview(Request $request): JsonResponse
     {
-        $result = $this->rewardService->getRewardOverview((int) $request->user()->id);
+        $result = $this->rewardService->getRewardOverview((string) $request->user()->id);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
@@ -79,11 +79,11 @@ final class RewardController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Finance - Rewards']
     )]
-    #[OA\Parameter(name: 'transactionId', description: 'ID giao dịch', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'transactionId', description: 'ID giao dịch', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Response(response: 200, description: 'Thành công')]
-    public function showDetail(int $transactionId, Request $request): JsonResponse
+    public function showDetail(string $transactionId, Request $request): JsonResponse
     {
-        $result = $this->rewardService->getTransactionDetail((int) $request->user()->id, $transactionId);
+        $result = $this->rewardService->getTransactionDetail((string) $request->user()->id, $transactionId);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());

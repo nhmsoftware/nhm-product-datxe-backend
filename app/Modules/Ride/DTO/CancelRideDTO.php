@@ -12,8 +12,8 @@ use App\Modules\Ride\Http\Requests\CancelRideRequest;
 final class CancelRideDTO
 {
     public function __construct(
-        public readonly int $rideId,
-        public readonly int $customerId,
+        public readonly string $rideId,
+        public readonly string $customerId,
         public readonly ?string $reason = null,
     ) {
     }
@@ -28,8 +28,8 @@ final class CancelRideDTO
     public static function fromRequest(CancelRideRequest $request): self
     {
         return new self(
-            rideId: (int) $request->route('id'),
-            customerId: (int) $request->user()->id,
+            rideId: $request->route('id'),
+            customerId: $request->user()->id->toString(),
             reason: $request->input('reason'),
         );
     }

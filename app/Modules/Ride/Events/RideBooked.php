@@ -13,8 +13,8 @@ final class RideBooked
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public readonly int $rideId,
-        public readonly int $customerId
+        public readonly string $rideId,
+        public readonly string $customerId
     ) {
     }
 }

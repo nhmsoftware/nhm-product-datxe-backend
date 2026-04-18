@@ -16,8 +16,8 @@ final class DriverArrivedAtPickup
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public readonly int $rideId,
-        public readonly int $driverId
+        public readonly string $rideId,
+        public readonly string $driverId
     ) {
     }
 }
