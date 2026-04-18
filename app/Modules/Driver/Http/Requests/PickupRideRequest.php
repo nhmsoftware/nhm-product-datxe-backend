@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Modules\Driver\Http\Requests;
 
-use App\Core\Http\Requests\BaseFormRequest;
 use App\Core\Traits\HandleApi;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
  * Request xác nhận đón khách.
  */
-final class PickupRideRequest extends BaseFormRequest
+final class PickupRideRequest extends FormRequest
 {
     use HandleApi;
 
