@@ -63,6 +63,9 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             $this->validate($ride->driver_id === $dto->userId, 'Bạn không phải tài xế của chuyến xe này.', 403);
             $this->validate($ride->status === RideStatus::ACCEPTED, 'Trạng thái chuyến xe không hợp lệ.', 422);
 
+            $driverProfile = $this->driverProfileRepository->findByUserId($dto->userId);
+            $this->validate($driverProfile !== null, 'Hồ sơ tài xế không tồn tại.', 404);
+
             // Kiểm tra vị trí GPS (Ngưỡng cho phép 200m)
             $distance = $this->calculateDistance(
                 (float) $dto->lat,
@@ -72,11 +75,16 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             );
 
             if ($distance > 200) {
+                Log::debug('Distance check failed for notifyArrived', [
+                    'distance' => $distance,
+                    'ride_id' => $dto->rideId,
+                    'user_id' => $dto->userId
+                ]);
                 $this->throw('Bạn chưa đủ gần điểm đón để thông báo đã đến (Bán kính 200m).', 422);
             }
 
-            // Gửi sự kiện Domain Event
-            event(new DriverArrivedAtPickup($ride->id, $dto->userId));
+            // Gửi sự kiện Domain Event với driverProfile->id để listener tìm thấy
+            event(new DriverArrivedAtPickup($ride->id, $driverProfile->id));
 
             return $this->success([], 'Đã gửi thông báo đến khách hàng.');
         });
@@ -117,6 +125,11 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             );
 
             if ($distance > 200) {
+                Log::debug('Distance check failed for pickupRide', [
+                    'distance' => $distance,
+                    'ride_id' => $dto->rideId,
+                    'user_id' => $dto->userId
+                ]);
                 $this->throw('Vị trí hiện tại của bạn cách điểm đón quá xa. Vui lòng di chuyển đến đúng vị trí.', 422);
             }
 

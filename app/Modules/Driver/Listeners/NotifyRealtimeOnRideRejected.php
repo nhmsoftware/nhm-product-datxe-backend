@@ -25,6 +25,13 @@ final class NotifyRealtimeOnRideRejected implements ShouldQueue
         try {
             $driverProfile = $this->driverProfileRepository->findById($event->driverId);
 
+            if (!$driverProfile) {
+                Log::warning('NotifyRealtimeOnRideRejected partial: Driver profile not found, sending basic info', [
+                    'driver_id' => $event->driverId,
+                    'ride_id'   => $event->rideId
+                ]);
+            }
+
             $payload = [
                 'event'   => 'ride.rejected',
                 'ride_id' => (string) $event->rideId,

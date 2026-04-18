@@ -22,6 +22,10 @@ final class NotifyRealtimeOnRideAccepted implements ShouldQueue
             $driverProfile = $this->driverProfileRepository->findById($event->driverId);
 
             if (!$driverProfile) {
+                Log::warning('NotifyRealtimeOnRideAccepted skipped: Driver profile not found', [
+                    'driver_id' => $event->driverId,
+                    'ride_id'   => $event->rideId
+                ]);
                 return;
             }
 
