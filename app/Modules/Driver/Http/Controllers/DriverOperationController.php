@@ -9,10 +9,16 @@ use App\Modules\Driver\DTO\AcceptOrderDTO;
 use App\Modules\Driver\DTO\CancelOrderDTO;
 use App\Modules\Driver\DTO\RejectOrderDTO;
 use App\Modules\Driver\DTO\ToggleOnlineStatusDTO;
+use App\Modules\Driver\DTO\StartRideDTO;
+use App\Modules\Driver\DTO\CompleteRideDTO;
+use App\Modules\Driver\DTO\PickupRideDTO;
+use App\Modules\Driver\Http\Requests\StartRideRequest;
+use App\Modules\Driver\Http\Requests\CompleteRideRequest;
 use App\Modules\Driver\Http\Requests\AcceptOrderRequest;
 use App\Modules\Driver\Http\Requests\CancelOrderRequest;
 use App\Modules\Driver\Http\Requests\RejectOrderRequest;
 use App\Modules\Driver\Http\Requests\ToggleOnlineStatusRequest;
+use App\Modules\Driver\Http\Requests\PickupRideRequest;
 use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
 use Illuminate\Http\JsonResponse;
 use OpenApi\Attributes as OA;
@@ -25,8 +31,8 @@ final class DriverOperationController extends BaseController
 
     #[OA\Put(
         path: '/api/v1/driver/status',
-        summary: 'UC-31: Bật/Tắt trạng thái hoạt động (Go Online/Offline)',
         description: 'Tài xế có thể bật/tắt trạng thái bất cứ lúc nào. Nếu tắt Offline khi đang có chuyến, tài xế vẫn hoàn thành chuyến cũ nhưng sẽ không được gán thêm chuyến mới.',
+        summary: 'UC-31: Bật/Tắt trạng thái hoạt động (Go Online/Offline)',
         security: [['sanctum' => []]],
         requestBody: new OA\RequestBody(
             required: true,
@@ -136,9 +142,9 @@ final class DriverOperationController extends BaseController
                 required: ['reason_id'],
                 properties: [
                     new OA\Property(
-                        property: 'reason_id', 
-                        description: 'ID lý do hủy chuyến. 1: Khách không ra (Customer No Show), 2: Xe hỏng (Vehicle Broken), 3: Đặt sai điểm (Wrong Location), 4: Khác (Other)', 
-                        type: 'integer', 
+                        property: 'reason_id',
+                        description: 'ID lý do hủy chuyến. 1: Khách không ra (Customer No Show), 2: Xe hỏng (Vehicle Broken), 3: Đặt sai điểm (Wrong Location), 4: Khác (Other)',
+                        type: 'integer',
                         example: 1
                     ),
                     new OA\Property(property: 'current_lat', type: 'number', format: 'float', example: 10.776889),
@@ -161,6 +167,168 @@ final class DriverOperationController extends BaseController
     {
         $result = $this->driverOperationService->cancelOrder(
             CancelOrderDTO::fromRequest($request, $rideId)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/driver/ride/{rideId}/start',
+        summary: 'UC-35: Bắt đầu thực hiện chuyến đi (Start Trip)',
+        security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['lat', 'lng'],
+                properties: [
+                    new OA\Property(property: 'lat', type: 'number', format: 'float', example: 10.776889),
+                    new OA\Property(property: 'lng', type: 'number', format: 'float', example: 106.700806),
+                ]
+            )
+        ),
+        tags: ['Driver'],
+        parameters: [
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Bắt đầu thành công'),
+            new OA\Response(response: 403, description: 'Không có quyền sở hữu chuyến hoặc chưa đủ gần'),
+            new OA\Response(response: 422, description: 'Trạng thái đơn không hợp lệ'),
+            new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
+        ]
+    )]
+    public function startRide(string $rideId, StartRideRequest $request): JsonResponse
+    {
+        $result = $this->driverOperationService->startRide(
+            new StartRideDTO(
+                rideId: $rideId,
+                userId: (string) $request->user()->id,
+                currentLat: (float) $request->lat,
+                currentLng: (float) $request->lng
+            )
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/driver/ride/{rideId}/complete',
+        summary: 'UC-40: Hoàn thành chuyến đi (Complete Trip)',
+        security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['lat', 'lng'],
+                properties: [
+                    new OA\Property(property: 'lat', type: 'number', format: 'float', example: 10.776889),
+                    new OA\Property(property: 'lng', type: 'number', format: 'float', example: 106.700806),
+                ]
+            )
+        ),
+        tags: ['Driver'],
+        parameters: [
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Hoàn thành chuyến đi thành công'),
+            new OA\Response(response: 403, description: 'Không có quyền sở hữu chuyến hoặc chưa đủ gần điểm đến'),
+            new OA\Response(response: 422, description: 'Trạng thái đơn không hợp lệ'),
+            new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
+        ]
+    )]
+    public function completeRide(string $rideId, CompleteRideRequest $request): JsonResponse
+    {
+        $result = $this->driverOperationService->completeRide(
+            new CompleteRideDTO(
+                rideId: $rideId,
+                userId: (string) $request->user()->id,
+                currentLat: (float) $request->lat,
+                currentLng: (float) $request->lng
+            )
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/driver/ride/{rideId}/arrived',
+        summary: 'UC-36: Thông báo đã đến điểm đón (Arrived)',
+        security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['lat', 'lng'],
+                properties: [
+                    new OA\Property(property: 'lat', type: 'number', format: 'float', example: 10.776889),
+                    new OA\Property(property: 'lng', type: 'number', format: 'float', example: 106.700806),
+                ]
+            )
+        ),
+        tags: ['Driver'],
+        parameters: [
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thông báo thành công'),
+            new OA\Response(response: 403, description: 'Không có quyền sở hữu chuyến hoặc chưa đủ gần'),
+            new OA\Response(response: 422, description: 'Trạng thái đơn không hợp lệ'),
+            new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
+        ]
+    )]
+    public function notifyArrived(string $rideId, PickupRideRequest $request): JsonResponse
+    {
+        $result = $this->driverOperationService->notifyArrived(
+            PickupRideDTO::fromRequest($request, $rideId)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/driver/ride/{rideId}/pickup',
+        summary: 'UC-36: Xác nhận đã đón khách (Pickup)',
+        security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['lat', 'lng'],
+                properties: [
+                    new OA\Property(property: 'lat', type: 'number', format: 'float', example: 10.776889),
+                    new OA\Property(property: 'lng', type: 'number', format: 'float', example: 106.700806),
+                ]
+            )
+        ),
+        tags: ['Driver'],
+        parameters: [
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Xác nhận đón khách thành công'),
+            new OA\Response(response: 403, description: 'Không có quyền sở hữu chuyến hoặc chưa đủ gần'),
+            new OA\Response(response: 422, description: 'Trạng thái đơn không hợp lệ'),
+            new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
+        ]
+    )]
+    public function pickupRide(string $rideId, PickupRideRequest $request): JsonResponse
+    {
+        $result = $this->driverOperationService->pickupRide(
+            PickupRideDTO::fromRequest($request, $rideId)
         );
 
         if ($result->isError()) {

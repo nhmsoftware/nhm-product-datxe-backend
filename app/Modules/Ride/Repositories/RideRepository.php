@@ -147,4 +147,27 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             'status' => RideStatus::PICKED_UP->value,
         ]);
     }
+
+    /**
+     * Tài xế bắt đầu thực hiện chuyến đi (UC-35 Start Trip).
+     */
+    public function startTrip(string $rideId): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'status'     => RideStatus::IN_PROGRESS->value,
+            'started_at' => now(),
+        ]);
+    }
+
+    /**
+     * Tài xế hoàn thành chuyến đi (UC-40 Complete Trip).
+     */
+    public function completeTrip(string $rideId, float $finalFare): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'status'       => RideStatus::COMPLETED->value,
+            'completed_at' => now(),
+            'total_price'  => $finalFare,
+        ]);
+    }
 }

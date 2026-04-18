@@ -100,4 +100,19 @@ interface RideRepositoryInterface
      * @return bool
      */
     public function pickup(string $rideId): bool;
+
+    /**
+     * Tài xế bắt đầu thực hiện chuyến đi (UC-35 Start Trip).
+     * @param string $rideId ID chuyến đi
+     * @return bool
+     */
+    public function startTrip(string $rideId): bool;
+
+    /**
+     * Tài xế hoàn thành chuyến đi (UC-40 Complete Trip).
+     * @param string $rideId ID chuyến đi
+     * @param float $finalFare Giá cuối cùng
+     * @return bool
+     */
+    public function completeTrip(string $rideId, float $finalFare): bool;
 }

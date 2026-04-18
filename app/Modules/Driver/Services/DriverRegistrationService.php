@@ -148,7 +148,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
             ]);
 
             // - Raise Domain Event — Thông báo realtime cho frontend
-            event(new DriverApplicationApproved($application->id, (int) $userId));
+            event(new DriverApplicationApproved($application->id, $userId));
 
             return [
                 'user_id'        => $userId,

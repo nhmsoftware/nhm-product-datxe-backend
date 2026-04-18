@@ -16,6 +16,10 @@ use App\Modules\Driver\Events\RideAccepted;
 use App\Modules\Driver\Events\RideCancelled;
 use App\Modules\Driver\Events\RidePickedUp;
 use App\Modules\Driver\Events\RideRejected;
+use App\Modules\Driver\Events\RideStarted;
+use App\Modules\Driver\Events\RideCompleted;
+use App\Modules\Driver\DTO\StartRideDTO;
+use App\Modules\Driver\DTO\CompleteRideDTO;
 use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
@@ -72,7 +76,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             }
 
             // Gửi sự kiện Domain Event
-            event(new DriverArrivedAtPickup((int)$ride->id, $dto->userId));
+            event(new DriverArrivedAtPickup($ride->id, $dto->userId));
 
             return $this->success([], 'Đã gửi thông báo đến khách hàng.');
         });
@@ -117,15 +121,98 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             }
 
             // 4. Thực hiện cập nhật trạng thái trong Persistence Layer
-            $updated = $this->rideRepository->pickup((int)$ride->id);
+            $updated = $this->rideRepository->pickup($ride->id);
             $this->validate($updated, 'Không thể cập nhật trạng thái. Vui lòng thử lại.', 500);
 
             // 5. Phát Domain Event gởi sang Redis Communication
-            event(new RidePickedUp((int)$ride->id, (int)$driverProfile->id));
+            event(new RidePickedUp($ride->id, $driverProfile->id));
 
             return $this->success(
                 data: ['ride_id' => $ride->id, 'status' => RideStatus::PICKED_UP->value],
                 message: 'Xác nhận đón khách thành công.'
+            );
+        }, useTransaction: true);
+    }
+
+    /**
+     * Tài xế bắt đầu thực hiện chuyến đi (UC-35 Start Trip).
+     */
+    public function startRide(StartRideDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $ride = $this->rideRepository->findById($dto->rideId);
+            $this->validate($ride !== null, 'Chuyến xe không tồn tại.', 404);
+            $this->validate($ride->driver_id === $dto->userId, 'Bạn không phải tài xế của chuyến xe này.', 403);
+
+            // Phải là trạng thái PICKED_UP mới được bắt đầu chuyến
+            $this->validate($ride->status === RideStatus::PICKED_UP, 'Trạng thái chuyến xe không hợp lệ để bắt đầu.', 422);
+
+            // 3. Kiểm tra vị trí GPS (Bán kính 200m so với điểm đón)
+            $distance = $this->calculateDistance(
+                (float) $dto->currentLat,
+                (float) $dto->currentLng,
+                (float) $ride->pickup_lat,
+                (float) $ride->pickup_lng
+            );
+
+            if ($distance > 200) {
+                $this->throw('Bạn chưa đủ gần điểm đón để bắt đầu chuyến đi.', 422);
+            }
+
+            $updated = $this->rideRepository->startTrip($dto->rideId);
+            $this->validate($updated, 'Không thể cập nhật trạng thái. Vui lòng thử lại.', 500);
+
+            event(new RideStarted($dto->rideId, $dto->userId));
+
+            return $this->success(
+                data: ['ride_id' => $ride->id, 'status' => RideStatus::IN_PROGRESS->value],
+                message: 'Chuyến đi đã bắt đầu.'
+            );
+        }, useTransaction: true);
+    }
+
+    /**
+     * Tài xế hoàn thành chuyến đi (UC-40 Complete Trip).
+     */
+    public function completeRide(CompleteRideDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $ride = $this->rideRepository->findById($dto->rideId);
+            $this->validate($ride !== null, 'Chuyến xe không tồn tại.', 404);
+            $this->validate($ride->driver_id === $dto->userId, 'Bạn không phải tài xế của chuyến xe này.', 403);
+
+            // Phải là trạng thái IN_PROGRESS mới được hoàn thành
+            $this->validate($ride->status === RideStatus::IN_PROGRESS, 'Trạng thái chuyến xe không hợp lệ để hoàn thành.', 422);
+
+            // 3. Kiểm tra vị trí GPS (Bán kính 200m so với điểm đến)
+            $distance = $this->calculateDistance(
+                (float) $dto->currentLat,
+                (float) $dto->currentLng,
+                (float) $ride->destination_lat,
+                (float) $ride->destination_lng
+            );
+
+            if ($distance > 200) {
+                $this->throw('Bạn chưa đủ gần điểm đến để hoàn thành chuyến đi.', 422);
+            }
+
+            // TODO: Tính toán giá cước cuối cùng nếu cần. Hiện tại dùng giá đã chốt.
+            $finalFare = (float) $ride->total_price;
+
+            $updated = $this->rideRepository->completeTrip($dto->rideId, $finalFare);
+            $this->validate($updated, 'Không thể hoàn thành chuyến xe. Vui lòng thử lại.', 500);
+
+            // Cập nhật trạng thái tài xế sang Sẵn sàng (ACTIVE)
+            $driverProfile = $this->driverProfileRepository->findByUserId($dto->userId);
+            if ($driverProfile) {
+                $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
+            }
+
+            event(new RideCompleted($dto->rideId, $dto->userId, $finalFare));
+
+            return $this->success(
+                data: ['ride_id' => $ride->id, 'status' => RideStatus::COMPLETED->value, 'final_fare' => $finalFare],
+                message: 'Chuyến đi đã hoàn thành.'
             );
         }, useTransaction: true);
     }
@@ -160,7 +247,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
 
             // Cập nhật trạng thái hoạt động thông qua Repository
             $this->driverProfileRepository->updateOnlineStatus(
-                (int)$driverProfile->id,
+                $driverProfile->id,
                 $dto->isOnline,
                 $dto->currentLat,
                 $dto->currentLng
@@ -227,15 +314,15 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             );
 
             // 3. Thực hiện chuyển đổi trạng thái (Giao dịch DB)
-            $rideUpdated = $this->rideRepository->acceptByDriver((int)$ride->id, (int)$driverProfile->user_id);
+            $rideUpdated = $this->rideRepository->acceptByDriver($ride->id, $driverProfile->user_id);
             $this->validate($rideUpdated, 'Thao tác thất bại. Vui lòng thử lại.', 500);
 
             // Cập nhật trạng thái tài xế sang Bận (BUSY)
-            $driverUpdated = $this->driverProfileRepository->updateStatus((int)$driverProfile->id, DriverStatus::BUSY);
+            $driverUpdated = $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::BUSY);
             $this->validate($driverUpdated, 'Lỗi hệ thống khi cập nhật trạng thái tài xế.', 500);
 
             // 4. Thông báo cho khách hàng qua Realtime
-            event(new RideAccepted((int)$ride->id, (int)$driverProfile->id));
+            event(new RideAccepted($ride->id, $driverProfile->id));
 
             $ride->refresh();
             return $ride->toArray();
@@ -255,9 +342,9 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             $this->validate($ride !== null, 'Chuyến xe không tồn tại.', 404);
             $this->validate($ride->status === RideStatus::PENDING, 'Đơn không còn ở trạng thái chờ.', 422);
 
-            $this->rideRepository->rejectByDriver((int)$ride->id, (int)$driverProfile->user_id);
+            $this->rideRepository->rejectByDriver($ride->id, $driverProfile->user_id);
 
-            event(new RideRejected((int)$ride->id, (int)$driverProfile->id));
+            event(new RideRejected($ride->id, $driverProfile->id));
 
             return $this->success([], 'Đã từ chối tiếp nhận đơn hàng.');
         }, useTransaction: true);
@@ -295,7 +382,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             );
 
             // 2. Thực hiện hủy đơn và lưu lý do
-            $this->rideRepository->cancelByDriver((int)$ride->id, $dto->reason->value);
+            $this->rideRepository->cancelByDriver($ride->id, (string) $dto->reason->value);
 
             // 3. Tính toán hình phạt (Penalty System)
             $penaltyMinutes = 0;
@@ -314,21 +401,21 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             }
 
             // Kiểm tra số lần hủy trong ngày
-            $newCancelCount = $this->driverProfileRepository->incrementCancelCount((int)$driverProfile->id);
+            $newCancelCount = $this->driverProfileRepository->incrementCancelCount($driverProfile->id);
             if ($newCancelCount >= 3) {
                 $penaltyMinutes = max($penaltyMinutes, 60); // Hình phạt 60 phút do hủy quá nhiều
             }
 
             // Áp dụng trạng thái nghỉ (Cooldown) nếu có phạt
             if ($penaltyMinutes > 0) {
-                $this->driverProfileRepository->setCooldown((int)$driverProfile->id, $penaltyMinutes);
+                $this->driverProfileRepository->setCooldown($driverProfile->id, $penaltyMinutes);
             } else {
                 // Nếu không bị phạt, đưa tài xế trở lại trạng thái sẵn sàng (ACTIVE)
-                $this->driverProfileRepository->updateStatus((int)$driverProfile->id, DriverStatus::ACTIVE);
+                $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
             }
 
             // 4. Thông báo cho các bên liên quan qua Realtime
-            event(new RideCancelled((int)$ride->id, (int)$driverProfile->id, $dto->reason->getLabel()));
+            event(new RideCancelled($ride->id, $driverProfile->id, $dto->reason->getLabel()));
 
             return $this->success([], 'Hủy chuyến xe thành công.');
         }, useTransaction: true);
