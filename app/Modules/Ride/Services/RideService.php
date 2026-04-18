@@ -103,7 +103,7 @@ final class RideService extends BaseService implements RideServiceInterface
     /**
      * UC-09: Lấy danh sách loại xe kèm giá ước tính
      */
-    public function getVehicleOptions(int $rideId, int $customerId): ServiceReturn
+    public function getVehicleOptions(string $rideId, string $customerId): ServiceReturn
     {
         return $this->execute(function () use ($rideId, $customerId): array {
             // Xác thực quyền sở hữu
@@ -143,7 +143,7 @@ final class RideService extends BaseService implements RideServiceInterface
     /**
      * UC-10: Xem giá ước tính chi tiết
      */
-    public function getPriceEstimate(int $rideId, int $customerId): ServiceReturn
+    public function getPriceEstimate(string $rideId, string $customerId): ServiceReturn
     {
         return $this->execute(function () use ($rideId, $customerId): array {
             // Xác thực quyền sở hữu chuyến xe
@@ -231,7 +231,7 @@ final class RideService extends BaseService implements RideServiceInterface
     /**
      * UC-11 A4: Xóa voucher
      */
-    public function removeVoucher(int $rideId, int $customerId): ServiceReturn
+    public function removeVoucher(string $rideId, string $customerId): ServiceReturn
     {
         return $this->execute(function () use ($rideId, $customerId): ServiceReturn {
             // Xác thực quyền sở hữu chuyến xe

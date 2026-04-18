@@ -22,7 +22,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Tìm ride draft theo ID và customer ID để xác thực quyền sở hữu.
      */
-    public function findByIdAndCustomer(int $rideId, int $customerId): ?Ride
+    public function findByIdAndCustomer(string $rideId, string $customerId): ?Ride
     {
         /** @var Ride|null */
         return $this->model->where('id', $rideId)
@@ -33,7 +33,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Áp dụng voucher vào chuyến đi — lưu mã, discount và giá cuối (UC-11).
      */
-    public function applyVoucher(int $rideId, string $voucherCode, float $discountAmount, float $finalPrice): bool
+    public function applyVoucher(string $rideId, string $voucherCode, float $discountAmount, float $finalPrice): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'voucher_code'    => $voucherCode,
@@ -45,7 +45,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Xóa voucher khỏi chuyến đi, khôi phục giá gốc (UC-11 A4).
      */
-    public function clearVoucher(int $rideId, float $originalPrice): bool
+    public function clearVoucher(string $rideId, float $originalPrice): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'voucher_code'    => null,
@@ -57,7 +57,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Xác nhận đặt xe, chuyển trạng thái sang PENDING và chốt giá (UC-12).
      */
-    public function confirmBooking(int $rideId, float $finalPrice): bool
+    public function confirmBooking(string $rideId, float $finalPrice): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'status'      => RideStatus::PENDING->value,
@@ -68,7 +68,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Hủy chuyến đi, cập nhật lý do và phí hủy nếu có (UC-15).
      */
-    public function cancel(int $rideId, ?string $reason, float $cancellationFee): bool
+    public function cancel(string $rideId, ?string $reason, float $cancellationFee): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'status'           => RideStatus::CANCELLED->value,
@@ -80,7 +80,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Tính toán tổng chi tiêu của khách hàng trong một khoảng thời gian (UC-23).
      */
-    public function getSpendingSummary(int $customerId, Carbon $start, Carbon $end): array
+    public function getSpendingSummary(string $customerId, Carbon $start, Carbon $end): array
     {
         $data = $this->model
             ->where('customer_id', $customerId)
@@ -91,14 +91,14 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
         return [
             'total_amount' => (float) ($data->total_amount ?? 0),
-            'total_count'  => (int) ($data->total_count ?? 0),
+            'total_count'  => (string) ($data->total_count ?? 0),
         ];
     }
 
     /**
      * Kiểm tra tài xế có chuyến đi nào đang diễn ra không (UC-31).
      */
-    public function hasActiveRideByDriver(int $driverId): bool
+    public function hasActiveRideByDriver(string $driverId): bool
     {
         return $this->model
             ->where('driver_id', $driverId)
@@ -109,7 +109,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Tài xế nhận chuyến đi — cập nhật status ACCEPTED và gán driver_id (UC-32).
      */
-    public function acceptByDriver(int $rideId, int $driverId): bool
+    public function acceptByDriver(string $rideId, string $driverId): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'status'    => RideStatus::ACCEPTED->value,
@@ -120,7 +120,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Tài xế từ chối nhận đơn (UC-33 Reject).
      */
-    public function rejectByDriver(int $rideId, int $driverId): bool
+    public function rejectByDriver(string $rideId, string $driverId): bool
     {
         return DB::table('ride_rejects')->updateOrInsert(
             ['ride_id' => $rideId, 'driver_id' => $driverId],
@@ -131,7 +131,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Tài xế hủy chuyến sau khi đã nhận (UC-33 Cancel).
      */
-    public function cancelByDriver(int $rideId, int $reasonId): bool
+    public function cancelByDriver(string $rideId, string $reasonId): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'status'        => RideStatus::CANCELLED->value,
@@ -141,7 +141,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Tài xế xác nhận đã đón khách sau khi đã nhận (UC-36).
      */
-    public function pickup(int $rideId): bool
+    public function pickup(string $rideId): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'status' => RideStatus::PICKED_UP->value,

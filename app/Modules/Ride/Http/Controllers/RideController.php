@@ -80,7 +80,8 @@ final class RideController extends BaseController
     #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
     public function getVehicleOptions(int $rideId, Request $request): JsonResponse
     {
-        $result = $this->rideService->getVehicleOptions($rideId, $request->user()->id);
+//        dd($request);
+        $result = $this->rideService->getVehicleOptions($rideId, (int) $request->user()->id);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());

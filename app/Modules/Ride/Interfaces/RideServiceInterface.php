@@ -24,21 +24,21 @@ interface RideServiceInterface
      * Lấy danh sách loại xe khả dụng kèm giá ước tính (UC-09).
      * Dựa vào khoảng cách & thời gian từ draft ride đã tạo.
      *
-     * @param int $rideId ID của ride draft
-     * @param int $customerId ID của khách hàng
+     * @param string $rideId ID của ride draft
+     * @param string $customerId ID của khách hàng
      * @return ServiceReturn Danh sách VehicleOptionDTO[]
      */
-    public function getVehicleOptions(int $rideId, int $customerId): ServiceReturn;
+    public function getVehicleOptions(string $rideId, string $customerId): ServiceReturn;
 
     /**
      * Xem chi tiết giá ước tính cho chuyến đi (UC-10).
      * Tính lại giá dựa trên loại xe đã chọn.
      *
-     * @param int $rideId ID của ride draft
-     * @param int $customerId ID của khách hàng
+     * @param string $rideId ID của ride draft
+     * @param string $customerId ID của khách hàng
      * @return ServiceReturn PriceEstimateDTO
      */
-    public function getPriceEstimate(int $rideId, int $customerId): ServiceReturn;
+    public function getPriceEstimate(string $rideId, string $customerId): ServiceReturn;
 
     /**
      * Áp dụng mã giảm giá vào chuyến đi (UC-11).
@@ -52,11 +52,11 @@ interface RideServiceInterface
     /**
      * Xóa voucher đã áp dụng khỏi chuyến đi (UC-11 - A4).
      *
-     * @param int $rideId ID của ride draft
-     * @param int $customerId ID của khách hàng
+     * @param string $rideId ID của ride draft
+     * @param string $customerId ID của khách hàng
      * @return ServiceReturn PriceEstimateDTO sau khi đã xóa giảm giá
      */
-    public function removeVoucher(int $rideId, int $customerId): ServiceReturn;
+    public function removeVoucher(string $rideId, string $customerId): ServiceReturn;
 
     /**
      * Xác nhận đặt xe (UC-12).
