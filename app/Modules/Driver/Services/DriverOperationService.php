@@ -302,6 +302,10 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             $hasActiveRide = $this->rideRepository->hasActiveRideByDriver($driverProfile->user_id);
             $this->validate(!$hasActiveRide, 'Bạn đang có một chuyến đi khác chưa hoàn thành.', 422);
 
+            // Kiểm tra xem tài xế đã từng từ chối hoặc hủy chuyến xe này chưa
+            $isRejected = $this->rideRepository->isRejectedByDriver($dto->rideId, $driverProfile->user_id);
+            $this->validate(!$isRejected, 'Bạn đã từ chối hoặc hủy đơn hàng này trước đó, không thể tiếp nhận lại.', 422);
+
             // 2. Kiểm tra chuyến đi
             $ride = $this->rideRepository->findById($dto->rideId);
             $this->validate($ride !== null, 'Chuyến xe không tồn tại hoặc đã hết hạn.', 404);
@@ -383,6 +387,9 @@ final class DriverOperationService extends BaseService implements DriverOperatio
 
             // 2. Thực hiện hủy đơn và lưu lý do
             $this->rideRepository->cancelByDriver($ride->id, (string) $dto->reason->value);
+
+            // Ghi nhận vào danh sách từ chối để không hiển thị lại cho tài xế này (Anti-re-acceptance)
+            $this->rideRepository->rejectByDriver($ride->id, $driverProfile->user_id);
 
             // 3. Tính toán hình phạt (Penalty System)
             $penaltyMinutes = 0;

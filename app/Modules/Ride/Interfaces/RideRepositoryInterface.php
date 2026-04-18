@@ -115,4 +115,12 @@ interface RideRepositoryInterface
      * @return bool
      */
     public function completeTrip(string $rideId, float $finalFare): bool;
+
+    /**
+     * Kiểm tra tài xế đã từng từ chối hoặc hủy chuyến xe này chưa.
+     * @param string $rideId ID chuyến đi
+     * @param string $driverId ID tài khoản tài xế
+     * @return bool TRUE nếu đã từ chối/hủy, FALSE nếu chưa
+     */
+    public function isRejectedByDriver(string $rideId, string $driverId): bool;
 }

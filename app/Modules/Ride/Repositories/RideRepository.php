@@ -170,4 +170,15 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             'total_price'  => $finalFare,
         ]);
     }
+
+    /**
+     * Kiểm tra tài xế đã từng từ chối đơn này chưa.
+     */
+    public function isRejectedByDriver(string $rideId, string $driverId): bool
+    {
+        return DB::table('ride_rejects')
+            ->where('ride_id', $rideId)
+            ->where('driver_id', $driverId)
+            ->exists();
+    }
 }

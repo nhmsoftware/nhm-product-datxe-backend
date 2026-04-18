@@ -30,7 +30,7 @@ final class NotifyRealtimeOnDriverArrived implements ShouldQueue
             }
 
             $payload = [
-                'event'   => 'ride.driver_arrived',
+                'event'   => 'ride.arrived',
                 'ride_id' => (string) $event->rideId,
                 'message' => 'Tài xế đã đến điểm đón.',
                 'occurred_at' => now()->toIso8601String(),
