@@ -27,6 +27,15 @@ final class AdminDriverController extends BaseController
         path: '/api/v1/admin/driver/applications/{id}/approve',
         summary: 'Duyệt hồ sơ tài xế',
         security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['driver_group_id'],
+                properties: [
+                    new OA\Property(property: 'driver_group_id', description: 'ID nhóm tài xế: 1 - Đội xe nhà, 2 - Đội xe đối tác', type: 'number', example: 1),
+                ]
+            )
+        ),
         tags: ['Admin|Driver'],
         parameters: [
             new OA\Parameter(
@@ -94,7 +103,7 @@ final class AdminDriverController extends BaseController
     public function show(string $id): JsonResponse
     {
         $result = $this->driverRegistrationService->getApplicationDetails($id);
-        
+
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
         }

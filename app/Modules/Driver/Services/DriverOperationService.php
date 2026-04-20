@@ -23,10 +23,12 @@ use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
 use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\DriverStatus;
+use Illuminate\Support\Facades\Log;
 
 /**
  * DriverOperationService
@@ -437,7 +439,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             }
 
             // 4. Thông báo cho các bên liên quan qua Realtime
-            event(new App\Modules\Driver\Events\RideCancelled($ride->id, $driverProfile->id, $dto->reason->getLabel()));
+            event(new RideCancelled($ride->id, $driverProfile->id, $dto->reason->getLabel()));
 
             return $this->success([], 'Hủy chuyến xe thành công.');
         }, useTransaction: true);

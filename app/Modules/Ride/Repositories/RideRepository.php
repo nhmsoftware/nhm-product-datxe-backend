@@ -194,4 +194,41 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
         return (bool) $this->model->where('id', $rideId)->update($data);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function findActiveByDriver(string $driverId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model
+            ->where('driver_id', $driverId)
+            ->whereIn('status', [
+                RideStatus::ACCEPTED->value,
+                RideStatus::PICKED_UP->value,
+                RideStatus::IN_PROGRESS->value,
+                RideStatus::CANCELLATION_REQUESTED->value
+            ])
+            ->latest()
+            ->first();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function findActiveByCustomer(string $customerId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model
+            ->where('customer_id', $customerId)
+            ->whereIn('status', [
+                RideStatus::PENDING->value,
+                RideStatus::ACCEPTED->value,
+                RideStatus::PICKED_UP->value,
+                RideStatus::IN_PROGRESS->value,
+                RideStatus::CANCELLATION_REQUESTED->value
+            ])
+            ->latest()
+            ->first();
+    }
 }

@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Modules\Ride\Interfaces;
 
 use App\Core\Services\ServiceReturn;
+use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
+use App\Modules\Ride\DTO\RequestRideCancellationDTO;
 
 interface RideServiceInterface
 {
@@ -61,12 +63,12 @@ interface RideServiceInterface
     /**
      * UC-28: Khách hàng yêu cầu hủy chuyến.
      */
-    public function requestCancellation(\App\Modules\Ride\DTO\RequestRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
+    public function requestCancellation(RequestRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
 
     /**
      * UC-28: Tài xế phản hồi yêu cầu hủy chuyến.
      */
-    public function respondToCancellation(\App\Modules\Driver\DTO\RespondRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
+    public function respondToCancellation(RespondRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
 
     /**
      * Xác nhận đặt xe (UC-12).

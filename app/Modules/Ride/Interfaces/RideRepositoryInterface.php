@@ -126,4 +126,18 @@ interface RideRepositoryInterface
      * Cập nhật trạng thái chuyến xe linh hoạt.
      */
     public function updateStatus(string $rideId, \App\Modules\Ride\Model\Enums\RideStatus $status, ?string $reason = null): bool;
+
+    /**
+     * Tìm chuyến xe đang diễn ra của tài xế.
+     * @param string $driverId
+     * @return Ride|null
+     */
+    public function findActiveByDriver(string $driverId): ?Ride;
+
+    /**
+     * Tìm chuyến xe đang diễn ra của khách hàng.
+     * @param string $customerId
+     * @return Ride|null
+     */
+    public function findActiveByCustomer(string $customerId): ?Ride;
 }
