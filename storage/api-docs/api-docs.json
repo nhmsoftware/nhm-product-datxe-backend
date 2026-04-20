@@ -442,6 +442,79 @@
                 ]
             }
         },
+        "/api/v1/admin/driver/applications": {
+            "get": {
+                "tags": [
+                    "Admin|Driver"
+                ],
+                "summary": "Danh sách hồ sơ chờ duyệt",
+                "description": "Danh sách hồ sơ đang chờ duyệt.",
+                "operationId": "d095852687be1e4bc71587fcd9bfdb7d",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/driver/applications/{id}": {
+            "get": {
+                "tags": [
+                    "Admin|Driver"
+                ],
+                "summary": "Chi tiết hồ sơ đăng ký tài xế",
+                "description": "Chi tiết hồ sơ đăng ký.",
+                "operationId": "a24af6392285e3225c42de6f5ddd8f85",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/driver/groups": {
+            "get": {
+                "tags": [
+                    "Admin|Driver"
+                ],
+                "summary": "Danh sách đội xe",
+                "description": "Danh sách đội xe nhà (Driver Groups).",
+                "operationId": "a4da37b85a75b7c6661a874641d3ba73",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/driver/register/submit": {
             "post": {
                 "tags": [
@@ -1062,6 +1135,61 @@
                     },
                     "404": {
                         "description": "Không tìm thấy đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/cancel-respond": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-28: Phản hồi yêu cầu hủy chuyến từ khách hàng",
+                "operationId": "adcfa2eaddfbf249df9c0b8e320a6933",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "agreement"
+                                ],
+                                "properties": {
+                                    "agreement": {
+                                        "description": "True nếu đồng ý hủy, False nếu từ chối",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Phản hồi thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền sở hữu chuyến"
+                    },
+                    "422": {
+                        "description": "Trạng thái đơn không hợp lệ"
                     }
                 },
                 "security": [
@@ -1859,7 +1987,7 @@
                 ],
                 "summary": "Hủy chuyến xe (UC-15)",
                 "description": "Hủy chuyến xe sau khi đã đặt hoặc khi đang tìm tài xế.",
-                "operationId": "dafa2d153d472551bed7530132a0ecf0",
+                "operationId": "e1b89e454f642049638cab2bfebed3e5",
                 "parameters": [
                     {
                         "name": "id",
@@ -1896,6 +2024,53 @@
                     },
                     "404": {
                         "description": "Không tìm thấy chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{id}/cancel-request": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Yêu cầu hủy chuyến (UC-28)",
+                "description": "Khách hàng gửi yêu cầu hủy chuyến đi. Nếu đã có tài xế, sẽ cần tài xế xác nhận.",
+                "operationId": "c2776ed27b7e601223c9fd8daa006c71",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Thay đổi lộ trình"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Yêu cầu đã được gửi hoặc hủy thành công"
                     }
                 },
                 "security": [

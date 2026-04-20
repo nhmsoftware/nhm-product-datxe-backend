@@ -224,6 +224,16 @@ final class RideController extends BaseController
     #[OA\Response(response: 200, description: 'Hủy chuyến thành công')]
     #[OA\Response(response: 400, description: 'Không thể hủy chuyến')]
     #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
+    public function cancelRide(string $id, CancelRideRequest $request): JsonResponse
+    {
+        $result = $this->rideService->cancelRide(
+            CancelRideDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
         return $this->sendSuccess($result->getData(), 'Bạn đã hủy chuyến thành công.');
     }
 
