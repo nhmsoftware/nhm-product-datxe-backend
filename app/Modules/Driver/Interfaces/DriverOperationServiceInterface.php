@@ -11,6 +11,7 @@ use App\Modules\Driver\DTO\RejectOrderDTO;
 use App\Modules\Driver\DTO\PickupRideDTO;
 use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
+use App\Modules\Driver\DTO\ToggleOnlineStatusDTO;
 use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 
 interface DriverOperationServiceInterface
