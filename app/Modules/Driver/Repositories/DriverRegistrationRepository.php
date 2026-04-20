@@ -21,7 +21,7 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
      * Tìm hồ sơ KYC Pending/Approved của user.
      * UC-30 A9 (check pending app), A14/A15 (sau xét duyệt).
      */
-    public function findActiveApplicationByUser(string $userId, KycType $kycType): ?UserReviewApplication
+    public function findActiveApplicationByUser(int|string $userId, KycType $kycType): ?UserReviewApplication
     {
         /** @var UserReviewApplication|null */
         return $this->model
@@ -37,7 +37,7 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
      * Dùng PostgreSQL JSONB operator ->>' để query.
      * UC-30 A6.
      */
-    public function existsByCitizenId(string $citizenId, string $excludeUserId = '0'): bool
+    public function existsByCitizenId(string $citizenId, int|string $excludeUserId = '0'): bool
     {
         return $this->model
             ->where('kyc_type', KycType::DRIVER->value)
@@ -51,7 +51,7 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
      * Kiểm tra biển số xe đã được đăng ký chưa.
      * UC-30 A7.
      */
-    public function existsByVehicleNumber(string $vehicleNumber, string $excludeUserId = '0'): bool
+    public function existsByVehicleNumber(string $vehicleNumber, int|string $excludeUserId = '0'): bool
     {
         return $this->model
             ->where('kyc_type', KycType::DRIVER->value)
@@ -82,11 +82,32 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
     /**
      * Cập nhật trạng thái hồ sơ — Admin duyệt/từ chối (UC-30 A14).
      */
-    public function updateStatus(string $applicationId, KycStatus $status, ?string $cancelReason = null): bool
+    public function updateStatus(int|string $applicationId, KycStatus $status, ?string $cancelReason = null): bool
     {
         return (bool) $this->model->where('id', $applicationId)->update([
             'kyc_status'    => $status->value,
             'cancel_reason' => $cancelReason,
         ]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getPendingApplications(): \Illuminate\Support\Collection
+    {
+        return $this->model
+            ->where('kyc_status', KycStatus::PENDING->value)
+            ->with('user')
+            ->latest()
+            ->get();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function findByIdWithUser(int|string $applicationId): ?UserReviewApplication
+    {
+        /** @var UserReviewApplication|null */
+        return $this->model->with('user')->find($applicationId);
     }
 }

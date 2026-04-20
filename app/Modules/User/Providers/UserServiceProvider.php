@@ -16,6 +16,8 @@ use App\Modules\User\Repositories\ProfileRepository;
 use App\Modules\User\Repositories\SavedAddressRepository;
 use App\Modules\User\Repositories\UserRepository;
 use App\Modules\User\Repositories\DriverProfileRepository;
+use App\Modules\User\Repositories\DriverGroupRepository;
+use App\Modules\User\Interfaces\DriverGroupRepositoryInterface;
 use App\Modules\User\Services\ProfileService;
 use App\Modules\User\Services\SavedAddressService;
 use Illuminate\Routing\Router;
@@ -38,6 +40,7 @@ class UserServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(ProfileRepositoryInterface::class, ProfileRepository::class);
         $this->app->singleton(UserRepositoryInterface::class, UserRepository::class);
         $this->app->singleton(DriverProfileRepositoryInterface::class, DriverProfileRepository::class);
+        $this->app->singleton(DriverGroupRepositoryInterface::class, DriverGroupRepository::class);
     }
 
     public function boot(): void

@@ -11,6 +11,7 @@ use App\Modules\Driver\DTO\CancelOrderDTO;
 use App\Modules\Driver\DTO\RejectOrderDTO;
 use App\Modules\Driver\DTO\PickupRideDTO;
 use App\Modules\Driver\DTO\ToggleOnlineStatusDTO;
+use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 use App\Modules\Driver\Events\DriverArrivedAtPickup;
 use App\Modules\Driver\Events\RideAccepted;
 use App\Modules\Driver\Events\RideCancelled;
@@ -21,8 +22,8 @@ use App\Modules\Driver\Events\RideCompleted;
 use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
 use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
-use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\DriverStatus;
@@ -44,6 +45,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
         private readonly UserRepositoryInterface $userRepository,
         private readonly DriverProfileRepositoryInterface $driverProfileRepository,
         private readonly RideRepositoryInterface $rideRepository,
+        private readonly RideServiceInterface $rideService,
     ) {}
 
     /**
@@ -435,11 +437,23 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             }
 
             // 4. Thông báo cho các bên liên quan qua Realtime
-            event(new RideCancelled($ride->id, $driverProfile->id, $dto->reason->getLabel()));
+            event(new App\Modules\Driver\Events\RideCancelled($ride->id, $driverProfile->id, $dto->reason->getLabel()));
 
             return $this->success([], 'Hủy chuyến xe thành công.');
         }, useTransaction: true);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function respondToCancellation(RespondRideCancellationDTO $dto): ServiceReturn
+    {
+        // Proxy to RideService as it contains the core ride lifecycle logic
+        return $this->rideService->respondToCancellation($dto);
+    }
+
+    /**
+     * Helper tính khoảng cách theo công thức Haversine (đơn vị: mét)
 
     /**
      * Helper tính khoảng cách theo công thức Haversine (đơn vị: mét)

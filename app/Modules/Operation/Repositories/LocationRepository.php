@@ -112,6 +112,14 @@ final class LocationRepository implements LocationRepositoryInterface
     }
 
     /**
+     * @inheritDoc
+     */
+    public function findNearbyDriverIds(float $lat, float $lng, float $radiusKm): array
+    {
+        return Redis::georadius('locations:drivers:geo', $lng, $lat, $radiusKm, 'km') ?: [];
+    }
+
+    /**
      * Helper kiểm tra và thực hiện đồng bộ DB có tiết lưu (Throttling).
      */
     private function throttleDbUpdate(string $userId, int $role, float $lat, float $lng): void

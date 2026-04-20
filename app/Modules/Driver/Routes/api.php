@@ -50,12 +50,25 @@ Route::prefix('v1/driver')
         // UC-40: Hoàn thành chuyến đi
         Route::post('ride/{rideId}/complete', [DriverOperationController::class, 'completeRide'])
             ->name('driver.ride.complete');
+
+        // UC-28: Phản hồi yêu cầu hủy chuyến xe
+        Route::post('ride/{rideId}/cancel-respond', [DriverOperationController::class, 'respondToCancellation'])
+            ->name('driver.ride.cancel_respond');
     });
 
 // Admin Routes
 Route::prefix('v1/admin/driver')
     ->middleware(['auth:sanctum'])
     ->group(function () {
+        Route::get('applications', [AdminDriverController::class, 'index'])
+            ->name('admin.driver.applications.index');
+
+        Route::get('applications/{id}', [AdminDriverController::class, 'show'])
+            ->name('admin.driver.applications.show');
+
         Route::post('applications/{id}/approve', [AdminDriverController::class, 'approve'])
             ->name('admin.driver.application.approve');
+
+        Route::get('groups', [AdminDriverController::class, 'groups'])
+            ->name('admin.driver.groups.index');
     });

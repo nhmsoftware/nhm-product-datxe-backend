@@ -47,4 +47,9 @@ interface DriverProfileRepositoryInterface extends BaseRepositoryInterface
      * @return bool
      */
     public function setCooldown(string $driverId, int $minutes): bool;
+
+    /**
+     * Tìm danh sách tài xế hợp lệ để điều phối.
+     */
+    public function findEligibleDrivers(array $userIds, int $vehicleType, ?int $groupType = null): \Illuminate\Support\Collection;
 }

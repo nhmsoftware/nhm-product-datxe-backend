@@ -13,6 +13,8 @@ use App\Modules\Ride\Http\Requests\ApplyVoucherRequest;
 use App\Modules\Ride\Http\Requests\ConfirmBookingRequest;
 use App\Modules\Ride\Http\Requests\CreateDraftRideRequest;
 use App\Modules\Ride\Http\Requests\CancelRideRequest;
+use App\Modules\Ride\Http\Requests\RequestRideCancellationRequest;
+use App\Modules\Ride\DTO\RequestRideCancellationDTO;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -222,16 +224,36 @@ final class RideController extends BaseController
     #[OA\Response(response: 200, description: 'Hủy chuyến thành công')]
     #[OA\Response(response: 400, description: 'Không thể hủy chuyến')]
     #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
-    public function cancel(string $id, CancelRideRequest $request): JsonResponse
+        return $this->sendSuccess($result->getData(), 'Bạn đã hủy chuyến thành công.');
+    }
+
+    #[OA\Post(
+        path: '/api/v1/ride/{id}/cancel-request',
+        description: 'Khách hàng gửi yêu cầu hủy chuyến đi. Nếu đã có tài xế, sẽ cần tài xế xác nhận.',
+        summary: 'Yêu cầu hủy chuyến (UC-28)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    #[OA\Parameter(name: 'id', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\RequestBody(
+        required: false,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'reason', type: 'string', example: 'Thay đổi lộ trình'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Yêu cầu đã được gửi hoặc hủy thành công')]
+    public function requestCancellation(string $id, RequestRideCancellationRequest $request): JsonResponse
     {
-        $result = $this->rideService->cancelRide(
-            CancelRideDTO::fromRequest($request)
+        $result = $this->rideService->requestCancellation(
+            RequestRideCancellationDTO::fromRequest($request)
         );
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
         }
 
-        return $this->sendSuccess($result->getData(), 'Bạn đã hủy chuyến thành công.');
+        return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 }

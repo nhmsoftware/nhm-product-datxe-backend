@@ -32,7 +32,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
         ?float $currentLng = null
     ): bool {
         $data = ['is_online' => $isOnline];
-        
+
         if ($isOnline && $currentLat !== null && $currentLng !== null) {
             $data['current_lat'] = $currentLat;
             $data['current_lng'] = $currentLng;
@@ -74,5 +74,27 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
             'status'         => DriverStatus::COOLDOWN->value,
             'cooldown_until' => now()->addMinutes($minutes),
         ]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function findEligibleDrivers(array $userIds, int $vehicleType, ?int $groupType = null): \Illuminate\Support\Collection
+    {
+        if (empty($userIds)) {
+            return collect();
+        }
+
+        $query = $this->model
+            ->whereIn('user_id', $userIds)
+            ->where('is_online', true)
+            ->where('status', DriverStatus::ACTIVE->value)
+            ->where('vehicle_type', $vehicleType);
+
+        if ($groupType !== null) {
+            $query->where('driver_group_type', $groupType);
+        }
+
+        return $query->get();
     }
 }

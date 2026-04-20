@@ -28,4 +28,9 @@ interface LocationRepositoryInterface
      * Lấy tọa độ Customer mới nhất từ Redis.
      */
     public function getCustomerLocation(string $userId): ?array;
+
+    /**
+     * Tìm các Driver gần tọa độ cho trước (dùng Redis Geo).
+     */
+    public function findNearbyDriverIds(float $lat, float $lng, float $radiusKm): array;
 }

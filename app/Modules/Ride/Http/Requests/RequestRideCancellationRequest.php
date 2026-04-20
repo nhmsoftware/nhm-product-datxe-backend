@@ -2,40 +2,27 @@
 
 declare(strict_types=1);
 
-namespace App\Modules\Driver\Http\Requests;
+namespace App\Modules\Ride\Http\Requests;
 
-use App\Modules\Driver\Model\Enums\KycStatus;
 use App\Core\Traits\HandleApi;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Validation\Rule;
 
-final class ApproveRegistrationRequest extends FormRequest
+final class RequestRideCancellationRequest extends FormRequest
 {
     use HandleApi;
 
     public function authorize(): bool
     {
-        return true; // Admin middleware will handle this
+        return true;
     }
 
     public function rules(): array
     {
         return [
-            'driver_group_id' => [
-                'nullable',
-                'integer',
-                Rule::exists('driver_groups', 'id')->whereNull('deleted_at'),
-            ],
+            'reason' => 'nullable|string|max:255',
         ];
-    }
-
-    public function all($keys = null): array
-    {
-        $data = parent::all($keys);
-        $data['id'] = $this->route('id');
-        return $data;
     }
 
     /**

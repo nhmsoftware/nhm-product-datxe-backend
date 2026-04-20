@@ -9,9 +9,9 @@ use App\Modules\Driver\DTO\AcceptOrderDTO;
 use App\Modules\Driver\DTO\CancelOrderDTO;
 use App\Modules\Driver\DTO\RejectOrderDTO;
 use App\Modules\Driver\DTO\PickupRideDTO;
-use App\Modules\Driver\DTO\ToggleOnlineStatusDTO;
 use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
+use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 
 interface DriverOperationServiceInterface
 {
@@ -58,4 +58,9 @@ interface DriverOperationServiceInterface
      * Hoàn thành chuyến đi (UC-40 Complete Trip).
      */
     public function completeRide(CompleteRideDTO $dto): ServiceReturn;
+
+    /**
+     * Phản hồi yêu cầu hủy chuyến từ khách hàng (UC-28).
+     */
+    public function respondToCancellation(RespondRideCancellationDTO $dto): ServiceReturn;
 }

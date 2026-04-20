@@ -117,10 +117,13 @@ interface RideRepositoryInterface
     public function completeTrip(string $rideId, float $finalFare): bool;
 
     /**
-     * Kiểm tra tài xế đã từng từ chối hoặc hủy chuyến xe này chưa.
-     * @param string $rideId ID chuyến đi
      * @param string $driverId ID tài khoản tài xế
      * @return bool TRUE nếu đã từ chối/hủy, FALSE nếu chưa
      */
     public function isRejectedByDriver(string $rideId, string $driverId): bool;
+
+    /**
+     * Cập nhật trạng thái chuyến xe linh hoạt.
+     */
+    public function updateStatus(string $rideId, \App\Modules\Ride\Model\Enums\RideStatus $status, ?string $reason = null): bool;
 }

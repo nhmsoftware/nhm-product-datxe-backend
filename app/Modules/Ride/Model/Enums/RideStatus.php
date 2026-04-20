@@ -17,6 +17,7 @@ enum RideStatus: int
     case COMPLETED   = 5; // Hoàn thành
     case CANCELLED   = 6; // Đã hủy
     case PICKED_UP   = 7; // Đã đón khách / Đã lấy hàng
+    case CANCELLATION_REQUESTED = 8; // Đang chờ tài xế xác nhận hủy
 
     /**
      * Kiểm tra xem trạng thái này có phải là trạng thái cuối không.
@@ -36,9 +37,10 @@ enum RideStatus: int
         return match ($this) {
             self::DRAFT       => in_array($next, [self::PENDING, self::CANCELLED], strict: true),
             self::PENDING     => in_array($next, [self::ACCEPTED, self::CANCELLED], strict: true),
-            self::ACCEPTED    => in_array($next, [self::PICKED_UP, self::CANCELLED], strict: true),
-            self::PICKED_UP   => in_array($next, [self::IN_PROGRESS, self::CANCELLED], strict: true),
+            self::ACCEPTED    => in_array($next, [self::PICKED_UP, self::CANCELLED, self::CANCELLATION_REQUESTED], strict: true),
+            self::PICKED_UP   => in_array($next, [self::IN_PROGRESS, self::CANCELLED, self::CANCELLATION_REQUESTED], strict: true),
             self::IN_PROGRESS => $next === self::COMPLETED,
+            self::CANCELLATION_REQUESTED => in_array($next, [self::CANCELLED, self::ACCEPTED, self::PICKED_UP], strict: true),
             default           => false, // COMPLETED và CANCELLED là terminal
         };
     }
@@ -56,6 +58,7 @@ enum RideStatus: int
             self::COMPLETED   => 'Hoàn thành',
             self::CANCELLED   => 'Đã hủy',
             self::PICKED_UP   => 'Đã đón khách / Đã lấy hàng',
+            self::CANCELLATION_REQUESTED => 'Đang chờ tài xế xác nhận hủy',
         };
     }
 }

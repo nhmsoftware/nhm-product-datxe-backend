@@ -17,7 +17,7 @@ final class DriverApplicationApproved
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public readonly string $applicationId,
-        public readonly string $userId,
+        public readonly int|string $applicationId,
+        public readonly int|string $userId,
     ) {}
 }

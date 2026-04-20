@@ -12,6 +12,8 @@ use App\Modules\Driver\DTO\ToggleOnlineStatusDTO;
 use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
 use App\Modules\Driver\DTO\PickupRideDTO;
+use App\Modules\Driver\DTO\RespondRideCancellationDTO;
+use App\Modules\Driver\Http\Requests\RespondRideCancellationRequest;
 use App\Modules\Driver\Http\Requests\StartRideRequest;
 use App\Modules\Driver\Http\Requests\CompleteRideRequest;
 use App\Modules\Driver\Http\Requests\AcceptOrderRequest;
@@ -329,6 +331,42 @@ final class DriverOperationController extends BaseController
     {
         $result = $this->driverOperationService->pickupRide(
             PickupRideDTO::fromRequest($request, $rideId)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/driver/ride/{rideId}/cancel-respond',
+        summary: 'UC-28: Phản hồi yêu cầu hủy chuyến từ khách hàng',
+        security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['agreement'],
+                properties: [
+                    new OA\Property(property: 'agreement', description: 'True nếu đồng ý hủy, False nếu từ chối', type: 'boolean', example: true),
+                ]
+            )
+        ),
+        tags: ['Driver'],
+        parameters: [
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Phản hồi thành công'),
+            new OA\Response(response: 403, description: 'Không có quyền sở hữu chuyến'),
+            new OA\Response(response: 422, description: 'Trạng thái đơn không hợp lệ'),
+        ]
+    )]
+    public function respondToCancellation(string $rideId, RespondRideCancellationRequest $request): JsonResponse
+    {
+        $result = $this->driverOperationService->respondToCancellation(
+            RespondRideCancellationDTO::fromRequest($request)
         );
 
         if ($result->isError()) {

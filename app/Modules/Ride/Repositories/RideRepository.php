@@ -181,4 +181,17 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->where('driver_id', $driverId)
             ->exists();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function updateStatus(string $rideId, RideStatus $status, ?string $reason = null): bool
+    {
+        $data = ['status' => $status->value];
+        if ($reason !== null) {
+            $data['cancel_reason'] = $reason;
+        }
+
+        return (bool) $this->model->where('id', $rideId)->update($data);
+    }
 }

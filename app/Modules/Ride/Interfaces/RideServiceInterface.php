@@ -59,6 +59,16 @@ interface RideServiceInterface
     public function removeVoucher(string $rideId, string $customerId): ServiceReturn;
 
     /**
+     * UC-28: Khách hàng yêu cầu hủy chuyến.
+     */
+    public function requestCancellation(\App\Modules\Ride\DTO\RequestRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
+
+    /**
+     * UC-28: Tài xế phản hồi yêu cầu hủy chuyến.
+     */
+    public function respondToCancellation(\App\Modules\Driver\DTO\RespondRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
+
+    /**
      * Xác nhận đặt xe (UC-12).
      *
      * @return ServiceReturn
