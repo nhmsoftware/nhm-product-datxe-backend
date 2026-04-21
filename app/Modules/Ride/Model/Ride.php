@@ -98,6 +98,8 @@ class Ride extends Model
         'is_paid',
         'cancel_reason',
         'cancellation_fee',
+        'service_fee',
+        'driver_earnings',
         'started_at',
         'completed_at',
     ];
@@ -121,6 +123,8 @@ class Ride extends Model
         'discount_amount' => 'decimal:2',
         'is_paid' => 'boolean',
         'cancellation_fee' => 'decimal:2',
+        'service_fee' => 'decimal:2',
+        'driver_earnings' => 'decimal:2',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
     ];

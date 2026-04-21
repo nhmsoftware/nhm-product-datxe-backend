@@ -1219,6 +1219,79 @@
                 ]
             }
         },
+        "/api/v1/driver/ride/{rideId}/summary": {
+            "get": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-41: Xem tóm tắt thu nhập sau khi hoàn thành chuyến đi",
+                "operationId": "c49417f0f4d1d229c56d0df27c98a74e",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy tóm tắt thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
+                    },
+                    "422": {
+                        "description": "Chuyến xe chưa ở trạng thái hoàn thành"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/confirm-ready": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-41: Xác nhận đã xem thu nhập và sẵn sàng nhận chuyến mới",
+                "operationId": "4ffedecf694e5296d3e1379ac3d9509a",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xác nhận thành công, Driver chuyển sang ACTIVE"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy hồ sơ tài xế"
+                    },
+                    "500": {
+                        "description": "Lỗi cập nhật trạng thái"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/finance/rewards/overview": {
             "get": {
                 "tags": [
