@@ -28,8 +28,8 @@ final class CancelRideDTO
     public static function fromRequest(CancelRideRequest $request): self
     {
         return new self(
-            rideId: $request->route('id'),
-            customerId: $request->user()->id,
+            rideId: (string) $request->input('rideId'),
+            customerId: (string) $request->user()->id,
             reason: $request->input('reason'),
         );
     }

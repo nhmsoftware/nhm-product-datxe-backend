@@ -11,8 +11,10 @@ use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Ride\Repositories\RideRepository;
 use App\Modules\Ride\Services\GoongMapService;
 use App\Modules\Ride\Services\RideService;
+use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Ride\Events\RideCancellationRequested;
 use App\Modules\Ride\Events\RideCancellationResponded;
+use App\Modules\Ride\Listeners\NotifyRealtimeOnRideCanceled;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnRideCancellationRequested;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnRideCancellationResponded;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
@@ -53,6 +55,11 @@ class RideServiceProvider extends BaseModuleServiceProvider
         Event::listen(
             RideCancellationResponded::class,
             NotifyRealtimeOnRideCancellationResponded::class
+        );
+
+        Event::listen(
+            RideCanceled::class,
+            NotifyRealtimeOnRideCanceled::class
         );
 
         parent::boot();

@@ -10,10 +10,9 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
- * FormRequest cho UC-09: Lấy danh sách xe khả dụng.
- * Yêu cầu ride_id để lấy đúng thông tin khoảng cách từ draft đã tạo.
+ * FormRequest cho UC-10: Xem chi tiết giá ước tính.
  */
-class GetVehicleOptionsRequest extends FormRequest
+final class GetPriceEstimateRequest extends FormRequest
 {
     use HandleApi;
     public function authorize(): bool
@@ -21,13 +20,10 @@ class GetVehicleOptionsRequest extends FormRequest
         return true;
     }
 
-    /**
-     * @return array<string, array<string, mixed>>
-     */
     public function rules(): array
     {
         return [
-            'rideId' => 'required|string|exists:rides,id',
+            'rideId' => ['required', 'string', 'exists:rides,id'],
         ];
     }
 

@@ -22,11 +22,11 @@ final class ApplyVoucherDTO
      * Khởi tạo DTO từ FormRequest đã validate.
      * rideId lấy từ route parameter, customerId từ authenticated user.
      */
-    public static function fromRequest(ApplyVoucherRequest $request, string $rideId): self
+    public static function fromRequest(ApplyVoucherRequest $request): self
     {
         return new self(
-            customerId:   $request->user()->id,
-            rideId:       $rideId,
+            customerId:   (string) $request->user()->id,
+            rideId:       (string) $request->input('rideId'),
             voucherCode:  $request->string('voucher_code')->toString(),
         );
     }

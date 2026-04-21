@@ -21,8 +21,19 @@ final class RequestRideCancellationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'rideId' => 'required|string|exists:rides,id',
             'reason' => 'nullable|string|max:255',
         ];
+    }
+
+    /**
+     * Đồng bộ hóa dữ liệu từ route vào request data để validate.
+     */
+    public function all($keys = null): array
+    {
+        $data = parent::all($keys);
+        $data['rideId'] = $this->route('rideId');
+        return $data;
     }
 
     /**

@@ -24,8 +24,8 @@ Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->
     Route::post('{rideId}/confirm', [RideController::class, 'confirmBooking'])->name('ride.confirm');
 
     // UC-15: Hủy chuyến xe
-    Route::post('{id}/cancel', [RideController::class, 'cancel'])->name('ride.cancel');
+    Route::post('{rideId}/cancel', [RideController::class, 'cancel'])->name('ride.cancel');
 
     // UC-28: Yêu cầu hủy chuyến xe (cần xác nhận)
-    Route::post('{id}/cancel-request', [RideController::class, 'requestCancellation'])->name('ride.cancel_request');
+    Route::post('{rideId}/cancel-request', [RideController::class, 'requestCancellation'])->name('ride.cancel_request');
 });
