@@ -421,6 +421,26 @@
                         }
                     }
                 ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "driver_group_id"
+                                ],
+                                "properties": {
+                                    "driver_group_id": {
+                                        "description": "ID nhóm tài xế: 1 - Đội xe nhà, 2 - Đội xe đối tác",
+                                        "type": "number",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Duyệt thành công"
@@ -1980,17 +2000,17 @@
                 ]
             }
         },
-        "/api/v1/ride/{id}/cancel": {
+        "/api/v1/ride/{rideId}/cancel": {
             "post": {
                 "tags": [
                     "Ride"
                 ],
                 "summary": "Hủy chuyến xe (UC-15)",
                 "description": "Hủy chuyến xe sau khi đã đặt hoặc khi đang tìm tài xế.",
-                "operationId": "e1b89e454f642049638cab2bfebed3e5",
+                "operationId": "5cd618c4519130866c6db9eeaee437da",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "rideId",
                         "in": "path",
                         "description": "ID của chuyến xe",
                         "required": true,
@@ -2033,17 +2053,17 @@
                 ]
             }
         },
-        "/api/v1/ride/{id}/cancel-request": {
+        "/api/v1/ride/{rideId}/cancel-request": {
             "post": {
                 "tags": [
                     "Ride"
                 ],
                 "summary": "Yêu cầu hủy chuyến (UC-28)",
                 "description": "Khách hàng gửi yêu cầu hủy chuyến đi. Nếu đã có tài xế, sẽ cần tài xế xác nhận.",
-                "operationId": "c2776ed27b7e601223c9fd8daa006c71",
+                "operationId": "7c8202840e45ccbbf43161ee04d5a258",
                 "parameters": [
                     {
-                        "name": "id",
+                        "name": "rideId",
                         "in": "path",
                         "description": "ID của chuyến xe",
                         "required": true,
