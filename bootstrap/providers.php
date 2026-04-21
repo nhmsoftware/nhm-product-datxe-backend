@@ -23,4 +23,5 @@ return [
     SocialiteServiceProvider::class,
     DriverServiceProvider::class,
     App\Modules\Operation\Providers\OperationServiceProvider::class,
+    App\Modules\Communication\Providers\CommunicationServiceProvider::class,
 ];
