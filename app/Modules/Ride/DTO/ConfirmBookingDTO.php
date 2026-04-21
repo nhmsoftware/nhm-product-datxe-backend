@@ -18,7 +18,7 @@ final class ConfirmBookingDTO
     public static function fromRequest(ConfirmBookingRequest $request): self
     {
         return new self(
-            rideId:        (string) $request->input('rideId'),
+            rideId:        (string) $request->route('rideId'),
             customerId:    (string) $request->user()->id,
             expectedPrice: $request->float('expected_price')
         );

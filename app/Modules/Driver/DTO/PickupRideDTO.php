@@ -22,7 +22,7 @@ final readonly class PickupRideDTO
     public static function fromRequest(PickupRideRequest $request): self
     {
         return new self(
-            rideId: (string) $request->input('rideId'),
+            rideId: (string) $request->route('rideId'),
             userId: (string) $request->user()->id,
             lat: (float) $request->input('lat'),
             lng: (float) $request->input('lng')

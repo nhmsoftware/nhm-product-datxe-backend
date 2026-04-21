@@ -15,7 +15,7 @@ final readonly class RequestRideCancellationDTO
     public static function fromRequest($request): self
     {
         return new self(
-            rideId: (string) $request->input('rideId'),
+            rideId: (string) $request->route('rideId'),
             customerId: (string) $request->user()->id,
             reason: $request->input('reason')
         );

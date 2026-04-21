@@ -85,7 +85,7 @@ final class RideController extends BaseController
     public function getVehicleOptions(GetVehicleOptionsRequest $request): JsonResponse
     {
         $result = $this->rideService->getVehicleOptions(
-            (string) $request->input('rideId'),
+            (string) $request->route('rideId'),
             (string) $request->user()->id
         );
 
@@ -112,7 +112,7 @@ final class RideController extends BaseController
     public function getPriceEstimate(GetPriceEstimateRequest $request): JsonResponse
     {
         $result = $this->rideService->getPriceEstimate(
-            (string) $request->input('rideId'),
+            (string) $request->route('rideId'),
             (string) $request->user()->id
         );
 
@@ -168,7 +168,7 @@ final class RideController extends BaseController
     public function removeVoucher(GetPriceEstimateRequest $request): JsonResponse
     {
         $result = $this->rideService->removeVoucher(
-            (string) $request->input('rideId'),
+            (string) $request->route('rideId'),
             (string) $request->user()->id
         );
 

@@ -18,7 +18,7 @@ final class AcceptOrderDTO
     public static function fromRequest(AcceptOrderRequest $request): self
     {
         return new self(
-            rideId: (string) $request->input('rideId'),
+            rideId: (string) $request->route('rideId'),
             userId: (string) $request->user()->id,
             currentLat: (float) $request->input('current_lat'),
             currentLng: (float) $request->input('current_lng'),

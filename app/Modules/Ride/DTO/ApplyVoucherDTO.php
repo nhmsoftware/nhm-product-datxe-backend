@@ -26,7 +26,7 @@ final class ApplyVoucherDTO
     {
         return new self(
             customerId:   (string) $request->user()->id,
-            rideId:       (string) $request->input('rideId'),
+            rideId:       (string) $request->route('rideId'),
             voucherCode:  $request->string('voucher_code')->toString(),
         );
     }

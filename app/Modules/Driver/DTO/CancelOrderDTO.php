@@ -20,7 +20,7 @@ final class CancelOrderDTO
     public static function fromRequest(CancelOrderRequest $request): self
     {
         return new self(
-            rideId: (string) $request->input('rideId'),
+            rideId: (string) $request->route('rideId'),
             userId: (string) $request->user()->id,
             reason: RideCancelReason::from((int) $request->input('reason_id')),
             currentLat: $request->filled('current_lat') ? (float) $request->input('current_lat') : null,

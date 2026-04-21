@@ -18,11 +18,11 @@ final class RejectOrderDTO
     public static function fromRequest(RejectOrderRequest $request): self
     {
         return new self(
-            rideId: (string) $request->input('rideId'),
+            rideId: (string) $request->route('rideId'),
             userId: (string) $request->user()->id,
         );
     }
 }
 
-// Separate file for CancelOrderDTO if needed, but I'll put it in one go if allowed, 
+// Separate file for CancelOrderDTO if needed, but I'll put it in one go if allowed,
 // however standard is 1 class per file. I'll create them separately.

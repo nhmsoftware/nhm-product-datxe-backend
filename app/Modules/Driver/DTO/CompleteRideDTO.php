@@ -22,7 +22,7 @@ final readonly class CompleteRideDTO
     public static function fromRequest(CompleteRideRequest $request): self
     {
         return new self(
-            rideId: (string) $request->input('rideId'),
+            rideId: (string) $request->route('rideId'),
             userId: (string) $request->user()->id,
             currentLat: (float) $request->input('lat'),
             currentLng: (float) $request->input('lng')
