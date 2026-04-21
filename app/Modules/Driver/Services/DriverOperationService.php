@@ -22,6 +22,7 @@ use App\Modules\Driver\Events\RideCompleted;
 use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
 use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
+use App\Modules\Operation\Interfaces\LocationRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
@@ -48,6 +49,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
         private readonly DriverProfileRepositoryInterface $driverProfileRepository,
         private readonly RideRepositoryInterface $rideRepository,
         private readonly RideServiceInterface $rideService,
+        private readonly LocationRepositoryInterface $locationRepository,
     ) {}
 
     /**
@@ -269,6 +271,15 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 $dto->currentLat,
                 $dto->currentLng
             );
+
+            // Cũng cập nhật tọa độ vào LocationRepository (Redis) để DispatchService có thể tìm thấy ngay lập tức
+            if ($dto->isOnline && $dto->currentLat !== null && $dto->currentLng !== null) {
+                $this->locationRepository->updateDriverLocation(
+                    $dto->userId,
+                    $dto->currentLat,
+                    $dto->currentLng
+                );
+            }
 
             $statusText = $dto->isOnline ? 'Trực tuyến' : 'Ngoại tuyến';
 
