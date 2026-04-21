@@ -241,7 +241,7 @@ final class RideCommunicationService extends BaseService implements RideCommunic
     /**
      * @return array{0: Ride, 1: RideChatSenderType, 2: User}
      */
-    private function resolveRideParticipants(int $rideId, int $actorId): array
+    private function resolveRideParticipants(string $rideId, string $actorId): array
     {
         /** @var Ride|null $ride */
         $ride = $this->rideRepository->findById($rideId, relations: ['customer', 'driver']);

@@ -1699,6 +1699,174 @@
                 ]
             }
         },
+        "/api/v1/ride/{rideId}/communication/messages": {
+            "get": {
+                "tags": [
+                    "Ride Communication"
+                ],
+                "summary": "Lấy hội thoại customer-driver (UC-14)",
+                "description": "Trả về toàn bộ cuộc trò chuyện và trạng thái liên hệ của một chuyến đi đã có tài xế nhận.",
+                "operationId": "d218841d11a573b03af3da8b76fbf382",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy hội thoại thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Ride Communication"
+                ],
+                "summary": "Gửi tin nhắn chat cho tài xế hoặc khách hàng (UC-14)",
+                "description": "Lưu tin nhắn chat trong chuyến đi và phát realtime tới room của ride.",
+                "operationId": "1d05a90567231d2c60f3531e420515e9",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "message"
+                                ],
+                                "properties": {
+                                    "message": {
+                                        "type": "string",
+                                        "example": "Anh/chị đang tới đâu rồi ạ?"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Gửi tin nhắn thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/communication/calls": {
+            "post": {
+                "tags": [
+                    "Ride Communication"
+                ],
+                "summary": "Khởi tạo cuộc gọi customer-driver (UC-14)",
+                "description": "Tạo log cuộc gọi và trả thông tin liên hệ bên nhận để app có thể thực hiện cuộc gọi.",
+                "operationId": "3ad330e94d8239b1d23a8615ef5cbe5a",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Khởi tạo cuộc gọi thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/communication/calls/{callId}/status": {
+            "post": {
+                "tags": [
+                    "Ride Communication"
+                ],
+                "summary": "Cập nhật trạng thái cuộc gọi (UC-14)",
+                "description": "Dùng để phản ánh nhánh lỗi gọi, không phản hồi hoặc kết thúc cuộc gọi.",
+                "operationId": "f9756da27475c9668d97e82002101231",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "callId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "type": "integer",
+                                        "example": 5
+                                    },
+                                    "failure_reason": {
+                                        "type": "string",
+                                        "example": "Không thể thực hiện cuộc gọi."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật trạng thái cuộc gọi thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/ride/draft": {
             "post": {
                 "tags": [
@@ -4191,6 +4359,10 @@
         {
             "name": "Operation",
             "description": "Operation"
+        },
+        {
+            "name": "Ride Communication",
+            "description": "Ride Communication"
         },
         {
             "name": "Ride",
