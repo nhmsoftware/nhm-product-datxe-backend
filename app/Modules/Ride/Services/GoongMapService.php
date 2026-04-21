@@ -25,12 +25,9 @@ class GoongMapService implements MapServiceInterface
      */
     public function getDistanceMatrix(float $originLat, float $originLng, float $destLat, float $destLng): MapMatrixDTO
     {
-        if (empty($this->apiKey)) {
-            Log::warning('Goong API Key is missing. Returning mocked distance.');
-            return MapMatrixDTO::create(
-                distance: 5000, // 5km fallback
-                duration: 600   // 10 mins fallback
-            );
+        if (empty($this->apiKey) || $this->apiKey === 'key_goong_api') {
+            Log::warning('Goong API Key is missing or default. Returning dynamic fallback distance.');
+            return $this->getFallbackMatrix($originLat, $originLng, $destLat, $destLng);
         }
 
         try {
@@ -70,10 +67,7 @@ class GoongMapService implements MapServiceInterface
         }
 
         // Fallback values if API fails
-        return MapMatrixDTO::create(
-            distance: 5000,
-            duration: 600
-        );
+        return $this->getFallbackMatrix($originLat, $originLng, $destLat, $destLng);
     }
 
     /**
@@ -81,12 +75,13 @@ class GoongMapService implements MapServiceInterface
      */
     public function getDirection(float $originLat, float $originLng, float $destLat, float $destLng): DirectionDTO
     {
-        if (empty($this->apiKey)) {
-            Log::warning('Goong API Key is missing. Returning mocked direction.');
+        if (empty($this->apiKey) || $this->apiKey === 'key_goong_api') {
+            Log::warning('Goong API Key is missing or default. Returning dynamic fallback direction.');
+            $matrix = $this->getFallbackMatrix($originLat, $originLng, $destLat, $destLng);
             return DirectionDTO::create(
-                distance: 5000,
-                duration: 600,
-                polyline: 'a~l~Fjk~uOnTxmCf|Ady@{m@', // Mocked polyline
+                distance: $matrix->distance,
+                duration: $matrix->duration,
+                polyline: '', 
                 bounds: []
             );
         }
@@ -123,5 +118,38 @@ class GoongMapService implements MapServiceInterface
         }
 
         return DirectionDTO::create(5000, 600, '', []);
+    }
+
+    /**
+     * Tính quãng đường đường chim bay và ước tính quãng đường thực tế (UC-09 Fallback).
+     * Rule: Road distance = Bird-fly distance * 1.3 (Winding factor).
+     */
+    private function getFallbackMatrix(float $originLat, float $originLng, float $destLat, float $destLng): MapMatrixDTO
+    {
+        $birdDistance = $this->calculateHaversineDistance($originLat, $originLng, $destLat, $destLng);
+        $roadDistance = (int) ($birdDistance * 1.3);
+        
+        // Ước tính thời gian dựa trên vận tốc trung bình 30km/h (8.33 m/s)
+        $duration = (int) ($roadDistance / 8.33);
+
+        return MapMatrixDTO::create(
+            distance: $roadDistance,
+            duration: max($duration, 60) // Tối thiểu 1 phút
+        );
+    }
+
+    /**
+     * Công thức Haversine tính khoảng cách đường chim bay (mét).
+     */
+    private function calculateHaversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): int
+    {
+        $earthRadius = 6371000;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        $a = sin($dLat / 2) * sin($dLat / 2) +
+            cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+            sin($dLng / 2) * sin($dLng / 2);
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+        return (int) ($earthRadius * $c);
     }
 }
