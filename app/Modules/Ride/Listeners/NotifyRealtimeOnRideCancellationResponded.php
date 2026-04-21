@@ -17,6 +17,7 @@ final class NotifyRealtimeOnRideCancellationResponded implements ShouldQueue
             $payload = [
                 'event'       => 'ride.cancellation_responded',
                 'ride_id'     => (string) $event->rideId,
+                'user_id'     => (string) $event->customerId, // Send directly to Customer's userRoom
                 'driver_id'   => (string) $event->driverId,
                 'customer_id' => (string) $event->customerId,
                 'is_approved' => $event->isApproved,

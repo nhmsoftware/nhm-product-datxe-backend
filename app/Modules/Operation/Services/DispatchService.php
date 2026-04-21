@@ -53,9 +53,13 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
                 groupType: DriverGroupType::INTERNAL->value
             );
 
-            // 3. Thông báo cho các tài xế này
+            // 3. Thông báo cho các tài xế (loại trừ những người đã từ chối đơn này)
+            $notifiedCount = 0;
             foreach ($eligibleDrivers as $driver) {
-                $this->notifyDriverOfNewRide($driver->user_id, $ride);
+                if (!$this->rideRepository->isRejectedByDriver($rideId, $driver->user_id)) {
+                    $this->notifyDriverOfNewRide($driver->user_id, $ride);
+                    $notifiedCount++;
+                }
             }
 
             // 4. Lên lịch vòng 2 (Fallback) sau 60s
@@ -64,7 +68,8 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
 
             Log::info("PriorityDispatch: Round 1 initiated for Ride {$rideId}", [
                 'nearby_count' => count($nearbyDriverIds),
-                'eligible_count' => $eligibleDrivers->count()
+                'eligible_count' => $eligibleDrivers->count(),
+                'notified_count' => $notifiedCount
             ]);
         });
     }
@@ -97,14 +102,19 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
                 groupType: DriverGroupType::PARTNER->value // Chỉ lấy đối tác ở vòng 2
             );
 
-            // 2. Thông báo
+            // 2. Thông báo (loại trừ những người đã từ chối đơn này)
+            $notifiedCount = 0;
             foreach ($eligibleDrivers as $driver) {
-                $this->notifyDriverOfNewRide($driver->user_id, $ride);
+                if (!$this->rideRepository->isRejectedByDriver($rideId, $driver->user_id)) {
+                    $this->notifyDriverOfNewRide($driver->user_id, $ride);
+                    $notifiedCount++;
+                }
             }
 
             Log::info("PriorityDispatch: Round 2 (Fallback) executed for Ride {$rideId}", [
                 'nearby_count' => count($nearbyDriverIds),
-                'eligible_count' => $eligibleDrivers->count()
+                'eligible_count' => $eligibleDrivers->count(),
+                'notified_count' => $notifiedCount
             ]);
         });
     }

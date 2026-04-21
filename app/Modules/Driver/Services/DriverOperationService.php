@@ -461,8 +461,18 @@ final class DriverOperationService extends BaseService implements DriverOperatio
      */
     public function respondToCancellation(RespondRideCancellationDTO $dto): ServiceReturn
     {
-        // Proxy to RideService as it contains the core ride lifecycle logic
-        return $this->rideService->respondToCancellation($dto);
+        $response = $this->rideService->respondToCancellation($dto);
+
+        // Nếu phản hồi thành công và Tài xế ĐỒNG Ý hủy chuyến
+        if (!$response->isError() && $dto->isApproved) {
+            $driverProfile = $this->driverProfileRepository->findByUserId($dto->driverId);
+            if ($driverProfile) {
+                // Đưa trạng thái tài xế về ACTIVE (Sẵn sàng nhận cuốc mới)
+                $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
+            }
+        }
+
+        return $response;
     }
 
     /**
