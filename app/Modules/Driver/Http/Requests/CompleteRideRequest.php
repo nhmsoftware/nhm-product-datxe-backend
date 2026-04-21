@@ -21,7 +21,7 @@ final class CompleteRideRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rideId' => ['required', 'string', 'exists:rides,id'],
+            'rideId' => ['required', 'numeric', 'exists:rides,id'],
             'lat'    => ['required', 'numeric', 'between:-90,90'],
             'lng'    => ['required', 'numeric', 'between:-180,180'],
         ];

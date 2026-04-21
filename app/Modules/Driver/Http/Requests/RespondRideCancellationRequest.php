@@ -21,7 +21,7 @@ final class RespondRideCancellationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rideId'    => 'required|string|exists:rides,id',
+            'rideId'    => 'required|numeric|exists:rides,id',
             'agreement' => 'required|boolean',
         ];
     }

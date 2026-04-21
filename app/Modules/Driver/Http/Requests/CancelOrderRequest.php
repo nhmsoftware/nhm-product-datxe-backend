@@ -23,7 +23,7 @@ class CancelOrderRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rideId'      => ['required', 'string', 'exists:rides,id'],
+            'rideId'      => ['required', 'numeric', 'exists:rides,id'],
             'reason_id'   => ['required', 'integer', new Enum(RideCancelReason::class)],
             'current_lat' => 'nullable|numeric',
             'current_lng' => 'nullable|numeric',

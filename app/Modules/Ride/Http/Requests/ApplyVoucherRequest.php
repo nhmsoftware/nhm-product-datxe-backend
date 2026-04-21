@@ -27,7 +27,7 @@ class ApplyVoucherRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rideId'       => ['required', 'string', 'exists:rides,id'],
+            'rideId'      => ['required', 'numeric', 'exists:rides,id'],
             'voucher_code' => ['required', 'string', 'max:50'],
         ];
     }
