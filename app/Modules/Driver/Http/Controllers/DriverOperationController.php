@@ -94,10 +94,10 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
         ]
     )]
-    public function acceptOrder(string $rideId, AcceptOrderRequest $request): JsonResponse
+    public function acceptOrder(AcceptOrderRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->acceptOrder(
-            AcceptOrderDTO::fromRequest($request, $rideId)
+            AcceptOrderDTO::fromRequest($request)
         );
 
         if ($result->isError()) {
@@ -121,10 +121,10 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 422, description: 'Đơn không ở trạng thái chờ'),
         ]
     )]
-    public function rejectOrder(string $rideId, RejectOrderRequest $request): JsonResponse
+    public function rejectOrder(RejectOrderRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->rejectOrder(
-            RejectOrderDTO::fromRequest($request, $rideId)
+            RejectOrderDTO::fromRequest($request)
         );
 
         if ($result->isError()) {
@@ -165,10 +165,10 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 422, description: 'Trạng thái đơn không hợp lệ'),
         ]
     )]
-    public function cancelOrder(string $rideId, CancelOrderRequest $request): JsonResponse
+    public function cancelOrder(CancelOrderRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->cancelOrder(
-            CancelOrderDTO::fromRequest($request, $rideId)
+            CancelOrderDTO::fromRequest($request)
         );
 
         if ($result->isError()) {
@@ -203,15 +203,10 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
         ]
     )]
-    public function startRide(string $rideId, StartRideRequest $request): JsonResponse
+    public function startRide(StartRideRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->startRide(
-            new StartRideDTO(
-                rideId: $rideId,
-                userId: (string) $request->user()->id,
-                currentLat: (float) $request->lat,
-                currentLng: (float) $request->lng
-            )
+            StartRideDTO::fromRequest($request)
         );
 
         if ($result->isError()) {
@@ -246,15 +241,10 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
         ]
     )]
-    public function completeRide(string $rideId, CompleteRideRequest $request): JsonResponse
+    public function completeRide(CompleteRideRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->completeRide(
-            new CompleteRideDTO(
-                rideId: $rideId,
-                userId: (string) $request->user()->id,
-                currentLat: (float) $request->lat,
-                currentLng: (float) $request->lng
-            )
+            CompleteRideDTO::fromRequest($request)
         );
 
         if ($result->isError()) {
@@ -289,10 +279,10 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
         ]
     )]
-    public function notifyArrived(string $rideId, PickupRideRequest $request): JsonResponse
+    public function notifyArrived(PickupRideRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->notifyArrived(
-            PickupRideDTO::fromRequest($request, $rideId)
+            PickupRideDTO::fromRequest($request)
         );
 
         if ($result->isError()) {
@@ -327,10 +317,10 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 404, description: 'Không tìm thấy đơn hàng'),
         ]
     )]
-    public function pickupRide(string $rideId, PickupRideRequest $request): JsonResponse
+    public function pickupRide(PickupRideRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->pickupRide(
-            PickupRideDTO::fromRequest($request, $rideId)
+            PickupRideDTO::fromRequest($request)
         );
 
         if ($result->isError()) {
@@ -363,7 +353,7 @@ final class DriverOperationController extends BaseController
             new OA\Response(response: 422, description: 'Trạng thái đơn không hợp lệ'),
         ]
     )]
-    public function respondToCancellation(string $rideId, RespondRideCancellationRequest $request): JsonResponse
+    public function respondToCancellation(RespondRideCancellationRequest $request): JsonResponse
     {
         $result = $this->driverOperationService->respondToCancellation(
             RespondRideCancellationDTO::fromRequest($request)

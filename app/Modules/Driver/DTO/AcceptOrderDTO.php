@@ -15,13 +15,10 @@ final class AcceptOrderDTO
         public readonly float $currentLng,
     ) {}
 
-    /**
-     * Create DTO from validated FormRequest
-     */
-    public static function fromRequest(AcceptOrderRequest $request, string $rideId): self
+    public static function fromRequest(AcceptOrderRequest $request): self
     {
         return new self(
-            rideId: $rideId,
+            rideId: (string) $request->input('rideId'),
             userId: (string) $request->user()->id,
             currentLat: (float) $request->input('current_lat'),
             currentLng: (float) $request->input('current_lng'),

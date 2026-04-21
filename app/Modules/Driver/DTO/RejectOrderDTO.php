@@ -15,10 +15,10 @@ final class RejectOrderDTO
         public readonly string $userId,
     ) {}
 
-    public static function fromRequest(RejectOrderRequest $request, string $rideId): self
+    public static function fromRequest(RejectOrderRequest $request): self
     {
         return new self(
-            rideId: $rideId,
+            rideId: (string) $request->input('rideId'),
             userId: (string) $request->user()->id,
         );
     }

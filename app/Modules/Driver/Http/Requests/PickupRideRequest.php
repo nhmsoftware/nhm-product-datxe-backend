@@ -30,9 +30,20 @@ final class PickupRideRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lat' => ['required', 'numeric', 'between:-90,90'],
-            'lng' => ['required', 'numeric', 'between:-180,180'],
+            'rideId' => ['required', 'string', 'exists:rides,id'],
+            'lat'    => ['required', 'numeric', 'between:-90,90'],
+            'lng'    => ['required', 'numeric', 'between:-180,180'],
         ];
+    }
+
+    /**
+     * Đồng bộ hóa dữ liệu từ route vào request data để validate.
+     */
+    public function all($keys = null): array
+    {
+        $data = parent::all($keys);
+        $data['rideId'] = $this->route('rideId');
+        return $data;
     }
 
     /**
@@ -41,10 +52,12 @@ final class PickupRideRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'lat.required' => 'Vĩ độ không được để trống.',
-            'lat.numeric'  => 'Vĩ độ phải là số.',
-            'lng.required' => 'Kinh độ không được để trống.',
-            'lng.numeric'  => 'Kinh độ phải là số.',
+            'rideId.required' => 'ID chuyến xe là bắt buộc.',
+            'rideId.exists'   => 'Chuyến xe không tồn tại.',
+            'lat.required'    => 'Vĩ độ không được để trống.',
+            'lat.numeric'     => 'Vĩ độ phải là số.',
+            'lng.required'    => 'Kinh độ không được để trống.',
+            'lng.numeric'     => 'Kinh độ phải là số.',
         ];
     }
 
@@ -54,11 +67,7 @@ final class PickupRideRequest extends FormRequest
     protected function failedValidation(Validator $validator): void
     {
         throw new HttpResponseException(
-            response()->json([
-                'success' => false,
-                'message' => 'Dữ liệu không hợp lệ.',
-                'errors'  => $validator->errors(),
-            ], 422)
+            $this->sendValidation('Dữ liệu không hợp lệ.', $validator->errors()->toArray(), 422)
         );
     }
 }

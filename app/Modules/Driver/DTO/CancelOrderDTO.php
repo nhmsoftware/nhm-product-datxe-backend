@@ -17,14 +17,14 @@ final class CancelOrderDTO
         public readonly ?float $currentLng = null,
     ) {}
 
-    public static function fromRequest(CancelOrderRequest $request, string $rideId): self
+    public static function fromRequest(CancelOrderRequest $request): self
     {
         return new self(
-            rideId: $rideId,
+            rideId: (string) $request->input('rideId'),
             userId: (string) $request->user()->id,
             reason: RideCancelReason::from((int) $request->input('reason_id')),
-            currentLat: $request->has('current_lat') ? (float) $request->input('current_lat') : null,
-            currentLng: $request->has('current_lng') ? (float) $request->input('current_lng') : null,
+            currentLat: $request->filled('current_lat') ? (float) $request->input('current_lat') : null,
+            currentLng: $request->filled('current_lng') ? (float) $request->input('current_lng') : null,
         );
     }
 }

@@ -216,13 +216,13 @@ final class RideController extends BaseController
     }
 
     #[OA\Post(
-        path: '/api/v1/ride/{id}/cancel',
+        path: '/api/v1/ride/{rideId}/cancel',
         description: 'Hủy chuyến xe sau khi đã đặt hoặc khi đang tìm tài xế.',
         summary: 'Hủy chuyến xe (UC-15)',
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'id', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\Parameter(name: 'rideId', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\RequestBody(
         required: false,
         content: new OA\JsonContent(
@@ -248,13 +248,13 @@ final class RideController extends BaseController
     }
 
     #[OA\Post(
-        path: '/api/v1/ride/{id}/cancel-request',
+        path: '/api/v1/ride/{rideId}/cancel-request',
         description: 'Khách hàng gửi yêu cầu hủy chuyến đi. Nếu đã có tài xế, sẽ cần tài xế xác nhận.',
         summary: 'Yêu cầu hủy chuyến (UC-28)',
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'id', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\Parameter(name: 'rideId', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\RequestBody(
         required: false,
         content: new OA\JsonContent(

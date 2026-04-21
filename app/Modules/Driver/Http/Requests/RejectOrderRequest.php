@@ -20,7 +20,27 @@ class RejectOrderRequest extends FormRequest
 
     public function rules(): array
     {
-        return []; // No additional fields required for reject
+        return [
+            'rideId' => 'required|string|exists:rides,id',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'rideId.required' => 'ID chuyến xe là bắt buộc.',
+            'rideId.exists'   => 'Chuyến xe không tồn tại.',
+        ];
+    }
+
+    /**
+     * Đồng bộ hóa dữ liệu từ route vào request data để validate.
+     */
+    public function all($keys = null): array
+    {
+        $data = parent::all($keys);
+        $data['rideId'] = $this->route('rideId');
+        return $data;
     }
 
     protected function failedValidation(Validator $validator)

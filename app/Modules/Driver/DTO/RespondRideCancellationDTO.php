@@ -15,7 +15,7 @@ final readonly class RespondRideCancellationDTO
     public static function fromRequest($request): self
     {
         return new self(
-            rideId: (string) $request->route('id'),
+            rideId: (string) $request->input('rideId'),
             driverId: (string) $request->user()->id,
             isApproved: (bool) $request->input('agreement')
         );

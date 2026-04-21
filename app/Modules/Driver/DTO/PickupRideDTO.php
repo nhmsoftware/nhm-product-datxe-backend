@@ -19,14 +19,11 @@ final readonly class PickupRideDTO
     ) {
     }
 
-    /**
-     * Tạo DTO từ FormRequest.
-     */
-    public static function fromRequest(PickupRideRequest $request, string $rideId): self
+    public static function fromRequest(PickupRideRequest $request): self
     {
         return new self(
-            rideId: $rideId,
-            userId: (string) auth()->id(),
+            rideId: (string) $request->input('rideId'),
+            userId: (string) $request->user()->id,
             lat: (float) $request->input('lat'),
             lng: (float) $request->input('lng')
         );

@@ -21,8 +21,28 @@ final class RespondRideCancellationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'rideId'    => 'required|string|exists:rides,id',
             'agreement' => 'required|boolean',
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'rideId.required'    => 'ID chuyến xe là bắt buộc.',
+            'rideId.exists'      => 'Chuyến xe không tồn tại.',
+            'agreement.required' => 'Vui lòng cung cấp phản hồi đồng ý hoặc từ chối.',
+        ];
+    }
+
+    /**
+     * Đồng bộ hóa dữ liệu từ route vào request data để validate.
+     */
+    public function all($keys = null): array
+    {
+        $data = parent::all($keys);
+        $data['rideId'] = $this->route('rideId');
+        return $data;
     }
 
     /**
