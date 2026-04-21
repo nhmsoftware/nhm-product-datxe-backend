@@ -19,7 +19,7 @@ class Logging
     public static function userActivity(
         string $action,
         string $description,
-        ?int $userId = null
+        string|int|null $userId = null
     ): void {
         $userRequestId = request()->user()?->id;
         if ($userId) {

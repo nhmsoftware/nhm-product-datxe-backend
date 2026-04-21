@@ -7,6 +7,7 @@ namespace App\Modules\User\Repositories;
 use App\Core\Repository\BaseRepository;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\CustomerProfile;
+use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\User;
 
 final class UserRepository extends BaseRepository implements UserRepositoryInterface
@@ -109,7 +110,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
     /**
      * Cập nhật vai trò của user.
      */
-    public function updateRole(int $userId, \App\Modules\User\Model\Enums\UserRole $role): bool
+    public function updateRole(int|string $userId, UserRole $role): bool
     {
         return (bool) $this->model->where('id', $userId)->update([
             'role' => $role->value,

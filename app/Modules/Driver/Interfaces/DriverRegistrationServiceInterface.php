@@ -20,4 +20,19 @@ interface DriverRegistrationServiceInterface
      * Admin duyệt hồ sơ tài xế.
      */
     public function approveRegistration(ApproveRegistrationDTO $dto): ServiceReturn;
+
+    /**
+     * Lấy danh sách hồ sơ đăng ký đang chờ duyệt.
+     */
+    public function getApplications(): ServiceReturn;
+
+    /**
+     * Lấy chi tiết một hồ sơ kèm tài liệu.
+     */
+    public function getApplicationDetails(string $id): ServiceReturn;
+
+    /**
+     * Lấy danh sách đội xe (Driver Groups).
+     */
+    public function getDriverGroups(): ServiceReturn;
 }

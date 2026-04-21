@@ -11,8 +11,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property int $id
- * @property int $user_id
+ * @property string $id
+ * @property string $user_id
  * @property string $full_name
  * @property int|null $driver_group_id
  * @property int $driver_group_type
@@ -105,6 +105,8 @@ class DriverProfile extends Model
     ];
 
     protected $casts = [
+        'id'                => 'string',
+        'user_id'           => 'string',
         'is_online'      => 'boolean',
         'current_lat'    => 'decimal:8',
         'current_lng'    => 'decimal:8',

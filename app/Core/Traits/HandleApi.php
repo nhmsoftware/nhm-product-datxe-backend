@@ -13,7 +13,7 @@ trait HandleApi
      * @param  string $message Tin nhắn
      * @param  int    $code    HTTP Status Code (mặc định 200)
      */
-    protected function sendSuccess(array$data = [], string $message = 'Success', int $code = 200): JsonResponse
+    protected function sendSuccess(array $data = [], string $message = 'Success', int $code = 200): JsonResponse
     {
         return response()->json([
             'success' => true,

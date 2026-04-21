@@ -16,10 +16,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
         return DriverProfile::class;
     }
 
-    /**
-     * Tìm DriverProfile của một user.
-     */
-    public function findByUserId(int $userId): ?DriverProfile
+    public function findByUserId(string $userId): ?DriverProfile
     {
         /** @var DriverProfile|null */
         return $this->model->where('user_id', $userId)->first();
@@ -29,13 +26,13 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
      * Cập nhật trạng thái trực tuyến của Driver.
      */
     public function updateOnlineStatus(
-        int $driverId,
+        string $driverId,
         bool $isOnline,
         ?float $currentLat = null,
         ?float $currentLng = null
     ): bool {
         $data = ['is_online' => $isOnline];
-        
+
         if ($isOnline && $currentLat !== null && $currentLng !== null) {
             $data['current_lat'] = $currentLat;
             $data['current_lng'] = $currentLng;
@@ -47,10 +44,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
     /**
      * Cập nhật trạng thái của Driver (UC-32).
      */
-    /**
-     * Cập nhật trạng thái của Driver (UC-32).
-     */
-    public function updateStatus(int $driverId, DriverStatus $status): bool
+    public function updateStatus(string $driverId, DriverStatus $status): bool
     {
         return (bool) $this->model->where('id', $driverId)->update([
             'status' => $status->value,
@@ -60,7 +54,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
     /**
      * Tăng số lần hủy trong ngày (UC-33).
      */
-    public function incrementCancelCount(int $driverId): int
+    public function incrementCancelCount(string $driverId): int
     {
         $profile = $this->model->find($driverId);
         if (!$profile) {
@@ -74,11 +68,33 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
     /**
      * Thiết lập thời gian đóng băng nhận đơn (UC-33).
      */
-    public function setCooldown(int $driverId, int $minutes): bool
+    public function setCooldown(string $driverId, int $minutes): bool
     {
         return (bool) $this->model->where('id', $driverId)->update([
             'status'         => DriverStatus::COOLDOWN->value,
             'cooldown_until' => now()->addMinutes($minutes),
         ]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function findEligibleDrivers(array $userIds, int $vehicleType, ?int $groupType = null): \Illuminate\Support\Collection
+    {
+        if (empty($userIds)) {
+            return collect();
+        }
+
+        $query = $this->model
+            ->whereIn('user_id', $userIds)
+            ->where('is_online', true)
+            ->where('status', DriverStatus::ACTIVE->value)
+            ->where('vehicle_type', $vehicleType);
+
+        if ($groupType !== null) {
+            $query->where('driver_group_type', $groupType);
+        }
+
+        return $query->get();
     }
 }

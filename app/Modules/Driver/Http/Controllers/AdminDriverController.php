@@ -27,6 +27,15 @@ final class AdminDriverController extends BaseController
         path: '/api/v1/admin/driver/applications/{id}/approve',
         summary: 'Duyệt hồ sơ tài xế',
         security: [['sanctum' => []]],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['driver_group_id'],
+                properties: [
+                    new OA\Property(property: 'driver_group_id', description: 'ID nhóm tài xế: 1 - Đội xe nhà, 2 - Đội xe đối tác', type: 'number', example: 1),
+                ]
+            )
+        ),
         tags: ['Admin|Driver'],
         parameters: [
             new OA\Parameter(
@@ -34,7 +43,7 @@ final class AdminDriverController extends BaseController
                 description: 'ID của hồ sơ cần duyệt',
                 in: 'path',
                 required: true,
-                schema: new OA\Schema(type: 'integer')
+                schema: new OA\Schema(type: 'string', example: '1')
             )
         ],
         responses: [
@@ -55,5 +64,68 @@ final class AdminDriverController extends BaseController
         }
 
         return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    /**
+     * Danh sách hồ sơ đang chờ duyệt.
+     */
+    #[OA\Get(
+        path: '/api/v1/admin/driver/applications',
+        summary: 'Danh sách hồ sơ chờ duyệt',
+        security: [['sanctum' => []]],
+        tags: ['Admin|Driver'],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function index(): JsonResponse
+    {
+        $result = $this->driverRegistrationService->getApplications();
+        return $this->sendSuccess($result->getData());
+    }
+
+    /**
+     * Chi tiết hồ sơ đăng ký.
+     */
+    #[OA\Get(
+        path: '/api/v1/admin/driver/applications/{id}',
+        summary: 'Chi tiết hồ sơ đăng ký tài xế',
+        security: [['sanctum' => []]],
+        tags: ['Admin|Driver'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+            new OA\Response(response: 404, description: 'Không tìm thấy'),
+        ]
+    )]
+    public function show(string $id): JsonResponse
+    {
+        $result = $this->driverRegistrationService->getApplicationDetails($id);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData());
+    }
+
+    /**
+     * Danh sách đội xe nhà (Driver Groups).
+     */
+    #[OA\Get(
+        path: '/api/v1/admin/driver/groups',
+        summary: 'Danh sách đội xe',
+        security: [['sanctum' => []]],
+        tags: ['Admin|Driver'],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function groups(): JsonResponse
+    {
+        $result = $this->driverRegistrationService->getDriverGroups();
+        return $this->sendSuccess($result->getData());
     }
 }

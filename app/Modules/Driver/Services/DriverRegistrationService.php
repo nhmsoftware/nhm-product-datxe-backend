@@ -17,8 +17,9 @@ use App\Modules\Driver\Model\Enums\FileableType;
 use App\Modules\Driver\Model\Enums\FileDisk;
 use App\Modules\Driver\Model\Enums\KycStatus;
 use App\Modules\Driver\Model\Enums\KycType;
-use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
+use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
+use App\Modules\User\Interfaces\DriverGroupRepositoryInterface;
 use App\Modules\User\Model\Enums\DriverGroupType;
 use App\Modules\User\Model\Enums\DriverStatus;
 use App\Modules\User\Model\Enums\UserRole;
@@ -34,6 +35,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
         private readonly FileRecordRepositoryInterface         $fileRecordRepository,
         private readonly UserRepositoryInterface               $userRepository,
         private readonly DriverProfileRepositoryInterface       $driverProfileRepository,
+        private readonly DriverGroupRepositoryInterface         $driverGroupRepository,
     ) {}
 
     /**
@@ -134,11 +136,14 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
             $this->userRepository->updateRole($userId, UserRole::Driver);
 
             // - Tạo hồ sơ vận hành (DriverProfile)
-            // Lấy thông tin từ snapshot để đảm bảo tính nhất quán
+            // Xác định loại đội xe (Xe nhà vs Đối tác)
+            $driverGroupType = $dto->driverGroupId ? DriverGroupType::INTERNAL : DriverGroupType::PARTNER;
+
             $this->driverProfileRepository->create([
                 'user_id'           => $userId,
                 'full_name'         => $snapshotData['full_name'] ?? 'Driver ' . $userId,
-                'driver_group_type' => DriverGroupType::PARTNER->value, // Mặc định là Partners
+                'driver_group_id'   => $dto->driverGroupId,
+                'driver_group_type' => $driverGroupType->value,
                 'vehicle_type'      => (int) ($snapshotData['vehicle_type'] ?? 1),
                 'vehicle_name'      => $snapshotData['vehicle_name'] ?? 'N/A',
                 'vehicle_color'     => (int) ($snapshotData['vehicle_color'] ?? 0),
@@ -148,7 +153,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
             ]);
 
             // - Raise Domain Event — Thông báo realtime cho frontend
-            event(new DriverApplicationApproved($application->id, (int) $userId));
+            event(new DriverApplicationApproved($application->id, $userId));
 
             return [
                 'user_id'        => $userId,
@@ -214,5 +219,43 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
         }
 
         return $path;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getApplications(): ServiceReturn
+    {
+        return $this->execute(function () {
+            return $this->driverRegistrationRepository->getPendingApplications();
+        });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getApplicationDetails(string $id): ServiceReturn
+    {
+        return $this->execute(function () use ($id) {
+            $application = $this->driverRegistrationRepository->findByIdWithUser($id);
+            $this->validate($application !== null, 'Không tìm thấy hồ sơ.', 404);
+
+            $files = $this->fileRecordRepository->findByApplicationId((int) $id);
+
+            return [
+                'application' => $application,
+                'files'       => $files,
+            ];
+        });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getDriverGroups(): ServiceReturn
+    {
+        return $this->execute(function () {
+            return $this->driverGroupRepository->getAllGroups();
+        });
     }
 }

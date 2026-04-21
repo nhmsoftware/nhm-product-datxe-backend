@@ -25,7 +25,10 @@ final class VoucherService extends BaseService implements VoucherServiceInterfac
     /**
      * @inheritDoc
      */
-    public function listVouchers(int $customerId, ?string $serviceType = null): ServiceReturn
+    /**
+     * @inheritDoc
+     */
+    public function listVouchers(string $customerId, ?string $serviceType = null): ServiceReturn
     {
         return $this->execute(function () use ($customerId, $serviceType): array {
             $vouchers = $this->voucherRepository->findAllActive();
@@ -42,7 +45,7 @@ final class VoucherService extends BaseService implements VoucherServiceInterfac
             }
 
             return $vouchers->map(function (Voucher $v) use ($customerId) {
-                $isSaved = $this->voucherWalletRepository->isSavedByCustomer($customerId, (int) $v->id);
+                $isSaved = $this->voucherWalletRepository->isSavedByCustomer($customerId, (string) $v->id);
                 return VoucherDTO::fromModel($v, $isSaved)->toArray();
             })->values()->toArray();
         });
@@ -51,7 +54,7 @@ final class VoucherService extends BaseService implements VoucherServiceInterfac
     /**
      * @inheritDoc
      */
-    public function getVoucherDetail(int $customerId, int $voucherId): ServiceReturn
+    public function getVoucherDetail(string $customerId, string $voucherId): ServiceReturn
     {
         return $this->execute(function () use ($customerId, $voucherId): array {
             /** @var Voucher|null $voucher */
@@ -66,7 +69,7 @@ final class VoucherService extends BaseService implements VoucherServiceInterfac
     /**
      * @inheritDoc
      */
-    public function saveVoucher(int $customerId, int $voucherId): ServiceReturn
+    public function saveVoucher(string $customerId, string $voucherId): ServiceReturn
     {
         return $this->execute(function () use ($customerId, $voucherId): string {
             /** @var Voucher|null $voucher */

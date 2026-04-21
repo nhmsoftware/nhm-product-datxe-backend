@@ -12,16 +12,16 @@ interface RewardWalletRepositoryInterface extends BaseRepositoryInterface
     /**
      * Lấy ví điểm thưởng của khách hàng (UC-24)
      * 
-     * @param int $customerId
+     * @param string $customerId
      * @return RewardWallet|null
      */
-    public function findByCustomerId(int $customerId): ?RewardWallet;
+    public function findByCustomerId(string $customerId): ?RewardWallet;
 
     /**
      * Tạo ví điểm thưởng cho khách hàng nếu chưa có.
      * 
-     * @param int $customerId
+     * @param string $customerId
      * @return RewardWallet
      */
-    public function firstOrCreateWallet(int $customerId): RewardWallet;
+    public function firstOrCreateWallet(string $customerId): RewardWallet;
 }

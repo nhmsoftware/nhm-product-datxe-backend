@@ -34,4 +34,9 @@ interface FileRecordRepositoryInterface extends BaseRepositoryInterface
         int          $size,
         string       $mimeType,
     ): FileRecord;
+
+    /**
+     * Tìm tất cả tài liệu đính kèm của một hồ sơ.
+     */
+    public function findByApplicationId(int $applicationId): \Illuminate\Support\Collection;
 }

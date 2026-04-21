@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Model quản lý ví voucher của khách hàng.
+ * @property string $id
+ * @property string $customer_id
+ * @property string $voucher_id
+ * @property \Illuminate\Support\Carbon|null $saved_at
+ * @property \Illuminate\Support\Carbon|null $used_at
  */
 final class VoucherWallet extends Model
 {
@@ -25,6 +30,9 @@ final class VoucherWallet extends Model
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'customer_id' => 'string',
+        'voucher_id' => 'string',
         'saved_at' => 'datetime',
         'used_at' => 'datetime',
     ];

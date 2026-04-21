@@ -23,8 +23,11 @@ final class ApproveRegistrationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // id được lấy từ route, nhưng ta có thể validate nó ở đây nếu cần
-            // Ở đây ta chỉ cần check xem application_id từ route có tồn tại và đang PENDING không
+            'driver_group_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('driver_groups', 'id')->whereNull('deleted_at'),
+            ],
         ];
     }
 

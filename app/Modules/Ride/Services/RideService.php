@@ -13,10 +13,14 @@ use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
+use App\Modules\Ride\DTO\RequestRideCancellationDTO;
+use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\DTO\PriceEstimateDTO;
 use App\Modules\Ride\DTO\VehicleOptionDTO;
 use App\Modules\Ride\Events\RideBooked;
 use App\Modules\Ride\Events\RideCanceled;
+use App\Modules\Ride\Events\RideCancellationRequested;
+use App\Modules\Ride\Events\RideCancellationResponded;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
@@ -103,7 +107,7 @@ final class RideService extends BaseService implements RideServiceInterface
     /**
      * UC-09: Lấy danh sách loại xe kèm giá ước tính
      */
-    public function getVehicleOptions(int $rideId, int $customerId): ServiceReturn
+    public function getVehicleOptions(string $rideId, string $customerId): ServiceReturn
     {
         return $this->execute(function () use ($rideId, $customerId): array {
             // Xác thực quyền sở hữu
@@ -143,7 +147,7 @@ final class RideService extends BaseService implements RideServiceInterface
     /**
      * UC-10: Xem giá ước tính chi tiết
      */
-    public function getPriceEstimate(int $rideId, int $customerId): ServiceReturn
+    public function getPriceEstimate(string $rideId, string $customerId): ServiceReturn
     {
         return $this->execute(function () use ($rideId, $customerId): array {
             // Xác thực quyền sở hữu chuyến xe
@@ -231,7 +235,7 @@ final class RideService extends BaseService implements RideServiceInterface
     /**
      * UC-11 A4: Xóa voucher
      */
-    public function removeVoucher(int $rideId, int $customerId): ServiceReturn
+    public function removeVoucher(string $rideId, string $customerId): ServiceReturn
     {
         return $this->execute(function () use ($rideId, $customerId): ServiceReturn {
             // Xác thực quyền sở hữu chuyến xe
@@ -267,6 +271,7 @@ final class RideService extends BaseService implements RideServiceInterface
     {
         return $this->execute(function () use ($dto): ServiceReturn {
             $ride = $this->rideRepository->findByIdAndCustomer($dto->rideId, $dto->customerId);
+
             $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
 
             $this->validate(
@@ -318,9 +323,7 @@ final class RideService extends BaseService implements RideServiceInterface
             $this->rideRepository->confirmBooking($dto->rideId, $finalFare);
 
             // 5. Kích hoạt Domain Event để hệ thống tìm tài xế (A4, A6 sẽ được handle async/background)
-//            event(new RideBooked($dto->rideId, $dto->customerId));
-
-//            dd($ride);
+            event(new RideBooked($dto->rideId, $dto->customerId));
 
             // Return thông tin (sẽ pass qua getPriceEstimate hoặc mảng tùy ý, trả về mảng info cơ bản là okay)
             $ride->refresh();
@@ -361,12 +364,91 @@ final class RideService extends BaseService implements RideServiceInterface
             $this->rideRepository->cancel($dto->rideId, $dto->reason, $cancellationFee);
 
             // Raise Domain Event để thông báo cho Driver (Nếu có)
-//            event(new RideCanceled($dto->rideId, $dto->customerId, $ride->driver_id));
+            event(new RideCanceled($dto->rideId, $dto->customerId, $ride->driver_id));
 
             return [
                 'ride_id'          => $dto->rideId,
                 'status'           => RideStatus::CANCELLED->getLabel(),
                 'cancellation_fee' => $cancellationFee,
+            ];
+        }, useTransaction: true);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function requestCancellation(RequestRideCancellationDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            $ride = $this->rideRepository->findByIdAndCustomer($dto->rideId, $dto->customerId);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+
+            // A2: Chuyến xe đã bắt đầu
+            $this->validate(
+                $ride->status !== RideStatus::IN_PROGRESS,
+                'Không thể hủy chuyến khi chuyến đi đã bắt đầu.',
+                400
+            );
+
+            // Nếu chưa có tài xế nhận (PENDING) -> Hủy ngay
+            if ($ride->status === RideStatus::PENDING || $ride->status === RideStatus::DRAFT) {
+                $this->rideRepository->updateStatus($dto->rideId, RideStatus::CANCELLED, $dto->reason);
+                event(new RideCanceled($dto->rideId, $dto->customerId, null));
+
+                return [
+                    'ride_id' => $dto->rideId,
+                    'status'  => RideStatus::CANCELLED->value,
+                    'message' => 'Hủy chuyến thành công.',
+                ];
+            }
+
+            // Nếu đã có tài xế nhận -> Yêu cầu xác nhận
+            $this->validate(
+                $ride->driver_id !== null,
+                'Trạng thái chuyến xe không hợp lệ để yêu cầu hủy.',
+                400
+            );
+
+            $this->rideRepository->updateStatus($dto->rideId, RideStatus::CANCELLATION_REQUESTED, $dto->reason);
+            event(new RideCancellationRequested($dto->rideId, (string)$ride->driver_id, $dto->customerId, $dto->reason));
+
+            return [
+                'ride_id' => $dto->rideId,
+                'status'  => RideStatus::CANCELLATION_REQUESTED->value,
+                'message' => 'Đang chờ tài xế xác nhận hủy chuyến.',
+            ];
+        }, useTransaction: true);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function respondToCancellation(RespondRideCancellationDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            $ride = $this->rideRepository->find($dto->rideId);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+            $this->validate((string)$ride->driver_id === $dto->driverId, 'Bạn không có quyền phản hồi yêu cầu này.', 403);
+            $this->validate($ride->status === RideStatus::CANCELLATION_REQUESTED, 'Yêu cầu hủy không tồn tại hoặc đã được xử lý.', 400);
+
+            if ($dto->isApproved) {
+                // Driver đồng ý hủy
+                $this->rideRepository->updateStatus($dto->rideId, RideStatus::CANCELLED);
+                $message = 'Chuyến xe đã được hủy.';
+            } else {
+                // Driver từ chối hủy -> Quay lại trạng thái ACCEPTED (hoặc trạng thái logic trước đó)
+                // Theo spec A1: System giữ nguyên trạng thái chuyến xe (trước khi request)
+                // Ở đây ta mặc định quay lại ACCEPTED
+                $this->rideRepository->updateStatus($dto->rideId, RideStatus::ACCEPTED);
+                $message = 'Tài xế không đồng ý hủy chuyến.';
+            }
+
+            event(new RideCancellationResponded($dto->rideId, (string)$ride->customer_id, $dto->driverId, $dto->isApproved));
+
+            return [
+                'ride_id' => $dto->rideId,
+                'status'  => $ride->refresh()->status->value,
+                'message' => $message,
             ];
         }, useTransaction: true);
     }

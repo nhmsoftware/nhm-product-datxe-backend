@@ -8,6 +8,13 @@ use App\Core\Traits\HasBigIntId;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string $id
+ * @property string $customer_id
+ * @property int $balance
+ * @property int $total_earned
+ * @property int $total_used
+ */
 class RewardWallet extends Model
 {
     use SoftDeletes, HasBigIntId;
@@ -20,6 +27,8 @@ class RewardWallet extends Model
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'customer_id' => 'string',
         'balance' => 'integer',
         'total_earned' => 'integer',
         'total_used' => 'integer',

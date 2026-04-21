@@ -17,7 +17,7 @@ use Illuminate\Http\UploadedFile;
 final class RegisterDriverSubmitDTO
 {
     public function __construct(
-        public readonly int          $userId,
+        public readonly string       $userId,
         public readonly string       $fullName,
         public readonly string       $phone,
         public readonly string       $citizenId,
@@ -32,7 +32,7 @@ final class RegisterDriverSubmitDTO
     public static function fromRequest(RegisterDriverSubmitRequest $request): self
     {
         return new self(
-            userId:        (int) $request->user()->id,
+            userId:        (string) $request->user()->id,
             fullName:      $request->string('full_name')->toString(),
             phone:         $request->string('phone')->toString(),
             citizenId:     $request->string('citizen_id')->toString(),

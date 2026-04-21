@@ -416,7 +416,8 @@
                         "description": "ID của hồ sơ cần duyệt",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string",
+                            "example": "1"
                         }
                     }
                 ],
@@ -432,6 +433,79 @@
                     },
                     "403": {
                         "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/driver/applications": {
+            "get": {
+                "tags": [
+                    "Admin|Driver"
+                ],
+                "summary": "Danh sách hồ sơ chờ duyệt",
+                "description": "Danh sách hồ sơ đang chờ duyệt.",
+                "operationId": "d095852687be1e4bc71587fcd9bfdb7d",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/driver/applications/{id}": {
+            "get": {
+                "tags": [
+                    "Admin|Driver"
+                ],
+                "summary": "Chi tiết hồ sơ đăng ký tài xế",
+                "description": "Chi tiết hồ sơ đăng ký.",
+                "operationId": "a24af6392285e3225c42de6f5ddd8f85",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/driver/groups": {
+            "get": {
+                "tags": [
+                    "Admin|Driver"
+                ],
+                "summary": "Danh sách đội xe",
+                "description": "Danh sách đội xe nhà (Driver Groups).",
+                "operationId": "a4da37b85a75b7c6661a874641d3ba73",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
                     }
                 },
                 "security": [
@@ -588,7 +662,8 @@
                 "tags": [
                     "Driver"
                 ],
-                "summary": "UC-31: Cập nhật trạng thái Go Online / Go Offline",
+                "summary": "UC-31: Bật/Tắt trạng thái hoạt động (Go Online/Offline)",
+                "description": "Tài xế có thể bật/tắt trạng thái bất cứ lúc nào. Nếu tắt Offline khi đang có chuyến, tài xế vẫn hoàn thành chuyến cũ nhưng sẽ không được gán thêm chuyến mới.",
                 "operationId": "800c64bb5a49044aae8e087ebe3ec0ab",
                 "requestBody": {
                     "required": true,
@@ -624,16 +699,16 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Cập nhật thành công"
+                        "description": "Cập nhật trạng thái thành công"
                     },
                     "400": {
                         "description": "Dữ liệu không hợp lệ"
                     },
                     "403": {
-                        "description": "Tài khoản chưa được duyệt hoặc bị khóa"
+                        "description": "Tài khoản chưa được duyệt, bị khóa hoặc đang chờ (Cooldown)"
                     },
                     "422": {
-                        "description": "Không thể cập nhật khi đang có chuyến"
+                        "description": "Lỗi xử lý nghiệp vụ"
                     }
                 },
                 "security": [
@@ -656,7 +731,7 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -723,7 +798,7 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -758,7 +833,7 @@
                         "in": "path",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -801,6 +876,317 @@
                     },
                     "403": {
                         "description": "Không có quyền hủy hoặc bị phạt"
+                    },
+                    "422": {
+                        "description": "Trạng thái đơn không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/start": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-35: Bắt đầu thực hiện chuyến đi (Start Trip)",
+                "operationId": "ec53fb0b8e81b9348b463667caf839d9",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "lat",
+                                    "lng"
+                                ],
+                                "properties": {
+                                    "lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.776889
+                                    },
+                                    "lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.700806
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Bắt đầu thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền sở hữu chuyến hoặc chưa đủ gần"
+                    },
+                    "422": {
+                        "description": "Trạng thái đơn không hợp lệ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/complete": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-40: Hoàn thành chuyến đi (Complete Trip)",
+                "operationId": "2d78e2e031d0efb77bacc9bb0375b91f",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "lat",
+                                    "lng"
+                                ],
+                                "properties": {
+                                    "lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.776889
+                                    },
+                                    "lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.700806
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hoàn thành chuyến đi thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền sở hữu chuyến hoặc chưa đủ gần điểm đến"
+                    },
+                    "422": {
+                        "description": "Trạng thái đơn không hợp lệ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/arrived": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-36: Thông báo đã đến điểm đón (Arrived)",
+                "operationId": "579713bda37acdf54c1f165d30daaaaa",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "lat",
+                                    "lng"
+                                ],
+                                "properties": {
+                                    "lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.776889
+                                    },
+                                    "lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.700806
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thông báo thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền sở hữu chuyến hoặc chưa đủ gần"
+                    },
+                    "422": {
+                        "description": "Trạng thái đơn không hợp lệ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/pickup": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-36: Xác nhận đã đón khách (Pickup)",
+                "operationId": "dcbe2f57e9dc363abd311cb4cc6d8d3a",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "lat",
+                                    "lng"
+                                ],
+                                "properties": {
+                                    "lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.776889
+                                    },
+                                    "lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.700806
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Xác nhận đón khách thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền sở hữu chuyến hoặc chưa đủ gần"
+                    },
+                    "422": {
+                        "description": "Trạng thái đơn không hợp lệ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/cancel-respond": {
+            "post": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-28: Phản hồi yêu cầu hủy chuyến từ khách hàng",
+                "operationId": "adcfa2eaddfbf249df9c0b8e320a6933",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "agreement"
+                                ],
+                                "properties": {
+                                    "agreement": {
+                                        "description": "True nếu đồng ý hủy, False nếu từ chối",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Phản hồi thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền sở hữu chuyến"
                     },
                     "422": {
                         "description": "Trạng thái đơn không hợp lệ"
@@ -920,7 +1306,7 @@
                         "description": "ID giao dịch",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1059,7 +1445,7 @@
                         "description": "ID của voucher",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1093,7 +1479,7 @@
                         "description": "ID của voucher",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1124,7 +1510,7 @@
                         "description": "ID của voucher",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1193,6 +1579,97 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/operation/location": {
+            "post": {
+                "tags": [
+                    "Operation"
+                ],
+                "summary": "UC-35: Cập nhật vị trí hiện tại (Driver/Customer)",
+                "description": "API để User (Tài xế/Khách hàng) cập nhật tọa độ GPS. Hệ thống sử dụng Redis để lưu trữ real-time và đồng bộ DB có tiết lưu (60s/lần) để đảm bảo hiệu năng cao cho 10.000+ user.",
+                "operationId": "360bb0c9fad772341e3ff3fe9939c88b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "lat",
+                                    "lng"
+                                ],
+                                "properties": {
+                                    "lat": {
+                                        "description": "Vĩ độ",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.762622
+                                    },
+                                    "lng": {
+                                        "description": "Kinh độ",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.660172
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "422": {
+                        "description": "Dữ liệu tọa độ không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/operation/navigation/{rideId}": {
+            "get": {
+                "tags": [
+                    "Operation"
+                ],
+                "summary": "UC-34: Lấy thông tin dẫn đường (Polyline/Distance/Duration)",
+                "description": "Lấy dữ liệu dẫn đường thông minh: Tài xế sẽ thấy đường đến Pickup (nếu vừa nhận) hoặc Destination (nếu đang chở khách). Khách hàng sẽ thấy đường từ Tài xế đến mình để theo dõi.",
+                "operationId": "d44d6873ed668bf620af46b52f5bb4d7",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy dữ liệu thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền xem chuyến xe này"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
                     }
                 },
                 "security": [
@@ -1294,7 +1771,7 @@
                         "description": "ID của ride draft",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1328,7 +1805,7 @@
                         "description": "ID của ride draft",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1366,7 +1843,7 @@
                         "description": "ID của ride draft",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1417,7 +1894,7 @@
                         "description": "ID của ride draft",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     },
                     {
@@ -1457,7 +1934,7 @@
                         "description": "ID của ride draft",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1510,7 +1987,7 @@
                 ],
                 "summary": "Hủy chuyến xe (UC-15)",
                 "description": "Hủy chuyến xe sau khi đã đặt hoặc khi đang tìm tài xế.",
-                "operationId": "dafa2d153d472551bed7530132a0ecf0",
+                "operationId": "e1b89e454f642049638cab2bfebed3e5",
                 "parameters": [
                     {
                         "name": "id",
@@ -1518,7 +1995,7 @@
                         "description": "ID của chuyến xe",
                         "required": true,
                         "schema": {
-                            "type": "integer"
+                            "type": "string"
                         }
                     }
                 ],
@@ -1547,6 +2024,53 @@
                     },
                     "404": {
                         "description": "Không tìm thấy chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{id}/cancel-request": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Yêu cầu hủy chuyến (UC-28)",
+                "description": "Khách hàng gửi yêu cầu hủy chuyến đi. Nếu đã có tài xế, sẽ cần tài xế xác nhận.",
+                "operationId": "c2776ed27b7e601223c9fd8daa006c71",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Thay đổi lộ trình"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Yêu cầu đã được gửi hoặc hủy thành công"
                     }
                 },
                 "security": [
@@ -2302,8 +2826,8 @@
                         "description": "ID của địa chỉ",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "example": "1"
                         }
                     }
                 ],
@@ -2429,8 +2953,8 @@
                         "description": "ID của địa chỉ cần cập nhật",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "example": "1"
                         }
                     }
                 ],
@@ -2660,8 +3184,8 @@
                         "description": "ID của địa chỉ cần xóa",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "example": "1"
                         }
                     }
                 ],
@@ -2785,8 +3309,8 @@
                         "description": "ID của địa chỉ cần đặt làm mặc định",
                         "required": true,
                         "schema": {
-                            "type": "integer",
-                            "example": 1
+                            "type": "string",
+                            "example": "1"
                         }
                     }
                 ],
@@ -2914,8 +3438,8 @@
                 "properties": {
                     "id": {
                         "description": "ID người dùng",
-                        "type": "integer",
-                        "example": 1
+                        "type": "string",
+                        "example": "1"
                     },
                     "role": {
                         "description": "Vai trò: 1=Driver, 2=Customer, 3=Merchant",
@@ -3113,8 +3637,8 @@
                 "properties": {
                     "id": {
                         "description": "ID địa chỉ",
-                        "type": "integer",
-                        "example": 1
+                        "type": "string",
+                        "example": "1"
                     },
                     "label": {
                         "description": "Nhãn: 1=Nhà, 2=Công ty, 3=Nhà hàng yêu thích, 4=Khác",
@@ -3402,8 +3926,8 @@
                 ],
                 "properties": {
                     "id": {
-                        "type": "integer",
-                        "example": 1
+                        "type": "string",
+                        "example": "1"
                     },
                     "code": {
                         "type": "string",
@@ -3466,8 +3990,8 @@
                 "properties": {
                     "id": {
                         "description": "Reward Transaction Response Schema",
-                        "type": "integer",
-                        "example": 1
+                        "type": "string",
+                        "example": "1"
                     },
                     "type": {
                         "description": "Loại giao dịch. 1: Tích điểm (Earn), 2: Sử dụng điểm (Redeem), 3: Điểm hết hạn (Expire)",
@@ -3513,8 +4037,8 @@
                 "properties": {
                     "id": {
                         "description": "Ride Response Schema",
-                        "type": "integer",
-                        "example": 1
+                        "type": "string",
+                        "example": "1"
                     },
                     "status": {
                         "description": "Trạng thái chuyến xe. 1: Nháp, 2: Đang tìm tài xế, 3: Tài xế đã nhận, 4: Đang di chuyển, 5: Hoàn thành, 6: Đã hủy",
@@ -3643,6 +4167,10 @@
         {
             "name": "Homepage",
             "description": "Homepage"
+        },
+        {
+            "name": "Operation",
+            "description": "Operation"
         },
         {
             "name": "Ride",

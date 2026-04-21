@@ -6,6 +6,7 @@ namespace App\Modules\User\Interfaces;
 
 use App\Core\Interfaces\BaseRepositoryInterface;
 use App\Modules\User\Model\CustomerProfile;
+use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\User;
 
 interface UserRepositoryInterface extends BaseRepositoryInterface
@@ -74,5 +75,5 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     /**
      * Cập nhật vai trò của user.
      */
-    public function updateRole(int $userId, \App\Modules\User\Model\Enums\UserRole $role): bool;
+    public function updateRole(int|string $userId, UserRole $role): bool;
 }

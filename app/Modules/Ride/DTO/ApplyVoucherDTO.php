@@ -12,8 +12,8 @@ use App\Modules\Ride\Http\Requests\ApplyVoucherRequest;
 final class ApplyVoucherDTO
 {
     public function __construct(
-        public readonly int    $customerId,
-        public readonly int    $rideId,
+        public readonly string $customerId,
+        public readonly string $rideId,
         public readonly string $voucherCode,
     ) {
     }
@@ -22,11 +22,11 @@ final class ApplyVoucherDTO
      * Khởi tạo DTO từ FormRequest đã validate.
      * rideId lấy từ route parameter, customerId từ authenticated user.
      */
-    public static function fromRequest(ApplyVoucherRequest $request, int $rideId): self
+    public static function fromRequest(ApplyVoucherRequest $request): self
     {
         return new self(
-            customerId:   (int) $request->user()->id,
-            rideId:       $rideId,
+            customerId:   (string) $request->user()->id,
+            rideId:       (string) $request->route('rideId'),
             voucherCode:  $request->string('voucher_code')->toString(),
         );
     }

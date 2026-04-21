@@ -14,7 +14,7 @@ use App\Modules\Ride\Model\Enums\VehicleType;
 final class CreateDraftRideDTO
 {
     public function __construct(
-        public readonly int         $customerId,
+        public readonly string      $customerId,
         public readonly string      $pickupAddress,
         public readonly float       $pickupLat,
         public readonly float       $pickupLng,
@@ -32,7 +32,7 @@ final class CreateDraftRideDTO
     public static function fromRequest(CreateDraftRideRequest $request): self
     {
         return new self(
-            customerId:          (int) $request->user()->id,
+            customerId:          (string) $request->user()->id,
             pickupAddress:       $request->string('pickup_address')->toString(),
             pickupLat:           (float) $request->input('pickup_lat'),
             pickupLng:           (float) $request->input('pickup_lng'),

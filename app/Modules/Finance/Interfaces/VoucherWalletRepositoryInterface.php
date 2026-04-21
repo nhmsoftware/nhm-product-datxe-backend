@@ -14,18 +14,18 @@ interface VoucherWalletRepositoryInterface extends BaseRepositoryInterface
     /**
      * Kiểm tra xem khách hàng đã lưu voucher này chưa.
      * 
-     * @param int $customerId
-     * @param int $voucherId
+     * @param string $customerId
+     * @param string $voucherId
      * @return bool
      */
-    public function isSavedByCustomer(int $customerId, int $voucherId): bool;
+    public function isSavedByCustomer(string $customerId, string $voucherId): bool;
 
     /**
      * Lưu voucher vào ví của khách hàng.
      * 
-     * @param int $customerId
-     * @param int $voucherId
+     * @param string $customerId
+     * @param string $voucherId
      * @return bool
      */
-    public function saveToWallet(int $customerId, int $voucherId): bool;
+    public function saveToWallet(string $customerId, string $voucherId): bool;
 }

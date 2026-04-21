@@ -44,7 +44,7 @@ final class VoucherController extends BaseController
     public function index(Request $request): JsonResponse
     {
         $result = $this->voucherService->listVouchers(
-            (int) $request->user()->id,
+            (string) $request->user()->id,
             $request->query('service_type')
         );
 
@@ -58,12 +58,12 @@ final class VoucherController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Finance']
     )]
-    #[OA\Parameter(name: 'id', description: 'ID của voucher', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'id', description: 'ID của voucher', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Response(response: 200, description: 'Chi tiết voucher')]
     #[OA\Response(response: 404, description: 'Không tìm thấy voucher')]
-    public function show(Request $request, int $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
-        $result = $this->voucherService->getVoucherDetail((int) $request->user()->id, $id);
+        $result = $this->voucherService->getVoucherDetail((string) $request->user()->id, $id);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
@@ -79,11 +79,11 @@ final class VoucherController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Finance']
     )]
-    #[OA\Parameter(name: 'id', description: 'ID của voucher', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'id', description: 'ID của voucher', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Response(response: 200, description: 'Đã lưu voucher thành công')]
-    public function save(Request $request, int $id): JsonResponse
+    public function save(Request $request, string $id): JsonResponse
     {
-        $result = $this->voucherService->saveVoucher((int) $request->user()->id, $id);
+        $result = $this->voucherService->saveVoucher((string) $request->user()->id, $id);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
@@ -98,7 +98,7 @@ final class VoucherController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Finance']
     )]
-    #[OA\Parameter(name: 'id', description: 'ID của voucher', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'id', description: 'ID của voucher', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Response(response: 200, description: 'Thông tin chuyển hướng và voucher')]
     public function applyQuick(ApplyVoucherQuickRequest $request): JsonResponse
     {

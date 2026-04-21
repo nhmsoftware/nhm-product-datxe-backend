@@ -11,7 +11,7 @@ namespace App\Modules\Ride\DTO;
 final class PriceEstimateDTO
 {
     public function __construct(
-        public readonly int    $rideId,
+        public readonly string $rideId,
         public readonly float  $distanceKm,
         public readonly int    $durationMinutes,
         public readonly float  $baseFare,
@@ -26,7 +26,7 @@ final class PriceEstimateDTO
     }
 
     public static function create(
-        int    $rideId,
+        string $rideId,
         float  $distanceKm,
         int    $durationMinutes,
         float  $baseFare,

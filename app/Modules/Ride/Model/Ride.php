@@ -13,9 +13,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property int $id
- * @property int $customer_id
- * @property int|null $driver_id
+ * @property string $id
+ * @property string $customer_id
+ * @property string|null $driver_id
  * @property string $pickup_address
  * @property numeric $pickup_lat
  * @property numeric $pickup_lng
@@ -33,6 +33,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $voucher_code
  * @property numeric $discount_amount
  * @property bool $is_paid
+ * @property \Illuminate\Support\Carbon|null $started_at
+ * @property \Illuminate\Support\Carbon|null $completed_at
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property \Illuminate\Support\Carbon|null $deleted_at
@@ -96,9 +98,14 @@ class Ride extends Model
         'is_paid',
         'cancel_reason',
         'cancellation_fee',
+        'started_at',
+        'completed_at',
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'customer_id' => 'string',
+        'driver_id' => 'string',
         'pickup_lat' => 'decimal:7',
         'pickup_lng' => 'decimal:7',
         'destination_lat' => 'decimal:7',
@@ -114,6 +121,8 @@ class Ride extends Model
         'discount_amount' => 'decimal:2',
         'is_paid' => 'boolean',
         'cancellation_fee' => 'decimal:2',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
     ];
 
     /**

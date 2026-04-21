@@ -22,9 +22,9 @@ interface RewardRepositoryInterface extends BaseRepositoryInterface
     /**
      * Lấy chi tiết một giao dịch điểm của khách hàng (UC-24-5)
      *
-     * @param int $transactionId
-     * @param int $customerId
+     * @param string $transactionId
+     * @param string $customerId
      * @return RewardTransaction|null
      */
-    public function getTransactionDetail(int $transactionId, int $customerId): ?RewardTransaction;
+    public function getTransactionDetail(string $transactionId, string $customerId): ?RewardTransaction;
 }

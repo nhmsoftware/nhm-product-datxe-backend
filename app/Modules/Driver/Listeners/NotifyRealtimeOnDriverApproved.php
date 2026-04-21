@@ -15,7 +15,7 @@ use App\Modules\Driver\Notifications\DriverApplicationApprovedNotification;
  * Listener xử lý thông báo realtime khi hồ sơ tài xế được duyệt.
  * Gửi tín hiệu qua Redis để nhm-realtime service chuyển tiếp tới frontend.
  */
-final class NotifyRealtimeOnDriverApproved
+final class NotifyRealtimeOnDriverApproved implements ShouldQueue
 {
     /**
      * Tên Redis channel dùng chung cho các sự kiện truyền thông.

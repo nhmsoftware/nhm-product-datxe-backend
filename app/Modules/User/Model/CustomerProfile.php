@@ -12,16 +12,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * @property int $id
- * @property int $user_id
+ * @property string $id
+ * @property string $user_id
  * @property string $full_name
  * @property Gender|null $gender
- * @property \Illuminate\Support\Carbon|null $birthday
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
- * @property string|null $citizen_id
- * @property string|null $address
- * @property string|null $avatar
+ * @property numeric|null $current_lat
+ * @property numeric|null $current_lng
  * @property \Illuminate\Support\Carbon|null $deleted_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Modules\User\Model\CustomerSavedAddress> $savedAddresses
  * @property-read int|null $saved_addresses_count
@@ -59,11 +55,17 @@ class CustomerProfile extends Model
         'address',
         'avatar',
         'birthday',
+        'current_lat',
+        'current_lng',
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'user_id' => 'string',
         'gender' => Gender::class,
         'birthday' => 'date',
+        'current_lat' => 'decimal:7',
+        'current_lng' => 'decimal:7',
     ];
 
     /**

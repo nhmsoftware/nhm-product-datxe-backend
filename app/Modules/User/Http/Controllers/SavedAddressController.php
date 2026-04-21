@@ -106,7 +106,7 @@ class SavedAddressController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Saved Addresses'],
         parameters: [
-            new OA\PathParameter(name: 'id', description: 'ID của địa chỉ', required: true, schema: new OA\Schema(type: 'integer', example: 1))
+            new OA\PathParameter(name: 'id', description: 'ID của địa chỉ', required: true, schema: new OA\Schema(type: 'string', example: '1'))
         ],
         responses: [
             new OA\Response(
@@ -156,7 +156,7 @@ class SavedAddressController extends BaseController
             )
         ]
     )]
-    public function show(int $id, Request $request): JsonResponse
+    public function show(string $id, Request $request): JsonResponse
     {
 
         $serviceReturn = $this->savedAddressService->getAddress($request->user(), $id);
@@ -298,7 +298,7 @@ class SavedAddressController extends BaseController
         ),
         tags: ['Saved Addresses'],
         parameters: [
-            new OA\PathParameter(name: 'id', description: 'ID của địa chỉ cần cập nhật', required: true, schema: new OA\Schema(type: 'integer', example: 1))
+            new OA\PathParameter(name: 'id', description: 'ID của địa chỉ cần cập nhật', required: true, schema: new OA\Schema(type: 'string', example: '1'))
         ],
         responses: [
             new OA\Response(
@@ -360,7 +360,7 @@ class SavedAddressController extends BaseController
             )
         ]
     )]
-    public function update(int $id, UpdateAddressRequest $request): JsonResponse
+    public function update(string $id, UpdateAddressRequest $request): JsonResponse
     {
 
         $serviceReturn = $this->savedAddressService->updateAddress(
@@ -390,7 +390,7 @@ class SavedAddressController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Saved Addresses'],
         parameters: [
-            new OA\PathParameter(name: 'id', description: 'ID của địa chỉ cần xóa', required: true, schema: new OA\Schema(type: 'integer', example: 1))
+            new OA\PathParameter(name: 'id', description: 'ID của địa chỉ cần xóa', required: true, schema: new OA\Schema(type: 'string', example: '1'))
         ],
         responses: [
             new OA\Response(
@@ -439,7 +439,7 @@ class SavedAddressController extends BaseController
             )
         ]
     )]
-    public function destroy(int $id, Request $request): JsonResponse
+    public function destroy(string $id, Request $request): JsonResponse
     {
         $serviceReturn = $this->savedAddressService->deleteAddress($request->user(), $id);
 
@@ -465,7 +465,7 @@ class SavedAddressController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Saved Addresses'],
         parameters: [
-            new OA\PathParameter(name: 'id', description: 'ID của địa chỉ cần đặt làm mặc định', required: true, schema: new OA\Schema(type: 'integer', example: 1))
+            new OA\PathParameter(name: 'id', description: 'ID của địa chỉ cần đặt làm mặc định', required: true, schema: new OA\Schema(type: 'string', example: '1'))
         ],
         responses: [
             new OA\Response(
@@ -515,7 +515,7 @@ class SavedAddressController extends BaseController
             )
         ]
     )]
-    public function setDefault(int $id, Request $request): JsonResponse
+    public function setDefault(string $id, Request $request): JsonResponse
     {
         $serviceReturn = $this->savedAddressService->setAsDefault($request->user(), $id);
 

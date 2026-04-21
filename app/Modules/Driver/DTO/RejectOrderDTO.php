@@ -11,18 +11,18 @@ use App\Modules\Ride\Model\Enums\RideCancelReason;
 final class RejectOrderDTO
 {
     public function __construct(
-        public readonly int $rideId,
-        public readonly int $userId,
+        public readonly string $rideId,
+        public readonly string $userId,
     ) {}
 
-    public static function fromRequest(RejectOrderRequest $request, int $rideId): self
+    public static function fromRequest(RejectOrderRequest $request): self
     {
         return new self(
-            rideId: $rideId,
-            userId: (int) $request->user()->id,
+            rideId: (string) $request->route('rideId'),
+            userId: (string) $request->user()->id,
         );
     }
 }
 
-// Separate file for CancelOrderDTO if needed, but I'll put it in one go if allowed, 
+// Separate file for CancelOrderDTO if needed, but I'll put it in one go if allowed,
 // however standard is 1 class per file. I'll create them separately.

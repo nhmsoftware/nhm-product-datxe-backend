@@ -44,7 +44,7 @@ abstract class BaseRepository implements BaseRepositoryInterface
     {
         return $this->query()->find($id);
     }
-    public function findById(int $id, array $columns = ['*'], array $relations = []): ?Model
+    public function findById(int|string $id, array $columns = ['*'], array $relations = []): ?Model
     {
         return $this->model->with($relations)->select($columns)->find($id);
     }

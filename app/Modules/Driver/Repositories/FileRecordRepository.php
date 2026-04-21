@@ -9,6 +9,7 @@ use App\Modules\Driver\Interfaces\FileRecordRepositoryInterface;
 use App\Modules\Driver\Model\Enums\FileDisk;
 use App\Modules\Driver\Model\Enums\FileableType;
 use App\Modules\Driver\Model\FileRecord;
+use Illuminate\Support\Collection;
 
 final class FileRecordRepository extends BaseRepository implements FileRecordRepositoryInterface
 {
@@ -41,5 +42,13 @@ final class FileRecordRepository extends BaseRepository implements FileRecordRep
             'fileable_type' => $fileableType->value,
             'fileable_id'   => $fileableId,
         ]);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function findByApplicationId(int $applicationId): Collection
+    {
+        return $this->model->where('fileable_id', $applicationId)->get();
     }
 }

@@ -13,13 +13,13 @@ interface DriverProfileRepositoryInterface extends BaseRepositoryInterface
     /**
      * Tìm DriverProfile của một user.
      */
-    public function findByUserId(int $userId): ?DriverProfile;
+    public function findByUserId(string $userId): ?DriverProfile;
 
     /**
      * Cập nhật trạng thái trực tuyến của Driver.
      */
     public function updateOnlineStatus(
-        int $driverId,
+        string $driverId,
         bool $isOnline,
         ?float $currentLat = null,
         ?float $currentLng = null
@@ -27,24 +27,29 @@ interface DriverProfileRepositoryInterface extends BaseRepositoryInterface
 
     /**
      * Cập nhật trạng thái của Driver (UC-32).
-     * @param int $driverId
+     * @param string $driverId
      * @param DriverStatus $status
      * @return bool
      */
-    public function updateStatus(int $driverId, DriverStatus $status): bool;
+    public function updateStatus(string $driverId, DriverStatus $status): bool;
 
     /**
      * Tăng số lần hủy trong ngày (UC-33).
-     * @param int $driverId
+     * @param string $driverId
      * @return int Số lần hủy mới
      */
-    public function incrementCancelCount(int $driverId): int;
+    public function incrementCancelCount(string $driverId): int;
 
     /**
      * Thiết lập thời gian đóng băng nhận đơn (UC-33).
-     * @param int $driverId
+     * @param string $driverId
      * @param int $minutes
      * @return bool
      */
-    public function setCooldown(int $driverId, int $minutes): bool;
+    public function setCooldown(string $driverId, int $minutes): bool;
+
+    /**
+     * Tìm danh sách tài xế hợp lệ để điều phối.
+     */
+    public function findEligibleDrivers(array $userIds, int $vehicleType, ?int $groupType = null): \Illuminate\Support\Collection;
 }
