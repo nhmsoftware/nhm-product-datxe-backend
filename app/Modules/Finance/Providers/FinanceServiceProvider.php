@@ -12,13 +12,29 @@ use App\Modules\Finance\Interfaces\SpendingServiceInterface;
 use App\Modules\Finance\Interfaces\VoucherRepositoryInterface;
 use App\Modules\Finance\Interfaces\VoucherServiceInterface;
 use App\Modules\Finance\Interfaces\VoucherWalletRepositoryInterface;
+use App\Modules\Finance\Interfaces\TopUpRepositoryInterface;
+use App\Modules\Finance\Interfaces\SubscriptionPackageRepositoryInterface;
+use App\Modules\Finance\Interfaces\DriverSubscriptionRepositoryInterface;
+use App\Modules\Finance\Interfaces\WalletRepositoryInterface;
+use App\Modules\Finance\Interfaces\WalletTransactionRepositoryInterface;
+use App\Modules\Finance\Interfaces\WalletServiceInterface;
+use App\Modules\Finance\Interfaces\SubscriptionServiceInterface;
+use App\Modules\Finance\Interfaces\FinanceRealtimeInterface;
 use App\Modules\Finance\Repositories\RewardRepository;
 use App\Modules\Finance\Repositories\RewardWalletRepository;
 use App\Modules\Finance\Repositories\VoucherRepository;
 use App\Modules\Finance\Repositories\VoucherWalletRepository;
+use App\Modules\Finance\Repositories\TopUpRepository;
+use App\Modules\Finance\Repositories\SubscriptionPackageRepository;
+use App\Modules\Finance\Repositories\DriverSubscriptionRepository;
+use App\Modules\Finance\Repositories\WalletRepository;
+use App\Modules\Finance\Repositories\WalletTransactionRepository;
 use App\Modules\Finance\Services\RewardService;
 use App\Modules\Finance\Services\SpendingService;
 use App\Modules\Finance\Services\VoucherService;
+use App\Modules\Finance\Services\RedisFinanceRealtimeService;
+use App\Modules\Finance\Services\WalletService;
+use App\Modules\Finance\Services\SubscriptionService;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Routing\Router;
 
@@ -40,11 +56,19 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(VoucherWalletRepositoryInterface::class, VoucherWalletRepository::class);
         $this->app->singleton(RewardRepositoryInterface::class, RewardRepository::class);
         $this->app->singleton(RewardWalletRepositoryInterface::class, RewardWalletRepository::class);
+        $this->app->singleton(WalletRepositoryInterface::class, WalletRepository::class);
+        $this->app->singleton(WalletTransactionRepositoryInterface::class, WalletTransactionRepository::class);
+        $this->app->singleton(TopUpRepositoryInterface::class, TopUpRepository::class);
+        $this->app->singleton(SubscriptionPackageRepositoryInterface::class, SubscriptionPackageRepository::class);
+        $this->app->singleton(DriverSubscriptionRepositoryInterface::class, DriverSubscriptionRepository::class);
 
         // ── Services ──────
         $this->app->singleton(VoucherServiceInterface::class, VoucherService::class);
         $this->app->singleton(SpendingServiceInterface::class, SpendingService::class);
         $this->app->singleton(RewardServiceInterface::class, RewardService::class);
+        $this->app->singleton(WalletServiceInterface::class, WalletService::class);
+        $this->app->singleton(SubscriptionServiceInterface::class, SubscriptionService::class);
+        $this->app->singleton(FinanceRealtimeInterface::class, RedisFinanceRealtimeService::class);
 
     }
 

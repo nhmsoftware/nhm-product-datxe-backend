@@ -18,7 +18,7 @@ final class RideChatMessageRepository extends BaseRepository implements RideChat
         return RideChatMessage::class;
     }
 
-    public function getConversationByRideId(int $rideId): Collection
+    public function getConversationByRideId(string $rideId): Collection
     {
         return $this->model
             ->with('sender')
@@ -28,8 +28,8 @@ final class RideChatMessageRepository extends BaseRepository implements RideChat
     }
 
     public function storeRideChatMessage(
-        int $rideId,
-        int $senderId,
+        string $rideId,
+        string $senderId,
         RideChatSenderType $senderType,
         string $message,
         RideChatMessageStatus $status

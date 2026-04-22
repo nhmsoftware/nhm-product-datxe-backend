@@ -18,9 +18,9 @@ final class RideCallLogRepository extends BaseRepository implements RideCallLogR
     }
 
     public function createRideCallAttempt(
-        int $rideId,
-        int $callerId,
-        int $calleeId,
+        string $rideId,
+        string $callerId,
+        string $calleeId,
         RideChatSenderType $callerType,
         RideCallStatus $status
     ): RideCallLog {
@@ -36,7 +36,7 @@ final class RideCallLogRepository extends BaseRepository implements RideCallLogR
         return $callLog;
     }
 
-    public function findRideCallByIdAndRide(int $rideId, int $callId): ?RideCallLog
+    public function findRideCallByIdAndRide(string $rideId, string $callId): ?RideCallLog
     {
         /** @var RideCallLog|null */
         return $this->model
@@ -45,7 +45,7 @@ final class RideCallLogRepository extends BaseRepository implements RideCallLogR
             ->first();
     }
 
-    public function updateRideCallStatus(int $callId, RideCallStatus $status, ?string $failureReason = null): bool
+    public function updateRideCallStatus(string $callId, RideCallStatus $status, ?string $failureReason = null): bool
     {
         return (bool) $this->model
             ->where('id', $callId)

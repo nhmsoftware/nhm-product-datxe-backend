@@ -1478,6 +1478,71 @@
                 ]
             }
         },
+        "/api/v1/finance/subscriptions/packages": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Danh sách gói thành viên (UC-46)",
+                "description": "Lấy danh sách các gói thành viên đang hoạt động dành cho tài xế.",
+                "operationId": "8f3d568aebefe6783f2b1aa669033ffc",
+                "responses": {
+                    "200": {
+                        "description": "Tải danh sách gói thành viên thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/subscriptions/register": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Đăng ký gói thành viên (UC-46)",
+                "description": "Đăng ký một gói thành viên mới bằng cách sử dụng số dư ví tín dụng.",
+                "operationId": "1bbf4f65caa6514054936157735a09ff",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "package_id"
+                                ],
+                                "properties": {
+                                    "package_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng ký gói thành viên thành công"
+                    },
+                    "400": {
+                        "description": "Số dư không đủ hoặc đã có gói hoạt động"
+                    },
+                    "404": {
+                        "description": "Gói không tồn tại"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/vouchers": {
             "get": {
                 "tags": [
@@ -1617,6 +1682,184 @@
                         "sanctum": []
                     }
                 ]
+            }
+        },
+        "/api/v1/finance/wallet/manage": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Xem tổng quan ví (UC-43)",
+                "description": "Lấy thông tin tổng quan về ví của tài xế bao gồm số dư, thu nhập và giao dịch gần đây.",
+                "operationId": "f76f6db5e1b392e5b5e31d92518fc481",
+                "responses": {
+                    "200": {
+                        "description": "Tải thông tin ví thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/wallet/credit": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Xem ví tín dụng & lịch sử (UC-44)",
+                "description": "Xem chi tiết số dư ví tín dụng và lịch sử giao dịch phân trang.",
+                "operationId": "daf93672fd4a8e49c6ba0240b11f48ca",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Trang hiện tại",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Số bản ghi mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tải thông tin ví tín dụng thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/wallet/transactions/{transactionId}": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Chi tiết giao dịch (UC-44)",
+                "description": "Xem chi tiết một giao dịch ví cụ thể.",
+                "operationId": "05deab772301a556f865e44170a687b6",
+                "parameters": [
+                    {
+                        "name": "transactionId",
+                        "in": "path",
+                        "description": "ID giao dịch",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tải chi tiết giao dịch thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy giao dịch"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/wallet/top-up": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Nạp tiền (UC-45)",
+                "description": "Khởi tạo yêu cầu nạp tiền vào ví tín dụng qua cổng thanh toán.",
+                "operationId": "fb7198f3efe954be3c7bd1303d23d047",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount",
+                                    "payment_method"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "example": 50000
+                                    },
+                                    "payment_method": {
+                                        "type": "string",
+                                        "example": "momo"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Khởi tạo giao dịch nạp tiền thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/wallet/top-up/callback": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Callback nạp tiền (UC-45 Callback)",
+                "description": "Nhận phản hồi từ cổng thanh toán để cập nhật trạng thái nạp tiền (Dùng cho Gateway callback hoặc Mock).",
+                "operationId": "3a944811ed10bda01c7cd17c70dfc828",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "external_id"
+                                ],
+                                "properties": {
+                                    "external_id": {
+                                        "type": "string",
+                                        "example": "TX-123456"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "success"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Xử lý kết quả nạp tiền thành công"
+                    }
+                }
             }
         },
         "/api/v1/homepage": {

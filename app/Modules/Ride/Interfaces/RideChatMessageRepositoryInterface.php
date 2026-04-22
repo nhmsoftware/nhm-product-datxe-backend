@@ -15,24 +15,24 @@ interface RideChatMessageRepositoryInterface extends BaseRepositoryInterface
     /**
      * Lấy toàn bộ hội thoại của một chuyến đi để hiển thị chat realtime (UC-14).
      *
-     * @param int $rideId
+     * @param string $rideId
      * @return Collection<int, RideChatMessage>
      */
-    public function getConversationByRideId(int $rideId): Collection;
+    public function getConversationByRideId(string $rideId): Collection;
 
     /**
      * Lưu một tin nhắn chat mới của customer hoặc driver (UC-14 bước 5, 6).
      *
-     * @param int $rideId
-     * @param int $senderId
+     * @param string $rideId
+     * @param string $senderId
      * @param RideChatSenderType $senderType
      * @param string $message
      * @param RideChatMessageStatus $status
      * @return RideChatMessage
      */
     public function storeRideChatMessage(
-        int $rideId,
-        int $senderId,
+        string $rideId,
+        string $senderId,
         RideChatSenderType $senderType,
         string $message,
         RideChatMessageStatus $status
