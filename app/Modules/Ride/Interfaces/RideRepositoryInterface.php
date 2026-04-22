@@ -112,9 +112,11 @@ interface RideRepositoryInterface
      * Tài xế hoàn thành chuyến đi (UC-40 Complete Trip).
      * @param string $rideId ID chuyến đi
      * @param float $finalFare Giá cuối cùng
+     * @param float $serviceFee Phí dịch vụ
+     * @param float $driverEarnings Thu nhập thực nhận
      * @return bool
      */
-    public function completeTrip(string $rideId, float $finalFare): bool;
+    public function completeTrip(string $rideId, float $finalFare, float $serviceFee, float $driverEarnings): bool;
 
     /**
      * @param string $driverId ID tài khoản tài xế

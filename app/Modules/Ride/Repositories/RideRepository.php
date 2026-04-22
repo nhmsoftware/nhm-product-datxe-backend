@@ -162,12 +162,14 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Tài xế hoàn thành chuyến đi (UC-40 Complete Trip).
      */
-    public function completeTrip(string $rideId, float $finalFare): bool
+    public function completeTrip(string $rideId, float $finalFare, float $serviceFee, float $driverEarnings): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
-            'status'       => RideStatus::COMPLETED->value,
-            'completed_at' => now(),
-            'total_price'  => $finalFare,
+            'status'          => RideStatus::COMPLETED->value,
+            'completed_at'    => now(),
+            'total_price'     => $finalFare,
+            'service_fee'     => $serviceFee,
+            'driver_earnings' => $driverEarnings,
         ]);
     }
 

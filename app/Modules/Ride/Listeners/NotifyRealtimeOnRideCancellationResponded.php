@@ -25,7 +25,8 @@ final class NotifyRealtimeOnRideCancellationResponded implements ShouldQueue
             ];
 
             // Publish to Redis channel expected by nhm-realtime service
-            Redis::publish('ride.communication.events', json_encode($payload));
+            $channel = env('REDIS_COMMUNICATION_CHANNEL', 'ride.communication.events');
+            Redis::publish($channel, json_encode($payload));
 
             Log::info('Realtime notification sent: ride.cancellation_responded', [
                 'ride_id'     => $event->rideId,

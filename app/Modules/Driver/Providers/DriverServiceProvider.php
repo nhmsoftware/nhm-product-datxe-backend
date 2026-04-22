@@ -30,6 +30,8 @@ use App\Modules\Driver\Events\RideStarted;
 use App\Modules\Driver\Events\RideCompleted;
 use App\Modules\Driver\Listeners\NotifyRealtimeOnRideStarted;
 use App\Modules\Driver\Listeners\NotifyRealtimeOnRideCompleted;
+use App\Modules\Driver\Events\DriverStatusUpdated;
+use App\Modules\Driver\Listeners\NotifyRealtimeOnDriverStatusUpdated;
 use Illuminate\Support\Facades\Event;
 
 class DriverServiceProvider extends BaseModuleServiceProvider
@@ -107,6 +109,11 @@ class DriverServiceProvider extends BaseModuleServiceProvider
         Event::listen(
             RideCompleted::class,
             NotifyRealtimeOnRideCompleted::class
+        );
+
+        Event::listen(
+            DriverStatusUpdated::class,
+            NotifyRealtimeOnDriverStatusUpdated::class
         );
     }
 }

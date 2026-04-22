@@ -54,6 +54,13 @@ Route::prefix('v1/driver')
         // UC-28: Phản hồi yêu cầu hủy chuyến xe
         Route::post('ride/{rideId}/cancel-respond', [DriverOperationController::class, 'respondToCancellation'])
             ->name('driver.ride.cancel_respond');
+
+        // UC-41: Xem tóm tắt thu nhập và xác nhận sẵn sàng
+        Route::get('ride/{rideId}/summary', [DriverOperationController::class, 'getTripSummary'])
+            ->name('driver.ride.summary');
+
+        Route::post('ride/{rideId}/confirm-ready', [DriverOperationController::class, 'confirmReady'])
+            ->name('driver.ride.confirm_ready');
     });
 
 // Admin Routes

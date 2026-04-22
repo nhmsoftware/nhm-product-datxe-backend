@@ -12,8 +12,10 @@ use App\Modules\Driver\DTO\ToggleOnlineStatusDTO;
 use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
 use App\Modules\Driver\DTO\PickupRideDTO;
+use App\Modules\Driver\DTO\ConfirmReadyDTO;
 use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 use App\Modules\Driver\Http\Requests\RespondRideCancellationRequest;
+use App\Modules\Driver\Http\Requests\ConfirmReadyRequest;
 use App\Modules\Driver\Http\Requests\StartRideRequest;
 use App\Modules\Driver\Http\Requests\CompleteRideRequest;
 use App\Modules\Driver\Http\Requests\AcceptOrderRequest;
@@ -357,6 +359,62 @@ final class DriverOperationController extends BaseController
     {
         $result = $this->driverOperationService->respondToCancellation(
             RespondRideCancellationDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/driver/ride/{rideId}/summary',
+        summary: 'UC-41: Xem tóm tắt thu nhập sau khi hoàn thành chuyến đi',
+        security: [['sanctum' => []]],
+        tags: ['Driver'],
+        parameters: [
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Lấy tóm tắt thành công'),
+            new OA\Response(response: 403, description: 'Không có quyền truy cập'),
+            new OA\Response(response: 404, description: 'Không tìm thấy chuyến xe'),
+            new OA\Response(response: 422, description: 'Chuyến xe chưa ở trạng thái hoàn thành'),
+        ]
+    )]
+    public function getTripSummary(string $rideId): JsonResponse
+    {
+        $result = $this->driverOperationService->getTripSummary(
+            $rideId,
+            (string) auth()->id()
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/driver/ride/{rideId}/confirm-ready',
+        summary: 'UC-41: Xác nhận đã xem thu nhập và sẵn sàng nhận chuyến mới',
+        security: [['sanctum' => []]],
+        tags: ['Driver'],
+        parameters: [
+            new OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Xác nhận thành công, Driver chuyển sang ACTIVE'),
+            new OA\Response(response: 404, description: 'Không tìm thấy hồ sơ tài xế'),
+            new OA\Response(response: 500, description: 'Lỗi cập nhật trạng thái'),
+        ]
+    )]
+    public function confirmReady(ConfirmReadyRequest $request, string $rideId): JsonResponse
+    {
+        $result = $this->driverOperationService->confirmReady(
+            ConfirmReadyDTO::fromRequest($request, $rideId)
         );
 
         if ($result->isError()) {

@@ -215,24 +215,71 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 $this->throw('Bạn chưa đủ gần điểm đến để hoàn thành chuyến đi.', 422);
             }
 
-            // TODO: Tính toán giá cước cuối cùng nếu cần. Hiện tại dùng giá đã chốt.
+            // Tính toán chi tiết thu nhập (Rule: Phí dịch vụ 20%)
             $finalFare = (float) $ride->total_price;
+            $serviceFee = round($finalFare * 0.2, 2);
+            $driverEarnings = round($finalFare - $serviceFee, 2);
 
-            $updated = $this->rideRepository->completeTrip($dto->rideId, $finalFare);
+            $updated = $this->rideRepository->completeTrip(
+                $ride->id,
+                $finalFare,
+                $serviceFee,
+                $driverEarnings
+            );
             $this->validate($updated, 'Không thể hoàn thành chuyến xe. Vui lòng thử lại.', 500);
 
-            // Cập nhật trạng thái tài xế sang Sẵn sàng (ACTIVE)
-            $driverProfile = $this->driverProfileRepository->findByUserId($dto->userId);
-            if ($driverProfile) {
-                $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
-            }
+            // [UC-41] Driver KHÔNG tự động chuyển sang ACTIVE. 
+            // Họ sẽ xem màn hình Trip Summary và nhấn "Confirm & Ready" sau.
 
             event(new RideCompleted($dto->rideId, $dto->userId, $finalFare));
 
             return $this->success(
-                data: ['ride_id' => $ride->id, 'status' => RideStatus::COMPLETED->value, 'final_fare' => $finalFare],
-                message: 'Chuyến đi đã hoàn thành.'
+                data: [
+                    'ride_id' => $ride->id,
+                    'status' => RideStatus::COMPLETED->value,
+                    'final_fare' => $finalFare,
+                    'service_fee' => $serviceFee,
+                    'driver_earnings' => $driverEarnings
+                ],
+                message: 'Chuyến đi đã hoàn thành. Vui lòng xem tóm tắt thu nhập.'
             );
+        }, useTransaction: true);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getTripSummary(string $rideId, string $userId): ServiceReturn
+    {
+        return $this->execute(function () use ($rideId, $userId) {
+            $ride = $this->rideRepository->findById($rideId);
+            $this->validate($ride !== null, 'Chuyến xe không tồn tại.', 404);
+            $this->validate($ride->driver_id === $userId, 'Bạn không phải tài xế của chuyến xe này.', 403);
+            $this->validate($ride->status === RideStatus::COMPLETED, 'Chuyến xe chưa hoàn thành.', 422);
+
+            $summary = \App\Modules\Driver\DTO\TripSummaryDTO::fromModel($ride);
+
+            return $this->success($summary->toArray(), 'Lấy tóm tắt thu nhập thành công.');
+        });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function confirmReady(\App\Modules\Driver\DTO\ConfirmReadyDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $driverProfile = $this->driverProfileRepository->findByUserId($dto->userId);
+            $this->validate($driverProfile !== null, 'Hồ sơ tài xế không tồn tại.', 404);
+
+            // Chuyển trạng thái sang ACTIVE (Sẵn sàng nhận chuyến mới)
+            $updated = $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
+            $this->validate($updated, 'Không thể cập nhật trạng thái. Vui lòng thử lại.', 500);
+
+            // Phát sự kiện realtime để báo App đã sẵn sàng (Sync logic)
+            event(new \App\Modules\Driver\Events\DriverStatusUpdated($dto->userId, DriverStatus::ACTIVE->value));
+
+            return $this->success([], 'Bạn đã sẵn sàng nhận chuyến đi mới.');
         }, useTransaction: true);
     }
 

@@ -31,9 +31,9 @@ final class RideCommunicationController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride Communication']
     )]
-    #[OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Response(response: 200, description: 'Lấy hội thoại thành công')]
-    public function index(int $rideId, ShowRideConversationRequest $request): JsonResponse
+    public function index(string $rideId, ShowRideConversationRequest $request): JsonResponse
     {
         $result = $this->rideCommunicationService->getConversation(
             ShowRideConversationDTO::fromRequest($request, $rideId)
@@ -53,7 +53,7 @@ final class RideCommunicationController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride Communication']
     )]
-    #[OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
@@ -64,7 +64,7 @@ final class RideCommunicationController extends BaseController
         )
     )]
     #[OA\Response(response: 200, description: 'Gửi tin nhắn thành công')]
-    public function send(int $rideId, SendRideChatMessageRequest $request): JsonResponse
+    public function send(string $rideId, SendRideChatMessageRequest $request): JsonResponse
     {
         $result = $this->rideCommunicationService->sendMessage(
             SendRideChatMessageDTO::fromRequest($request, $rideId)
@@ -84,9 +84,9 @@ final class RideCommunicationController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride Communication']
     )]
-    #[OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\Response(response: 200, description: 'Khởi tạo cuộc gọi thành công')]
-    public function initiateCall(int $rideId, InitiateRideCallRequest $request): JsonResponse
+    public function initiateCall(string $rideId, InitiateRideCallRequest $request): JsonResponse
     {
         $result = $this->rideCommunicationService->initiateCall(
             InitiateRideCallDTO::fromRequest($request, $rideId)
@@ -106,8 +106,8 @@ final class RideCommunicationController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride Communication']
     )]
-    #[OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
-    #[OA\Parameter(name: 'callId', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'rideId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\Parameter(name: 'callId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
@@ -119,7 +119,7 @@ final class RideCommunicationController extends BaseController
         )
     )]
     #[OA\Response(response: 200, description: 'Cập nhật trạng thái cuộc gọi thành công')]
-    public function updateCallStatus(int $rideId, int $callId, UpdateRideCallStatusRequest $request): JsonResponse
+    public function updateCallStatus(string $rideId, string $callId, UpdateRideCallStatusRequest $request): JsonResponse
     {
         $result = $this->rideCommunicationService->updateCallStatus(
             UpdateRideCallStatusDTO::fromRequest($request, $rideId, $callId)

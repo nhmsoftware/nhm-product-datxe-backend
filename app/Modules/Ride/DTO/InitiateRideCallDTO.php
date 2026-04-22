@@ -9,16 +9,16 @@ use App\Modules\Ride\Http\Requests\InitiateRideCallRequest;
 final class InitiateRideCallDTO
 {
     public function __construct(
-        public readonly int $rideId,
-        public readonly int $actorId,
+        public readonly string $rideId,
+        public readonly string $actorId,
     ) {
     }
 
-    public static function fromRequest(InitiateRideCallRequest $request, int $rideId): self
+    public static function fromRequest(InitiateRideCallRequest $request, string $rideId): self
     {
         return new self(
             rideId: $rideId,
-            actorId: (int) $request->user()->id,
+            actorId: (string) $request->user()->id,
         );
     }
 }

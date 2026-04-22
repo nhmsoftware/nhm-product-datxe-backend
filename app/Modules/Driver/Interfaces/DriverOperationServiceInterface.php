@@ -64,4 +64,14 @@ interface DriverOperationServiceInterface
      * Phản hồi yêu cầu hủy chuyến từ khách hàng (UC-28).
      */
     public function respondToCancellation(RespondRideCancellationDTO $dto): ServiceReturn;
+
+    /**
+     * Lấy tóm tắt thu nhập chuyến đi sau khi hoàn thành (UC-41).
+     */
+    public function getTripSummary(string $rideId, string $userId): ServiceReturn;
+
+    /**
+     * Xác nhận đã xem thu nhập và sẵn sàng nhận chuyến mới (UC-41).
+     */
+    public function confirmReady(\App\Modules\Driver\DTO\ConfirmReadyDTO $dto): ServiceReturn;
 }
