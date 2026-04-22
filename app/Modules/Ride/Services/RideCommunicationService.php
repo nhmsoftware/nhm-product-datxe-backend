@@ -244,11 +244,19 @@ final class RideCommunicationService extends BaseService implements RideCommunic
     private function resolveRideParticipants(string $rideId, string $actorId): array
     {
         /** @var Ride|null $ride */
-        $ride = $this->rideRepository->findById($rideId, relations: ['customer', 'driver']);
+        $ride = $this->rideRepository->findById($rideId, relations: [
+            'customer.customerProfile',
+            'driver.driverProfile'
+        ]);
         $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
         $this->validate($ride->driver_id !== null, 'Chuyến đi hiện chưa có tài xế nhận.', 409);
 
-        if ($ride->customer_id === $actorId) {
+        $actorIdStr = (string) $actorId;
+        $customerIdStr = (string) $ride->customer_id;
+        $driverIdStr = (string) $ride->driver_id;
+
+        // Trường hợp Khách hàng là người thực hiện hành động (gọi/chat)
+        if ($customerIdStr === $actorIdStr) {
             /** @var User|null $counterpart */
             $counterpart = $ride->driver;
             $this->validate($counterpart !== null, 'Không tìm thấy tài xế của chuyến đi.', 404);
@@ -256,7 +264,8 @@ final class RideCommunicationService extends BaseService implements RideCommunic
             return [$ride, RideChatSenderType::CUSTOMER, $counterpart];
         }
 
-        if ($ride->driver_id === $actorId) {
+        // Trường hợp Tài xế là người thực hiện hành động (gọi/chat)
+        if ($driverIdStr === $actorIdStr) {
             /** @var User|null $counterpart */
             $counterpart = $ride->customer;
             $this->validate($counterpart !== null, 'Không tìm thấy khách hàng của chuyến đi.', 404);
