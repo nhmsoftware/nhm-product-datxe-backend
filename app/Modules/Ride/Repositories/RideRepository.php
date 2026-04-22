@@ -233,4 +233,56 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->latest()
             ->first();
     }
+
+    public function findTrackingRideByIdAndCustomer(string $rideId, string $customerId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->with(['driver.driverProfile'])
+            ->where('id', $rideId)
+            ->where('customer_id', $customerId)
+            ->first();
+    }
+
+    public function assignDriver(string $rideId, string $driverId, \Carbon\Carbon $acceptedAt): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'status' => RideStatus::ACCEPTED->value,
+            'driver_id' => $driverId,
+            'driver_assigned_at' => $acceptedAt,
+        ]);
+    }
+
+    public function findTrackingRideByIdAndDriver(string $rideId, string $driverId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->with(['driver.driverProfile'])
+            ->where('id', $rideId)
+            ->where('driver_id', $driverId)
+            ->first();
+    }
+
+    public function refreshTrackingHeartbeat(string $rideId, \Carbon\Carbon $trackedAt): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'tracking_last_ping_at' => $trackedAt,
+        ]);
+    }
+
+    public function markDriverArrived(string $rideId, \Carbon\Carbon $arrivedAt): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'driver_arrived_at' => $arrivedAt,
+        ]);
+    }
+
+    public function releaseDriverFromRide(string $rideId, ?string $reason): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'status' => RideStatus::PENDING->value,
+            'driver_id' => null,
+            'driver_assigned_at' => null,
+            'driver_arrived_at' => null,
+            'cancel_reason' => $reason,
+        ]);
+    }
 }

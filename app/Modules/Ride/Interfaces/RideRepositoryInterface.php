@@ -142,4 +142,34 @@ interface RideRepositoryInterface
      * @return Ride|null
      */
     public function findActiveByCustomer(string $customerId): ?Ride;
+
+    /**
+     * Tìm một ride cho việc tracking snapshot (UC-13).
+     */
+    public function findTrackingRideByIdAndCustomer(string $rideId, string $customerId): ?Ride;
+
+    /**
+     * Tài xế chấp nhận chuyến — gán driver_id và chuyển sang ACCEPTED.
+     */
+    public function assignDriver(string $rideId, string $driverId, \Carbon\Carbon $acceptedAt): bool;
+
+    /**
+     * Tìm ride cho driver tracking snapshot (UC-13).
+     */
+    public function findTrackingRideByIdAndDriver(string $rideId, string $driverId): ?Ride;
+
+    /**
+     * Cập nhật timestamp lần cuối nhận tín hiệu từ tài xế (Heartbeat).
+     */
+    public function refreshTrackingHeartbeat(string $rideId, \Carbon\Carbon $trackedAt): bool;
+
+    /**
+     * Tài xế đã đến điểm đón (UC-13).
+     */
+    public function markDriverArrived(string $rideId, \Carbon\Carbon $arrivedAt): bool;
+
+    /**
+     * Tài xế hủy chuyến sau khi nhận — đưa ride về PENDING và xóa driver_id.
+     */
+    public function releaseDriverFromRide(string $rideId, ?string $reason): bool;
 }

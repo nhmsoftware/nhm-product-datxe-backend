@@ -6,6 +6,7 @@ namespace App\Modules\Ride\Model;
 
 use App\Core\Traits\HasBigIntId;
 use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\User\Model\User;
 use Illuminate\Database\Eloquent\Model;
@@ -95,11 +96,15 @@ class Ride extends Model
         'voucher_id',
         'voucher_code',
         'discount_amount',
+        'tracking_status',
         'is_paid',
         'cancel_reason',
         'cancellation_fee',
         'service_fee',
         'driver_earnings',
+        'driver_assigned_at',
+        'driver_arrived_at',
+        'tracking_last_ping_at',
         'started_at',
         'completed_at',
     ];
@@ -116,6 +121,7 @@ class Ride extends Model
         'duration' => 'integer',
         'vehicle_type' => VehicleType::class,
         'status' => RideStatus::class,
+        'tracking_status' => RideTrackingStatus::class,
         'base_price' => 'decimal:2',
         'distance_price' => 'decimal:2',
         'time_fare' => 'decimal:2',
@@ -125,6 +131,9 @@ class Ride extends Model
         'cancellation_fee' => 'decimal:2',
         'service_fee' => 'decimal:2',
         'driver_earnings' => 'decimal:2',
+        'driver_assigned_at' => 'datetime',
+        'driver_arrived_at' => 'datetime',
+        'tracking_last_ping_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
     ];
