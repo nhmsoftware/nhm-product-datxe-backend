@@ -293,6 +293,8 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
+    #[OA\Parameter(name: 'rideId', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\Response(response: 200, description: 'Thông tin theo dõi chuyến xe')]
     public function showTracking(GetPriceEstimateRequest $request): JsonResponse
     {
         $result = $this->rideService->showTracking(
@@ -312,6 +314,8 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
+    #[OA\Parameter(name: 'rideId', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\Response(response: 200, description: 'Chấp nhận theo dõi thành công')]
     public function acceptTracking(AcceptRideTrackingRequest $request): JsonResponse
     {
         $result = $this->rideService->acceptTracking(
@@ -331,6 +335,8 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
+    #[OA\Parameter(name: 'rideId', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\Response(response: 200, description: 'Cập nhật vị trí thành công')]
     public function updateDriverLocation(UpdateDriverLocationRequest $request): JsonResponse
     {
         $result = $this->rideService->updateDriverLocation(
@@ -350,6 +356,8 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
+    #[OA\Parameter(name: 'rideId', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\Response(response: 200, description: 'Cập nhật trạng thái thành công')]
     public function markDriverArrived(MarkDriverArrivedRequest $request): JsonResponse
     {
         $result = $this->rideService->markDriverArrived(
@@ -369,6 +377,8 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
+    #[OA\Parameter(name: 'rideId', description: 'ID của chuyến xe', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\Response(response: 200, description: 'Hủy chuyến thành công')]
     public function cancelByDriver(DriverCancelRideRequest $request): JsonResponse
     {
         $result = $this->rideService->cancelByDriver(
