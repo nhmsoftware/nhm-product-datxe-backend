@@ -2742,6 +2742,59 @@
                 ],
                 "summary": "Đặt xe đi tỉnh (UC-26)",
                 "operationId": "6ebb0ae3fd0db0bbc24a16e87f4860ae",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pickup_address": {
+                                        "type": "string",
+                                        "example": "Hà Nội"
+                                    },
+                                    "pickup_lat": {
+                                        "type": "number",
+                                        "example": 21.0285
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "example": 105.8542
+                                    },
+                                    "destination_address": {
+                                        "type": "string",
+                                        "example": "Hải Phòng"
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "example": 20.8449
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "example": 106.6881
+                                    },
+                                    "travel_date": {
+                                        "type": "string",
+                                        "example": "2024-05-01"
+                                    },
+                                    "travel_time": {
+                                        "type": "string",
+                                        "example": "08:00"
+                                    },
+                                    "vehicle_type": {
+                                        "description": "2: CAR_4_SEATS, 3: CAR_7_SEATS, 4: CAR_9_SEATS, 5: CAR_SHARED",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "voucher_code": {
+                                        "type": "string",
+                                        "example": "DISCOUNT10"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Đặt xe thành công"
@@ -2761,6 +2814,67 @@
                 ],
                 "summary": "Đặt xe sân bay (UC-27)",
                 "operationId": "44f127c36b6c34c1fcea4f81a40e571c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pickup_address": {
+                                        "type": "string",
+                                        "example": "Hà Nội"
+                                    },
+                                    "pickup_lat": {
+                                        "type": "number",
+                                        "example": 21.0285
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "example": 105.8542
+                                    },
+                                    "destination_address": {
+                                        "type": "string",
+                                        "example": "Sân bay Nội Bài"
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "example": 21.2129
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "example": 105.8042
+                                    },
+                                    "travel_date": {
+                                        "type": "string",
+                                        "example": "2024-05-01"
+                                    },
+                                    "travel_time": {
+                                        "type": "string",
+                                        "example": "08:00"
+                                    },
+                                    "vehicle_type": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "airport_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "airport_direction": {
+                                        "description": "1: To Airport, 2: From Airport",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "voucher_code": {
+                                        "type": "string",
+                                        "example": "DISCOUNT10"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Đặt xe thành công"

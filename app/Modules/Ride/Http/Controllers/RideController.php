@@ -406,6 +406,23 @@ final class RideController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'pickup_address', type: 'string', example: 'Hà Nội'),
+                new OA\Property(property: 'pickup_lat', type: 'number', example: 21.0285),
+                new OA\Property(property: 'pickup_lng', type: 'number', example: 105.8542),
+                new OA\Property(property: 'destination_address', type: 'string', example: 'Hải Phòng'),
+                new OA\Property(property: 'destination_lat', type: 'number', example: 20.8449),
+                new OA\Property(property: 'destination_lng', type: 'number', example: 106.6881),
+                new OA\Property(property: 'travel_date', type: 'string', example: '2024-05-01'),
+                new OA\Property(property: 'travel_time', type: 'string', example: '08:00'),
+                new OA\Property(property: 'vehicle_type', type: 'integer', example: 2, description: '2: CAR_4_SEATS, 3: CAR_7_SEATS, 4: CAR_9_SEATS, 5: CAR_SHARED'),
+                new OA\Property(property: 'voucher_code', type: 'string', example: 'DISCOUNT10'),
+            ]
+        )
+    )]
     #[OA\Response(response: 200, description: 'Đặt xe thành công')]
     public function createIntercity(CreateIntercityRideRequest $request): JsonResponse
     {
@@ -425,6 +442,25 @@ final class RideController extends BaseController
         summary: 'Đặt xe sân bay (UC-27)',
         security: [['sanctum' => []]],
         tags: ['Ride']
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'pickup_address', type: 'string', example: 'Hà Nội'),
+                new OA\Property(property: 'pickup_lat', type: 'number', example: 21.0285),
+                new OA\Property(property: 'pickup_lng', type: 'number', example: 105.8542),
+                new OA\Property(property: 'destination_address', type: 'string', example: 'Sân bay Nội Bài'),
+                new OA\Property(property: 'destination_lat', type: 'number', example: 21.2129),
+                new OA\Property(property: 'destination_lng', type: 'number', example: 105.8042),
+                new OA\Property(property: 'travel_date', type: 'string', example: '2024-05-01'),
+                new OA\Property(property: 'travel_time', type: 'string', example: '08:00'),
+                new OA\Property(property: 'vehicle_type', type: 'integer', example: 2),
+                new OA\Property(property: 'airport_id', type: 'integer', example: 1),
+                new OA\Property(property: 'airport_direction', type: 'integer', example: 1, description: '1: To Airport, 2: From Airport'),
+                new OA\Property(property: 'voucher_code', type: 'string', example: 'DISCOUNT10'),
+            ]
+        )
     )]
     #[OA\Response(response: 200, description: 'Đặt xe thành công')]
     public function createAirport(CreateAirportRideRequest $request): JsonResponse
