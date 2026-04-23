@@ -361,8 +361,8 @@ final class RideService extends BaseService implements RideServiceInterface
             afterCommitCallback: function () use ($dto, $acceptedAt): void {
                 $this->rideTrackingRealtime->publish([
                     'event' => 'tracking.accepted',
-                    'ride_id' => $dto->rideId,
-                    'driver_id' => $dto->driverId,
+                    'ride_id' => (string) $dto->rideId,
+                    'driver_id' => (string) $dto->driverId,
                     'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED->value,
                     'tracking_status_label' => RideTrackingStatus::DRIVER_ACCEPTED->getLabel(),
                     'occurred_at' => $acceptedAt->toIso8601String(),
@@ -410,8 +410,8 @@ final class RideService extends BaseService implements RideServiceInterface
             afterCommitCallback: function () use ($dto): void {
                 $this->rideTrackingRealtime->publish([
                     'event' => 'tracking.location.updated',
-                    'ride_id' => $dto->rideId,
-                    'driver_id' => $dto->driverId,
+                    'ride_id' => (string) $dto->rideId,
+                    'driver_id' => (string) $dto->driverId,
                     'location' => [
                         'lat' => $dto->lat,
                         'lng' => $dto->lng,
@@ -455,8 +455,8 @@ final class RideService extends BaseService implements RideServiceInterface
             afterCommitCallback: function () use ($dto, $arrivedAt): void {
                 $this->rideTrackingRealtime->publish([
                     'event' => 'tracking.driver.arrived',
-                    'ride_id' => $dto->rideId,
-                    'driver_id' => $dto->driverId,
+                    'ride_id' => (string) $dto->rideId,
+                    'driver_id' => (string) $dto->driverId,
                     'tracking_status' => RideTrackingStatus::DRIVER_ARRIVED->value,
                     'tracking_status_label' => RideTrackingStatus::DRIVER_ARRIVED->getLabel(),
                     'occurred_at' => $arrivedAt->toIso8601String(),
@@ -528,8 +528,8 @@ final class RideService extends BaseService implements RideServiceInterface
             afterCommitCallback: function () use ($dto, $cancelledAt): void {
                 $this->rideTrackingRealtime->publish([
                     'event' => 'tracking.driver.cancelled',
-                    'ride_id' => $dto->rideId,
-                    'driver_id' => $dto->driverId,
+                    'ride_id' => (string) $dto->rideId,
+                    'driver_id' => (string) $dto->driverId,
                     'tracking_status' => RideTrackingStatus::DRIVER_CANCELLED->value,
                     'tracking_status_label' => RideTrackingStatus::DRIVER_CANCELLED->getLabel(),
                     'occurred_at' => $cancelledAt->toIso8601String(),
@@ -580,8 +580,8 @@ final class RideService extends BaseService implements RideServiceInterface
         }, useTransaction: true, afterCommitCallback: function () use ($dto): void {
             $this->rideTrackingRealtime->publish([
                 'event' => 'tracking.customer.cancelled',
-                'ride_id' => $dto->rideId,
-                'customer_id' => $dto->customerId,
+                'ride_id' => (string) $dto->rideId,
+                'customer_id' => (string) $dto->customerId,
                 'tracking_status' => RideTrackingStatus::CUSTOMER_CANCELLED->value,
                 'tracking_status_label' => RideTrackingStatus::CUSTOMER_CANCELLED->getLabel(),
                 'occurred_at' => now()->toIso8601String(),
@@ -677,7 +677,7 @@ final class RideService extends BaseService implements RideServiceInterface
             'event' => $event,
             'message' => $message,
             'ride' => [
-                'id' => $ride->id,
+                'id' => (string) $ride->id,
                 'status' => $ride->status->value,
                 'status_label' => $ride->status->getLabel(),
                 'tracking_status' => $trackingStatus?->value,
@@ -693,7 +693,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'tracking_last_ping_at' => $trackedAt?->toIso8601String(),
             ],
             'driver' => [
-                'id' => $driver->id,
+                'id' => (string) $driver->id,
                 'name' => $driverProfile?->full_name ?? $driver->full_name,
                 'phone' => $driver->phone,
                 'vehicle_number' => $driverProfile?->vehicle_number,
@@ -716,7 +716,7 @@ final class RideService extends BaseService implements RideServiceInterface
             ],
             'warning' => $warning,
             'realtime' => [
-                'room' => sprintf('ride:%d', $ride->id),
+                'room' => sprintf('ride:%s', (string) $ride->id),
                 'channel' => 'ride.tracking.events',
             ],
         ], $extraPayload);
