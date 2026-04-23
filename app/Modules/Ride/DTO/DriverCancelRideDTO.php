@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\DTO;
 
-use App\Core\DTO\BaseDTO;
 use Illuminate\Http\Request;
 
-final class DriverCancelRideDTO extends BaseDTO
+final readonly class DriverCancelRideDTO
 {
     public function __construct(
         public readonly string $rideId,

@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\DTO;
 
-use App\Core\DTO\BaseDTO;
-use Illuminate\Http\Request;
-
-final class AcceptRideTrackingDTO extends BaseDTO
+final readonly class AcceptRideTrackingDTO
 {
     public function __construct(
         public readonly string $rideId,

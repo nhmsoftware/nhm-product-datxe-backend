@@ -100,4 +100,15 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
 
         return $query->get();
     }
+
+    /**
+     * Cập nhật vị trí hiện tại của tài xế.
+     */
+    public function updateLocation(string $driverId, float $lat, float $lng): bool
+    {
+        return (bool) $this->model->where('user_id', $driverId)->update([
+            'current_lat' => $lat,
+            'current_lng' => $lng,
+        ]);
+    }
 }

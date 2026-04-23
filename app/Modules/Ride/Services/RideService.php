@@ -38,6 +38,7 @@ use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\DriverProfile;
 use App\Modules\User\Model\Enums\DriverStatus;
 use App\Modules\User\Model\User;
+use Illuminate\Support\Facades\Log;
 
 final class RideService extends BaseService implements RideServiceInterface
 {
@@ -376,7 +377,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 $driver = $this->userRepository->findDriverWithProfileById($dto->driverId);
                 $this->validate($driver !== null && $driver->driverProfile !== null, 'Không tìm thấy hồ sơ tài xế.', 404);
 
-                $updatedLocation = $this->userRepository->updateDriverCurrentLocation($dto->driverId, $dto->lat, $dto->lng);
+                $updatedLocation = $this->driverProfileRepository->updateLocation($dto->driverId, $dto->lat, $dto->lng);
                 $this->validate($updatedLocation, 'Không thể cập nhật vị trí tài xế.', 500);
 
                 $heartbeatRefreshed = $this->rideRepository->refreshTrackingHeartbeat($dto->rideId, $dto->trackedAt);
@@ -555,6 +556,12 @@ final class RideService extends BaseService implements RideServiceInterface
 
             if ($ride->status === RideStatus::ACCEPTED) {
                 $cancellationFee = 10000.0;
+
+                // Cảnh báo gian lận
+                $driverProfile = $this->driverProfileRepository->findByUserId((string) $ride->driver_id);
+                if ($driverProfile) {
+                    $this->checkFraudProximity($ride, $driverProfile, 'General cancellation');
+                }
             }
 
             $this->rideRepository->cancel($dto->rideId, $dto->reason, $cancellationFee);
@@ -760,6 +767,12 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // Nếu đã có tài xế (ACCEPTED/PICKED_UP), chuyển sang trạng thái chờ xác nhận hủy
             if (in_array($ride->status, [RideStatus::ACCEPTED, RideStatus::PICKED_UP], true)) {
+                // Cảnh báo gian lận: Kiểm tra khoảng cách tài xế và điểm đón khi hủy
+                $driverProfile = $this->driverProfileRepository->findByUserId((string) $ride->driver_id);
+                if ($driverProfile) {
+                    $this->checkFraudProximity($ride, $driverProfile, 'Customer requested cancellation');
+                }
+
                 $this->rideRepository->updateStatus($dto->rideId, RideStatus::CANCELLATION_REQUESTED, $dto->reason);
 
                 // Phát sự kiện để Notify Realtime cho Tài xế
@@ -814,5 +827,37 @@ final class RideService extends BaseService implements RideServiceInterface
                 'is_approved' => $dto->isApproved,
             ];
         }, useTransaction: true);
+    }
+
+    /**
+     * Kiểm tra gian lận: Tài xế ở gần điểm đón nhưng khách hủy/hủy chuyến
+     * (Nghi ngờ tài xế yêu cầu khách hủy để chạy ngoài)
+     */
+    private function checkFraudProximity(Ride $ride, $driverProfile, string $context): void
+    {
+        if (!$driverProfile || $driverProfile->current_lat === null) {
+            return;
+        }
+
+        $distance = $this->calculateDistanceMeters(
+            (float) $driverProfile->current_lat,
+            (float) $driverProfile->current_lng,
+            (float) $ride->pickup_lat,
+            (float) $ride->pickup_lng
+        );
+
+        // Nếu tài xế ở trong phạm vi 200m hoặc đã báo đến nơi (driver_arrived_at)
+        $isArrived = $ride->driver_arrived_at !== null;
+
+        if ($distance < 200 || $isArrived) {
+            Log::warning(sprintf(
+                "[FRAUD_ALERT] Nghi vấn gian lận (offline ride): Chuyến xe %s bị hủy (%s). Khoảng cách tài xế - điểm đón: %.2fm. Trạng thái đã đến: %s. Driver ID: %s",
+                $ride->id,
+                $context,
+                $distance,
+                $isArrived ? 'Có' : 'Không',
+                $driverProfile->user_id
+            ));
+        }
     }
 }

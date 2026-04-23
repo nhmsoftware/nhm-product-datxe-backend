@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\DTO;
 
-use App\Core\DTO\BaseDTO;
 use Illuminate\Http\Request;
 use Carbon\CarbonInterface;
 use Carbon\Carbon;
 
-final class UpdateDriverLocationDTO extends BaseDTO
+final readonly class UpdateDriverLocationDTO
 {
     public function __construct(
         public readonly string $rideId,

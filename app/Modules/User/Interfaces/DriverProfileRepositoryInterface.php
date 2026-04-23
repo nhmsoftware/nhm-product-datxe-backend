@@ -53,4 +53,9 @@ interface DriverProfileRepositoryInterface extends BaseRepositoryInterface
      * Tìm danh sách tài xế hợp lệ để điều phối.
      */
     public function findEligibleDrivers(array $userIds, int $vehicleType, ?int $groupType = null): \Illuminate\Support\Collection;
+
+    /**
+     * Cập nhật vị trí hiện tại của tài xế.
+     */
+    public function updateLocation(string $driverId, float $lat, float $lng): bool;
 }
