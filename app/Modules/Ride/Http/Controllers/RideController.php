@@ -645,4 +645,22 @@ final class RideController extends BaseController
 
         return $this->sendSuccess($result->getData(), $result->getMessage());
     }
+    #[OA\Get(
+        path: '/api/v1/ride/airports',
+        description: 'Lấy danh sách các sân bay được hỗ trợ để đặt xe (UC-27).',
+        summary: 'Danh sách sân bay hỗ trợ (UC-27)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    #[OA\Response(response: 200, description: 'Lấy danh sách thành công')]
+    public function listAirports(): JsonResponse
+    {
+        $result = $this->rideService->getAirports();
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), 'Lấy danh sách sân bay thành công.');
+    }
 }

@@ -38,6 +38,7 @@ Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->
     Route::post('intercity', [RideController::class, 'createIntercity'])->name('ride.intercity');
 
     // UC-27: Đặt xe sân bay
+    Route::get('airports', [RideController::class, 'listAirports'])->name('ride.airports');
     Route::post('airport', [RideController::class, 'createAirport'])->name('ride.airport');
 
     // UC-13: Theo dõi tài xế realtime

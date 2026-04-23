@@ -149,4 +149,9 @@ interface RideServiceInterface
      * Tài xế quản lý danh sách chuyến xe đã nhận (UC-51).
      */
     public function getDriverManagedRides(string $driverId): ServiceReturn;
+
+    /**
+     * Lấy danh sách sân bay hỗ trợ (UC-27).
+     */
+    public function getAirports(): ServiceReturn;
 }

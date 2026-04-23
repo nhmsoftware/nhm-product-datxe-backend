@@ -38,6 +38,7 @@ use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideType;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\VehicleType;
+use App\Modules\Ride\Model\Airport;
 use App\Modules\Ride\Model\Ride;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
@@ -883,7 +884,7 @@ final class RideService extends BaseService implements RideServiceInterface
             }
 
             $priceData = $pricingResult->getData();
-            $totalPrice = (float) $priceData['total_price'];
+            $totalPrice = (float) $priceData->finalFare;
             $discountAmount = 0.0;
             $voucherId = null;
 
@@ -912,8 +913,8 @@ final class RideService extends BaseService implements RideServiceInterface
                 'travel_date'         => $dto->travelDate,
                 'travel_time'         => $dto->travelTime,
                 'status'              => RideStatus::PENDING->value,
-                'base_price'          => $priceData['base_price'],
-                'distance_price'      => $priceData['distance_price'],
+                'base_price'          => $priceData->baseFare,
+                'distance_price'      => $priceData->distanceFare,
                 'total_price'         => $totalPrice,
                 'voucher_code'        => $dto->voucherCode,
                 'discount_amount'     => $discountAmount,
@@ -946,7 +947,7 @@ final class RideService extends BaseService implements RideServiceInterface
             }
 
             $priceData = $pricingResult->getData();
-            $totalPrice = (float) $priceData['total_price'];
+            $totalPrice = (float) $priceData->finalFare;
             $discountAmount = 0.0;
 
             // 3. Áp dụng voucher nếu có
@@ -976,8 +977,8 @@ final class RideService extends BaseService implements RideServiceInterface
                 'airport_id'          => $dto->airportId,
                 'airport_direction'   => $dto->airportDirection,
                 'status'              => RideStatus::PENDING->value,
-                'base_price'          => $priceData['base_price'],
-                'distance_price'      => $priceData['distance_price'],
+                'base_price'          => $priceData->baseFare,
+                'distance_price'      => $priceData->distanceFare,
                 'total_price'         => $totalPrice,
                 'voucher_code'        => $dto->voucherCode,
                 'discount_amount'     => $discountAmount,
@@ -1216,6 +1217,25 @@ final class RideService extends BaseService implements RideServiceInterface
                     'status_label'        => $ride->status->getLabel(),
                 ];
             })->toArray();
+        });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getAirports(): ServiceReturn
+    {
+        return $this->execute(function () {
+            return Airport::where('is_active', true)
+                ->orderBy('name')
+                ->get()
+                ->map(fn($airport) => [
+                    'id'   => $airport->id,
+                    'name' => $airport->name,
+                    'code' => $airport->code,
+                    'lat'  => (float) $airport->lat,
+                    'lng'  => (float) $airport->lng,
+                ])->toArray();
         });
     }
 }
