@@ -285,6 +285,54 @@
 
 # ---G2: Service
 
+## Các enums trong module này
+
+### RideType
+```
+1: City (Nội thành)
+2: Intercity (Đi tỉnh)
+3: Airport (Sân bay)
+```
+
+## rides
+```
+    # note
+    - Bảng rides quản lý thông tin các chuyến xe (Nội thành và Liên tỉnh).
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - customer_id (unsigned bigint, FK -> users)
+    - driver_id (unsigned bigint, nullable, FK -> users)
+    - pickup_address (varchar 255)
+    - pickup_lat (decimal 10,7)
+    - pickup_lng (decimal 10,7)
+    - destination_address (varchar 255)
+    - destination_lat (decimal 10,7)
+    - destination_lng (decimal 10,7)
+    - distance (unsigned bigint) -- Khoảng cách (mét)
+    - duration (unsigned bigint) -- Thời gian (giây)
+    - vehicle_type (unsigned tinyint) -- Loại xe (VehicleType)
+    - ride_type (unsigned tinyint) -- Loại chuyến đi (RideType)
+    - travel_date (date, nullable) -- Ngày đi (cho đi tỉnh/sân bay)
+    - travel_time (time, nullable) -- Giờ đi (cho đi tỉnh/sân bay)
+    - airport_id (unsigned bigint, nullable) -- FK -> airports
+    - airport_direction (unsigned tinyint, nullable) -- 1: To Airport, 2: From Airport
+    - status (unsigned tinyint) -- Trạng thái (RideStatus)
+    - base_price (decimal 15,2)
+    - distance_price (decimal 15,2)
+    - total_price (decimal 15,2)
+    - voucher_code (varchar 50, nullable)
+    - discount_amount (decimal 15,2)
+    - is_paid (boolean)
+    - timestamps
+    - softDeletes
+
+    # index
+    - index(customer_id, status)
+    - index(driver_id, status)
+    - index(ride_type, travel_date)
+```
+
 # ---G3: Finance
 
 ## Các enums trong module này
@@ -543,3 +591,18 @@
     ### index
     - index(fileable_type, fileable_id) -- index cho polymorphic relation
     - timestamps
+
+## airports
+```
+    # note
+    - Bảng airports lưu trữ danh sách các sân bay được hỗ trợ.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - name (varchar 255) -- Tên sân bay
+    - code (varchar 10) -- Mã sân bay (Vd: HAN, SGN)
+    - lat (decimal 10,7)
+    - lng (decimal 10,7)
+    - is_active (boolean)
+    - timestamps
+```

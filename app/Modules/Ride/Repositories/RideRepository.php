@@ -30,6 +30,15 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->first();
     }
 
+    public function findWithDriverDetail(string $rideId, string $customerId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->with(['driver', 'driver.driverProfile'])
+            ->where('id', $rideId)
+            ->where('customer_id', $customerId)
+            ->first();
+    }
+
     /**
      * Áp dụng voucher vào chuyến đi — lưu mã, discount và giá cuối (UC-11).
      */
@@ -245,11 +254,14 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function assignDriver(string $rideId, string $driverId, CarbonInterface $acceptedAt): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
-            'status' => RideStatus::ACCEPTED->value,
-            'driver_id' => $driverId,
-            'driver_assigned_at' => $acceptedAt,
-        ]);
+        return (bool) $this->model->where('id', $rideId)
+            ->where('status', RideStatus::PENDING->value)
+            ->whereNull('driver_id')
+            ->update([
+                'status' => RideStatus::ACCEPTED->value,
+                'driver_id' => $driverId,
+                'driver_assigned_at' => $acceptedAt,
+            ]);
     }
 
     public function findTrackingRideByIdAndDriver(string $rideId, string $driverId): ?Ride
@@ -293,5 +305,81 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->where('status', RideStatus::CANCELLED->value)
             ->where('updated_at', '>=', now()->startOfDay())
             ->count();
+    }
+
+    public function createIntercityRide(array $data): Ride
+    {
+        return $this->model->create($data);
+    }
+
+    public function createAirportRide(array $data): Ride
+    {
+        return $this->model->create($data);
+    }
+
+    public function findAvailableScheduledRides(int $vehicleType, array $filters): \Illuminate\Support\Collection
+    {
+        $query = $this->model->newQuery()
+            ->where('status', \App\Modules\Ride\Model\Enums\RideStatus::PENDING->value)
+            ->where('vehicle_type', $vehicleType)
+            // Lọc ra các đơn mà tài xế đã từ chối trước đó (nếu có lưu vết)
+            ->whereNotExists(function ($q) use ($filters) {
+                $q->select(DB::raw(1))
+                    ->from('ride_dispatches')
+                    ->whereColumn('ride_dispatches.ride_id', 'rides.id')
+                    ->where('ride_dispatches.driver_id', $filters['driver_id'] ?? null)
+                    ->where('ride_dispatches.status', 3); // 3: Rejected
+            });
+
+        if (!empty($filters['travel_date'])) {
+            $query->whereDate('travel_date', $filters['travel_date']);
+        }
+
+        if (!empty($filters['travel_time'])) {
+            $query->where('travel_time', '>=', $filters['travel_time']);
+        }
+
+        if (!empty($filters['ride_type'])) {
+            $query->where('ride_type', $filters['ride_type']);
+        }
+
+        if (isset($filters['min_price'])) {
+            $query->where('total_price', '>=', $filters['min_price']);
+        }
+
+        if (isset($filters['max_price'])) {
+            $query->where('total_price', '<=', $filters['max_price']);
+        }
+
+        if (!empty($filters['pickup_area'])) {
+            $query->where('pickup_address', 'like', '%' . $filters['pickup_area'] . '%');
+        }
+
+        if (!empty($filters['destination_area'])) {
+            $query->where('destination_address', 'like', '%' . $filters['destination_area'] . '%');
+        }
+
+        return $query->orderBy('travel_date')->orderBy('travel_time')->get();
+    }
+
+    public function findAvailableById(string $rideId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->where('id', $rideId)
+            ->where('status', \App\Modules\Ride\Model\Enums\RideStatus::PENDING->value)
+            ->first();
+    }
+
+    public function findDriverAcceptedRides(string $driverId): \Illuminate\Support\Collection
+    {
+        return $this->model->with(['customer'])
+            ->where('driver_id', $driverId)
+            ->whereNotIn('status', [
+                \App\Modules\Ride\Model\Enums\RideStatus::COMPLETED->value,
+                \App\Modules\Ride\Model\Enums\RideStatus::CANCELLED->value
+            ])
+            ->orderBy('travel_date')
+            ->orderBy('travel_time')
+            ->get();
     }
 }

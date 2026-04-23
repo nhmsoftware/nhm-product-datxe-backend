@@ -19,6 +19,11 @@ interface RideRepositoryInterface
     public function findByIdAndCustomer(string $rideId, string $customerId): ?Ride;
 
     /**
+     * Tìm chi tiết chuyến xe kèm thông tin tài xế (UC-29).
+     */
+    public function findWithDriverDetail(string $rideId, string $customerId): ?Ride;
+
+    /**
      * Áp dụng voucher vào chuyến đi — lưu mã, discount và giá cuối (UC-11 Normal Flow).
      * @param string $rideId ID chuyến chuyến
      * @param string $voucherCode Mã voucher
@@ -177,4 +182,33 @@ interface RideRepositoryInterface
      * Đếm số lượng cuốc xe tài xế đã hủy trong ngày hôm nay.
      */
     public function countCancellationsToday(string $driverId): int;
+
+    /**
+     * Tạo chuyến xe đi tỉnh (UC-26).
+     */
+    public function createIntercityRide(array $data): \App\Modules\Ride\Model\Ride;
+
+    /**
+     * Tạo chuyến xe sân bay (UC-27).
+     */
+    public function createAirportRide(array $data): \App\Modules\Ride\Model\Ride;
+
+    /**
+     * Tìm danh sách chuyến xe đặt trước đang chờ tài xế (UC-47).
+     *
+     * @param int $vehicleType Loại xe của tài xế
+     * @param array $filters Bộ lọc tìm kiếm
+     * @return \Illuminate\Support\Collection
+     */
+    public function findAvailableScheduledRides(int $vehicleType, array $filters): \Illuminate\Support\Collection;
+
+    /**
+     * Tìm chuyến xe đang chờ tài xế theo ID (UC-48).
+     */
+    public function findAvailableById(string $rideId): ?\App\Modules\Ride\Model\Ride;
+
+    /**
+     * Tìm danh sách các chuyến xe mà tài xế đã nhận (UC-51).
+     */
+    public function findDriverAcceptedRides(string $driverId): \Illuminate\Support\Collection;
 }

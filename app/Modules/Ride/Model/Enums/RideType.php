@@ -1,0 +1,24 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\Ride\Model\Enums;
+
+/**
+ * Phân loại loại hình chuyến xe.
+ */
+enum RideType: int
+{
+    case CITY      = 1; // Nội thành
+    case INTERCITY = 2; // Đi tỉnh
+    case AIRPORT   = 3; // Sân bay
+
+    public function getLabel(): string
+    {
+        return match ($this) {
+            self::CITY      => 'Nội thành',
+            self::INTERCITY => 'Đi tỉnh',
+            self::AIRPORT   => 'Sân bay',
+        };
+    }
+}

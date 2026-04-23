@@ -2584,6 +2584,485 @@
                 ]
             }
         },
+        "/api/v1/ride/{rideId}/tracking": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Xem theo dõi chuyến xe (UC-13)",
+                "description": "Xem thông tin theo dõi chuyến xe realtime cho khách hàng.",
+                "operationId": "c7cedea462cbdd6668ad8a14e8d7cc13",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin theo dõi chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/tracking/accept": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Tài xế chấp nhận yêu cầu theo dõi (UC-13)",
+                "operationId": "a73dee68358f4ea30c263e4aec4dc7a5",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chấp nhận theo dõi thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/tracking/location": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Cập nhật vị trí tài xế realtime (UC-13)",
+                "operationId": "4907e336b85d9c94217221d8146a5a9a",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật vị trí thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/tracking/arrived": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Đánh dấu tài xế đã đến điểm đón (UC-13)",
+                "operationId": "cbd56ade3bfb6b38fe1745f5f0f0f75c",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật trạng thái thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/tracking/driver-cancel": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Tài xế hủy chuyến trong quá trình tracking (UC-13)",
+                "operationId": "2fc713d436109b246da3f3f8259a2664",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hủy chuyến thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/intercity": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Đặt xe đi tỉnh (UC-26)",
+                "operationId": "6ebb0ae3fd0db0bbc24a16e87f4860ae",
+                "responses": {
+                    "200": {
+                        "description": "Đặt xe thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/airport": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Đặt xe sân bay (UC-27)",
+                "operationId": "44f127c36b6c34c1fcea4f81a40e571c",
+                "responses": {
+                    "200": {
+                        "description": "Đặt xe thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/cancel-response": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Phản hồi yêu cầu hủy (UC-28 Driver Response)",
+                "description": "Tài xế phản hồi yêu cầu hủy chuyến của khách hàng (Đồng ý/Từ chối).",
+                "operationId": "9d4b3d2d32e1228ccd717134d9fe48a8",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_approved": {
+                                        "description": "true: Đồng ý hủy, false: Từ chối hủy",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Phản hồi thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Xem chi tiết chuyến xe (UC-29)",
+                "description": "Xem chi tiết chuyến xe (UC-29). Trả về thông tin đầy đủ kèm tài xế nếu có.",
+                "operationId": "c4b2f2b4a23d38f2468c0d93fe2afc24",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy thông tin thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/scheduled-rides": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Danh sách chuyến xe đặt trước cho tài xế (UC-47)",
+                "description": "Tài xế xem danh sách các chuyến xe đặt trước phù hợp với loại xe đã đăng ký (UC-47).",
+                "operationId": "903d902489bae51b6c64ec8aa399191e",
+                "parameters": [
+                    {
+                        "name": "travel_date",
+                        "in": "query",
+                        "description": "Ngày đi (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "travel_time",
+                        "in": "query",
+                        "description": "Giờ đi (H:i)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ride_type",
+                        "in": "query",
+                        "description": "Loại chuyến (1: Nội thành, 2: Đi tỉnh, 3: Sân bay)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "description": "Giá tối thiểu",
+                        "required": false,
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "description": "Giá tối đa",
+                        "required": false,
+                        "schema": {
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/scheduled-rides/{rideId}": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Chi tiết chuyến xe đặt trước cho tài xế (UC-48)",
+                "description": "Tài xế xem chi tiết một chuyến xe đặt trước (UC-48).",
+                "operationId": "23d46fe9cc6945074eb40521d4b95e92",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy chi tiết thành công"
+                    },
+                    "400": {
+                        "description": "Chuyến xe không còn khả dụng"
+                    },
+                    "403": {
+                        "description": "Không đủ điều kiện xem"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/scheduled-rides/{rideId}/accept": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Nhận chuyến xe đặt trước (UC-49)",
+                "description": "Tài xế nhận một chuyến xe đặt trước (UC-49).",
+                "operationId": "d1f44227e5eadb29de1aba9e008d8b40",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nhận chuyến thành công"
+                    },
+                    "400": {
+                        "description": "Không thể nhận chuyến"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/scheduled-rides/{rideId}/cancel": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Hủy chuyến xe đặt trước (UC-50 Driver)",
+                "description": "Tài xế hủy chuyến xe đặt trước đã nhận (UC-50). Chỉ được hủy trong thời gian quy định.",
+                "operationId": "071a7cc372d920c234ddacf7db2a0a3e",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Hỏng xe đột xuất"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hủy chuyến thành công"
+                    },
+                    "400": {
+                        "description": "Đã quá thời gian cho phép tự hủy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/managed-rides": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Danh sách chuyến xe đang quản lý của tài xế (UC-51)",
+                "description": "Tài xế xem danh sách các chuyến xe đã nhận và đang quản lý (UC-51).",
+                "operationId": "44d1296aaf80354d895aba1d46d31e5a",
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/user/profile": {
             "get": {
                 "tags": [

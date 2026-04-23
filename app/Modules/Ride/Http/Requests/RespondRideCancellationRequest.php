@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use App\Core\Traits\HandleApi;
 use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
-final class DriverCancelRideRequest extends FormRequest
+class RespondRideCancellationRequest extends FormRequest
 {
     use HandleApi;
 
     public function authorize(): bool
     {
-        return $this->user()->isDriver();
+        return true;
     }
 
     protected function failedValidation(Validator $validator)
@@ -28,15 +28,7 @@ final class DriverCancelRideRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'reason' => 'required|string|min:5|max:255',
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'reason.required' => 'Vui lòng nhập lý do hủy chuyến.',
-            'reason.min' => 'Lý do hủy chuyến phải có ít nhất 5 ký tự.',
+            'is_approved' => 'required|boolean',
         ];
     }
 }

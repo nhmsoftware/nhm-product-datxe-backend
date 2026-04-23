@@ -14,6 +14,7 @@ enum VehicleType: int
     case CAR_4_SEATS = 2;
     case CAR_7_SEATS = 3;
     case CAR_9_SEATS = 4;
+    case CAR_SHARED  = 5;
 
     /**
      * Trả về tên hiển thị của loại xe.
@@ -25,6 +26,7 @@ enum VehicleType: int
             self::CAR_4_SEATS => 'Ô Tô 4 Chỗ',
             self::CAR_7_SEATS => 'Ô Tô 7 Chỗ',
             self::CAR_9_SEATS => 'Ô Tô 9 Chỗ',
+            self::CAR_SHARED  => 'Xe Ghép (Liên tỉnh)',
         };
     }
 
@@ -38,6 +40,7 @@ enum VehicleType: int
             self::CAR_4_SEATS => 'Thoải mái cho 1–3 hành khách',
             self::CAR_7_SEATS => 'Rộng rãi cho nhóm 4–6 người',
             self::CAR_9_SEATS => 'Lý tưởng cho nhóm đông hoặc nhiều hành lý',
+            self::CAR_SHARED  => 'Tiết kiệm, đi chung với hành khách khác',
         };
     }
 
@@ -51,6 +54,7 @@ enum VehicleType: int
             self::CAR_4_SEATS => 3,
             self::CAR_7_SEATS => 6,
             self::CAR_9_SEATS => 8,
+            self::CAR_SHARED  => 1,
         };
     }
 
@@ -65,6 +69,7 @@ enum VehicleType: int
             self::CAR_4_SEATS => '3–7 phút',
             self::CAR_7_SEATS => '5–10 phút',
             self::CAR_9_SEATS => '7–15 phút',
+            self::CAR_SHARED  => 'Theo lịch hẹn',
         };
     }
 }

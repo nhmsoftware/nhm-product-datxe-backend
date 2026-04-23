@@ -109,4 +109,44 @@ interface RideServiceInterface
      * @return ServiceReturn
      */
     public function cancelRide(CancelRideDTO $dto): ServiceReturn;
+
+    /**
+     * Đặt xe đi tỉnh (UC-26).
+     */
+    public function createIntercity(\App\Modules\Ride\DTO\CreateIntercityRideDTO $dto): ServiceReturn;
+
+    /**
+     * Đặt xe sân bay (UC-27).
+     */
+    public function createAirport(\App\Modules\Ride\DTO\CreateAirportRideDTO $dto): ServiceReturn;
+
+    /**
+     * Xem chi tiết chuyến xe (UC-29).
+     */
+    public function getRideDetail(string $rideId, string $customerId): ServiceReturn;
+
+    /**
+     * Tài xế xem danh sách chuyến xe đặt trước (UC-47).
+     */
+    public function getAvailableScheduledRides(\App\Modules\Ride\DTO\FilterScheduledRideDTO $dto): ServiceReturn;
+
+    /**
+     * Tài xế xem chi tiết chuyến xe đặt trước (UC-48).
+     */
+    public function getScheduledRideDetail(string $rideId, string $driverId): ServiceReturn;
+
+    /**
+     * Tài xế nhận chuyến xe đặt trước (UC-49).
+     */
+    public function acceptScheduledRide(string $rideId, string $driverId): ServiceReturn;
+
+    /**
+     * Tài xế hủy chuyến xe đặt trước (UC-50).
+     */
+    public function driverCancelScheduledRide(\App\Modules\Ride\DTO\DriverCancelRideDTO $dto): ServiceReturn;
+
+    /**
+     * Tài xế quản lý danh sách chuyến xe đã nhận (UC-51).
+     */
+    public function getDriverManagedRides(string $driverId): ServiceReturn;
 }
