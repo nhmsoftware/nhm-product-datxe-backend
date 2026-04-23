@@ -125,7 +125,7 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
     private function notifyDriverOfNewRide(string $userId, $ride): void
     {
         $payload = [
-            'user_id' => $userId,
+            'user_id' => (string) $userId,
             'event' => 'ride.new_offer',
             'ride_id' => (string) $ride->id,
             'ride_type' => $ride->ride_type->name,
