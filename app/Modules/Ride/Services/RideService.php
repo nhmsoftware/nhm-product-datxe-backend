@@ -28,6 +28,7 @@ use App\Modules\Ride\Interfaces\MapServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Ride\DTO\RequestRideCancellationDTO;
+use App\Modules\Ride\Interfaces\AirportRepositoryInterface;
 use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\Events\RideCancellationRequested;
 use App\Modules\Ride\Events\RideCancellationResponded;
@@ -55,7 +56,8 @@ final class RideService extends BaseService implements RideServiceInterface
         private readonly PricingServiceInterface $pricingService,
         private readonly UserRepositoryInterface $userRepository,
         private readonly DriverProfileRepositoryInterface $driverProfileRepository,
-        private readonly RideTrackingRealtimeInterface $rideTrackingRealtime
+        private readonly RideTrackingRealtimeInterface $rideTrackingRealtime,
+        private readonly AirportRepositoryInterface $airportRepository
     ) {
     }
 
@@ -1226,16 +1228,15 @@ final class RideService extends BaseService implements RideServiceInterface
     public function getAirports(): ServiceReturn
     {
         return $this->execute(function () {
-            return Airport::where('is_active', true)
-                ->orderBy('name')
-                ->get()
-                ->map(fn($airport) => [
-                    'id'   => $airport->id,
-                    'name' => $airport->name,
-                    'code' => $airport->code,
-                    'lat'  => (float) $airport->lat,
-                    'lng'  => (float) $airport->lng,
-                ])->toArray();
+            $airports = $this->airportRepository->getActiveAirports();
+
+            return $airports->map(fn($airport) => [
+                'id'   => $airport->id,
+                'name' => $airport->name,
+                'code' => $airport->code,
+                'lat'  => (float) $airport->lat,
+                'lng'  => (float) $airport->lng,
+            ])->toArray();
         });
     }
 }
