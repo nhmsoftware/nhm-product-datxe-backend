@@ -17,6 +17,15 @@ use App\Modules\Ride\Http\Requests\GetVehicleOptionsRequest;
 use App\Modules\Ride\Http\Requests\GetPriceEstimateRequest;
 use App\Modules\Ride\Http\Requests\RequestRideCancellationRequest;
 use App\Modules\Ride\DTO\RequestRideCancellationDTO;
+use App\Modules\Ride\DTO\AcceptRideTrackingDTO;
+use App\Modules\Ride\DTO\DriverCancelRideDTO;
+use App\Modules\Ride\DTO\MarkDriverArrivedDTO;
+use App\Modules\Ride\DTO\ShowRideTrackingDTO;
+use App\Modules\Ride\DTO\UpdateDriverLocationDTO;
+use App\Modules\Ride\Http\Requests\AcceptRideTrackingRequest;
+use App\Modules\Ride\Http\Requests\DriverCancelRideRequest;
+use App\Modules\Ride\Http\Requests\MarkDriverArrivedRequest;
+use App\Modules\Ride\Http\Requests\UpdateDriverLocationRequest;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -268,6 +277,102 @@ final class RideController extends BaseController
     {
         $result = $this->rideService->requestCancellation(
             RequestRideCancellationDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/ride/{rideId}/tracking',
+        description: 'Xem thông tin theo dõi chuyến xe realtime cho khách hàng.',
+        summary: 'Xem theo dõi chuyến xe (UC-13)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    public function showTracking(GetPriceEstimateRequest $request): JsonResponse
+    {
+        $result = $this->rideService->showTracking(
+            ShowRideTrackingDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/ride/{rideId}/tracking/accept',
+        summary: 'Tài xế chấp nhận yêu cầu theo dõi (UC-13)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    public function acceptTracking(AcceptRideTrackingRequest $request): JsonResponse
+    {
+        $result = $this->rideService->acceptTracking(
+            AcceptRideTrackingDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/ride/{rideId}/tracking/location',
+        summary: 'Cập nhật vị trí tài xế realtime (UC-13)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    public function updateDriverLocation(UpdateDriverLocationRequest $request): JsonResponse
+    {
+        $result = $this->rideService->updateDriverLocation(
+            UpdateDriverLocationDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/ride/{rideId}/tracking/arrived',
+        summary: 'Đánh dấu tài xế đã đến điểm đón (UC-13)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    public function markDriverArrived(MarkDriverArrivedRequest $request): JsonResponse
+    {
+        $result = $this->rideService->markDriverArrived(
+            MarkDriverArrivedDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/ride/{rideId}/tracking/driver-cancel',
+        summary: 'Tài xế hủy chuyến trong quá trình tracking (UC-13)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    public function cancelByDriver(DriverCancelRideRequest $request): JsonResponse
+    {
+        $result = $this->rideService->cancelByDriver(
+            DriverCancelRideDTO::fromRequest($request)
         );
 
         if ($result->isError()) {

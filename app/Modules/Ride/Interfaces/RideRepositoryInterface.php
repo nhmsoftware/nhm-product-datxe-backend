@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Ride\Interfaces;
 
 use App\Modules\Ride\Model\Ride;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 interface RideRepositoryInterface
 {
@@ -61,7 +61,7 @@ interface RideRepositoryInterface
      * @param Carbon $end
      * @return array{total_amount: float, total_count: int}
      */
-    public function getSpendingSummary(string $customerId, Carbon $start, Carbon $end): array;
+    public function getSpendingSummary(string $customerId, CarbonInterface $start, CarbonInterface $end): array;
 
     /**
      * Kiểm tra tài xế có chuyến đi nào đang diễn ra không (UC-31).
@@ -151,7 +151,7 @@ interface RideRepositoryInterface
     /**
      * Tài xế chấp nhận chuyến — gán driver_id và chuyển sang ACCEPTED.
      */
-    public function assignDriver(string $rideId, string $driverId, \Carbon\Carbon $acceptedAt): bool;
+    public function assignDriver(string $rideId, string $driverId, CarbonInterface $acceptedAt): bool;
 
     /**
      * Tìm ride cho driver tracking snapshot (UC-13).
@@ -161,12 +161,12 @@ interface RideRepositoryInterface
     /**
      * Cập nhật timestamp lần cuối nhận tín hiệu từ tài xế (Heartbeat).
      */
-    public function refreshTrackingHeartbeat(string $rideId, \Carbon\Carbon $trackedAt): bool;
+    public function refreshTrackingHeartbeat(string $rideId, CarbonInterface $trackedAt): bool;
 
     /**
      * Tài xế đã đến điểm đón (UC-13).
      */
-    public function markDriverArrived(string $rideId, \Carbon\Carbon $arrivedAt): bool;
+    public function markDriverArrived(string $rideId, CarbonInterface $arrivedAt): bool;
 
     /**
      * Tài xế hủy chuyến sau khi nhận — đưa ride về PENDING và xóa driver_id.

@@ -8,7 +8,7 @@ use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Ride;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 use Illuminate\Support\Facades\DB;
 
@@ -80,7 +80,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Tính toán tổng chi tiêu của khách hàng trong một khoảng thời gian (UC-23).
      */
-    public function getSpendingSummary(string $customerId, Carbon $start, Carbon $end): array
+    public function getSpendingSummary(string $customerId, CarbonInterface $start, CarbonInterface $end): array
     {
         $data = $this->model
             ->where('customer_id', $customerId)
@@ -243,7 +243,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->first();
     }
 
-    public function assignDriver(string $rideId, string $driverId, \Carbon\Carbon $acceptedAt): bool
+    public function assignDriver(string $rideId, string $driverId, CarbonInterface $acceptedAt): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'status' => RideStatus::ACCEPTED->value,
@@ -261,14 +261,14 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->first();
     }
 
-    public function refreshTrackingHeartbeat(string $rideId, \Carbon\Carbon $trackedAt): bool
+    public function refreshTrackingHeartbeat(string $rideId, CarbonInterface $trackedAt): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'tracking_last_ping_at' => $trackedAt,
         ]);
     }
 
-    public function markDriverArrived(string $rideId, \Carbon\Carbon $arrivedAt): bool
+    public function markDriverArrived(string $rideId, CarbonInterface $arrivedAt): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'driver_arrived_at' => $arrivedAt,

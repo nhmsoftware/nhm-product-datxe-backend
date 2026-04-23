@@ -76,4 +76,9 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
      * Cập nhật vai trò của user.
      */
     public function updateRole(int|string $userId, UserRole $role): bool;
+
+    /**
+     * Tìm driver kèm profile (UC-13).
+     */
+    public function findDriverWithProfileById(string $driverId): ?User;
 }

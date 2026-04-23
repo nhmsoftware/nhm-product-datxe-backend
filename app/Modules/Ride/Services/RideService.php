@@ -28,12 +28,15 @@ use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\Events\RideCancellationRequested;
 use App\Modules\Ride\Events\RideCancellationResponded;
 use App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface;
+use App\Modules\Ride\Events\RideBooked;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\Ride\Model\Ride;
+use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\DriverProfile;
+use App\Modules\User\Model\Enums\DriverStatus;
 use App\Modules\User\Model\User;
 
 final class RideService extends BaseService implements RideServiceInterface
@@ -43,6 +46,7 @@ final class RideService extends BaseService implements RideServiceInterface
         private readonly MapServiceInterface $mapService,
         private readonly PricingServiceInterface $pricingService,
         private readonly UserRepositoryInterface $userRepository,
+        private readonly DriverProfileRepositoryInterface $driverProfileRepository,
         private readonly RideTrackingRealtimeInterface $rideTrackingRealtime
     ) {
     }
@@ -301,6 +305,9 @@ final class RideService extends BaseService implements RideServiceInterface
 
             $ride->refresh();
 
+            // Phát sự kiện RideBooked để DispatchService bắt đầu tìm tài xế
+            event(new RideBooked(rideId: $ride->id, customerId: $dto->customerId));
+
             return $this->success($ride->toArray(), 'Đặt xe thành công. Đang tìm tài xế.');
         }, useTransaction: true);
     }
@@ -462,14 +469,49 @@ final class RideService extends BaseService implements RideServiceInterface
                 $this->validate($ride !== null, 'Không tìm thấy chuyến xe của tài xế.', 404);
                 $this->validate($ride->status === RideStatus::ACCEPTED, 'Không thể hủy chuyến ở trạng thái hiện tại.');
 
+                $driverProfile = $this->driverProfileRepository->findByUserId($dto->driverId);
+                $this->validate($driverProfile !== null, 'Hồ sơ tài xế không tồn tại.', 404);
+
                 $released = $this->rideRepository->releaseDriverFromRide($dto->rideId, $dto->reason);
                 $this->validate($released, 'Không thể đưa chuyến xe về trạng thái tìm tài xế.', 500);
+
+                // --- Logic Tạm Khóa Tài Khoản (Penalty System) ---
+                $penaltyMinutes = 0;
+
+                // 1. Kiểm tra vị trí: Nếu gần điểm đón (< 200m) thì phạt 30p
+                if ($driverProfile->current_lat !== null && $driverProfile->current_lng !== null) {
+                    $distanceToPickup = $this->calculateDistanceMeters(
+                        (float) $driverProfile->current_lat,
+                        (float) $driverProfile->current_lng,
+                        (float) $ride->pickup_lat,
+                        (float) $ride->pickup_lng
+                    );
+                    if ($distanceToPickup <= 200) {
+                        $penaltyMinutes = 30;
+                    }
+                }
+
+                // 2. Kiểm tra số lần hủy trong ngày: Nếu >= 3 lần thì phạt ít nhất 60p
+                $newCancelCount = $this->driverProfileRepository->incrementCancelCount($driverProfile->id);
+                if ($newCancelCount >= 3) {
+                    $penaltyMinutes = max($penaltyMinutes, 60);
+                }
+
+                // Áp dụng hình phạt
+                if ($penaltyMinutes > 0) {
+                    $this->driverProfileRepository->setCooldown($driverProfile->id, $penaltyMinutes);
+                } else {
+                    // Nếu không bị phạt, đưa tài xế trở lại trạng thái sẵn sàng
+                    $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
+                }
 
                 return [
                     'ride_id' => $dto->rideId,
                     'status' => RideStatus::PENDING->value,
                     'status_label' => RideStatus::PENDING->getLabel(),
                     'message' => 'Tài xế đã hủy chuyến.',
+                    'penalty_applied' => $penaltyMinutes > 0,
+                    'penalty_minutes' => $penaltyMinutes,
                 ];
             },
             useTransaction: true,

@@ -307,8 +307,11 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             if ($driverProfile->status === DriverStatus::COOLDOWN) {
                 $until = $driverProfile->cooldown_until;
                 if ($until && $until->isFuture()) {
-                    $this->throw("Tài khoản đang trong thời gian tạm nghỉ đến " . $until->format('H:i d/m/Y'), 403);
+                    $this->throw("Tài khoản của bạn đang bị khóa đến " . $until->format('H:i d/m/Y'), 403);
                 }
+                
+                // Nếu đã hết thời gian cooldown, tự động đưa về trạng thái ACTIVE
+                $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
             }
 
             // Cập nhật trạng thái hoạt động thông qua Repository
@@ -369,7 +372,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             if ($driverProfile->status === DriverStatus::COOLDOWN) {
                 $until = $driverProfile->cooldown_until;
                 if ($until && $until->isFuture()) {
-                    $this->throw("Tài khoản đang trong thời gian tạm nghỉ.", 403);
+                    $this->throw("Tài khoản của bạn đang bị khóa đến " . $until->format('H:i d/m/Y'), 403);
                 }
             }
 

@@ -63,12 +63,37 @@ interface RideServiceInterface
     /**
      * UC-28: Khách hàng yêu cầu hủy chuyến.
      */
-    public function requestCancellation(RequestRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
+    public function requestCancellation(\App\Modules\Ride\DTO\RequestRideCancellationDTO $dto): ServiceReturn;
 
     /**
      * UC-28: Tài xế phản hồi yêu cầu hủy chuyến.
      */
-    public function respondToCancellation(RespondRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
+    public function respondToCancellation(RespondRideCancellationDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Xem thông tin theo dõi chuyến xe (Customer).
+     */
+    public function showTracking(\App\Modules\Ride\DTO\ShowRideTrackingDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Tài xế chấp nhận yêu cầu theo dõi (Bắt đầu tracking).
+     */
+    public function acceptTracking(\App\Modules\Ride\DTO\AcceptRideTrackingDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Cập nhật vị trí tài xế realtime.
+     */
+    public function updateDriverLocation(\App\Modules\Ride\DTO\UpdateDriverLocationDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Đánh dấu tài xế đã đến điểm đón.
+     */
+    public function markDriverArrived(\App\Modules\Ride\DTO\MarkDriverArrivedDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Tài xế hủy chuyến trong quá trình tracking.
+     */
+    public function cancelByDriver(\App\Modules\Ride\DTO\DriverCancelRideDTO $dto): ServiceReturn;
 
     /**
      * Xác nhận đặt xe (UC-12).
