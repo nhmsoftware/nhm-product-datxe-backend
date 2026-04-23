@@ -492,7 +492,10 @@ final class RideService extends BaseService implements RideServiceInterface
                 }
 
                 // 2. Kiểm tra số lần hủy trong ngày: Nếu >= 3 lần thì phạt ít nhất 60p
-                $newCancelCount = $this->driverProfileRepository->incrementCancelCount($driverProfile->id);
+                $cancellationsToday = $this->rideRepository->countCancellationsToday($dto->driverId);
+                $newCancelCount = $cancellationsToday + 1; // Bao gồm cả cuốc vừa hủy này
+                $this->driverProfileRepository->updateCancelCount($driverProfile->id, $newCancelCount);
+
                 if ($newCancelCount >= 3) {
                     $penaltyMinutes = max($penaltyMinutes, 60);
                 }

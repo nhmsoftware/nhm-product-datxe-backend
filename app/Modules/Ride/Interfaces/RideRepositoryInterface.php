@@ -172,4 +172,9 @@ interface RideRepositoryInterface
      * Tài xế hủy chuyến sau khi nhận — đưa ride về PENDING và xóa driver_id.
      */
     public function releaseDriverFromRide(string $rideId, ?string $reason): bool;
+
+    /**
+     * Đếm số lượng cuốc xe tài xế đã hủy trong ngày hôm nay.
+     */
+    public function countCancellationsToday(string $driverId): int;
 }

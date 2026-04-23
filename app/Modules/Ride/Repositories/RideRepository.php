@@ -285,4 +285,13 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             'cancel_reason' => $reason,
         ]);
     }
+
+    public function countCancellationsToday(string $driverId): int
+    {
+        return $this->model
+            ->where('driver_id', $driverId)
+            ->where('status', RideStatus::CANCELLED->value)
+            ->where('updated_at', '>=', now()->startOfDay())
+            ->count();
+    }
 }
