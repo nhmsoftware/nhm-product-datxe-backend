@@ -1301,7 +1301,47 @@
                 "operationId": "514ccb6726bd0b32f62e15a50c5c3d63",
                 "responses": {
                     "200": {
-                        "description": "Thành công"
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_points": {
+                                            "type": "integer",
+                                            "example": 1250
+                                        },
+                                        "expiring_points": {
+                                            "properties": {
+                                                "points": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "expiry_date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2024-12-31"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "tier": {
+                                            "properties": {
+                                                "current_tier": {
+                                                    "type": "string",
+                                                    "example": "Gold"
+                                                },
+                                                "points_to_next_tier": {
+                                                    "type": "integer",
+                                                    "example": 250
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1462,7 +1502,50 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Thành công - Trả về thông tin tổng hợp chi tiêu"
+                        "description": "Thành công - Trả về thông tin tổng hợp chi tiêu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "range_label": {
+                                            "type": "string",
+                                            "example": "Tháng này"
+                                        },
+                                        "total_amount": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 1250000
+                                        },
+                                        "total_count": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "breakdown": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "service": {
+                                                        "type": "string",
+                                                        "example": "Ride"
+                                                    },
+                                                    "amount": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 1250000
+                                                    },
+                                                    "count": {
+                                                        "type": "integer",
+                                                        "example": 25
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthorized - Token không hợp lệ hoặc đã hết hạn"
@@ -1488,7 +1571,17 @@
                 "operationId": "8f3d568aebefe6783f2b1aa669033ffc",
                 "responses": {
                     "200": {
-                        "description": "Tải danh sách gói thành viên thành công"
+                        "description": "Tải danh sách gói thành viên thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SubscriptionPackageResponse"
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1504,7 +1597,7 @@
                     "Finance"
                 ],
                 "summary": "Đăng ký gói thành viên (UC-46)",
-                "description": "Đăng ký một gói thành viên mới bằng cách sử dụng số dư ví tín dụng.",
+                "description": "Đăng ký một gói thành viên mới bằng cách sử dụng số dư ví tín dụng. package_id phải lấy từ danh sách gói thành viên hợp lệ từ API /api/v1/finance/subscriptions/packages.",
                 "operationId": "1bbf4f65caa6514054936157735a09ff",
                 "requestBody": {
                     "required": true,
@@ -1516,8 +1609,9 @@
                                 ],
                                 "properties": {
                                     "package_id": {
-                                        "type": "integer",
-                                        "example": 1
+                                        "description": "ID của gói thành viên lấy từ API danh sách gói",
+                                        "type": "string",
+                                        "example": "1"
                                     }
                                 },
                                 "type": "object"
@@ -1533,7 +1627,7 @@
                         "description": "Số dư không đủ hoặc đã có gói hoạt động"
                     },
                     "404": {
-                        "description": "Gói không tồn tại"
+                        "description": "Gói không tồn tại hoặc không còn hiệu lực"
                     }
                 },
                 "security": [
@@ -1694,7 +1788,38 @@
                 "operationId": "f76f6db5e1b392e5b5e31d92518fc481",
                 "responses": {
                     "200": {
-                        "description": "Tải thông tin ví thành công"
+                        "description": "Tải thông tin ví thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "driver_status": {
+                                            "properties": {
+                                                "is_online": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "label": {
+                                                    "type": "string",
+                                                    "example": "Trực tuyến"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "wallet": {
+                                            "$ref": "#/components/schemas/WalletResponse"
+                                        },
+                                        "recent_transactions": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WalletTransactionResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1736,7 +1861,68 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Tải thông tin ví tín dụng thành công"
+                        "description": "Tải thông tin ví tín dụng thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "wallet": {
+                                            "properties": {
+                                                "balance": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 150000
+                                                },
+                                                "total_top_up": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 500000
+                                                },
+                                                "total_used": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 350000
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "history": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/WalletTransactionResponse"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1767,7 +1953,14 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Tải chi tiết giao dịch thành công"
+                        "description": "Tải chi tiết giao dịch thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WalletTransactionResponse"
+                                }
+                            }
+                        }
                     },
                     "404": {
                         "description": "Không tìm thấy giao dịch"
@@ -1814,7 +2007,14 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Khởi tạo giao dịch nạp tiền thành công"
+                        "description": "Khởi tạo giao dịch nạp tiền thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TopUpResponse"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -3165,6 +3365,26 @@
                 "summary": "Danh sách chuyến xe đang quản lý của tài xế (UC-51)",
                 "description": "Tài xế xem danh sách các chuyến xe đã nhận và đang quản lý (UC-51).",
                 "operationId": "44d1296aaf80354d895aba1d46d31e5a",
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/airports": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Danh sách sân bay hỗ trợ (UC-27)",
+                "description": "Lấy danh sách các sân bay được hỗ trợ để đặt xe (UC-27).",
+                "operationId": "9fb257380cc121a39f76d25db105ae7d",
                 "responses": {
                     "200": {
                         "description": "Lấy danh sách thành công"
@@ -5192,7 +5412,7 @@
                 "description": "Thông tin ước tính giá cước",
                 "properties": {
                     "base_fare": {
-                        "description": "Price Estimate Response Schema",
+                        "description": "Wallet Response Schema",
                         "type": "number",
                         "format": "float",
                         "example": 15000
@@ -5226,6 +5446,142 @@
                         "type": "number",
                         "format": "float",
                         "example": 35000
+                    }
+                },
+                "type": "object"
+            },
+            "WalletResponse": {
+                "description": "Thông tin ví tiền",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "1"
+                    },
+                    "balance": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 150000
+                    },
+                    "total_earned": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 2000000
+                    },
+                    "total_withdrawn": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1000000
+                    }
+                },
+                "type": "object"
+            },
+            "WalletTransactionResponse": {
+                "description": "Thông tin giao dịch ví tiền",
+                "properties": {
+                    "id": {
+                        "description": "Wallet Transaction Response Schema",
+                        "type": "string",
+                        "example": "123"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000
+                    },
+                    "type": {
+                        "description": "Loại: top_up, fee, withdrawal, refund",
+                        "type": "string",
+                        "example": "top_up"
+                    },
+                    "type_label": {
+                        "type": "string",
+                        "example": "Nạp tiền"
+                    },
+                    "symbol": {
+                        "type": "string",
+                        "example": "+"
+                    },
+                    "balance_before": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100000
+                    },
+                    "balance_after": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 150000
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Nạp tiền qua MoMo"
+                    },
+                    "reference_type": {
+                        "type": "string",
+                        "example": "TopUp"
+                    },
+                    "reference_id": {
+                        "type": "string",
+                        "example": "456"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "Thành công"
+                    }
+                },
+                "type": "object"
+            },
+            "SubscriptionPackageResponse": {
+                "description": "Thông tin gói thành viên",
+                "properties": {
+                    "id": {
+                        "description": "Subscription Package Response Schema",
+                        "type": "string",
+                        "example": "1"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Gói VIP Tháng"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Giảm 50% phí dịch vụ"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100000
+                    },
+                    "duration_days": {
+                        "type": "integer",
+                        "example": 30
+                    },
+                    "service_fee_reduction_percent": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50
+                    }
+                },
+                "type": "object"
+            },
+            "TopUpResponse": {
+                "description": "Thông tin khởi tạo nạp tiền",
+                "properties": {
+                    "top_up_id": {
+                        "description": "Top Up Response Schema",
+                        "type": "string",
+                        "example": "789"
+                    },
+                    "external_id": {
+                        "type": "string",
+                        "example": "TX-123456"
+                    },
+                    "redirect_url": {
+                        "type": "string",
+                        "example": "https://payment.momo.vn/..."
                     }
                 },
                 "type": "object"

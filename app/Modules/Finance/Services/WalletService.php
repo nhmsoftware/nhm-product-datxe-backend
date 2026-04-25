@@ -39,7 +39,7 @@ final class WalletService extends BaseService implements WalletServiceInterface
             $driverProfile = $this->driverProfileRepository->findByUserId($dto->userId);
             $this->validate($driverProfile !== null, 'Không tìm thấy hồ sơ tài xế.', 404);
 
-            $recentTransactions = $this->transactionRepository->getRecentByWalletId((int) $wallet->id, 5);
+            $recentTransactions = $this->transactionRepository->getRecentByWalletId($wallet->id, 5);
 
             return [
                 'driver_status' => [
@@ -66,10 +66,10 @@ final class WalletService extends BaseService implements WalletServiceInterface
             $wallet = $this->walletRepository->findByUserId($dto->userId);
             $this->validate($wallet !== null, 'Không tìm thấy ví.', 404);
 
-            $totalTopUp = $this->transactionRepository->getTotalTopUp((int) $wallet->id);
-            $totalUsed = $this->transactionRepository->getTotalUsed((int) $wallet->id);
+            $totalTopUp = $this->transactionRepository->getTotalTopUp($wallet->id);
+            $totalUsed = $this->transactionRepository->getTotalUsed($wallet->id);
 
-            $paginated = $this->transactionRepository->paginateByWalletId((int) $wallet->id, $dto->page, $dto->limit);
+            $paginated = $this->transactionRepository->paginateByWalletId($wallet->id, $dto->page, $dto->limit);
 
             return [
                 'wallet' => [
@@ -94,7 +94,7 @@ final class WalletService extends BaseService implements WalletServiceInterface
             $wallet = $this->walletRepository->findByUserId($dto->userId);
             $this->validate($wallet !== null, 'Không tìm thấy ví.', 404);
 
-            $tx = $this->transactionRepository->findByIdAndWallet($dto->transactionId, (int) $wallet->id);
+            $tx = $this->transactionRepository->findByIdAndWallet($dto->transactionId, $wallet->id);
             $this->validate($tx !== null, 'Không tìm thấy giao dịch hoặc bạn không có quyền xem.', 404);
 
             return [

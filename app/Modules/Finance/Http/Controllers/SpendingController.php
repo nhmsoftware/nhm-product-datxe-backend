@@ -28,7 +28,24 @@ final class SpendingController extends BaseController
     #[OA\Parameter(name: 'range', description: 'Loại khoảng thời gian: day (hôm nay), week (tuần này), month (tháng này), custom (tùy chọn)', in: 'query', required: true, schema: new OA\Schema(type: 'string', enum: ['day', 'week', 'month', 'custom']))]
     #[OA\Parameter(name: 'start_date', description: 'Ngày bắt đầu (bắt buộc khi range=custom). Định dạng: Y-m-d', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date'))]
     #[OA\Parameter(name: 'end_date', description: 'Ngày kết thúc (bắt buộc khi range=custom). Định dạng: Y-m-d. Phải >= start_date', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date'))]
-    #[OA\Response(response: 200, description: 'Thành công - Trả về thông tin tổng hợp chi tiêu')]
+    #[OA\Response(
+        response: 200,
+        description: 'Thành công - Trả về thông tin tổng hợp chi tiêu',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'range_label', type: 'string', example: 'Tháng này'),
+                new OA\Property(property: 'total_amount', type: 'number', format: 'float', example: 1250000),
+                new OA\Property(property: 'total_count', type: 'integer', example: 25),
+                new OA\Property(property: 'breakdown', type: 'array', items: new OA\Items(
+                    properties: [
+                        new OA\Property(property: 'service', type: 'string', example: 'Ride'),
+                        new OA\Property(property: 'amount', type: 'number', format: 'float', example: 1250000),
+                        new OA\Property(property: 'count', type: 'integer', example: 25),
+                    ]
+                )),
+            ]
+        )
+    )]
     #[OA\Response(response: 401, description: 'Unauthorized - Token không hợp lệ hoặc đã hết hạn')]
     #[OA\Response(response: 422, description: 'Validation Error - Dữ liệu không hợp lệ')]
     public function viewSummary(ViewSpendingSummaryRequest $request): JsonResponse

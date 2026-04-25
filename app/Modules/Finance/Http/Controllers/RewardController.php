@@ -24,7 +24,23 @@ final class RewardController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Finance - Rewards']
     )]
-    #[OA\Response(response: 200, description: 'Thành công')]
+    #[OA\Response(
+        response: 200,
+        description: 'Thành công',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'total_points', type: 'integer', example: 1250),
+                new OA\Property(property: 'expiring_points', properties: [
+                    new OA\Property(property: 'points', type: 'integer', example: 100),
+                    new OA\Property(property: 'expiry_date', type: 'string', format: 'date', example: '2024-12-31'),
+                ], type: 'object'),
+                new OA\Property(property: 'tier', properties: [
+                    new OA\Property(property: 'current_tier', type: 'string', example: 'Gold'),
+                    new OA\Property(property: 'points_to_next_tier', type: 'integer', example: 250),
+                ], type: 'object'),
+            ]
+        )
+    )]
     public function overview(Request $request): JsonResponse
     {
         $result = $this->rewardService->getRewardOverview((string) $request->user()->id);

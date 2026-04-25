@@ -9,13 +9,13 @@ use Illuminate\Http\Request;
 final class ManageWalletDTO
 {
     public function __construct(
-        public readonly int $userId,
+        public readonly string $userId,
     ) {}
 
     public static function fromRequest(Request $request): self
     {
         return new self(
-            userId: (int) $request->user()->id
+            userId: (string) $request->user()->id
         );
     }
 }

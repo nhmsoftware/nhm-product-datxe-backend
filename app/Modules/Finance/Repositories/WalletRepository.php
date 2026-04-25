@@ -15,13 +15,13 @@ final class WalletRepository extends BaseRepository implements WalletRepositoryI
         return Wallet::class;
     }
 
-    public function findByUserId(int $userId): ?Wallet
+    public function findByUserId(string $userId): ?Wallet
     {
         /** @var Wallet|null */
         return $this->model->where('user_id', $userId)->first();
     }
 
-    public function firstOrCreateForUser(int $userId): Wallet
+    public function firstOrCreateForUser(string $userId): Wallet
     {
         /** @var Wallet */
         return $this->model->firstOrCreate(['user_id' => $userId], [

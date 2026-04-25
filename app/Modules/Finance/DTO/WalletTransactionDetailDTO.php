@@ -9,14 +9,14 @@ use Illuminate\Http\Request;
 final class WalletTransactionDetailDTO
 {
     public function __construct(
-        public readonly int $userId,
-        public readonly int $transactionId,
+        public readonly string $userId,
+        public readonly string $transactionId,
     ) {}
 
-    public static function fromRequest(Request $request, int $transactionId): self
+    public static function fromRequest(Request $request, string $transactionId): self
     {
         return new self(
-            userId: (int) $request->user()->id,
+            userId: (string) $request->user()->id,
             transactionId: $transactionId,
         );
     }

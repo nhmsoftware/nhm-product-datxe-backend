@@ -13,25 +13,25 @@ interface WalletTransactionRepositoryInterface extends BaseRepositoryInterface
     /**
      * Get recent transactions for a wallet
      */
-    public function getRecentByWalletId(int $walletId, int $limit = 10): Collection;
+    public function getRecentByWalletId(string $walletId, int $limit = 10): Collection;
 
     /**
      * Paginate transactions by wallet ID (UC-44)
      */
-    public function paginateByWalletId(int $walletId, int $page, int $limit): array;
+    public function paginateByWalletId(string $walletId, int $page, int $limit): array;
 
     /**
      * Get total topped up amount (UC-44)
      */
-    public function getTotalTopUp(int $walletId): float;
+    public function getTotalTopUp(string $walletId): float;
 
     /**
      * Get total used amount (fees, packages...) (UC-44)
      */
-    public function getTotalUsed(int $walletId): float;
+    public function getTotalUsed(string $walletId): float;
 
     /**
      * Find transaction by ID and wallet ID for security (UC-44 detail)
      */
-    public function findByIdAndWallet(int $transactionId, int $walletId): ?WalletTransaction;
+    public function findByIdAndWallet(string $transactionId, string $walletId): ?WalletTransaction;
 }

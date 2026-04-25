@@ -29,7 +29,20 @@ final class WalletController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Finance']
     )]
-    #[OA\Response(response: 200, description: 'Tải thông tin ví thành công')]
+    #[OA\Response(
+        response: 200,
+        description: 'Tải thông tin ví thành công',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'driver_status', properties: [
+                    new OA\Property(property: 'is_online', type: 'boolean', example: true),
+                    new OA\Property(property: 'label', type: 'string', example: 'Trực tuyến'),
+                ], type: 'object'),
+                new OA\Property(property: 'wallet', ref: '#/components/schemas/WalletResponse'),
+                new OA\Property(property: 'recent_transactions', type: 'array', items: new OA\Items(ref: '#/components/schemas/WalletTransactionResponse')),
+            ]
+        )
+    )]
     public function manage(Request $request): JsonResponse
     {
         $result = $this->walletService->getManageWalletData(
@@ -52,7 +65,28 @@ final class WalletController extends BaseController
     )]
     #[OA\Parameter(name: 'page', description: 'Trang hiện tại', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 1))]
     #[OA\Parameter(name: 'limit', description: 'Số bản ghi mỗi trang', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 10))]
-    #[OA\Response(response: 200, description: 'Tải thông tin ví tín dụng thành công')]
+    #[OA\Response(
+        response: 200,
+        description: 'Tải thông tin ví tín dụng thành công',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'wallet', properties: [
+                    new OA\Property(property: 'balance', type: 'number', format: 'float', example: 150000),
+                    new OA\Property(property: 'total_top_up', type: 'number', format: 'float', example: 500000),
+                    new OA\Property(property: 'total_used', type: 'number', format: 'float', example: 350000),
+                ], type: 'object'),
+                new OA\Property(property: 'history', properties: [
+                    new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/WalletTransactionResponse')),
+                    new OA\Property(property: 'meta', properties: [
+                        new OA\Property(property: 'current_page', type: 'integer', example: 1),
+                        new OA\Property(property: 'last_page', type: 'integer', example: 5),
+                        new OA\Property(property: 'per_page', type: 'integer', example: 10),
+                        new OA\Property(property: 'total', type: 'integer', example: 50),
+                    ], type: 'object'),
+                ], type: 'object'),
+            ]
+        )
+    )]
     public function viewCreditWallet(ViewCreditWalletRequest $request): JsonResponse
     {
         $result = $this->walletService->viewCreditWallet(
@@ -74,12 +108,16 @@ final class WalletController extends BaseController
         tags: ['Finance']
     )]
     #[OA\Parameter(name: 'transactionId', description: 'ID giao dịch', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
-    #[OA\Response(response: 200, description: 'Tải chi tiết giao dịch thành công')]
+    #[OA\Response(
+        response: 200,
+        description: 'Tải chi tiết giao dịch thành công',
+        content: new OA\JsonContent(ref: '#/components/schemas/WalletTransactionResponse')
+    )]
     #[OA\Response(response: 404, description: 'Không tìm thấy giao dịch')]
     public function getTransactionDetail(int $transactionId, Request $request): JsonResponse
     {
         $result = $this->walletService->getTransactionDetail(
-            WalletTransactionDetailDTO::fromRequest($request, $transactionId)
+            WalletTransactionDetailDTO::fromRequest($request, (string) $transactionId)
         );
 
         if ($result->isError()) {
@@ -106,7 +144,11 @@ final class WalletController extends BaseController
             ]
         )
     )]
-    #[OA\Response(response: 200, description: 'Khởi tạo giao dịch nạp tiền thành công')]
+    #[OA\Response(
+        response: 200,
+        description: 'Khởi tạo giao dịch nạp tiền thành công',
+        content: new OA\JsonContent(ref: '#/components/schemas/TopUpResponse')
+    )]
     public function initiateTopUp(InitiateTopUpRequest $request): JsonResponse
     {
         $result = $this->walletService->initiateTopUp(

@@ -10,6 +10,7 @@ use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Ride;
 use Carbon\CarbonInterface;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class RideRepository extends BaseRepository implements RideRepositoryInterface
@@ -317,46 +318,44 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         return $this->model->create($data);
     }
 
-    public function findAvailableScheduledRides(int $vehicleType, array $filters): \Illuminate\Support\Collection
+    public function findAvailableScheduledRides(int $vehicleType, array $filters): Collection
     {
         $query = $this->model->newQuery()
-            ->where('status', \App\Modules\Ride\Model\Enums\RideStatus::PENDING->value)
+            ->where('status', RideStatus::PENDING->value)
             ->where('vehicle_type', $vehicleType)
             // Lọc ra các đơn mà tài xế đã từ chối trước đó (nếu có lưu vết)
             ->whereNotExists(function ($q) use ($filters) {
                 $q->select(DB::raw(1))
-                    ->from('ride_dispatches')
-                    ->whereColumn('ride_dispatches.ride_id', 'rides.id')
-                    ->where('ride_dispatches.driver_id', $filters['driver_id'] ?? null)
-                    ->where('ride_dispatches.status', 3); // 3: Rejected
+                    ->from('ride_rejects')
+                    ->whereRaw('ride_rejects.ride_id = rides.id::text')
+                    ->whereRaw('ride_rejects.driver_id = ?', [(string) ($filters['driverId'] ?? '')]);
             });
 
-        if (!empty($filters['travel_date'])) {
-            $query->whereDate('travel_date', $filters['travel_date']);
+        $startDate = $filters['travelDate'] ?? now()->toDateString();
+        $query->where('travel_date', '>=', (string) $startDate);
+
+        if (!empty($filters['travelTime'])) {
+            $query->where('travel_time', '>=', (string) $filters['travelTime']);
         }
 
-        if (!empty($filters['travel_time'])) {
-            $query->where('travel_time', '>=', $filters['travel_time']);
+        if (!empty($filters['rideType'])) {
+            $query->where('ride_type', $filters['rideType']);
         }
 
-        if (!empty($filters['ride_type'])) {
-            $query->where('ride_type', $filters['ride_type']);
+        if (isset($filters['minPrice'])) {
+            $query->where('total_price', '>=', $filters['minPrice']);
         }
 
-        if (isset($filters['min_price'])) {
-            $query->where('total_price', '>=', $filters['min_price']);
+        if (isset($filters['maxPrice'])) {
+            $query->where('total_price', '<=', $filters['maxPrice']);
         }
 
-        if (isset($filters['max_price'])) {
-            $query->where('total_price', '<=', $filters['max_price']);
+        if (!empty($filters['pickupArea'])) {
+            $query->where('pickup_address', 'like', '%' . $filters['pickupArea'] . '%');
         }
 
-        if (!empty($filters['pickup_area'])) {
-            $query->where('pickup_address', 'like', '%' . $filters['pickup_area'] . '%');
-        }
-
-        if (!empty($filters['destination_area'])) {
-            $query->where('destination_address', 'like', '%' . $filters['destination_area'] . '%');
+        if (!empty($filters['destinationArea'])) {
+            $query->where('destination_address', 'like', '%' . $filters['destinationArea'] . '%');
         }
 
         return $query->orderBy('travel_date')->orderBy('travel_time')->get();
@@ -365,18 +364,30 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function findAvailableById(string $rideId): ?Ride
     {
         /** @var Ride|null */
-        return $this->model->where('id', $rideId)
-            ->where('status', \App\Modules\Ride\Model\Enums\RideStatus::PENDING->value)
+        return $this->model->whereRaw('id = ?::bigint', [$rideId])
+            ->where('status', RideStatus::PENDING->value)
             ->first();
     }
 
-    public function findDriverAcceptedRides(string $driverId): \Illuminate\Support\Collection
+    /**
+     * Ghi đè findById để ép kiểu bigint an toàn trên PostgreSQL
+     */
+    public function findById(string|int $id, array $columns = ['*'], array $relations = []): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->with($relations)
+            ->select($columns)
+            ->whereRaw('id = ?::bigint', [(string) $id])
+            ->first();
+    }
+
+    public function findDriverAcceptedRides(string $driverId): Collection
     {
         return $this->model->with(['customer'])
             ->where('driver_id', $driverId)
             ->whereNotIn('status', [
-                \App\Modules\Ride\Model\Enums\RideStatus::COMPLETED->value,
-                \App\Modules\Ride\Model\Enums\RideStatus::CANCELLED->value
+                RideStatus::COMPLETED->value,
+                RideStatus::CANCELLED->value
             ])
             ->orderBy('travel_date')
             ->orderBy('travel_time')

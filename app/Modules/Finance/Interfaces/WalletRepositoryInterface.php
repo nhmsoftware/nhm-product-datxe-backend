@@ -12,10 +12,10 @@ interface WalletRepositoryInterface extends BaseRepositoryInterface
     /**
      * Find wallet by user ID
      */
-    public function findByUserId(int $userId): ?Wallet;
+    public function findByUserId(string $userId): ?Wallet;
 
     /**
      * Create wallet for user if not exists
      */
-    public function firstOrCreateForUser(int $userId): Wallet;
+    public function firstOrCreateForUser(string $userId): Wallet;
 }
