@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             AirportSeeder::class,
+            SubscriptionPackageSeeder::class,
         ]);
     }
 }

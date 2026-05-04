@@ -21,6 +21,7 @@ final class SubscriptionPackage extends Model
     ];
 
     protected $casts = [
+        'id'                            => 'string',
         'price'                         => 'float',
         'duration_days'                 => 'integer',
         'service_fee_reduction_percent' => 'float',

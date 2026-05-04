@@ -22,6 +22,7 @@ final class DriverSubscription extends Model
     ];
 
     protected $casts = [
+        'id'         => 'string',
         'driver_id'  => 'string',
         'package_id' => 'string',
         'started_at' => 'datetime',

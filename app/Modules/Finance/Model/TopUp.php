@@ -22,6 +22,7 @@ final class TopUp extends Model
     ];
 
     protected $casts = [
+        'id'        => 'string',
         'user_id'   => 'string',
         'wallet_id' => 'string',
         'amount'    => 'float',

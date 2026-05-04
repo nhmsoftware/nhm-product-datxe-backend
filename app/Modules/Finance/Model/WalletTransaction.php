@@ -25,6 +25,7 @@ final class WalletTransaction extends Model
     ];
 
     protected $casts = [
+        'id'             => 'string',
         'wallet_id'      => 'string',
         'type'           => WalletTransactionType::class,
         'amount'         => 'float',

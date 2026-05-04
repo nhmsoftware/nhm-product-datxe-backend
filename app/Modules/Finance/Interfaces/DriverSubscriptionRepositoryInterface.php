@@ -12,10 +12,10 @@ interface DriverSubscriptionRepositoryInterface extends BaseRepositoryInterface
     /**
      * Get active subscription for a driver
      */
-    public function getActiveByDriverId(int $driverId): ?DriverSubscription;
+    public function getActiveByDriverId(string $driverId): ?DriverSubscription;
 
     /**
      * Check if driver already has an active subscription
      */
-    public function hasActiveSubscription(int $driverId): bool;
+    public function hasActiveSubscription(string $driverId): bool;
 }

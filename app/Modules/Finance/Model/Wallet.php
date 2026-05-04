@@ -20,6 +20,7 @@ final class Wallet extends Model
     ];
 
     protected $casts = [
+        'id'              => 'string',
         'user_id'         => 'string', // Always cast BigInt ID to string for Frontend
         'balance'         => 'float',
         'total_earned'    => 'float',

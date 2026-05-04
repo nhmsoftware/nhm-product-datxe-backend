@@ -15,7 +15,7 @@ final class DriverSubscriptionRepository extends BaseRepository implements Drive
         return DriverSubscription::class;
     }
 
-    public function getActiveByDriverId(int $driverId): ?DriverSubscription
+    public function getActiveByDriverId(string $driverId): ?DriverSubscription
     {
         /** @var DriverSubscription|null */
         return $this->model
@@ -25,7 +25,7 @@ final class DriverSubscriptionRepository extends BaseRepository implements Drive
             ->first();
     }
 
-    public function hasActiveSubscription(int $driverId): bool
+    public function hasActiveSubscription(string $driverId): bool
     {
         return $this->model
             ->where('driver_id', $driverId)
