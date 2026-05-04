@@ -285,6 +285,54 @@
 
 # ---G2: Service
 
+## Các enums trong module này
+
+### RideType
+```
+1: City (Nội thành)
+2: Intercity (Đi tỉnh)
+3: Airport (Sân bay)
+```
+
+## rides
+```
+    # note
+    - Bảng rides quản lý thông tin các chuyến xe (Nội thành và Liên tỉnh).
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - customer_id (unsigned bigint, FK -> users)
+    - driver_id (unsigned bigint, nullable, FK -> users)
+    - pickup_address (varchar 255)
+    - pickup_lat (decimal 10,7)
+    - pickup_lng (decimal 10,7)
+    - destination_address (varchar 255)
+    - destination_lat (decimal 10,7)
+    - destination_lng (decimal 10,7)
+    - distance (unsigned bigint) -- Khoảng cách (mét)
+    - duration (unsigned bigint) -- Thời gian (giây)
+    - vehicle_type (unsigned tinyint) -- Loại xe (VehicleType)
+    - ride_type (unsigned tinyint) -- Loại chuyến đi (RideType)
+    - travel_date (date, nullable) -- Ngày đi (cho đi tỉnh/sân bay)
+    - travel_time (time, nullable) -- Giờ đi (cho đi tỉnh/sân bay)
+    - airport_id (unsigned bigint, nullable) -- FK -> airports
+    - airport_direction (unsigned tinyint, nullable) -- 1: To Airport, 2: From Airport
+    - status (unsigned tinyint) -- Trạng thái (RideStatus)
+    - base_price (decimal 15,2)
+    - distance_price (decimal 15,2)
+    - total_price (decimal 15,2)
+    - voucher_code (varchar 50, nullable)
+    - discount_amount (decimal 15,2)
+    - is_paid (boolean)
+    - timestamps
+    - softDeletes
+
+    # index
+    - index(customer_id, status)
+    - index(driver_id, status)
+    - index(ride_type, travel_date)
+```
+
 # ---G3: Finance
 
 ## Các enums trong module này
@@ -395,6 +443,110 @@
     - index(reference_type, reference_id)
 ```
 
+## wallets
+```
+    # note
+    - Bảng wallets quản lý số dư tiền thực của người dùng (Customer hoặc Driver).
+    - Driver dùng ví này để nhận tiền thu nhập và thanh toán phí.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - user_id (unsigned bigint, not null, FK -> users.id)
+    - balance (decimal 15,2, default 0) -- Số dư hiện tại khả dụng
+    - total_earned (decimal 15,2, default 0) -- Tổng thu nhập đã nhận
+    - total_withdrawn (decimal 15,2, default 0) -- Tổng tiền đã rút
+    - timestamps
+    - softDeletes
+
+    # index
+    - UNIQUE (user_id)
+```
+
+## wallet_transactions
+```
+    # note
+    - Bảng wallet_transactions ghi lại lịch sử biến động số dư ví.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - wallet_id (unsigned bigint, FK -> wallets.id)
+    - type (unsigned tinyint) -- Loại giao dịch (WalletTransactionType)
+    - amount (decimal 15,2) -- Số tiền (dương cho cộng, âm cho trừ)
+    - balance_before (decimal 15,2)
+    - balance_after (decimal 15,2)
+    - description (varchar 255)
+    - reference_type (varchar 255, nullable) -- Polytmorphic reference (Ride, TopUp, etc.)
+    - reference_id (unsigned bigint, nullable)
+    - timestamps
+    - softDeletes
+
+    # index
+    - index(wallet_id)
+    - index(reference_type, reference_id)
+```
+
+## top_ups
+```
+    # note
+    - Bảng top_ups lưu trữ các phiên nạp tiền qua cổng thanh toán trước khi cập nhật vào ví.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - user_id (unsigned bigint, not null, FK -> users.id)
+    - wallet_id (unsigned bigint, not null, FK -> wallets.id)
+    - amount (decimal 15,2)
+    - status (varchar 20) -- pending, success, failed, cancelled
+    - payment_method (varchar 50) -- momo, vnpay, card...
+    - external_id (varchar 255, nullable) -- Mã giao dịch từ Payment Gateway
+    - metadata (json, nullable) -- Thông tin phản hồi từ Gateway
+    - timestamps
+    - softDeletes
+
+    # index
+    - index(user_id)
+    - index(wallet_id)
+    - index(status)
+    - index(external_id)
+```
+
+## subscription_packages
+```
+    # note
+    - Danh sách các gói thành viên dành cho Driver.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - name (varchar 255)
+    - description (text, nullable)
+    - price (decimal 15,2)
+    - duration_days (unsigned int)
+    - service_fee_reduction_percent (decimal 5,2)
+    - is_active (boolean, default true)
+    - timestamps
+    - softDeletes
+```
+
+## driver_subscriptions
+```
+    # note
+    - Lưu trữ thông tin đăng ký gói của Driver.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - driver_id (unsigned bigint, FK -> users.id)
+    - package_id (unsigned bigint, FK -> subscription_packages.id)
+    - started_at (timestamp)
+    - expires_at (timestamp)
+    - status (varchar 20) -- active, expired, cancelled
+    - price_paid (decimal 15,2)
+    - timestamps
+    - softDeletes
+
+    # index
+    - index(driver_id)
+    - index(driver_id, status)
+```
+
 # ---G5: System - Shared
 **Các enums trong module này**
 
@@ -439,3 +591,18 @@
     ### index
     - index(fileable_type, fileable_id) -- index cho polymorphic relation
     - timestamps
+
+## airports
+```
+    # note
+    - Bảng airports lưu trữ danh sách các sân bay được hỗ trợ.
+
+    # cấu trúc
+    - id (unsigned bigint, auto increment, primary key)
+    - name (varchar 255) -- Tên sân bay
+    - code (varchar 10) -- Mã sân bay (Vd: HAN, SGN)
+    - lat (decimal 10,7)
+    - lng (decimal 10,7)
+    - is_active (boolean)
+    - timestamps
+```

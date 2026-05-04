@@ -395,5 +395,72 @@ class Schemas
             new OA\Property(property: 'total_fare', type: 'number', format: 'float', example: 35000),
         ]
     )]
-    public static function priceEstimateResponse(): void {}
+    /**
+     * Wallet Response Schema
+     */
+    #[OA\Schema(
+        schema: 'WalletResponse',
+        description: 'Thông tin ví tiền',
+        properties: [
+            new OA\Property(property: 'id', type: 'string', example: '1'),
+            new OA\Property(property: 'balance', type: 'number', format: 'float', example: 150000),
+            new OA\Property(property: 'total_earned', type: 'number', format: 'float', example: 2000000),
+            new OA\Property(property: 'total_withdrawn', type: 'number', format: 'float', example: 1000000),
+        ]
+    )]
+    public static function walletResponse(): void {}
+
+    /**
+     * Wallet Transaction Response Schema
+     */
+    #[OA\Schema(
+        schema: 'WalletTransactionResponse',
+        description: 'Thông tin giao dịch ví tiền',
+        properties: [
+            new OA\Property(property: 'id', type: 'string', example: '123'),
+            new OA\Property(property: 'amount', type: 'number', format: 'float', example: 50000),
+            new OA\Property(property: 'type', type: 'string', example: 'top_up', description: 'Loại: top_up, fee, withdrawal, refund'),
+            new OA\Property(property: 'type_label', type: 'string', example: 'Nạp tiền'),
+            new OA\Property(property: 'symbol', type: 'string', example: '+'),
+            new OA\Property(property: 'balance_before', type: 'number', format: 'float', example: 100000),
+            new OA\Property(property: 'balance_after', type: 'number', format: 'float', example: 150000),
+            new OA\Property(property: 'description', type: 'string', example: 'Nạp tiền qua MoMo'),
+            new OA\Property(property: 'reference_type', type: 'string', example: 'TopUp'),
+            new OA\Property(property: 'reference_id', type: 'string', example: '456'),
+            new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
+            new OA\Property(property: 'status', type: 'string', example: 'Thành công'),
+        ]
+    )]
+    public static function walletTransactionResponse(): void {}
+
+    /**
+     * Subscription Package Response Schema
+     */
+    #[OA\Schema(
+        schema: 'SubscriptionPackageResponse',
+        description: 'Thông tin gói thành viên',
+        properties: [
+            new OA\Property(property: 'id', type: 'string', example: '1'),
+            new OA\Property(property: 'name', type: 'string', example: 'Gói VIP Tháng'),
+            new OA\Property(property: 'description', type: 'string', example: 'Giảm 50% phí dịch vụ'),
+            new OA\Property(property: 'price', type: 'number', format: 'float', example: 100000),
+            new OA\Property(property: 'duration_days', type: 'integer', example: 30),
+            new OA\Property(property: 'service_fee_reduction_percent', type: 'number', format: 'float', example: 50.0),
+        ]
+    )]
+    public static function subscriptionPackageResponse(): void {}
+
+    /**
+     * Top Up Response Schema
+     */
+    #[OA\Schema(
+        schema: 'TopUpResponse',
+        description: 'Thông tin khởi tạo nạp tiền',
+        properties: [
+            new OA\Property(property: 'top_up_id', type: 'string', example: '789'),
+            new OA\Property(property: 'external_id', type: 'string', example: 'TX-123456'),
+            new OA\Property(property: 'redirect_url', type: 'string', example: 'https://payment.momo.vn/...'),
+        ]
+    )]
+    public static function topUpResponse(): void {}
 }

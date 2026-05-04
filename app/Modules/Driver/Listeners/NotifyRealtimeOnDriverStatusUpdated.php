@@ -19,7 +19,7 @@ final class NotifyRealtimeOnDriverStatusUpdated implements ShouldQueue
         try {
             $payload = [
                 'event'     => 'driver.status.updated',
-                'user_id'   => $event->userId,
+                'user_id'   => (string) $event->userId,
                 'status'    => $event->status,
                 'occurred_at' => now()->toIso8601String(),
             ];

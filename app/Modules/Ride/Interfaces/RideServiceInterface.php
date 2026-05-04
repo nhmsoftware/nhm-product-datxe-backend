@@ -63,12 +63,37 @@ interface RideServiceInterface
     /**
      * UC-28: Khách hàng yêu cầu hủy chuyến.
      */
-    public function requestCancellation(RequestRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
+    public function requestCancellation(\App\Modules\Ride\DTO\RequestRideCancellationDTO $dto): ServiceReturn;
 
     /**
      * UC-28: Tài xế phản hồi yêu cầu hủy chuyến.
      */
-    public function respondToCancellation(RespondRideCancellationDTO $dto): \App\Core\Services\ServiceReturn;
+    public function respondToCancellation(RespondRideCancellationDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Xem thông tin theo dõi chuyến xe (Customer).
+     */
+    public function showTracking(\App\Modules\Ride\DTO\ShowRideTrackingDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Tài xế chấp nhận yêu cầu theo dõi (Bắt đầu tracking).
+     */
+    public function acceptTracking(\App\Modules\Ride\DTO\AcceptRideTrackingDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Cập nhật vị trí tài xế realtime.
+     */
+    public function updateDriverLocation(\App\Modules\Ride\DTO\UpdateDriverLocationDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Đánh dấu tài xế đã đến điểm đón.
+     */
+    public function markDriverArrived(\App\Modules\Ride\DTO\MarkDriverArrivedDTO $dto): ServiceReturn;
+
+    /**
+     * UC-13: Tài xế hủy chuyến trong quá trình tracking.
+     */
+    public function cancelByDriver(\App\Modules\Ride\DTO\DriverCancelRideDTO $dto): ServiceReturn;
 
     /**
      * Xác nhận đặt xe (UC-12).
@@ -84,4 +109,49 @@ interface RideServiceInterface
      * @return ServiceReturn
      */
     public function cancelRide(CancelRideDTO $dto): ServiceReturn;
+
+    /**
+     * Đặt xe đi tỉnh (UC-26).
+     */
+    public function createIntercity(\App\Modules\Ride\DTO\CreateIntercityRideDTO $dto): ServiceReturn;
+
+    /**
+     * Đặt xe sân bay (UC-27).
+     */
+    public function createAirport(\App\Modules\Ride\DTO\CreateAirportRideDTO $dto): ServiceReturn;
+
+    /**
+     * Xem chi tiết chuyến xe (UC-29).
+     */
+    public function getRideDetail(string $rideId, string $customerId): ServiceReturn;
+
+    /**
+     * Tài xế xem danh sách chuyến xe đặt trước (UC-47).
+     */
+    public function getAvailableScheduledRides(\App\Modules\Ride\DTO\FilterScheduledRideDTO $dto): ServiceReturn;
+
+    /**
+     * Tài xế xem chi tiết chuyến xe đặt trước (UC-48).
+     */
+    public function getScheduledRideDetail(string $rideId, string $driverId): ServiceReturn;
+
+    /**
+     * Tài xế nhận chuyến xe đặt trước (UC-49).
+     */
+    public function acceptScheduledRide(string $rideId, string $driverId): ServiceReturn;
+
+    /**
+     * Tài xế hủy chuyến xe đặt trước (UC-50).
+     */
+    public function driverCancelScheduledRide(\App\Modules\Ride\DTO\DriverCancelRideDTO $dto): ServiceReturn;
+
+    /**
+     * Tài xế quản lý danh sách chuyến xe đã nhận (UC-51).
+     */
+    public function getDriverManagedRides(string $driverId): ServiceReturn;
+
+    /**
+     * Lấy danh sách sân bay hỗ trợ (UC-27).
+     */
+    public function getAirports(): ServiceReturn;
 }

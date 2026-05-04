@@ -1301,7 +1301,47 @@
                 "operationId": "514ccb6726bd0b32f62e15a50c5c3d63",
                 "responses": {
                     "200": {
-                        "description": "Thành công"
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_points": {
+                                            "type": "integer",
+                                            "example": 1250
+                                        },
+                                        "expiring_points": {
+                                            "properties": {
+                                                "points": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "expiry_date": {
+                                                    "type": "string",
+                                                    "format": "date",
+                                                    "example": "2024-12-31"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "tier": {
+                                            "properties": {
+                                                "current_tier": {
+                                                    "type": "string",
+                                                    "example": "Gold"
+                                                },
+                                                "points_to_next_tier": {
+                                                    "type": "integer",
+                                                    "example": 250
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1462,13 +1502,132 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Thành công - Trả về thông tin tổng hợp chi tiêu"
+                        "description": "Thành công - Trả về thông tin tổng hợp chi tiêu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "range_label": {
+                                            "type": "string",
+                                            "example": "Tháng này"
+                                        },
+                                        "total_amount": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 1250000
+                                        },
+                                        "total_count": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "breakdown": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "service": {
+                                                        "type": "string",
+                                                        "example": "Ride"
+                                                    },
+                                                    "amount": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 1250000
+                                                    },
+                                                    "count": {
+                                                        "type": "integer",
+                                                        "example": 25
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Unauthorized - Token không hợp lệ hoặc đã hết hạn"
                     },
                     "422": {
                         "description": "Validation Error - Dữ liệu không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/subscriptions/packages": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Danh sách gói thành viên (UC-46)",
+                "description": "Lấy danh sách các gói thành viên đang hoạt động dành cho tài xế.",
+                "operationId": "8f3d568aebefe6783f2b1aa669033ffc",
+                "responses": {
+                    "200": {
+                        "description": "Tải danh sách gói thành viên thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/SubscriptionPackageResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/subscriptions/register": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Đăng ký gói thành viên (UC-46)",
+                "description": "Đăng ký một gói thành viên mới bằng cách sử dụng số dư ví tín dụng. package_id phải lấy từ danh sách gói thành viên hợp lệ từ API /api/v1/finance/subscriptions/packages.",
+                "operationId": "1bbf4f65caa6514054936157735a09ff",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "package_id"
+                                ],
+                                "properties": {
+                                    "package_id": {
+                                        "description": "ID của gói thành viên lấy từ API danh sách gói",
+                                        "type": "string",
+                                        "example": "1"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng ký gói thành viên thành công"
+                    },
+                    "400": {
+                        "description": "Số dư không đủ hoặc đã có gói hoạt động"
+                    },
+                    "404": {
+                        "description": "Gói không tồn tại hoặc không còn hiệu lực"
                     }
                 },
                 "security": [
@@ -1617,6 +1776,290 @@
                         "sanctum": []
                     }
                 ]
+            }
+        },
+        "/api/v1/finance/wallet/manage": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Xem tổng quan ví (UC-43)",
+                "description": "Lấy thông tin tổng quan về ví của tài xế bao gồm số dư, thu nhập và giao dịch gần đây.",
+                "operationId": "f76f6db5e1b392e5b5e31d92518fc481",
+                "responses": {
+                    "200": {
+                        "description": "Tải thông tin ví thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "driver_status": {
+                                            "properties": {
+                                                "is_online": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "label": {
+                                                    "type": "string",
+                                                    "example": "Trực tuyến"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "wallet": {
+                                            "$ref": "#/components/schemas/WalletResponse"
+                                        },
+                                        "recent_transactions": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WalletTransactionResponse"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/wallet/credit": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Xem ví tín dụng & lịch sử (UC-44)",
+                "description": "Xem chi tiết số dư ví tín dụng và lịch sử giao dịch phân trang.",
+                "operationId": "daf93672fd4a8e49c6ba0240b11f48ca",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Trang hiện tại",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Số bản ghi mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 10
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tải thông tin ví tín dụng thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "wallet": {
+                                            "properties": {
+                                                "balance": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 150000
+                                                },
+                                                "total_top_up": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 500000
+                                                },
+                                                "total_used": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 350000
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "history": {
+                                            "properties": {
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "$ref": "#/components/schemas/WalletTransactionResponse"
+                                                    }
+                                                },
+                                                "meta": {
+                                                    "properties": {
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "last_page": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 50
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/wallet/transactions/{transactionId}": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Chi tiết giao dịch (UC-44)",
+                "description": "Xem chi tiết một giao dịch ví cụ thể.",
+                "operationId": "05deab772301a556f865e44170a687b6",
+                "parameters": [
+                    {
+                        "name": "transactionId",
+                        "in": "path",
+                        "description": "ID giao dịch",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tải chi tiết giao dịch thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/WalletTransactionResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy giao dịch"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/wallet/top-up": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Nạp tiền (UC-45)",
+                "description": "Khởi tạo yêu cầu nạp tiền vào ví tín dụng qua cổng thanh toán.",
+                "operationId": "fb7198f3efe954be3c7bd1303d23d047",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "amount",
+                                    "payment_method"
+                                ],
+                                "properties": {
+                                    "amount": {
+                                        "type": "number",
+                                        "example": 50000
+                                    },
+                                    "payment_method": {
+                                        "type": "string",
+                                        "example": "momo"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Khởi tạo giao dịch nạp tiền thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/TopUpResponse"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/wallet/top-up/callback": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Callback nạp tiền (UC-45 Callback)",
+                "description": "Nhận phản hồi từ cổng thanh toán để cập nhật trạng thái nạp tiền (Dùng cho Gateway callback hoặc Mock).",
+                "operationId": "3a944811ed10bda01c7cd17c70dfc828",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "external_id"
+                                ],
+                                "properties": {
+                                    "external_id": {
+                                        "type": "string",
+                                        "example": "TX-123456"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "success"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Xử lý kết quả nạp tiền thành công"
+                    }
+                }
             }
         },
         "/api/v1/homepage": {
@@ -2332,6 +2775,619 @@
                 "responses": {
                     "200": {
                         "description": "Yêu cầu đã được gửi hoặc hủy thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/tracking": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Xem theo dõi chuyến xe (UC-13)",
+                "description": "Xem thông tin theo dõi chuyến xe realtime cho khách hàng.",
+                "operationId": "c7cedea462cbdd6668ad8a14e8d7cc13",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thông tin theo dõi chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/tracking/accept": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Tài xế chấp nhận yêu cầu theo dõi (UC-13)",
+                "operationId": "a73dee68358f4ea30c263e4aec4dc7a5",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chấp nhận theo dõi thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/tracking/location": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Cập nhật vị trí tài xế realtime (UC-13)",
+                "operationId": "4907e336b85d9c94217221d8146a5a9a",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật vị trí thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/tracking/arrived": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Đánh dấu tài xế đã đến điểm đón (UC-13)",
+                "operationId": "cbd56ade3bfb6b38fe1745f5f0f0f75c",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật trạng thái thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/tracking/driver-cancel": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Tài xế hủy chuyến trong quá trình tracking (UC-13)",
+                "operationId": "2fc713d436109b246da3f3f8259a2664",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hủy chuyến thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/intercity": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Đặt xe đi tỉnh (UC-26)",
+                "operationId": "6ebb0ae3fd0db0bbc24a16e87f4860ae",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pickup_address": {
+                                        "type": "string",
+                                        "example": "Hà Nội"
+                                    },
+                                    "pickup_lat": {
+                                        "type": "number",
+                                        "example": 21.0285
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "example": 105.8542
+                                    },
+                                    "destination_address": {
+                                        "type": "string",
+                                        "example": "Hải Phòng"
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "example": 20.8449
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "example": 106.6881
+                                    },
+                                    "travel_date": {
+                                        "type": "string",
+                                        "example": "2024-05-01"
+                                    },
+                                    "travel_time": {
+                                        "type": "string",
+                                        "example": "08:00"
+                                    },
+                                    "vehicle_type": {
+                                        "description": "2: CAR_4_SEATS, 3: CAR_7_SEATS, 4: CAR_9_SEATS, 5: CAR_SHARED",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "voucher_code": {
+                                        "type": "string",
+                                        "example": "DISCOUNT10"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đặt xe thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/airport": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Đặt xe sân bay (UC-27)",
+                "operationId": "44f127c36b6c34c1fcea4f81a40e571c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pickup_address": {
+                                        "type": "string",
+                                        "example": "Hà Nội"
+                                    },
+                                    "pickup_lat": {
+                                        "type": "number",
+                                        "example": 21.0285
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "example": 105.8542
+                                    },
+                                    "destination_address": {
+                                        "type": "string",
+                                        "example": "Sân bay Nội Bài"
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "example": 21.2129
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "example": 105.8042
+                                    },
+                                    "travel_date": {
+                                        "type": "string",
+                                        "example": "2024-05-01"
+                                    },
+                                    "travel_time": {
+                                        "type": "string",
+                                        "example": "08:00"
+                                    },
+                                    "vehicle_type": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "airport_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "airport_direction": {
+                                        "description": "1: To Airport, 2: From Airport",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "voucher_code": {
+                                        "type": "string",
+                                        "example": "DISCOUNT10"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đặt xe thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}/cancel-response": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Phản hồi yêu cầu hủy (UC-28 Driver Response)",
+                "description": "Tài xế phản hồi yêu cầu hủy chuyến của khách hàng (Đồng ý/Từ chối).",
+                "operationId": "9d4b3d2d32e1228ccd717134d9fe48a8",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_approved": {
+                                        "description": "true: Đồng ý hủy, false: Từ chối hủy",
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Phản hồi thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/{rideId}": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Xem chi tiết chuyến xe (UC-29)",
+                "description": "Xem chi tiết chuyến xe (UC-29). Trả về thông tin đầy đủ kèm tài xế nếu có.",
+                "operationId": "c4b2f2b4a23d38f2468c0d93fe2afc24",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy thông tin thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/scheduled-rides": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Danh sách chuyến xe đặt trước cho tài xế (UC-47)",
+                "description": "Tài xế xem danh sách các chuyến xe đặt trước phù hợp với loại xe đã đăng ký (UC-47).",
+                "operationId": "903d902489bae51b6c64ec8aa399191e",
+                "parameters": [
+                    {
+                        "name": "travel_date",
+                        "in": "query",
+                        "description": "Ngày đi (Y-m-d)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "travel_time",
+                        "in": "query",
+                        "description": "Giờ đi (H:i)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ride_type",
+                        "in": "query",
+                        "description": "Loại chuyến (1: Nội thành, 2: Đi tỉnh, 3: Sân bay)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "min_price",
+                        "in": "query",
+                        "description": "Giá tối thiểu",
+                        "required": false,
+                        "schema": {
+                            "type": "number"
+                        }
+                    },
+                    {
+                        "name": "max_price",
+                        "in": "query",
+                        "description": "Giá tối đa",
+                        "required": false,
+                        "schema": {
+                            "type": "number"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/scheduled-rides/{rideId}": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Chi tiết chuyến xe đặt trước cho tài xế (UC-48)",
+                "description": "Tài xế xem chi tiết một chuyến xe đặt trước (UC-48).",
+                "operationId": "23d46fe9cc6945074eb40521d4b95e92",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy chi tiết thành công"
+                    },
+                    "400": {
+                        "description": "Chuyến xe không còn khả dụng"
+                    },
+                    "403": {
+                        "description": "Không đủ điều kiện xem"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/scheduled-rides/{rideId}/accept": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Nhận chuyến xe đặt trước (UC-49)",
+                "description": "Tài xế nhận một chuyến xe đặt trước (UC-49).",
+                "operationId": "d1f44227e5eadb29de1aba9e008d8b40",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nhận chuyến thành công"
+                    },
+                    "400": {
+                        "description": "Không thể nhận chuyến"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/scheduled-rides/{rideId}/cancel": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Hủy chuyến xe đặt trước (UC-50 Driver)",
+                "description": "Tài xế hủy chuyến xe đặt trước đã nhận (UC-50). Chỉ được hủy trong thời gian quy định.",
+                "operationId": "071a7cc372d920c234ddacf7db2a0a3e",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Hỏng xe đột xuất"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hủy chuyến thành công"
+                    },
+                    "400": {
+                        "description": "Đã quá thời gian cho phép tự hủy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/managed-rides": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Danh sách chuyến xe đang quản lý của tài xế (UC-51)",
+                "description": "Tài xế xem danh sách các chuyến xe đã nhận và đang quản lý (UC-51).",
+                "operationId": "44d1296aaf80354d895aba1d46d31e5a",
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/airports": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Danh sách sân bay hỗ trợ (UC-27)",
+                "description": "Lấy danh sách các sân bay được hỗ trợ để đặt xe (UC-27).",
+                "operationId": "9fb257380cc121a39f76d25db105ae7d",
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách thành công"
                     }
                 },
                 "security": [
@@ -4356,7 +5412,7 @@
                 "description": "Thông tin ước tính giá cước",
                 "properties": {
                     "base_fare": {
-                        "description": "Price Estimate Response Schema",
+                        "description": "Wallet Response Schema",
                         "type": "number",
                         "format": "float",
                         "example": 15000
@@ -4390,6 +5446,142 @@
                         "type": "number",
                         "format": "float",
                         "example": 35000
+                    }
+                },
+                "type": "object"
+            },
+            "WalletResponse": {
+                "description": "Thông tin ví tiền",
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "example": "1"
+                    },
+                    "balance": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 150000
+                    },
+                    "total_earned": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 2000000
+                    },
+                    "total_withdrawn": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 1000000
+                    }
+                },
+                "type": "object"
+            },
+            "WalletTransactionResponse": {
+                "description": "Thông tin giao dịch ví tiền",
+                "properties": {
+                    "id": {
+                        "description": "Wallet Transaction Response Schema",
+                        "type": "string",
+                        "example": "123"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50000
+                    },
+                    "type": {
+                        "description": "Loại: top_up, fee, withdrawal, refund",
+                        "type": "string",
+                        "example": "top_up"
+                    },
+                    "type_label": {
+                        "type": "string",
+                        "example": "Nạp tiền"
+                    },
+                    "symbol": {
+                        "type": "string",
+                        "example": "+"
+                    },
+                    "balance_before": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100000
+                    },
+                    "balance_after": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 150000
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Nạp tiền qua MoMo"
+                    },
+                    "reference_type": {
+                        "type": "string",
+                        "example": "TopUp"
+                    },
+                    "reference_id": {
+                        "type": "string",
+                        "example": "456"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "Thành công"
+                    }
+                },
+                "type": "object"
+            },
+            "SubscriptionPackageResponse": {
+                "description": "Thông tin gói thành viên",
+                "properties": {
+                    "id": {
+                        "description": "Subscription Package Response Schema",
+                        "type": "string",
+                        "example": "1"
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Gói VIP Tháng"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Giảm 50% phí dịch vụ"
+                    },
+                    "price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 100000
+                    },
+                    "duration_days": {
+                        "type": "integer",
+                        "example": 30
+                    },
+                    "service_fee_reduction_percent": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50
+                    }
+                },
+                "type": "object"
+            },
+            "TopUpResponse": {
+                "description": "Thông tin khởi tạo nạp tiền",
+                "properties": {
+                    "top_up_id": {
+                        "description": "Top Up Response Schema",
+                        "type": "string",
+                        "example": "789"
+                    },
+                    "external_id": {
+                        "type": "string",
+                        "example": "TX-123456"
+                    },
+                    "redirect_url": {
+                        "type": "string",
+                        "example": "https://payment.momo.vn/..."
                     }
                 },
                 "type": "object"

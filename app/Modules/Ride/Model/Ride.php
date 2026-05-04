@@ -6,6 +6,8 @@ namespace App\Modules\Ride\Model;
 
 use App\Core\Traits\HasBigIntId;
 use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Model\Enums\RideType;
+use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\User\Model\User;
 use Illuminate\Database\Eloquent\Model;
@@ -25,6 +27,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $distance Distance in meters
  * @property int $duration Duration in seconds
  * @property VehicleType $vehicle_type
+ * @property RideType $ride_type
+ * @property string|null $travel_date
+ * @property string|null $travel_time
+ * @property string|null $airport_id
+ * @property int|null $airport_direction 1: To Airport, 2: From Airport
  * @property RideStatus $status 1: Draft, 2: Pending, 3: Accepted, 4: In Progress, 5: Completed, 6: Cancelled
  * @property numeric $base_price
  * @property numeric $distance_price
@@ -87,6 +94,11 @@ class Ride extends Model
         'distance',
         'duration',
         'vehicle_type',
+        'ride_type',
+        'travel_date',
+        'travel_time',
+        'airport_id',
+        'airport_direction',
         'status',
         'base_price',
         'distance_price',
@@ -95,11 +107,15 @@ class Ride extends Model
         'voucher_id',
         'voucher_code',
         'discount_amount',
+        'tracking_status',
         'is_paid',
         'cancel_reason',
         'cancellation_fee',
         'service_fee',
         'driver_earnings',
+        'driver_assigned_at',
+        'driver_arrived_at',
+        'tracking_last_ping_at',
         'started_at',
         'completed_at',
     ];
@@ -115,7 +131,13 @@ class Ride extends Model
         'distance' => 'integer',
         'duration' => 'integer',
         'vehicle_type' => VehicleType::class,
+        'ride_type' => RideType::class,
+        'travel_date' => 'date',
+        'travel_time' => 'string',
+        'airport_id' => 'string',
+        'airport_direction' => 'integer',
         'status' => RideStatus::class,
+        'tracking_status' => RideTrackingStatus::class,
         'base_price' => 'decimal:2',
         'distance_price' => 'decimal:2',
         'time_fare' => 'decimal:2',
@@ -125,6 +147,9 @@ class Ride extends Model
         'cancellation_fee' => 'decimal:2',
         'service_fee' => 'decimal:2',
         'driver_earnings' => 'decimal:2',
+        'driver_assigned_at' => 'datetime',
+        'driver_arrived_at' => 'datetime',
+        'tracking_last_ping_at' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
     ];

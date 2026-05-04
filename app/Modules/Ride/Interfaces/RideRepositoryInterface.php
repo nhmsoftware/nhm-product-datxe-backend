@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Ride\Interfaces;
 
 use App\Modules\Ride\Model\Ride;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
 interface RideRepositoryInterface
 {
@@ -17,6 +17,11 @@ interface RideRepositoryInterface
      * @return Ride|null
      */
     public function findByIdAndCustomer(string $rideId, string $customerId): ?Ride;
+
+    /**
+     * Tìm chi tiết chuyến xe kèm thông tin tài xế (UC-29).
+     */
+    public function findWithDriverDetail(string $rideId, string $customerId): ?Ride;
 
     /**
      * Áp dụng voucher vào chuyến đi — lưu mã, discount và giá cuối (UC-11 Normal Flow).
@@ -61,7 +66,7 @@ interface RideRepositoryInterface
      * @param Carbon $end
      * @return array{total_amount: float, total_count: int}
      */
-    public function getSpendingSummary(string $customerId, Carbon $start, Carbon $end): array;
+    public function getSpendingSummary(string $customerId, CarbonInterface $start, CarbonInterface $end): array;
 
     /**
      * Kiểm tra tài xế có chuyến đi nào đang diễn ra không (UC-31).
@@ -142,4 +147,68 @@ interface RideRepositoryInterface
      * @return Ride|null
      */
     public function findActiveByCustomer(string $customerId): ?Ride;
+
+    /**
+     * Tìm một ride cho việc tracking snapshot (UC-13).
+     */
+    public function findTrackingRideByIdAndCustomer(string $rideId, string $customerId): ?Ride;
+
+    /**
+     * Tài xế chấp nhận chuyến — gán driver_id và chuyển sang ACCEPTED.
+     */
+    public function assignDriver(string $rideId, string $driverId, CarbonInterface $acceptedAt): bool;
+
+    /**
+     * Tìm ride cho driver tracking snapshot (UC-13).
+     */
+    public function findTrackingRideByIdAndDriver(string $rideId, string $driverId): ?Ride;
+
+    /**
+     * Cập nhật timestamp lần cuối nhận tín hiệu từ tài xế (Heartbeat).
+     */
+    public function refreshTrackingHeartbeat(string $rideId, CarbonInterface $trackedAt): bool;
+
+    /**
+     * Tài xế đã đến điểm đón (UC-13).
+     */
+    public function markDriverArrived(string $rideId, CarbonInterface $arrivedAt): bool;
+
+    /**
+     * Tài xế hủy chuyến sau khi nhận — đưa ride về PENDING và xóa driver_id.
+     */
+    public function releaseDriverFromRide(string $rideId, ?string $reason): bool;
+
+    /**
+     * Đếm số lượng cuốc xe tài xế đã hủy trong ngày hôm nay.
+     */
+    public function countCancellationsToday(string $driverId): int;
+
+    /**
+     * Tạo chuyến xe đi tỉnh (UC-26).
+     */
+    public function createIntercityRide(array $data): \App\Modules\Ride\Model\Ride;
+
+    /**
+     * Tạo chuyến xe sân bay (UC-27).
+     */
+    public function createAirportRide(array $data): \App\Modules\Ride\Model\Ride;
+
+    /**
+     * Tìm danh sách chuyến xe đặt trước đang chờ tài xế (UC-47).
+     *
+     * @param int $vehicleType Loại xe của tài xế
+     * @param array $filters Bộ lọc tìm kiếm
+     * @return \Illuminate\Support\Collection
+     */
+    public function findAvailableScheduledRides(int $vehicleType, array $filters): \Illuminate\Support\Collection;
+
+    /**
+     * Tìm chuyến xe đang chờ tài xế theo ID (UC-48).
+     */
+    public function findAvailableById(string $rideId): ?\App\Modules\Ride\Model\Ride;
+
+    /**
+     * Tìm danh sách các chuyến xe mà tài xế đã nhận (UC-51).
+     */
+    public function findDriverAcceptedRides(string $driverId): \Illuminate\Support\Collection;
 }

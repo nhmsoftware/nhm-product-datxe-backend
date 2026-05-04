@@ -116,8 +116,8 @@ final class RideCommunicationService extends BaseService implements RideCommunic
 
                 $this->rideCommunicationRealtime->publish([
                     'event' => 'communication.chat.message.sent',
-                    'ride_id' => $ride->id,
-                    'room' => sprintf('ride:%d', $ride->id),
+                    'ride_id' => (string) $ride->id,
+                    'room' => sprintf('ride:%s', (string) $ride->id),
                     'sender_type' => $actorType->value,
                     'sender_type_label' => $actorType->getLabel(),
                     'message' => $this->mapMessage($latestMessage),
@@ -168,8 +168,8 @@ final class RideCommunicationService extends BaseService implements RideCommunic
 
                 $this->rideCommunicationRealtime->publish([
                     'event' => 'communication.call.initiated',
-                    'ride_id' => $ride->id,
-                    'room' => sprintf('ride:%d', $ride->id),
+                    'ride_id' => (string) $ride->id,
+                    'room' => sprintf('ride:%s', (string) $ride->id),
                     'caller_type' => $actorType->value,
                     'caller_type_label' => $actorType->getLabel(),
                     'call' => $this->mapCall($callLog, $counterpart),
@@ -229,8 +229,8 @@ final class RideCommunicationService extends BaseService implements RideCommunic
 
                 $this->rideCommunicationRealtime->publish([
                     'event' => 'communication.call.status.updated',
-                    'ride_id' => $dto->rideId,
-                    'room' => sprintf('ride:%d', $dto->rideId),
+                    'ride_id' => (string) $dto->rideId,
+                    'room' => sprintf('ride:%s', (string) $dto->rideId),
                     'call' => $this->mapCall($callLog, $callee),
                     'occurred_at' => now()->toIso8601String(),
                 ]);
@@ -244,11 +244,19 @@ final class RideCommunicationService extends BaseService implements RideCommunic
     private function resolveRideParticipants(string $rideId, string $actorId): array
     {
         /** @var Ride|null $ride */
-        $ride = $this->rideRepository->findById($rideId, relations: ['customer', 'driver']);
+        $ride = $this->rideRepository->findById($rideId, relations: [
+            'customer.customerProfile',
+            'driver.driverProfile'
+        ]);
         $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
         $this->validate($ride->driver_id !== null, 'Chuyến đi hiện chưa có tài xế nhận.', 409);
 
-        if ($ride->customer_id === $actorId) {
+        $actorIdStr = (string) $actorId;
+        $customerIdStr = (string) $ride->customer_id;
+        $driverIdStr = (string) $ride->driver_id;
+
+        // Trường hợp Khách hàng là người thực hiện hành động (gọi/chat)
+        if ($customerIdStr === $actorIdStr) {
             /** @var User|null $counterpart */
             $counterpart = $ride->driver;
             $this->validate($counterpart !== null, 'Không tìm thấy tài xế của chuyến đi.', 404);
@@ -256,7 +264,8 @@ final class RideCommunicationService extends BaseService implements RideCommunic
             return [$ride, RideChatSenderType::CUSTOMER, $counterpart];
         }
 
-        if ($ride->driver_id === $actorId) {
+        // Trường hợp Tài xế là người thực hiện hành động (gọi/chat)
+        if ($driverIdStr === $actorIdStr) {
             /** @var User|null $counterpart */
             $counterpart = $ride->customer;
             $this->validate($counterpart !== null, 'Không tìm thấy khách hàng của chuyến đi.', 404);
@@ -273,9 +282,9 @@ final class RideCommunicationService extends BaseService implements RideCommunic
     private function mapMessage(RideChatMessage $message): array
     {
         return [
-            'id' => $message->id,
-            'ride_id' => $message->ride_id,
-            'sender_id' => $message->sender_id,
+            'id' => (string) $message->id,
+            'ride_id' => (string) $message->ride_id,
+            'sender_id' => (string) $message->sender_id,
             'sender_type' => $message->sender_type->value,
             'sender_type_label' => $message->sender_type->getLabel(),
             'sender_name' => $message->sender?->full_name,
@@ -292,10 +301,10 @@ final class RideCommunicationService extends BaseService implements RideCommunic
     private function mapCall(RideCallLog $callLog, User $callee): array
     {
         return [
-            'id' => $callLog->id,
-            'ride_id' => $callLog->ride_id,
-            'caller_id' => $callLog->caller_id,
-            'callee_id' => $callLog->callee_id,
+            'id' => (string) $callLog->id,
+            'ride_id' => (string) $callLog->ride_id,
+            'caller_id' => (string) $callLog->caller_id,
+            'callee_id' => (string) $callLog->callee_id,
             'caller_type' => $callLog->caller_type->value,
             'caller_type_label' => $callLog->caller_type->getLabel(),
             'status' => $callLog->status->value,

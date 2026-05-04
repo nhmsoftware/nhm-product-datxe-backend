@@ -8,6 +8,7 @@ use App\Core\Repository\BaseRepository;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Model\DriverProfile;
 use App\Modules\User\Model\Enums\DriverStatus;
+use Illuminate\Support\Facades\DB;
 
 final class DriverProfileRepository extends BaseRepository implements DriverProfileRepositoryInterface
 {
@@ -52,17 +53,13 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
     }
 
     /**
-     * Tăng số lần hủy trong ngày (UC-33).
+     * Cập nhật số lần hủy trong ngày (UC-33).
      */
-    public function incrementCancelCount(string $driverId): int
+    public function updateCancelCount(string $driverId, int $count): bool
     {
-        $profile = $this->model->find($driverId);
-        if (!$profile) {
-            return 0;
-        }
-
-        $profile->increment('cancel_count_today');
-        return (int) $profile->cancel_count_today;
+        return (bool) $this->model->where('id', $driverId)->update([
+            'cancel_count_today' => $count,
+        ]);
     }
 
     /**
@@ -88,7 +85,13 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
         $query = $this->model
             ->whereIn('user_id', $userIds)
             ->where('is_online', true)
-            ->where('status', DriverStatus::ACTIVE->value)
+            ->where(function ($q) {
+                $q->where('status', DriverStatus::ACTIVE->value)
+                  ->orWhere(function ($q2) {
+                      $q2->where('status', DriverStatus::COOLDOWN->value)
+                         ->where('cooldown_until', '<=', now());
+                  });
+            })
             ->where('vehicle_type', $vehicleType);
 
         if ($groupType !== null) {
@@ -96,5 +99,16 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
         }
 
         return $query->get();
+    }
+
+    /**
+     * Cập nhật vị trí hiện tại của tài xế.
+     */
+    public function updateLocation(string $driverId, float $lat, float $lng): bool
+    {
+        return (bool) $this->model->where('user_id', $driverId)->update([
+            'current_lat' => $lat,
+            'current_lng' => $lng,
+        ]);
     }
 }

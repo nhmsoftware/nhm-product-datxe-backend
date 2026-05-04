@@ -16,6 +16,8 @@ use App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface;
 use App\Modules\Ride\Repositories\RideCallLogRepository;
 use App\Modules\Ride\Repositories\RideChatMessageRepository;
 use App\Modules\Ride\Repositories\RideRepository;
+use App\Modules\Ride\Interfaces\AirportRepositoryInterface;
+use App\Modules\Ride\Repositories\AirportRepository;
 use App\Modules\Ride\Services\GoongMapService;
 use App\Modules\Ride\Services\RedisRideCommunicationRealtimeService;
 use App\Modules\Ride\Services\RideCommunicationService;
@@ -45,6 +47,7 @@ class RideServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(RideRepositoryInterface::class, RideRepository::class);
         $this->app->singleton(RideChatMessageRepositoryInterface::class, RideChatMessageRepository::class);
         $this->app->singleton(RideCallLogRepositoryInterface::class, RideCallLogRepository::class);
+        $this->app->singleton(AirportRepositoryInterface::class, AirportRepository::class);
 
         // ── Services ──────
         $this->app->singleton(RideServiceInterface::class, RideService::class);

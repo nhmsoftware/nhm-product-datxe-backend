@@ -34,11 +34,12 @@ interface DriverProfileRepositoryInterface extends BaseRepositoryInterface
     public function updateStatus(string $driverId, DriverStatus $status): bool;
 
     /**
-     * Tăng số lần hủy trong ngày (UC-33).
+     * Cập nhật số lần hủy trong ngày (UC-33).
      * @param string $driverId
-     * @return int Số lần hủy mới
+     * @param int $count
+     * @return bool
      */
-    public function incrementCancelCount(string $driverId): int;
+    public function updateCancelCount(string $driverId, int $count): bool;
 
     /**
      * Thiết lập thời gian đóng băng nhận đơn (UC-33).
@@ -52,4 +53,9 @@ interface DriverProfileRepositoryInterface extends BaseRepositoryInterface
      * Tìm danh sách tài xế hợp lệ để điều phối.
      */
     public function findEligibleDrivers(array $userIds, int $vehicleType, ?int $groupType = null): \Illuminate\Support\Collection;
+
+    /**
+     * Cập nhật vị trí hiện tại của tài xế.
+     */
+    public function updateLocation(string $driverId, float $lat, float $lng): bool;
 }

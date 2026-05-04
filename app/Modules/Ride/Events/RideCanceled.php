@@ -19,6 +19,8 @@ final class RideCanceled
         public readonly string $rideId,
         public readonly string $customerId,
         public readonly ?string $driverId = null,
+        public readonly ?string $reason = null,
+        public readonly ?string $canceledBy = null,
     ) {
     }
 }

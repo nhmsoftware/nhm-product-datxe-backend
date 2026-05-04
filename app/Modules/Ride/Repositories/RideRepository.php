@@ -8,8 +8,9 @@ use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Ride;
-use Carbon\Carbon;
+use Carbon\CarbonInterface;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 final class RideRepository extends BaseRepository implements RideRepositoryInterface
@@ -26,6 +27,15 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     {
         /** @var Ride|null */
         return $this->model->where('id', $rideId)
+            ->where('customer_id', $customerId)
+            ->first();
+    }
+
+    public function findWithDriverDetail(string $rideId, string $customerId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->with(['driver', 'driver.driverProfile'])
+            ->where('id', $rideId)
             ->where('customer_id', $customerId)
             ->first();
     }
@@ -80,7 +90,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * Tính toán tổng chi tiêu của khách hàng trong một khoảng thời gian (UC-23).
      */
-    public function getSpendingSummary(string $customerId, Carbon $start, Carbon $end): array
+    public function getSpendingSummary(string $customerId, CarbonInterface $start, CarbonInterface $end): array
     {
         $data = $this->model
             ->where('customer_id', $customerId)
@@ -232,5 +242,155 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ])
             ->latest()
             ->first();
+    }
+
+    public function findTrackingRideByIdAndCustomer(string $rideId, string $customerId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->with(['driver.driverProfile'])
+            ->where('id', $rideId)
+            ->where('customer_id', $customerId)
+            ->first();
+    }
+
+    public function assignDriver(string $rideId, string $driverId, CarbonInterface $acceptedAt): bool
+    {
+        return (bool) $this->model->where('id', $rideId)
+            ->where('status', RideStatus::PENDING->value)
+            ->whereNull('driver_id')
+            ->update([
+                'status' => RideStatus::ACCEPTED->value,
+                'driver_id' => $driverId,
+                'driver_assigned_at' => $acceptedAt,
+            ]);
+    }
+
+    public function findTrackingRideByIdAndDriver(string $rideId, string $driverId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->with(['driver.driverProfile'])
+            ->where('id', $rideId)
+            ->where('driver_id', $driverId)
+            ->first();
+    }
+
+    public function refreshTrackingHeartbeat(string $rideId, CarbonInterface $trackedAt): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'tracking_last_ping_at' => $trackedAt,
+        ]);
+    }
+
+    public function markDriverArrived(string $rideId, CarbonInterface $arrivedAt): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'driver_arrived_at' => $arrivedAt,
+        ]);
+    }
+
+    public function releaseDriverFromRide(string $rideId, ?string $reason): bool
+    {
+        return (bool) $this->model->where('id', $rideId)->update([
+            'status' => RideStatus::PENDING->value,
+            'driver_id' => null,
+            'driver_assigned_at' => null,
+            'driver_arrived_at' => null,
+            'cancel_reason' => $reason,
+        ]);
+    }
+
+    public function countCancellationsToday(string $driverId): int
+    {
+        return $this->model
+            ->where('driver_id', $driverId)
+            ->where('status', RideStatus::CANCELLED->value)
+            ->where('updated_at', '>=', now()->startOfDay())
+            ->count();
+    }
+
+    public function createIntercityRide(array $data): Ride
+    {
+        return $this->model->create($data);
+    }
+
+    public function createAirportRide(array $data): Ride
+    {
+        return $this->model->create($data);
+    }
+
+    public function findAvailableScheduledRides(int $vehicleType, array $filters): Collection
+    {
+        $query = $this->model->newQuery()
+            ->where('status', RideStatus::PENDING->value)
+            ->where('vehicle_type', $vehicleType)
+            // Lọc ra các đơn mà tài xế đã từ chối trước đó (nếu có lưu vết)
+            ->whereNotExists(function ($q) use ($filters) {
+                $q->select(DB::raw(1))
+                    ->from('ride_rejects')
+                    ->whereRaw('ride_rejects.ride_id = rides.id::text')
+                    ->whereRaw('ride_rejects.driver_id = ?', [(string) ($filters['driverId'] ?? '')]);
+            });
+
+        $startDate = $filters['travelDate'] ?? now()->toDateString();
+        $query->where('travel_date', '>=', (string) $startDate);
+
+        if (!empty($filters['travelTime'])) {
+            $query->where('travel_time', '>=', (string) $filters['travelTime']);
+        }
+
+        if (!empty($filters['rideType'])) {
+            $query->where('ride_type', $filters['rideType']);
+        }
+
+        if (isset($filters['minPrice'])) {
+            $query->where('total_price', '>=', $filters['minPrice']);
+        }
+
+        if (isset($filters['maxPrice'])) {
+            $query->where('total_price', '<=', $filters['maxPrice']);
+        }
+
+        if (!empty($filters['pickupArea'])) {
+            $query->where('pickup_address', 'like', '%' . $filters['pickupArea'] . '%');
+        }
+
+        if (!empty($filters['destinationArea'])) {
+            $query->where('destination_address', 'like', '%' . $filters['destinationArea'] . '%');
+        }
+
+        return $query->orderBy('travel_date')->orderBy('travel_time')->get();
+    }
+
+    public function findAvailableById(string $rideId): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->whereRaw('id = ?::bigint', [$rideId])
+            ->where('status', RideStatus::PENDING->value)
+            ->first();
+    }
+
+    /**
+     * Ghi đè findById để ép kiểu bigint an toàn trên PostgreSQL
+     */
+    public function findById(string|int $id, array $columns = ['*'], array $relations = []): ?Ride
+    {
+        /** @var Ride|null */
+        return $this->model->with($relations)
+            ->select($columns)
+            ->whereRaw('id = ?::bigint', [(string) $id])
+            ->first();
+    }
+
+    public function findDriverAcceptedRides(string $driverId): Collection
+    {
+        return $this->model->with(['customer'])
+            ->where('driver_id', $driverId)
+            ->whereNotIn('status', [
+                RideStatus::COMPLETED->value,
+                RideStatus::CANCELLED->value
+            ])
+            ->orderBy('travel_date')
+            ->orderBy('travel_time')
+            ->get();
     }
 }

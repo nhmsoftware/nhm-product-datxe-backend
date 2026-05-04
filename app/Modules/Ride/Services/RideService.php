@@ -14,27 +14,39 @@ use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
+use App\Modules\Ride\DTO\CreateIntercityRideDTO;
+use App\Modules\Ride\DTO\CreateAirportRideDTO;
+use App\Modules\Ride\DTO\FilterScheduledRideDTO;
 use App\Modules\Ride\DTO\DriverCancelRideDTO;
 use App\Modules\Ride\DTO\MarkDriverArrivedDTO;
 use App\Modules\Ride\DTO\PriceEstimateDTO;
 use App\Modules\Ride\DTO\ShowRideTrackingDTO;
 use App\Modules\Ride\DTO\UpdateDriverLocationDTO;
 use App\Modules\Ride\DTO\VehicleOptionDTO;
+use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Ride\Interfaces\MapServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Ride\DTO\RequestRideCancellationDTO;
+use App\Modules\Ride\Interfaces\AirportRepositoryInterface;
 use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\Events\RideCancellationRequested;
 use App\Modules\Ride\Events\RideCancellationResponded;
 use App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface;
+use App\Modules\Ride\Events\RideBooked;
+use App\Modules\Ride\Events\RideAcceptedByDriver;
 use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Model\Enums\RideType;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\VehicleType;
+use App\Modules\Ride\Model\Airport;
 use App\Modules\Ride\Model\Ride;
+use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\DriverProfile;
+use App\Modules\User\Model\Enums\DriverStatus;
 use App\Modules\User\Model\User;
+use Illuminate\Support\Facades\Log;
 
 final class RideService extends BaseService implements RideServiceInterface
 {
@@ -43,7 +55,9 @@ final class RideService extends BaseService implements RideServiceInterface
         private readonly MapServiceInterface $mapService,
         private readonly PricingServiceInterface $pricingService,
         private readonly UserRepositoryInterface $userRepository,
-        private readonly RideTrackingRealtimeInterface $rideTrackingRealtime
+        private readonly DriverProfileRepositoryInterface $driverProfileRepository,
+        private readonly RideTrackingRealtimeInterface $rideTrackingRealtime,
+        private readonly AirportRepositoryInterface $airportRepository
     ) {
     }
 
@@ -301,6 +315,9 @@ final class RideService extends BaseService implements RideServiceInterface
 
             $ride->refresh();
 
+            // Phát sự kiện RideBooked để DispatchService bắt đầu tìm tài xế
+            event(new RideBooked(rideId: $ride->id, customerId: $dto->customerId));
+
             return $this->success($ride->toArray(), 'Đặt xe thành công. Đang tìm tài xế.');
         }, useTransaction: true);
     }
@@ -347,8 +364,8 @@ final class RideService extends BaseService implements RideServiceInterface
             afterCommitCallback: function () use ($dto, $acceptedAt): void {
                 $this->rideTrackingRealtime->publish([
                     'event' => 'tracking.accepted',
-                    'ride_id' => $dto->rideId,
-                    'driver_id' => $dto->driverId,
+                    'ride_id' => (string) $dto->rideId,
+                    'driver_id' => (string) $dto->driverId,
                     'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED->value,
                     'tracking_status_label' => RideTrackingStatus::DRIVER_ACCEPTED->getLabel(),
                     'occurred_at' => $acceptedAt->toIso8601String(),
@@ -369,7 +386,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 $driver = $this->userRepository->findDriverWithProfileById($dto->driverId);
                 $this->validate($driver !== null && $driver->driverProfile !== null, 'Không tìm thấy hồ sơ tài xế.', 404);
 
-                $updatedLocation = $this->userRepository->updateDriverCurrentLocation($dto->driverId, $dto->lat, $dto->lng);
+                $updatedLocation = $this->driverProfileRepository->updateLocation($dto->driverId, $dto->lat, $dto->lng);
                 $this->validate($updatedLocation, 'Không thể cập nhật vị trí tài xế.', 500);
 
                 $heartbeatRefreshed = $this->rideRepository->refreshTrackingHeartbeat($dto->rideId, $dto->trackedAt);
@@ -396,8 +413,8 @@ final class RideService extends BaseService implements RideServiceInterface
             afterCommitCallback: function () use ($dto): void {
                 $this->rideTrackingRealtime->publish([
                     'event' => 'tracking.location.updated',
-                    'ride_id' => $dto->rideId,
-                    'driver_id' => $dto->driverId,
+                    'ride_id' => (string) $dto->rideId,
+                    'driver_id' => (string) $dto->driverId,
                     'location' => [
                         'lat' => $dto->lat,
                         'lng' => $dto->lng,
@@ -441,8 +458,8 @@ final class RideService extends BaseService implements RideServiceInterface
             afterCommitCallback: function () use ($dto, $arrivedAt): void {
                 $this->rideTrackingRealtime->publish([
                     'event' => 'tracking.driver.arrived',
-                    'ride_id' => $dto->rideId,
-                    'driver_id' => $dto->driverId,
+                    'ride_id' => (string) $dto->rideId,
+                    'driver_id' => (string) $dto->driverId,
                     'tracking_status' => RideTrackingStatus::DRIVER_ARRIVED->value,
                     'tracking_status_label' => RideTrackingStatus::DRIVER_ARRIVED->getLabel(),
                     'occurred_at' => $arrivedAt->toIso8601String(),
@@ -462,22 +479,60 @@ final class RideService extends BaseService implements RideServiceInterface
                 $this->validate($ride !== null, 'Không tìm thấy chuyến xe của tài xế.', 404);
                 $this->validate($ride->status === RideStatus::ACCEPTED, 'Không thể hủy chuyến ở trạng thái hiện tại.');
 
+                $driverProfile = $this->driverProfileRepository->findByUserId($dto->driverId);
+                $this->validate($driverProfile !== null, 'Hồ sơ tài xế không tồn tại.', 404);
+
                 $released = $this->rideRepository->releaseDriverFromRide($dto->rideId, $dto->reason);
                 $this->validate($released, 'Không thể đưa chuyến xe về trạng thái tìm tài xế.', 500);
+
+                // --- Logic Tạm Khóa Tài Khoản (Penalty System) ---
+                $penaltyMinutes = 0;
+
+                // 1. Kiểm tra vị trí: Nếu gần điểm đón (< 200m) thì phạt 30p
+                if ($driverProfile->current_lat !== null && $driverProfile->current_lng !== null) {
+                    $distanceToPickup = $this->calculateDistanceMeters(
+                        (float) $driverProfile->current_lat,
+                        (float) $driverProfile->current_lng,
+                        (float) $ride->pickup_lat,
+                        (float) $ride->pickup_lng
+                    );
+                    if ($distanceToPickup <= 200) {
+                        $penaltyMinutes = 30;
+                    }
+                }
+
+                // 2. Kiểm tra số lần hủy trong ngày: Nếu >= 3 lần thì phạt ít nhất 60p
+                $cancellationsToday = $this->rideRepository->countCancellationsToday($dto->driverId);
+                $newCancelCount = $cancellationsToday + 1; // Bao gồm cả cuốc vừa hủy này
+                $this->driverProfileRepository->updateCancelCount($driverProfile->id, $newCancelCount);
+
+                if ($newCancelCount >= 3) {
+                    $penaltyMinutes = max($penaltyMinutes, 60);
+                }
+
+                // Áp dụng hình phạt
+                if ($penaltyMinutes > 0) {
+                    $this->driverProfileRepository->setCooldown($driverProfile->id, $penaltyMinutes);
+                } else {
+                    // Nếu không bị phạt, đưa tài xế trở lại trạng thái sẵn sàng
+                    $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
+                }
 
                 return [
                     'ride_id' => $dto->rideId,
                     'status' => RideStatus::PENDING->value,
                     'status_label' => RideStatus::PENDING->getLabel(),
                     'message' => 'Tài xế đã hủy chuyến.',
+                    'penalty_applied' => $penaltyMinutes > 0,
+                    'penalty_minutes' => $penaltyMinutes,
                 ];
             },
             useTransaction: true,
             afterCommitCallback: function () use ($dto, $cancelledAt): void {
                 $this->rideTrackingRealtime->publish([
                     'event' => 'tracking.driver.cancelled',
-                    'ride_id' => $dto->rideId,
-                    'driver_id' => $dto->driverId,
+                    'ride_id' => (string) $dto->rideId,
+                    'driver_id' => (string) $dto->driverId,
                     'tracking_status' => RideTrackingStatus::DRIVER_CANCELLED->value,
                     'tracking_status_label' => RideTrackingStatus::DRIVER_CANCELLED->getLabel(),
                     'occurred_at' => $cancelledAt->toIso8601String(),
@@ -510,6 +565,12 @@ final class RideService extends BaseService implements RideServiceInterface
 
             if ($ride->status === RideStatus::ACCEPTED) {
                 $cancellationFee = 10000.0;
+
+                // Cảnh báo gian lận
+                $driverProfile = $this->driverProfileRepository->findByUserId((string) $ride->driver_id);
+                if ($driverProfile) {
+                    $this->checkFraudProximity($ride, $driverProfile, 'General cancellation');
+                }
             }
 
             $this->rideRepository->cancel($dto->rideId, $dto->reason, $cancellationFee);
@@ -522,8 +583,8 @@ final class RideService extends BaseService implements RideServiceInterface
         }, useTransaction: true, afterCommitCallback: function () use ($dto): void {
             $this->rideTrackingRealtime->publish([
                 'event' => 'tracking.customer.cancelled',
-                'ride_id' => $dto->rideId,
-                'customer_id' => $dto->customerId,
+                'ride_id' => (string) $dto->rideId,
+                'customer_id' => (string) $dto->customerId,
                 'tracking_status' => RideTrackingStatus::CUSTOMER_CANCELLED->value,
                 'tracking_status_label' => RideTrackingStatus::CUSTOMER_CANCELLED->getLabel(),
                 'occurred_at' => now()->toIso8601String(),
@@ -619,7 +680,7 @@ final class RideService extends BaseService implements RideServiceInterface
             'event' => $event,
             'message' => $message,
             'ride' => [
-                'id' => $ride->id,
+                'id' => (string) $ride->id,
                 'status' => $ride->status->value,
                 'status_label' => $ride->status->getLabel(),
                 'tracking_status' => $trackingStatus?->value,
@@ -635,7 +696,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'tracking_last_ping_at' => $trackedAt?->toIso8601String(),
             ],
             'driver' => [
-                'id' => $driver->id,
+                'id' => (string) $driver->id,
                 'name' => $driverProfile?->full_name ?? $driver->full_name,
                 'phone' => $driver->phone,
                 'vehicle_number' => $driverProfile?->vehicle_number,
@@ -658,7 +719,7 @@ final class RideService extends BaseService implements RideServiceInterface
             ],
             'warning' => $warning,
             'realtime' => [
-                'room' => sprintf('ride:%d', $ride->id),
+                'room' => sprintf('ride:%s', (string) $ride->id),
                 'channel' => 'ride.tracking.events',
             ],
         ], $extraPayload);
@@ -715,6 +776,12 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // Nếu đã có tài xế (ACCEPTED/PICKED_UP), chuyển sang trạng thái chờ xác nhận hủy
             if (in_array($ride->status, [RideStatus::ACCEPTED, RideStatus::PICKED_UP], true)) {
+                // Cảnh báo gian lận: Kiểm tra khoảng cách tài xế và điểm đón khi hủy
+                $driverProfile = $this->driverProfileRepository->findByUserId((string) $ride->driver_id);
+                if ($driverProfile) {
+                    $this->checkFraudProximity($ride, $driverProfile, 'Customer requested cancellation');
+                }
+
                 $this->rideRepository->updateStatus($dto->rideId, RideStatus::CANCELLATION_REQUESTED, $dto->reason);
 
                 // Phát sự kiện để Notify Realtime cho Tài xế
@@ -769,5 +836,407 @@ final class RideService extends BaseService implements RideServiceInterface
                 'is_approved' => $dto->isApproved,
             ];
         }, useTransaction: true);
+    }
+
+    /**
+     * Kiểm tra gian lận: Tài xế ở gần điểm đón nhưng khách hủy/hủy chuyến
+     * (Nghi ngờ tài xế yêu cầu khách hủy để chạy ngoài)
+     */
+    private function checkFraudProximity(Ride $ride, $driverProfile, string $context): void
+    {
+        if (!$driverProfile || $driverProfile->current_lat === null) {
+            return;
+        }
+
+        $distance = $this->calculateDistanceMeters(
+            (float) $driverProfile->current_lat,
+            (float) $driverProfile->current_lng,
+            (float) $ride->pickup_lat,
+            (float) $ride->pickup_lng
+        );
+
+        // Nếu tài xế ở trong phạm vi 200m hoặc đã báo đến nơi (driver_arrived_at)
+        $isArrived = $ride->driver_arrived_at !== null;
+
+        if ($distance < 200 || $isArrived) {
+            Log::warning(sprintf(
+                "[FRAUD_ALERT] Nghi vấn gian lận (offline ride): Chuyến xe %s bị hủy (%s). Khoảng cách tài xế - điểm đón: %.2fm. Trạng thái đã đến: %s. Driver ID: %s",
+                $ride->id,
+                $context,
+                $distance,
+                $isArrived ? 'Có' : 'Không',
+                $driverProfile->user_id
+            ));
+        }
+    }
+
+    public function createIntercity(CreateIntercityRideDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            // 1. Giả lập tính toán khoảng cách và thời gian (Trong thực tế dùng Google/Goong API)
+            // Giả sử khoảng cách tối thiểu là 30km cho đi tỉnh
+            $distanceMeters = 50000; // 50km
+            $durationSeconds = 3600; // 1h
+
+            // 2. Tính giá cước
+            $vehicleType = VehicleType::from($dto->vehicleType);
+            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleType);
+            if ($pricingResult->isError()) {
+                $this->throw($pricingResult->getMessage());
+            }
+
+            $priceData = $pricingResult->getData();
+            $totalPrice = (float) $priceData->finalFare;
+            $discountAmount = 0.0;
+            $voucherId = null;
+
+            // 3. Áp dụng voucher nếu có
+            if ($dto->voucherCode) {
+                $discount = $this->resolveVoucherDiscount($dto->voucherCode, $totalPrice);
+                if ($discount !== null) {
+                    $discountAmount = $discount;
+                    $totalPrice = max(0, $totalPrice - $discountAmount);
+                }
+            }
+
+            // 4. Tạo chuyến xe với RideType::INTERCITY
+            $ride = $this->rideRepository->createIntercityRide([
+                'customer_id'         => $dto->customerId,
+                'pickup_address'      => $dto->pickupAddress,
+                'pickup_lat'          => $dto->pickupLat,
+                'pickup_lng'          => $dto->pickupLng,
+                'destination_address' => $dto->destinationAddress,
+                'destination_lat'     => $dto->destinationLat,
+                'destination_lng'     => $dto->destinationLng,
+                'distance'            => $distanceMeters,
+                'duration'            => $durationSeconds,
+                'vehicle_type'        => $dto->vehicleType,
+                'ride_type'           => RideType::INTERCITY->value,
+                'travel_date'         => $dto->travelDate,
+                'travel_time'         => $dto->travelTime,
+                'status'              => RideStatus::PENDING->value,
+                'base_price'          => $priceData->baseFare,
+                'distance_price'      => $priceData->distanceFare,
+                'total_price'         => $totalPrice,
+                'voucher_code'        => $dto->voucherCode,
+                'discount_amount'     => $discountAmount,
+            ]);
+
+            // 5. Phát sự kiện để tìm tài xế (UC-12 reused)
+            event(new RideBooked($ride->id, $ride->customer_id));
+
+            return [
+                'ride_id'      => $ride->id,
+                'ride_type'    => 'intercity',
+                'total_price'  => $totalPrice,
+                'status_label' => 'Đang tìm tài xế cho lịch trình của bạn',
+            ];
+        }, useTransaction: true);
+    }
+
+    public function createAirport(CreateAirportRideDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            // 1. Giả lập tính toán khoảng cách và thời gian
+            $distanceMeters = 30000; // 30km
+            $durationSeconds = 2400; // 40p
+
+            // 2. Tính giá cước
+            $vehicleType = VehicleType::from($dto->vehicleType);
+            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleType);
+            if ($pricingResult->isError()) {
+                $this->throw($pricingResult->getMessage());
+            }
+
+            $priceData = $pricingResult->getData();
+            $totalPrice = (float) $priceData->finalFare;
+            $discountAmount = 0.0;
+
+            // 3. Áp dụng voucher nếu có
+            if ($dto->voucherCode) {
+                $discount = $this->resolveVoucherDiscount($dto->voucherCode, $totalPrice);
+                if ($discount !== null) {
+                    $discountAmount = $discount;
+                    $totalPrice = max(0, $totalPrice - $discountAmount);
+                }
+            }
+
+            // 4. Tạo chuyến xe với RideType::AIRPORT
+            $ride = $this->rideRepository->createAirportRide([
+                'customer_id'         => $dto->customerId,
+                'pickup_address'      => $dto->pickupAddress,
+                'pickup_lat'          => $dto->pickupLat,
+                'pickup_lng'          => $dto->pickupLng,
+                'destination_address' => $dto->destinationAddress,
+                'destination_lat'     => $dto->destinationLat,
+                'destination_lng'     => $dto->destinationLng,
+                'distance'            => $distanceMeters,
+                'duration'            => $durationSeconds,
+                'vehicle_type'        => $dto->vehicleType,
+                'ride_type'           => RideType::AIRPORT->value,
+                'travel_date'         => $dto->travelDate,
+                'travel_time'         => $dto->travelTime,
+                'airport_id'          => $dto->airportId,
+                'airport_direction'   => $dto->airportDirection,
+                'status'              => RideStatus::PENDING->value,
+                'base_price'          => $priceData->baseFare,
+                'distance_price'      => $priceData->distanceFare,
+                'total_price'         => $totalPrice,
+                'voucher_code'        => $dto->voucherCode,
+                'discount_amount'     => $discountAmount,
+            ]);
+
+            // 5. Phát sự kiện để tìm tài xế (UC-12 reused)
+            event(new RideBooked($ride->id, $ride->customer_id));
+
+            return [
+                'ride_id'      => $ride->id,
+                'ride_type'    => 'airport',
+                'total_price'  => $totalPrice,
+                'status_label' => 'Đang tìm tài xế cho lịch trình của bạn',
+            ];
+        }, useTransaction: true);
+    }
+
+    public function getRideDetail(string $rideId, string $customerId): ServiceReturn
+    {
+        return $this->execute(function () use ($rideId, $customerId): array {
+            $ride = $this->rideRepository->findWithDriverDetail($rideId, $customerId);
+            $this->validate($ride !== null, 'Chuyến xe không tồn tại.', 404);
+
+            $data = $ride->toArray();
+
+            // Bổ sung label cho Enums
+            $data['status_label'] = $ride->status->getLabel();
+            $data['vehicle_type_label'] = $ride->vehicle_type->getLabel();
+            $data['ride_type_label'] = $ride->ride_type->getLabel();
+
+            // Thông tin tài xế nếu đã có
+            if ($ride->driver && $ride->driver->driverProfile) {
+                $profile = $ride->driver->driverProfile;
+                $data['driver_info'] = [
+                    'full_name'      => $profile->full_name,
+                    'phone'          => $ride->driver->phone,
+                    'avatar'         => $ride->driver->avatar,
+                    'vehicle_number' => $profile->vehicle_number,
+                    'vehicle_name'   => $profile->vehicle_name,
+                    'average_rating' => (float) $profile->average_rating,
+                    'total_trips'    => $profile->total_trips,
+                ];
+            } else {
+                $data['driver_info'] = null;
+            }
+
+            return $data;
+        });
+    }
+
+    public function getAvailableScheduledRides(FilterScheduledRideDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            // 1. Lấy thông tin driver để biết vehicle_type
+            $driver = $this->userRepository->findDriverWithProfileById($dto->driverId);
+            $this->validate($driver !== null, 'Không tìm thấy thông tin tài xế.', 404);
+            $this->validate($driver->driverProfile !== null, 'Bạn chưa đăng ký loại xe để nhận chuyến.', 400);
+
+            // 2. Lấy danh sách từ repository
+            $filters = (array) $dto;
+            $rides = $this->rideRepository->findAvailableScheduledRides(
+                (int) $driver->driverProfile->vehicle_type,
+                $filters
+            );
+
+            // 3. Format kết quả trả về
+            return $rides->map(function ($ride) {
+                return [
+                    'ride_id'             => $ride->id,
+                    'pickup_address'      => $ride->pickup_address,
+                    'destination_address' => $ride->destination_address,
+                    'travel_date'         => $ride->travel_date ? $ride->travel_date->format('Y-m-d') : null,
+                    'travel_time'         => $ride->travel_time,
+                    'vehicle_type'        => $ride->vehicle_type->value,
+                    'vehicle_type_label'  => $ride->vehicle_type->getLabel(),
+                    'ride_type'           => $ride->ride_type->value,
+                    'ride_type_label'     => $ride->ride_type->getLabel(),
+                    'total_price'         => (float) $ride->total_price,
+                    'expected_earnings'   => (float) ($ride->total_price * 0.8), // Giả sử driver nhận 80%
+                ];
+            })->toArray();
+        });
+    }
+
+    public function getScheduledRideDetail(string $rideId, string $driverId): ServiceReturn
+    {
+        return $this->execute(function () use ($rideId, $driverId): array {
+            // 1. Lấy thông tin driver để biết vehicle_type
+            $driver = $this->userRepository->findDriverWithProfileById($driverId);
+            $this->validate($driver !== null, 'Không tìm thấy thông tin tài xế.', 404);
+            $this->validate($driver->driverProfile !== null, 'Bạn chưa đăng ký loại xe.', 400);
+
+            // 2. Lấy thông tin chuyến xe
+            $ride = $this->rideRepository->findAvailableById($rideId);
+            if ($ride === null) {
+                // Kiểm tra xem có phải do đã được nhận/hủy không
+                $anyRide = $this->rideRepository->findById($rideId);
+                $this->validate($anyRide !== null, 'Chuyến xe không tồn tại.', 404);
+                $this->throw('Chuyến xe không còn khả dụng.', 400);
+            }
+
+            // 3. Kiểm tra phù hợp loại xe
+            $this->validate(
+                $ride->vehicle_type->value === (int) $driver->driverProfile->vehicle_type,
+                'Bạn không đủ điều kiện để xem chuyến xe này.',
+                403
+            );
+
+            // 4. Trả về chi tiết
+            return [
+                'ride_id'             => $ride->id,
+                'pickup_address'      => $ride->pickup_address,
+                'pickup_lat'          => (float) $ride->pickup_lat,
+                'pickup_lng'          => (float) $ride->pickup_lng,
+                'destination_address' => $ride->destination_address,
+                'destination_lat'     => (float) $ride->destination_lat,
+                'destination_lng'     => (float) $ride->destination_lng,
+                'distance'            => $ride->distance,
+                'duration'            => $ride->duration,
+                'travel_date'         => $ride->travel_date ? $ride->travel_date->format('Y-m-d') : null,
+                'travel_time'         => $ride->travel_time,
+                'vehicle_type'        => $ride->vehicle_type->value,
+                'vehicle_type_label'  => $ride->vehicle_type->getLabel(),
+                'ride_type'           => $ride->ride_type->value,
+                'ride_type_label'     => $ride->ride_type->getLabel(),
+                'total_price'         => (float) $ride->total_price,
+                'expected_earnings'   => (float) ($ride->total_price * 0.8),
+                'note'                => $ride->note ?? '',
+                'status'              => $ride->status->value,
+                'status_label'        => $ride->status->getLabel(),
+            ];
+        });
+    }
+
+    public function acceptScheduledRide(string $rideId, string $driverId): ServiceReturn
+    {
+        return $this->execute(function () use ($rideId, $driverId): array {
+            // 1. Lấy thông tin driver
+            $driver = $this->userRepository->findDriverWithProfileById($driverId);
+            $this->validate($driver !== null, 'Không tìm thấy thông tin tài xế.', 404);
+            $this->validate($driver->driverProfile !== null, 'Bạn chưa đăng ký loại xe.', 400);
+
+            // 2. Lấy thông tin chuyến xe
+            $ride = $this->rideRepository->findById($rideId);
+            $this->validate($ride !== null, 'Chuyến xe không tồn tại.', 404);
+
+            // 3. Kiểm tra trạng thái và loại xe
+            $this->validate($ride->status === RideStatus::PENDING, 'Chuyến xe đã được tài xế khác nhận hoặc không còn khả dụng.', 400);
+            $this->validate(
+                $ride->vehicle_type->value === (int) $driver->driverProfile->vehicle_type,
+                'Loại xe của bạn không phù hợp với chuyến này.',
+                403
+            );
+
+            // 4. Gán tài xế (Atomic update)
+            $success = $this->rideRepository->assignDriver($rideId, $driverId, now());
+            $this->validate($success, 'Không thể nhận chuyến. Có thể chuyến xe vừa được người khác nhận.', 400);
+
+            // 5. Phát sự kiện để Notify Realtime cho Khách hàng
+            event(new RideAcceptedByDriver(
+                rideId: $rideId,
+                driverId: $driverId,
+                customerId: (string) $ride->customer_id
+            ));
+
+            return [
+                'ride_id' => $rideId,
+                'status'  => RideStatus::ACCEPTED->value,
+                'message' => 'Bạn đã nhận chuyến thành công.'
+            ];
+        }, useTransaction: true);
+    }
+
+    public function driverCancelScheduledRide(DriverCancelRideDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            // 1. Lấy thông tin chuyến xe
+            $ride = $this->rideRepository->findById($dto->rideId);
+            $this->validate($ride !== null, 'Chuyến xe không tồn tại.', 404);
+            $this->validate((string) $ride->driver_id === $dto->driverId, 'Bạn không có quyền hủy chuyến xe này.', 403);
+
+            // 2. Kiểm tra trạng thái (Chỉ được hủy khi đã nhận nhưng chưa bắt đầu)
+            $this->validate(
+                $ride->status === RideStatus::ACCEPTED,
+                'Không thể hủy chuyến ở trạng thái hiện tại.'
+            );
+
+            // 3. Kiểm tra thời gian cho phép tự hủy (Giả sử 30 phút theo cấu hình Admin)
+            $maxCancelMinutes = 30;
+            if ($ride->driver_assigned_at) {
+                $minutesSinceAccepted = now()->diffInMinutes($ride->driver_assigned_at);
+                if ($minutesSinceAccepted > $maxCancelMinutes) {
+                    $this->throw('Bạn không thể tự hủy chuyến sau ' . $maxCancelMinutes . ' phút nhận đơn. Vui lòng liên hệ khách hàng.', 400);
+                }
+            }
+
+            // 4. Thực hiện hủy
+            $success = $this->rideRepository->cancel($dto->rideId, $dto->reason, 0);
+            $this->validate($success, 'Không thể hủy chuyến. Vui lòng thử lại.', 400);
+
+            // 5. Phát sự kiện để Notify Realtime cho Khách hàng
+            event(new RideCanceled(
+                rideId: $dto->rideId,
+                customerId: (string) $ride->customer_id,
+                driverId: (string) $ride->driver_id,
+                reason: $dto->reason,
+                canceledBy: 'driver'
+            ));
+
+            return [
+                'ride_id' => $dto->rideId,
+                'status'  => RideStatus::CANCELLED->value,
+                'message' => 'Hủy chuyến thành công.'
+            ];
+        }, useTransaction: true);
+    }
+
+    public function getDriverManagedRides(string $driverId): ServiceReturn
+    {
+        return $this->execute(function () use ($driverId): array {
+            $rides = $this->rideRepository->findDriverAcceptedRides($driverId);
+
+            return $rides->map(function ($ride) {
+                return [
+                    'ride_id'             => $ride->id,
+                    'customer_name'       => $ride->customer ? $ride->customer->name : 'Khách hàng',
+                    'customer_phone'      => $ride->customer ? $ride->customer->phone : null,
+                    'pickup_address'      => $ride->pickup_address,
+                    'destination_address' => $ride->destination_address,
+                    'travel_date'         => $ride->travel_date ? $ride->travel_date->format('Y-m-d') : null,
+                    'travel_time'         => $ride->travel_time,
+                    'ride_type_label'     => $ride->ride_type->getLabel(),
+                    'total_price'         => (float) $ride->total_price,
+                    'expected_earnings'   => (float) ($ride->total_price * 0.8),
+                    'status'              => $ride->status->value,
+                    'status_label'        => $ride->status->getLabel(),
+                ];
+            })->toArray();
+        });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getAirports(): ServiceReturn
+    {
+        return $this->execute(function () {
+            $airports = $this->airportRepository->getActiveAirports();
+
+            return $airports->map(fn($airport) => [
+                'id'   => $airport->id,
+                'name' => $airport->name,
+                'code' => $airport->code,
+                'lat'  => (float) $airport->lat,
+                'lng'  => (float) $airport->lng,
+            ])->toArray();
+        });
     }
 }

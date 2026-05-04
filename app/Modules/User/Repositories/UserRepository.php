@@ -116,4 +116,15 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
             'role' => $role->value,
         ]);
     }
+
+    /**
+     * Tìm driver kèm profile (UC-13).
+     */
+    public function findDriverWithProfileById(string $driverId): ?User
+    {
+        /** @var User|null */
+        return $this->model->with('driverProfile')
+            ->where('id', $driverId)
+            ->first();
+    }
 }

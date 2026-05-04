@@ -23,6 +23,15 @@ Module `Ride` chuyên xử lý các nghiệp vụ liên quan đến việc đặ
 - **UC-11 (Apply/Remove Voucher):** Cho phép áp dụng khuyến mãi nếu đủ điều kiện, giảm trực tiếp vào `total_price` tại Ride Draft. Có thể clear để về lại giá trị gốc.
 - **UC-13 (Track Driver):** Sau khi tài xế nhận chuyến, customer có thể lấy snapshot tracking, theo dõi ETA, vị trí hiện tại, trạng thái “đang đến đón khách”, xử lý các nhánh mất GPS, mất tracking, tài xế đến nơi hoặc hủy chuyến. Laravel publish sự kiện sang Redis và `nhm-product-datxe-realtime` phát realtime qua Socket.IO.
 - **UC-14 (Chat/Call Driver):** Cho phép customer và driver chat theo ride, lưu hội thoại vào DB, khởi tạo cuộc gọi, cập nhật trạng thái failed/no-answer/completed và phát realtime qua Redis + Socket.IO.
+- **UC-26 (Book Intercity Ride):** Đặt xe đi tỉnh với các thông tin ngày, giờ đi, loại xe (bao gồm xe ghép). Hệ thống tính giá và tìm tài xế phù hợp.
+- **UC-27 (Book Airport Ride):** Đặt xe ra/đến sân bay bằng cách chọn sân bay, chiều đi/đến và thời gian đón. Hệ thống tự động xác thực sân bay hỗ trợ và tìm tài xế.
+- **UC-28 (Request Ride Cancellation):** Khách hàng yêu cầu hủy chuyến. Nếu có tài xế, cần tài xế xác nhận. Hủy trực tiếp nếu đang tìm xe. Tích hợp cảnh báo gian lận khi tài xế ở quá gần điểm đón.
+- **UC-29 (View Scheduled Ride details):** Xem thông tin chi tiết chuyến xe đã đặt, bao gồm cả thông tin tài xế, phương tiện và đánh giá nếu đã được nhận chuyến.
+- **UC-47 (View Scheduled Ride List):** Tài xế xem danh sách các chuyến xe đặt trước (đi tỉnh/sân bay) phù hợp với loại xe của mình và có thể lọc theo thời gian, địa điểm, giá.
+- **UC-48 (View Scheduled Ride Detail):** Tài xế xem chi tiết một chuyến xe đặt trước cụ thể để nắm bắt lộ trình, thu nhập và ghi chú trước khi quyết định nhận chuyến.
+- **UC-49 (Accept Scheduled Ride):** Tài xế nhận chuyến xe đặt trước. Hệ thống thực hiện gán tài xế nguyên tử (atomic) và thông báo cho khách hàng ngay lập tức.
+- **UC-50 (Request Driver Cancellation):** Tài xế yêu cầu hủy chuyến xe đặt trước đã nhận. Hệ thống kiểm tra điều kiện thời gian (vd: 30 phút sau khi nhận) để cho phép tự hủy hoặc bắt buộc liên hệ khách hàng.
+- **UC-51 (Manage ride Scheduled bookings):** Tài xế quản lý danh sách các chuyến xe đã nhận, xem thông tin khách hàng và thực hiện các thao tác đón khách/bắt đầu chuyến.
 - *(More to be added as feature expands)*
 
 ## Quy Trình Tương Tác Giữa Các Component
