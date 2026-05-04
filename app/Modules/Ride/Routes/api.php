@@ -35,10 +35,7 @@ Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->
 
     // UC-13: Theo dõi tài xế realtime
     Route::get('{rideId}/tracking', [RideController::class, 'showTracking'])->name('ride.tracking.show');
-    Route::post('{rideId}/tracking/accept', [RideController::class, 'acceptTracking'])->name('ride.tracking.accept');
-    Route::post('{rideId}/tracking/location', [RideController::class, 'updateDriverLocation'])->name('ride.tracking.location');
-    Route::post('{rideId}/tracking/arrived', [RideController::class, 'markDriverArrived'])->name('ride.tracking.arrived');
-    Route::post('{rideId}/tracking/driver-cancel', [RideController::class, 'cancelByDriver'])->name('ride.tracking.driver-cancel');
+
 
     // UC-14: Chat / Call Driver (Customer side)
     Route::get('{rideId}/communication/messages', [RideCommunicationController::class, 'index'])->name('ride.communication.messages.index');

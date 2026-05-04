@@ -36,11 +36,18 @@ final class NotifyRealtimeOnDriverArrived implements ShouldQueue
             $payload = [
                 'event'   => 'ride.arrived',
                 'ride_id' => (string) $event->rideId,
+                'driver'  => [
+                    'id'          => (string) $driverProfile->id,
+                    'current_lat' => (float) $driverProfile->current_lat,
+                    'current_lng' => (float) $driverProfile->current_lng,
+                ],
                 'message' => 'Tài xế đã đến điểm đón.',
                 'occurred_at' => now()->toIso8601String(),
             ];
 
-            Redis::publish('ride.communication.events', json_encode($payload));
+            // Emit to Node.js WebSocket via Redis
+            $channel = env('REDIS_COMMUNICATION_CHANNEL', 'ride.communication.events');
+            Redis::publish($channel, json_encode($payload));
 
             Log::info('Realtime notification sent: ride.driver_arrived', [
                 'ride_id'   => $event->rideId
