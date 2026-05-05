@@ -6,6 +6,8 @@ namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
 use App\Modules\User\Model\Enums\DriverStatus;
+use App\Modules\User\Model\Enums\VehicleType;
+use App\Modules\User\Model\Enums\VehicleColor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -114,6 +116,8 @@ class DriverProfile extends Model
         'total_trips'    => 'integer',
         'cooldown_until' => 'datetime',
         'status'         => DriverStatus::class,
+        'vehicle_type'   => VehicleType::class,
+        'vehicle_color'  => VehicleColor::class,
     ];
 
     /**

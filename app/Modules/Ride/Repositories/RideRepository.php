@@ -393,4 +393,22 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->orderBy('travel_time')
             ->get();
     }
+
+    /**
+     * Đếm tổng số chuyến xe trong hệ thống.
+     */
+    public function countTotalOrders(): int
+    {
+        return $this->model->count();
+    }
+
+    /**
+     * Tính tổng doanh thu hệ thống (các chuyến xe đã hoàn thành).
+     */
+    public function sumTotalRevenue(): float
+    {
+        return (float) $this->model
+            ->where('status', RideStatus::COMPLETED->value)
+            ->sum('total_price');
+    }
 }

@@ -1,17 +1,23 @@
 <?php
 
+declare(strict_types=1);
 
 namespace App\Modules\Pricing\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
+use App\Modules\Pricing\Interfaces\PricingConfigRepositoryInterface;
+use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
+use App\Modules\Pricing\Interfaces\PricingSurgeRuleRepositoryInterface;
+use App\Modules\Pricing\Repositories\PricingConfigRepository;
+use App\Modules\Pricing\Repositories\PricingGlobalSettingRepository;
+use App\Modules\Pricing\Repositories\PricingSurgeRuleRepository;
 use App\Modules\Pricing\Services\PricingService;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Routing\Router;
 
-class PricingServiceProviders extends BaseModuleServiceProvider
+final class PricingServiceProvider extends BaseModuleServiceProvider
 {
-
     protected function getModuleName(): string
     {
         return 'Pricing';
@@ -23,8 +29,10 @@ class PricingServiceProviders extends BaseModuleServiceProvider
     public function register(): void
     {
         $this->app->singleton(PricingServiceInterface::class, PricingService::class);
+        $this->app->singleton(PricingConfigRepositoryInterface::class, PricingConfigRepository::class);
+        $this->app->singleton(PricingGlobalSettingRepositoryInterface::class, PricingGlobalSettingRepository::class);
+        $this->app->singleton(PricingSurgeRuleRepositoryInterface::class, PricingSurgeRuleRepository::class);
     }
-
 
     /**
      * Register the module's routes.

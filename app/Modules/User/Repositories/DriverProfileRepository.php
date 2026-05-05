@@ -102,6 +102,23 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
     }
 
     /**
+     * Đếm số lượng tài xế đang hoạt động (Online và Active)
+     */
+    public function countActiveDrivers(): int
+    {
+        return $this->model
+            ->where('is_online', true)
+            ->where(function ($q) {
+                $q->where('status', DriverStatus::ACTIVE->value)
+                  ->orWhere(function ($q2) {
+                      $q2->where('status', DriverStatus::COOLDOWN->value)
+                         ->where('cooldown_until', '<=', now());
+                  });
+            })
+            ->count();
+    }
+
+    /**
      * Cập nhật vị trí hiện tại của tài xế.
      */
     public function updateLocation(string $driverId, float $lat, float $lng): bool

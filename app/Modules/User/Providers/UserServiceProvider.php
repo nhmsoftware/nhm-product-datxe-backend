@@ -21,6 +21,13 @@ use App\Modules\User\Interfaces\DriverGroupRepositoryInterface;
 use App\Modules\User\Services\ProfileService;
 use App\Modules\User\Services\SavedAddressService;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Event;
+use App\Modules\User\Events\UserStatusUpdated;
+use App\Modules\User\Events\DriverApplicationApproved;
+use App\Modules\User\Events\DriverApplicationRejected;
+use App\Modules\User\Listeners\NotifyRealtimeOnUserStatusUpdated;
+use App\Modules\User\Listeners\NotifyRealtimeOnDriverApplicationApproved;
+use App\Modules\User\Listeners\NotifyRealtimeOnDriverApplicationRejected;
 
 class UserServiceProvider extends BaseModuleServiceProvider
 {
@@ -34,6 +41,8 @@ class UserServiceProvider extends BaseModuleServiceProvider
         // ── Services (singleton để tái sử dụng DI graph) ──────
         $this->app->singleton(ProfileServiceInterface::class, ProfileService::class);
         $this->app->singleton(SavedAddressServiceInterface::class, SavedAddressService::class);
+        $this->app->singleton(\App\Modules\User\Interfaces\AdminUserServiceInterface::class, \App\Modules\User\Services\AdminUserService::class);
+        $this->app->singleton(\App\Modules\User\Interfaces\AdminDriverServiceInterface::class, \App\Modules\User\Services\AdminDriverService::class);
 
         // ── Repositories (singleton) ────────────────────────
         $this->app->singleton(SavedAddressRepositoryInterface::class, SavedAddressRepository::class);
@@ -49,6 +58,22 @@ class UserServiceProvider extends BaseModuleServiceProvider
         /** @var Router $router */
         $router = $this->app['router'];
         $router->aliasMiddleware('check.account.status', CheckAccountStatus::class);
+
+        // Đăng ký Event Listeners cho Real-time
+        Event::listen(
+            UserStatusUpdated::class,
+            NotifyRealtimeOnUserStatusUpdated::class
+        );
+
+        Event::listen(
+            DriverApplicationApproved::class,
+            NotifyRealtimeOnDriverApplicationApproved::class
+        );
+
+        Event::listen(
+            DriverApplicationRejected::class,
+            NotifyRealtimeOnDriverApplicationRejected::class
+        );
 
         parent::boot();
     }
