@@ -529,7 +529,7 @@ final class RideService extends BaseService implements RideServiceInterface
             return 350.0;
         }
 
-        return match ($driverProfile->vehicle_type) {
+        return match ($driverProfile->vehicle_type->value) {
             VehicleType::BIKE->value => 450.0,
             VehicleType::CAR_4_SEATS->value, VehicleType::CAR_7_SEATS->value, VehicleType::CAR_9_SEATS->value => 350.0,
             default => 350.0,
@@ -840,7 +840,7 @@ final class RideService extends BaseService implements RideServiceInterface
             // 2. Lấy danh sách từ repository
             $filters = (array) $dto;
             $rides = $this->rideRepository->findAvailableScheduledRides(
-                (int) $driver->driverProfile->vehicle_type,
+                $driver->driverProfile->vehicle_type->value,
                 $filters
             );
 
@@ -882,7 +882,7 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // 3. Kiểm tra phù hợp loại xe
             $this->validate(
-                $ride->vehicle_type->value === (int) $driver->driverProfile->vehicle_type,
+                $ride->vehicle_type->value === $driver->driverProfile->vehicle_type->value,
                 'Bạn không đủ điều kiện để xem chuyến xe này.',
                 403
             );
@@ -928,7 +928,7 @@ final class RideService extends BaseService implements RideServiceInterface
             // 3. Kiểm tra trạng thái và loại xe
             $this->validate($ride->status === RideStatus::PENDING, 'Chuyến xe đã được tài xế khác nhận hoặc không còn khả dụng.', 400);
             $this->validate(
-                $ride->vehicle_type->value === (int) $driver->driverProfile->vehicle_type,
+                $ride->vehicle_type->value === $driver->driverProfile->vehicle_type->value,
                 'Loại xe của bạn không phù hợp với chuyến này.',
                 403
             );
