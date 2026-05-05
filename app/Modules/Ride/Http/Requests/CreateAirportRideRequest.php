@@ -29,11 +29,11 @@ class CreateAirportRideRequest extends FormRequest
     {
         return [
             'pickup_address'      => 'required|string|max:255',
-            'pickup_lat'          => 'required|numeric',
-            'pickup_lng'          => 'required|numeric',
+            'pickup_lat'          => 'required|numeric|between:-90,90',
+            'pickup_lng'          => 'required|numeric|between:-180,180',
             'destination_address' => 'required|string|max:255',
-            'destination_lat'     => 'required|numeric',
-            'destination_lng'     => 'required|numeric',
+            'destination_lat'     => 'required|numeric|between:-90,90',
+            'destination_lng'     => 'required|numeric|between:-180,180',
             'travel_date'         => 'required|date|after_or_equal:today',
             'travel_time'         => 'required|string|regex:/^\d{2}:\d{2}$/',
             'vehicle_type'        => 'required|integer|in:1,2,3,4', // BIKE, CAR_4_SEATS, CAR_7_SEATS, CAR_9_SEATS

@@ -89,6 +89,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 durationSeconds: $matrix->duration,
                 vehicleType: $dto->vehicleType
             );
+            $this->validate(!$pricingResult->isError(), $pricingResult->getMessage());
 
             /** @var PricingResultDTO $pricingData */
             $pricingData = $pricingResult->getData();
