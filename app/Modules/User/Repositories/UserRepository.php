@@ -205,12 +205,27 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
             });
         }
 
-        if (isset($filters['kyc_status'])) {
+        if (!empty($filters['kyc_status'])) {
             $query->whereHas('userReviewApplications', function ($q) use ($filters) {
                 $q->where('kyc_type', KycType::Driver->value)
-                  ->where('kyc_status', $filters['kyc_status']);
+                  ->where('kyc_status', $filters['kyc_status'])
+                  ->whereIn('id', function ($sub) {
+                      $sub->selectRaw('max(id)')
+                          ->from('user_review_applications')
+                          ->where('kyc_type', KycType::Driver->value)
+                          ->groupBy('user_id');
+                  });
             });
         }
+
+
+
+
+
+
+
+
+
 
         if (isset($filters['is_active'])) {
             $query->where('is_active', (bool) $filters['is_active']);

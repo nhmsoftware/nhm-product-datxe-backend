@@ -25,9 +25,23 @@ final class AdminUserService extends BaseService implements AdminUserServiceInte
     {
         return $this->execute(function () use ($dto) {
             $paginator = $this->userRepository->findCustomers($dto->toArray(), $dto->perPage);
+            
+            $paginator->getCollection()->transform(function ($user) {
+                return [
+                    'id'          => $user->id,
+                    'full_name'   => $user->full_name,
+                    'phone'       => $user->phone,
+                    'email'       => $user->email,
+                    'is_active'   => $user->is_active,
+                    'total_rides' => $user->customerProfile?->total_rides ?? 0,
+                    'created_at'  => $user->created_at?->toIso8601String(),
+                ];
+            });
+
             return $paginator;
         });
     }
+
 
     /**
      * @inheritDoc

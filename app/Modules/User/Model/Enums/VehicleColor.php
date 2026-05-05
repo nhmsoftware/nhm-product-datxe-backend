@@ -10,7 +10,9 @@ enum VehicleColor: int
 {
     use EnumHelper;
 
+    case Unknown = 0;
     case White  = 1;
+
     case Black  = 2;
     case Silver = 3;
     case Red    = 4;
@@ -19,7 +21,9 @@ enum VehicleColor: int
     public function label(): string
     {
         return match($this) {
+            self::Unknown => 'Chưa xác định',
             self::White  => 'Trắng',
+
             self::Black  => 'Đen',
             self::Silver => 'Bạc',
             self::Red    => 'Đỏ',

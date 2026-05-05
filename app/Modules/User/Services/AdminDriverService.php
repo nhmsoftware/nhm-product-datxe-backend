@@ -234,4 +234,34 @@ final class AdminDriverService extends BaseService implements AdminDriverService
             ];
         }, useTransaction: true);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function exportDrivers(ListDriversDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            // Lấy tất cả (không phân trang)
+            $drivers = $this->userRepository->findDrivers($dto->toArray(), 9999);
+            
+            $data = $drivers->getCollection()->map(function ($user) {
+                $latestKyc = $user->userReviewApplications->first();
+                return [
+                    'ID'         => $user->id,
+                    'Họ tên'     => $user->full_name,
+                    'SĐT'        => $user->phone,
+                    'Email'      => $user->email,
+                    'Trạng thái' => $user->is_active ? 'Hoạt động' : 'Bị khóa',
+                    'KYC'        => $latestKyc?->kyc_status?->label() ?? 'N/A',
+                    'Ngày tạo'   => $user->created_at?->format('d/m/Y H:i'),
+                ];
+            });
+
+            return [
+                'items' => $data,
+                'total' => $data->count()
+            ];
+        });
+    }
 }
+

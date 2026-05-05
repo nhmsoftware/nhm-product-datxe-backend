@@ -307,10 +307,11 @@ final class AuthService extends BaseService implements AuthServiceInterface
         return match ($role) {
             UserRole::Customer  => 'customerProfile',
             UserRole::Merchants => 'merchantProfile',
-            UserRole::Admin     => 'adminProfile',
+            UserRole::Admin     => 'customerProfile', // Admin dùng chung customerProfile để lấy thông tin cơ bản
             UserRole::Driver    => 'driverProfile',
         };
     }
+
 
     /**
      * Gửi OTP đến số điện thoại.

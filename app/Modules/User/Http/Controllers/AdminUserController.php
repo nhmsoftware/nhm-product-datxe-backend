@@ -44,7 +44,8 @@ final class AdminUserController extends BaseController
             return $this->sendError($result->getMessage(), $result->getCode());
         }
 
-        return $this->sendSuccess($result->getData(), $result->getMessage());
+        return $this->sendSuccess($result->getData()->toArray(), $result->getMessage());
+
     }
 
     #[OA\Get(

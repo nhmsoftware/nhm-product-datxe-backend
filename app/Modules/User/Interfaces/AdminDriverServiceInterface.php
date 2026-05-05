@@ -42,4 +42,10 @@ interface AdminDriverServiceInterface
      * Gán đội xe (UC-85).
      */
     public function assignDriverGroup(AssignDriverGroupDTO $dto): ServiceReturn;
+
+    /**
+     * Xuất dữ liệu tài xế.
+     */
+    public function exportDrivers(ListDriversDTO $dto): ServiceReturn;
 }
+

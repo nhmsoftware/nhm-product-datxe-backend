@@ -52,7 +52,8 @@ final class AdminDriverController extends BaseController
             return $this->sendError($result->getMessage(), $result->getCode());
         }
 
-        return $this->sendSuccess($result->getData(), $result->getMessage());
+        return $this->sendSuccess($result->getData()->toArray(), $result->getMessage());
+
     }
 
     #[OA\Post(
@@ -238,4 +239,52 @@ final class AdminDriverController extends BaseController
 
         return $this->sendSuccess($result->getData(), $result->getMessage());
     }
+
+    #[OA\Get(
+        path: '/api/v1/admin/drivers/export',
+        summary: 'Xuất Excel tài xế',
+        description: 'Xuất danh sách tài xế theo bộ lọc hiện tại',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Driver Management'],
+        parameters: [
+            new OA\Parameter(name: 'keyword', in: 'query', description: 'Từ khóa tìm kiếm', schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'kyc_status', in: 'query', description: 'Trạng thái duyệt', schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'is_active', in: 'query', description: 'Trạng thái hoạt động', schema: new OA\Schema(type: 'boolean')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function export(ListDriversRequest $request): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        $result = $this->adminDriverService->exportDrivers(ListDriversDTO::fromRequest($request));
+        
+        if ($result->isError()) {
+            abort($result->getCode(), $result->getMessage());
+        }
+
+        $data = $result->getData()['items'];
+
+        return response()->streamDownload(function () use ($data) {
+            $handle = fopen('php://output', 'w');
+            
+            // BOM for Excel UTF-8
+            fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
+
+            // Headers
+            if (!empty($data)) {
+                fputcsv($handle, array_keys($data[0]));
+            }
+
+            foreach ($data as $row) {
+                fputcsv($handle, array_values($row));
+            }
+
+            fclose($handle);
+        }, 'danh_sach_tai_xe_' . now()->getTimestamp() . '.csv', [
+            'Content-Type' => 'text/csv',
+        ]);
+    }
 }
+
+

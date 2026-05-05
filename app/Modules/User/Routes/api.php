@@ -64,8 +64,12 @@ Route::prefix('v1/admin')
             Route::get('/', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'listDrivers'])
                 ->name('admin.drivers.index');
             
+            Route::get('export', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'export'])
+                ->name('admin.drivers.export');
+
             Route::get('{userId}', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'show'])
                 ->name('admin.drivers.show');
+
 
             Route::put('{userId}/status', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'updateStatus'])
                 ->name('admin.drivers.status.update');
