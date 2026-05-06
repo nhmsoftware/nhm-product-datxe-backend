@@ -2814,22 +2814,53 @@
                 ]
             }
         },
-        "/api/v1/ride/{rideId}/vehicles": {
+        "/api/v1/ride/vehicles": {
             "get": {
                 "tags": [
                     "Ride"
                 ],
-                "summary": "Lấy danh sách loại xe (UC-09)",
-                "description": "Lấy danh sách loại xe khả dụng kèm giá ước tính và thời gian chờ dựa trên tuyến đường của chuyến xe nháp.",
-                "operationId": "3307fa95b098850b22396b6738005131",
+                "summary": "Lấy danh sách loại xe kèm giá (UC-09)",
+                "description": "Lấy danh sách loại xe khả dụng kèm giá ước tính dựa trên tọa độ đón và đến. Stateless, không cần draft trước.",
+                "operationId": "ab5bd51a6c2719d84a5eca169d653dd1",
                 "parameters": [
                     {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của ride draft",
+                        "name": "pickup_lat",
+                        "in": "query",
+                        "description": "Vĩ độ điểm đón",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "pickup_lng",
+                        "in": "query",
+                        "description": "Kinh độ điểm đón",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "destination_lat",
+                        "in": "query",
+                        "description": "Vĩ độ điểm đến",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "destination_lng",
+                        "in": "query",
+                        "description": "Kinh độ điểm đến",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
                         }
                     }
                 ],
@@ -2837,8 +2868,8 @@
                     "200": {
                         "description": "Danh sách xe và giá ước tính"
                     },
-                    "404": {
-                        "description": "Không tìm thấy chuyến xe"
+                    "403": {
+                        "description": "Chưa xác thực số điện thoại"
                     }
                 },
                 "security": [
@@ -2977,38 +3008,83 @@
                 ]
             }
         },
-        "/api/v1/ride/{rideId}/confirm": {
+        "/api/v1/ride/book": {
             "post": {
                 "tags": [
                     "Ride"
                 ],
                 "summary": "Xác nhận đặt xe (UC-12)",
-                "description": "Xác nhận đặt xe dựa trên giá trị draft. Hệ thống sẽ tính lại giá và so sánh với expected_price từ FE để báo lệch giá nếu có.",
-                "operationId": "3381684cb7f81eb00e88814a18bd3230",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của ride draft",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
+                "description": "Xác nhận đặt xe và tạo chuyến đi trong một bước. Hệ thống tính lại giá, so sánh với expected_price và phát sự kiện tìm tài xế.",
+                "operationId": "385f213a47785743aafe4b9c5889fd36",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "pickup_address",
+                                    "pickup_lat",
+                                    "pickup_lng",
+                                    "destination_address",
+                                    "destination_lat",
+                                    "destination_lng",
+                                    "vehicle_type",
                                     "expected_price"
                                 ],
                                 "properties": {
-                                    "expected_price": {
+                                    "pickup_address": {
+                                        "type": "string",
+                                        "example": "Số 1 Đào Duy Anh, Đống Đa, Hà Nội"
+                                    },
+                                    "pickup_lat": {
                                         "type": "number",
                                         "format": "float",
-                                        "example": 25000
+                                        "example": 21.0072
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.8428
+                                    },
+                                    "destination_address": {
+                                        "type": "string",
+                                        "example": "Vincom Mega Mall Ocean Park"
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20.9944
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.9458
+                                    },
+                                    "vehicle_type": {
+                                        "description": "1: Xe Máy, 2: 4 chỗ, 3: 7 chỗ, 4: 9 chỗ",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "expected_price": {
+                                        "description": "Giá kỳ vọ ng từ UC-09 để kiểm tra chênh lệch",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 85000
+                                    },
+                                    "voucher_codes": {
+                                        "description": "Danh sách mã voucher (tùy chọn)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "DEMO10"
+                                        ]
+                                    },
+                                    "note": {
+                                        "description": "Ghi chú cho tài xế (tùy chọn)",
+                                        "type": "string",
+                                        "example": "Gọi điện trước khi đến"
                                     }
                                 },
                                 "type": "object"
@@ -3028,7 +3104,7 @@
                         }
                     },
                     "409": {
-                        "description": "Giá đã thay đổi hoặc voucher không hợp lệ"
+                        "description": "Giá đã thay đổi so với expected_price"
                     }
                 },
                 "security": [

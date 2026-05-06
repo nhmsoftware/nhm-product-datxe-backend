@@ -22,6 +22,7 @@ use App\Modules\Ride\DTO\PriceEstimateDTO;
 use App\Modules\Ride\DTO\ShowRideTrackingDTO;
 use App\Modules\Ride\DTO\UpdateDriverLocationDTO;
 use App\Modules\Ride\DTO\VehicleOptionDTO;
+use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\AssignInternalDriverDTO;
 use App\Modules\Ride\DTO\BulkPushToPoolDTO;
 use App\Modules\Ride\Events\RideCanceled;
