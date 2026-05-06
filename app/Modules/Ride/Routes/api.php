@@ -10,8 +10,21 @@ use Illuminate\Support\Facades\Route;
  * Các route dành cho Khách hàng (Customer) - Prefix: v1/ride
  */
 Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->group(function () {
-    // UC-08: Tạo bản nháp chuyến xe
-    Route::post('draft', [RideController::class, 'createDraft'])->name('ride.draft');
+    // [DEPRECATED] UC-08: Tạo bản nháp chuyến xe — Không còn expose ra client
+    // Route::post('draft', [RideController::class, 'createDraft'])->name('ride.draft');
+
+    // UC-09: Lấy danh sách loại xe kèm giá ước tính (Stateless — truyền tọa độ, không cần draft)
+    Route::get('vehicles', [RideController::class, 'getVehicleOptions'])->name('ride.vehicles');
+
+    // UC-10: Xem chi tiết giá ước tính (giữ nguyên, dùng sau khi đã có ride)
+    Route::get('{rideId}/price', [RideController::class, 'getPriceEstimate'])->name('ride.price');
+
+    // UC-11: Áp dụng / Xóa voucher
+    Route::post('{rideId}/voucher', [RideController::class, 'applyVoucher'])->name('ride.voucher.apply');
+    Route::delete('{rideId}/voucher', [RideController::class, 'removeVoucher'])->name('ride.voucher.remove');
+
+    // UC-12: Xác nhận đặt xe (tạo draft + confirm trong 1 bước)
+    Route::post('book', [RideController::class, 'confirmBooking'])->name('ride.book');
 
     // UC-26: Đặt xe đi tỉnh
     Route::post('intercity', [RideController::class, 'createIntercity'])->name('ride.intercity');
@@ -19,19 +32,6 @@ Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->
     // UC-27: Đặt xe sân bay
     Route::get('airports', [RideController::class, 'listAirports'])->name('ride.airports');
     Route::post('airport', [RideController::class, 'createAirport'])->name('ride.airport');
-
-    // UC-09: Lấy danh sách loại xe kèm giá ước tính
-    Route::get('{rideId}/vehicles', [RideController::class, 'getVehicleOptions'])->name('ride.vehicles');
-
-    // UC-10: Xem chi tiết giá ước tính
-    Route::get('{rideId}/price', [RideController::class, 'getPriceEstimate'])->name('ride.price');
-
-    // UC-11: Áp dụng / Xóa voucher
-    Route::post('{rideId}/voucher', [RideController::class, 'applyVoucher'])->name('ride.voucher.apply');
-    Route::delete('{rideId}/voucher', [RideController::class, 'removeVoucher'])->name('ride.voucher.remove');
-
-    // UC-12: Xác nhận đặt xe
-    Route::post('{rideId}/confirm', [RideController::class, 'confirmBooking'])->name('ride.confirm');
 
     // UC-13: Theo dõi tài xế realtime
     Route::get('{rideId}/tracking', [RideController::class, 'showTracking'])->name('ride.tracking.show');
@@ -73,4 +73,17 @@ Route::prefix('v1/driver')->middleware(['auth:sanctum', 'check.account.status'])
     
     // UC-51: Quản lý danh sách chuyến xe đã nhận
     Route::get('managed-rides', [RideController::class, 'getDriverManagedRides'])->name('driver.managed.index');
+});
+
+/**
+ * Các route dành cho Quản trị viên (Admin) - Prefix: v1/admin/rides
+ */
+Route::prefix('v1/admin/rides')->middleware(['auth:sanctum'])->group(function () {
+    // UC-122: Manage Scheduled Ride Bookings
+    Route::prefix('scheduled')->group(function () {
+        Route::get('/', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'index'])->name('admin.rides.scheduled.index');
+        Route::get('/{id}', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'show'])->name('admin.rides.scheduled.show');
+        Route::post('/assign', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'assign'])->name('admin.rides.scheduled.assign');
+        Route::post('/push-to-pool', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'pushToPool'])->name('admin.rides.scheduled.push_to_pool');
+    });
 });

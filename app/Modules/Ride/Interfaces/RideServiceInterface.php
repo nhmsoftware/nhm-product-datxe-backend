@@ -10,6 +10,7 @@ use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
+use App\Modules\Ride\DTO\GetVehicleOptionsDTO;
 use App\Modules\Ride\DTO\RequestRideCancellationDTO;
 
 interface RideServiceInterface
@@ -24,13 +25,12 @@ interface RideServiceInterface
 
     /**
      * Lấy danh sách loại xe khả dụng kèm giá ước tính (UC-09).
-     * Dựa vào khoảng cách & thời gian từ draft ride đã tạo.
+     * Stateless — nhận tọa độ trực tiếp, không cần draft trước.
      *
-     * @param string $rideId ID của ride draft
-     * @param string $customerId ID của khách hàng
+     * @param GetVehicleOptionsDTO $dto Tọa độ đón và đến
      * @return ServiceReturn Danh sách VehicleOptionDTO[]
      */
-    public function getVehicleOptions(string $rideId, string $customerId): ServiceReturn;
+    public function getVehicleOptions(GetVehicleOptionsDTO $dto): ServiceReturn;
 
     /**
      * Xem chi tiết giá ước tính cho chuyến đi (UC-10).
@@ -136,4 +136,19 @@ interface RideServiceInterface
      * Lấy danh sách sân bay hỗ trợ (UC-27).
      */
     public function getAirports(): ServiceReturn;
+
+    /**
+     * Danh sách chuyến đặt trước cho Admin.
+     */
+    public function listScheduledRidesForAdmin(array $filters): ServiceReturn;
+
+    /**
+     * Admin gán chuyến xe cho tài xế đội xe nhà.
+     */
+    public function assignInternalDriver(\App\Modules\Ride\DTO\AssignInternalDriverDTO $dto): ServiceReturn;
+
+    /**
+     * Admin đẩy chuyến xe ra pool cho tài xế ngoài.
+     */
+    public function pushScheduledRidesToPool(\App\Modules\Ride\DTO\BulkPushToPoolDTO $dto): ServiceReturn;
 }

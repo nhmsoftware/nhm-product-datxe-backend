@@ -9,6 +9,7 @@ use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateIntercityRideDTO;
 use App\Modules\Ride\DTO\FilterScheduledRideDTO;
+use App\Modules\Ride\DTO\GetVehicleOptionsDTO;
 use App\Modules\Ride\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\DTO\CreateAirportRideDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
@@ -90,20 +91,22 @@ final class RideController extends BaseController
     }
 
     #[OA\Get(
-        path: '/api/v1/ride/{rideId}/vehicles',
-        description: 'Lấy danh sách loại xe khả dụng kèm giá ước tính và thời gian chờ dựa trên tuyến đường của chuyến xe nháp.',
-        summary: 'Lấy danh sách loại xe (UC-09)',
+        path: '/api/v1/ride/vehicles',
+        description: 'Lấy danh sách loại xe khả dụng kèm giá ước tính dựa trên tọa độ đón và đến. Stateless, không cần draft trước.',
+        summary: 'Lấy danh sách loại xe kèm giá (UC-09)',
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
+    #[OA\Parameter(name: 'pickup_lat', description: 'Vĩ độ điểm đón', in: 'query', required: true, schema: new OA\Schema(type: 'number', format: 'float'))]
+    #[OA\Parameter(name: 'pickup_lng', description: 'Kinh độ điểm đón', in: 'query', required: true, schema: new OA\Schema(type: 'number', format: 'float'))]
+    #[OA\Parameter(name: 'destination_lat', description: 'Vĩ độ điểm đến', in: 'query', required: true, schema: new OA\Schema(type: 'number', format: 'float'))]
+    #[OA\Parameter(name: 'destination_lng', description: 'Kinh độ điểm đến', in: 'query', required: true, schema: new OA\Schema(type: 'number', format: 'float'))]
     #[OA\Response(response: 200, description: 'Danh sách xe và giá ước tính')]
-    #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
+    #[OA\Response(response: 403, description: 'Chưa xác thực số điện thoại')]
     public function getVehicleOptions(GetVehicleOptionsRequest $request): JsonResponse
     {
         $result = $this->rideService->getVehicleOptions(
-            (string) $request->route('rideId'),
-            (string) $request->user()->id
+            GetVehicleOptionsDTO::fromRequest($request)
         );
 
         if ($result->isError()) {
@@ -197,19 +200,27 @@ final class RideController extends BaseController
     }
 
     #[OA\Post(
-        path: '/api/v1/ride/{rideId}/confirm',
-        description: 'Xác nhận đặt xe dựa trên giá trị draft. Hệ thống sẽ tính lại giá và so sánh với expected_price từ FE để báo lệch giá nếu có.',
+        path: '/api/v1/ride/book',
+        description: 'Xác nhận đặt xe và tạo chuyến đi trong một bước. Hệ thống tính lại giá, so sánh với expected_price và phát sự kiện tìm tài xế.',
         summary: 'Xác nhận đặt xe (UC-12)',
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
-            required: ['expected_price'],
+            required: ['pickup_address', 'pickup_lat', 'pickup_lng', 'destination_address', 'destination_lat', 'destination_lng', 'vehicle_type', 'expected_price'],
             properties: [
-                new OA\Property(property: 'expected_price', type: 'number', format: 'float', example: 25000),
+                new OA\Property(property: 'pickup_address', type: 'string', example: 'Số 1 Đào Duy Anh, Đống Đa, Hà Nội'),
+                new OA\Property(property: 'pickup_lat', type: 'number', format: 'float', example: 21.0072),
+                new OA\Property(property: 'pickup_lng', type: 'number', format: 'float', example: 105.8428),
+                new OA\Property(property: 'destination_address', type: 'string', example: 'Vincom Mega Mall Ocean Park'),
+                new OA\Property(property: 'destination_lat', type: 'number', format: 'float', example: 20.9944),
+                new OA\Property(property: 'destination_lng', type: 'number', format: 'float', example: 105.9458),
+                new OA\Property(property: 'vehicle_type', type: 'integer', example: 2, description: '1: Xe Máy, 2: 4 chỗ, 3: 7 chỗ, 4: 9 chỗ'),
+                new OA\Property(property: 'expected_price', type: 'number', format: 'float', example: 85000, description: 'Giá kỳ vọ ng từ UC-09 để kiểm tra chênh lệch'),
+                new OA\Property(property: 'voucher_codes', type: 'array', items: new OA\Items(type: 'string'), example: ['DEMO10'], description: 'Danh sách mã voucher (tùy chọn)'),
+                new OA\Property(property: 'note', type: 'string', example: 'Gọi điện trước khi đến', description: 'Ghi chú cho tài xế (tùy chọn)'),
             ]
         )
     )]
@@ -218,7 +229,7 @@ final class RideController extends BaseController
         description: 'Booking confirmed (Đang tìm tài xế)',
         content: new OA\JsonContent(ref: '#/components/schemas/RideResponse')
     )]
-    #[OA\Response(response: 409, description: 'Giá đã thay đổi hoặc voucher không hợp lệ')]
+    #[OA\Response(response: 409, description: 'Giá đã thay đổi so với expected_price')]
     public function confirmBooking(ConfirmBookingRequest $request): JsonResponse
     {
         $result = $this->rideService->confirmBooking(

@@ -34,4 +34,11 @@ Route::prefix('v1/admin/pricing')
 
         Route::delete('surge-rules/{ruleId}', [AdminPricingController::class, 'deleteSurgeRule'])
             ->name('admin.pricing.surge_rules.delete');
+        // UC-121: Configure Scheduled Ride Pricing
+        Route::prefix('scheduled')->group(function () {
+            Route::get('/', [\App\Modules\Pricing\Http\Controllers\AdminScheduledPricingController::class, 'show'])
+                ->name('admin.pricing.scheduled.show');
+            Route::post('/', [\App\Modules\Pricing\Http\Controllers\AdminScheduledPricingController::class, 'update'])
+                ->name('admin.pricing.scheduled.update');
+        });
     });

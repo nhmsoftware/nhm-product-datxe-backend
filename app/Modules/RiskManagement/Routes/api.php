@@ -28,5 +28,13 @@ Route::prefix('v1/admin/risk')->middleware(['auth:sanctum'])->group(function () 
         Route::delete('/{id}', [\App\Modules\RiskManagement\Http\Controllers\AdminPenaltyRuleController::class, 'destroy'])->name('admin.risk.penalty-rules.destroy');
         Route::patch('/{id}/toggle-status', [\App\Modules\RiskManagement\Http\Controllers\AdminPenaltyRuleController::class, 'toggleStatus'])->name('admin.risk.penalty-rules.toggle-status');
     });
+    // UC-120: Configure Scheduled Ride Cancellation
+    Route::prefix('cancellation-configs')->group(function () {
+        Route::get('/', [\App\Modules\RiskManagement\Http\Controllers\AdminCancellationConfigController::class, 'index'])->name('admin.risk.cancellation-configs.index');
+        Route::post('/', [\App\Modules\RiskManagement\Http\Controllers\AdminCancellationConfigController::class, 'store'])->name('admin.risk.cancellation-configs.store');
+        Route::get('/{id}', [\App\Modules\RiskManagement\Http\Controllers\AdminCancellationConfigController::class, 'show'])->name('admin.risk.cancellation-configs.show');
+        Route::put('/{id}', [\App\Modules\RiskManagement\Http\Controllers\AdminCancellationConfigController::class, 'update'])->name('admin.risk.cancellation-configs.update');
+        Route::delete('/{id}', [\App\Modules\RiskManagement\Http\Controllers\AdminCancellationConfigController::class, 'destroy'])->name('admin.risk.cancellation-configs.destroy');
+    });
 
 });

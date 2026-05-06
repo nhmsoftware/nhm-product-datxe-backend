@@ -221,4 +221,14 @@ interface RideRepositoryInterface
      * Tính tổng doanh thu hệ thống (các chuyến xe đã hoàn thành).
      */
     public function sumTotalRevenue(): float;
+
+    /**
+     * Danh sách chuyến đặt trước cho Admin quản lý.
+     */
+    public function listScheduledRidesForAdmin(array $filters): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+    /**
+     * Đẩy các chuyến xe ra pool cho tất cả tài xế ngoài.
+     */
+    public function pushToPool(array $rideIds): int;
 }

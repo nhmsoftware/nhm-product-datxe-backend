@@ -12,7 +12,11 @@ use App\Modules\Pricing\Interfaces\PricingSurgeRuleRepositoryInterface;
 use App\Modules\Pricing\Repositories\PricingConfigRepository;
 use App\Modules\Pricing\Repositories\PricingGlobalSettingRepository;
 use App\Modules\Pricing\Repositories\PricingSurgeRuleRepository;
+use App\Modules\Pricing\Repositories\ScheduledPricingRepository;
 use App\Modules\Pricing\Services\PricingService;
+use App\Modules\Pricing\Services\ScheduledPricingService;
+use App\Modules\Pricing\Interfaces\ScheduledPricingRepositoryInterface;
+use App\Modules\Pricing\Interfaces\ScheduledPricingServiceInterface;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Routing\Router;
 
@@ -32,6 +36,8 @@ final class PricingServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(PricingConfigRepositoryInterface::class, PricingConfigRepository::class);
         $this->app->singleton(PricingGlobalSettingRepositoryInterface::class, PricingGlobalSettingRepository::class);
         $this->app->singleton(PricingSurgeRuleRepositoryInterface::class, PricingSurgeRuleRepository::class);
+        $this->app->singleton(ScheduledPricingRepositoryInterface::class, ScheduledPricingRepository::class);
+        $this->app->singleton(ScheduledPricingServiceInterface::class, ScheduledPricingService::class);
     }
 
     /**
