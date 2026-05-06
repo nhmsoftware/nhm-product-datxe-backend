@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\RiskManagement\Http\Controllers;
 
-use App\Core\Http\Controllers\BaseController;
+use App\Core\Controller\BaseController;
 use App\Modules\RiskManagement\DTO\CreatePenaltyRuleDTO;
 use App\Modules\RiskManagement\DTO\UpdatePenaltyRuleDTO;
 use App\Modules\RiskManagement\Http\Requests\AdminPenaltyRuleRequest;
