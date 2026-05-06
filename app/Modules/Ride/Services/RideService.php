@@ -456,7 +456,7 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // Lấy quy tắc phí hủy từ cấu hình
             $feeResult = $this->cancellationConfigService->getApplicableFee($ride->ride_type->value, $minutesUntilPickup);
-            
+
             if ($feeResult->isSuccess()) {
                 $feeData = $feeResult->getData();
                 if ($feeData['fee_type'] === CancellationFeeType::FIXED->value) {
@@ -1189,11 +1189,11 @@ final class RideService extends BaseService implements RideServiceInterface
     {
         return $this->execute(function () use ($dto) {
             $count = $this->rideRepository->pushToPool($dto->rideIds);
-            
+
             if ($count > 0) {
                 \App\Modules\Ride\Events\ScheduledRidesPushedToPool::dispatch($dto->rideIds);
             }
-            
+
             return [
                 'updated_count' => $count,
                 'message' => "Đã đẩy $count chuyến xe ra danh sách chung.",
