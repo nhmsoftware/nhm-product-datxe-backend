@@ -43,7 +43,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                     'email'            => $user->email,
                     'is_active'        => $user->is_active,
                     'kyc_status'       => $latestKyc?->kyc_status?->value ?? 0,
-                    'kyc_status_label' => $latestKyc?->kyc_status?->label() ?? 'Chưa cập nhật',
+                    'kyc_status_label' => $latestKyc?->kyc_status?->label() ?? 'Chưa có hồ sơ',
                     'created_at'       => $user->created_at?->toIso8601String(),
                 ];
             });
@@ -156,7 +156,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 'lock_reason'        => $user->lock_reason,
                 'lock_expired_at'    => $user->lock_expired_at?->toIso8601String(),
                 'kyc_status'         => $latestKyc?->kyc_status?->value,
-                'kyc_status_label'   => $latestKyc?->kyc_status?->label() ?? 'N/A',
+                'kyc_status_label'   => $latestKyc?->kyc_status?->label() ?? 'Chưa có hồ sơ',
                 'kyc_cancel_reason'  => $latestKyc?->cancel_reason,
                 'created_at'         => $user->created_at?->toIso8601String(),
             ];
