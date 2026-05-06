@@ -24,4 +24,5 @@ return [
     DriverServiceProvider::class,
     App\Modules\Operation\Providers\OperationServiceProvider::class,
     App\Modules\Dashboard\Providers\DashboardServiceProvider::class,
+    App\Modules\RiskManagement\Providers\RiskManagementServiceProvider::class,
 ];

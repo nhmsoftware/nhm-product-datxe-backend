@@ -27,4 +27,12 @@ interface VoucherRepositoryInterface extends BaseRepositoryInterface
      * @return mixed
      */
     public function findByCode(string $code): mixed;
+
+    /**
+     * Tìm kiếm voucher cho Admin với phân trang.
+     * 
+     * @param array $filters
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function search(array $filters): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
 }

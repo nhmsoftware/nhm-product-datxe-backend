@@ -1358,6 +1358,149 @@
                 ]
             }
         },
+        "/api/v1/admin/finance/vouchers": {
+            "get": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Danh sách voucher (Admin) (UC-99)",
+                "operationId": "14130cb3c0f077f1d2938191cd272652",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Tạo voucher mới (Admin) (UC-99)",
+                "operationId": "46bd7e4bd8db505dc70e4eadd28edfd4",
+                "responses": {
+                    "201": {
+                        "description": "Tạo thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/vouchers/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Chi tiết voucher (Admin) (UC-99)",
+                "operationId": "0aa16f167e789aeed0b0cca7770a64db",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Cập nhật voucher (Admin) (UC-99)",
+                "operationId": "8975acb0f0b525b4b4bbec5184c51d0f",
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Xóa voucher (Admin) (UC-99)",
+                "operationId": "fecd3831b8460ae3d3d5c59a5f333db2",
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/vouchers/assign": {
+            "post": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Gán voucher cho người dùng (Admin) (UC-99)",
+                "operationId": "2473ce3ac8a63d5367edba9ab7353b84",
+                "responses": {
+                    "200": {
+                        "description": "Gán thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/vouchers/{id}/deactivate": {
+            "patch": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Vô hiệu hóa voucher (Admin) (UC-102)",
+                "operationId": "3b20366774f839b667b6bc16cc79b595",
+                "responses": {
+                    "200": {
+                        "description": "Vô hiệu hóa thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/finance/rewards/overview": {
             "get": {
                 "tags": [
@@ -2277,6 +2420,109 @@
                 "security": [
                     {
                         "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/pricing/surge-rules": {
+            "get": {
+                "tags": [
+                    "Admin Pricing"
+                ],
+                "summary": "Danh sách quy tắc giá cao điểm (UC-96)",
+                "operationId": "e0afb31987b6ee888fa750cb9e0e2395",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Pricing"
+                ],
+                "summary": "Lưu quy tắc giá cao điểm (UC-96)",
+                "operationId": "76f9de756fdecad9c76095025d560b23",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "vehicle_type": {
+                                        "type": "integer"
+                                    },
+                                    "conditions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "multiplier": {
+                                        "type": "number"
+                                    },
+                                    "start_time": {
+                                        "type": "string",
+                                        "format": "H:i"
+                                    },
+                                    "end_time": {
+                                        "type": "string",
+                                        "format": "H:i"
+                                    },
+                                    "area_id": {
+                                        "type": "string"
+                                    },
+                                    "rule_id": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/pricing/surge-rules/{ruleId}": {
+            "delete": {
+                "tags": [
+                    "Admin Pricing"
+                ],
+                "summary": "Xóa quy tắc giá cao điểm",
+                "operationId": "a221faaf8ff07e446729ed3d9a6cd116",
+                "parameters": [
+                    {
+                        "name": "ruleId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -3385,6 +3631,122 @@
                 ]
             }
         },
+        "/api/v1/admin/risk/anti-fraud/overview": {
+            "get": {
+                "tags": [
+                    "Admin Risk Management"
+                ],
+                "summary": "Tổng quan hệ thống chống gian lận (UC-104)",
+                "operationId": "15365003b86349181cbbb7fbf055fda6",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/risk/anti-fraud/alerts": {
+            "get": {
+                "tags": [
+                    "Admin Risk Management"
+                ],
+                "summary": "Danh sách cảnh báo gian lận (UC-104)",
+                "operationId": "31b61db93b15fc1d4debf261fa73c616",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "target_type",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "risk_level",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fraud_type",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/risk/anti-fraud/alerts/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Risk Management"
+                ],
+                "summary": "Chi tiết cảnh báo gian lận (UC-104)",
+                "operationId": "65af1f028c0bf9b6cc8e0611fa4009b7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Không có quyền"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/drivers": {
             "get": {
                 "tags": [
@@ -3697,6 +4059,52 @@
                     },
                     "404": {
                         "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/drivers/export": {
+            "get": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Xuất Excel tài xế",
+                "description": "Xuất danh sách tài xế theo bộ lọc hiện tại",
+                "operationId": "5d7324cfb42b56f90e408c25ed155fef",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Từ khóa tìm kiếm",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "kyc_status",
+                        "in": "query",
+                        "description": "Trạng thái duyệt",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Trạng thái hoạt động",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
                     }
                 },
                 "security": [
@@ -6079,6 +6487,10 @@
             "description": "Driver"
         },
         {
+            "name": "Admin - Finance",
+            "description": "Admin - Finance"
+        },
+        {
             "name": "Finance - Rewards",
             "description": "Finance - Rewards"
         },
@@ -6095,6 +6507,10 @@
             "description": "Operation"
         },
         {
+            "name": "Admin Pricing",
+            "description": "Admin Pricing"
+        },
+        {
             "name": "Admin.Pricing",
             "description": "Admin.Pricing"
         },
@@ -6105,6 +6521,10 @@
         {
             "name": "Ride",
             "description": "Ride"
+        },
+        {
+            "name": "Admin Risk Management",
+            "description": "Admin Risk Management"
         },
         {
             "name": "Admin Driver Management",

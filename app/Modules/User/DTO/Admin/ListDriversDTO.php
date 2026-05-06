@@ -12,7 +12,7 @@ final class ListDriversDTO
         public readonly ?string $keyword = null,
         public readonly ?int    $kycStatus = null,
         public readonly ?bool   $isActive = null,
-        public readonly int     $perPage = 15,
+        public readonly int     $perPage = 20,
         public readonly int     $page = 1,
     ) {}
 
@@ -22,7 +22,7 @@ final class ListDriversDTO
             keyword:   $request->query('keyword'),
             kycStatus: $request->query('kyc_status') ? (int) $request->query('kyc_status') : null,
             isActive:  $request->has('is_active') ? $request->boolean('is_active') : null,
-            perPage:   (int) $request->query('per_page', 15),
+            perPage:   (int) $request->query('per_page', 20),
             page:      (int) $request->query('page', 1),
         );
     }

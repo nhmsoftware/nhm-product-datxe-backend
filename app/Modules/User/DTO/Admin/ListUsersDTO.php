@@ -11,7 +11,7 @@ final class ListUsersDTO
     public function __construct(
         public readonly ?string $keyword,
         public readonly ?bool   $isActive,
-        public readonly int     $perPage = 15,
+        public readonly int     $perPage = 20,
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -19,7 +19,7 @@ final class ListUsersDTO
         return new self(
             keyword:  $request->query('keyword'),
             isActive: $request->has('is_active') ? $request->boolean('is_active') : null,
-            perPage:  (int) $request->query('per_page', 15),
+            perPage:  (int) $request->query('per_page', 20),
         );
     }
 

@@ -43,3 +43,15 @@ Route::prefix('v1/finance')->middleware(['auth:sanctum', 'check.account.status']
     Route::get('subscriptions/packages', [\App\Modules\Finance\Http\Controllers\SubscriptionController::class, 'packages'])->name('finance.subscriptions.packages');
     Route::post('subscriptions/register', [\App\Modules\Finance\Http\Controllers\SubscriptionController::class, 'register'])->name('finance.subscriptions.register');
 });
+
+// Admin Routes
+Route::prefix('v1/admin/finance')->middleware(['auth:sanctum'])->group(function () {
+    // UC-99: Manage Voucher
+    Route::get('vouchers', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'index'])->name('admin.finance.vouchers.index');
+    Route::get('vouchers/{id}', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'show'])->name('admin.finance.vouchers.show');
+    Route::post('vouchers', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'store'])->name('admin.finance.vouchers.store');
+    Route::put('vouchers/{id}', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'update'])->name('admin.finance.vouchers.update');
+    Route::delete('vouchers/{id}', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'destroy'])->name('admin.finance.vouchers.destroy');
+    Route::post('vouchers/assign', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'assign'])->name('admin.finance.vouchers.assign');
+    Route::patch('vouchers/{id}/deactivate', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'deactivate'])->name('admin.finance.vouchers.deactivate');
+});
