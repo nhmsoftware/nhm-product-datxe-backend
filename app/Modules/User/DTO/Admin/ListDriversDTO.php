@@ -20,7 +20,7 @@ final class ListDriversDTO
     {
         return new self(
             keyword:   $request->query('keyword'),
-            kycStatus: $request->query('kyc_status') ? (int) $request->query('kyc_status') : null,
+            kycStatus: $request->filled('kyc_status') || $request->query('kyc_status') === '0' ? (int) $request->query('kyc_status') : null,
             isActive:  $request->has('is_active') ? $request->boolean('is_active') : null,
             perPage:   (int) $request->query('per_page', 20),
             page:      (int) $request->query('page', 1),

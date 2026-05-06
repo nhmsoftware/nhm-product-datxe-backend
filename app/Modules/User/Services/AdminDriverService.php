@@ -42,8 +42,8 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                     'phone'            => $user->phone,
                     'email'            => $user->email,
                     'is_active'        => $user->is_active,
-                    'kyc_status'       => $latestKyc?->kyc_status?->value,
-                    'kyc_status_label' => $latestKyc?->kyc_status?->label() ?? 'N/A',
+                    'kyc_status'       => $latestKyc?->kyc_status?->value ?? 0,
+                    'kyc_status_label' => $latestKyc?->kyc_status?->label() ?? 'Chưa cập nhật',
                     'created_at'       => $user->created_at?->toIso8601String(),
                 ];
             });
