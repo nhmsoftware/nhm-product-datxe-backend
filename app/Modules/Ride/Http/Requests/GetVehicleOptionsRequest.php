@@ -10,8 +10,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
- * FormRequest cho UC-09: Lấy danh sách loại xe kèm giá ước tính.
- * Stateless — nhận tọa độ trực tiếp, không yêu cầu rideId.
+ * FormRequest cho UC-09: Lấy danh sách xe khả dụng.
+ * Yêu cầu ride_id để lấy đúng thông tin khoảng cách từ draft đã tạo.
  */
 final class GetVehicleOptionsRequest extends FormRequest
 {
@@ -25,25 +25,18 @@ final class GetVehicleOptionsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pickup_lat'      => ['required', 'numeric', 'between:-90,90'],
-            'pickup_lng'      => ['required', 'numeric', 'between:-180,180'],
-            'destination_lat' => ['required', 'numeric', 'between:-90,90'],
-            'destination_lng' => ['required', 'numeric', 'between:-180,180'],
+            'rideId' => ['required', 'numeric', 'exists:rides,id'],
         ];
     }
 
-    public function messages(): array
+    /**
+     * Đồng bộ hóa dữ liệu từ route vào request data để validate.
+     */
+    public function all($keys = null): array
     {
-        return [
-            'pickup_lat.required'      => 'Vĩ độ điểm đón là bắt buộc.',
-            'pickup_lat.between'       => 'Vĩ độ điểm đón không hợp lệ.',
-            'pickup_lng.required'      => 'Kinh độ điểm đón là bắt buộc.',
-            'pickup_lng.between'       => 'Kinh độ điểm đón không hợp lệ.',
-            'destination_lat.required' => 'Vĩ độ điểm đến là bắt buộc.',
-            'destination_lat.between'  => 'Vĩ độ điểm đến không hợp lệ.',
-            'destination_lng.required' => 'Kinh độ điểm đến là bắt buộc.',
-            'destination_lng.between'  => 'Kinh độ điểm đến không hợp lệ.',
-        ];
+        $data = parent::all($keys);
+        $data['rideId'] = $this->route('rideId');
+        return $data;
     }
 
     /**

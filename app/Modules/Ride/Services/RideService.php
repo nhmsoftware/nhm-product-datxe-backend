@@ -9,6 +9,8 @@ use App\Core\Services\ServiceReturn;
 use App\Modules\Pricing\DTO\PricingRequestDTO;
 use App\Modules\Pricing\DTO\PricingResultDTO;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
+use App\Modules\Ride\DTO\AcceptRideTrackingDTO;
+use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
@@ -16,13 +18,11 @@ use App\Modules\Ride\DTO\CreateIntercityRideDTO;
 use App\Modules\Ride\DTO\CreateAirportRideDTO;
 use App\Modules\Ride\DTO\FilterScheduledRideDTO;
 use App\Modules\Ride\DTO\DriverCancelRideDTO;
-use App\Modules\Ride\DTO\GetVehicleOptionsDTO;
 use App\Modules\Ride\DTO\MarkDriverArrivedDTO;
 use App\Modules\Ride\DTO\PriceEstimateDTO;
 use App\Modules\Ride\DTO\ShowRideTrackingDTO;
 use App\Modules\Ride\DTO\UpdateDriverLocationDTO;
 use App\Modules\Ride\DTO\VehicleOptionDTO;
-use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\AssignInternalDriverDTO;
 use App\Modules\Ride\DTO\BulkPushToPoolDTO;
 use App\Modules\Ride\Events\RideCanceled;
@@ -129,35 +129,24 @@ final class RideService extends BaseService implements RideServiceInterface
 
     /**
      * UC-09: Lấy danh sách loại xe kèm giá ước tính.
-     * Stateless — nhận tọa độ trực tiếp, không yêu cầu draft trước.
+     * Dựa vào khoảng cách & thời gian đã tính từ draft.
      */
-    public function getVehicleOptions(GetVehicleOptionsDTO $dto): ServiceReturn
+    public function getVehicleOptions(string $rideId, string $customerId): ServiceReturn
     {
-        return $this->execute(function () use ($dto): array {
-            /** @var \App\Modules\User\Model\User|null $user */
-            $user = $this->userRepository->findById($dto->customerId);
-            $this->validate($user !== null, 'Không tìm thấy thông tin khách hàng.', 404);
+        return $this->execute(function () use ($rideId, $customerId): array {
+            $ride = $this->rideRepository->findByIdAndCustomer($rideId, $customerId);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
 
             $this->validate(
-                $user->is_phone_verified,
-                'Vui lòng xác thực số điện thoại để tiếp tục.',
-                403
+                $ride->status === RideStatus::DRAFT,
+                'Chuyến xe này không thể chọn xe nữa.'
             );
 
-            // Tính khoảng cách và thời gian từ bản đồ
-            $matrix = $this->mapService->getDistanceMatrix(
-                $dto->pickupLat,
-                $dto->pickupLng,
-                $dto->destinationLat,
-                $dto->destinationLng
-            );
-
-            // Tính giá cho tất cả loại xe và trả về danh sách
             return array_values(array_filter(array_map(
-                function (VehicleType $vehicleType) use ($matrix): ?array {
+                function (VehicleType $vehicleType) use ($ride): ?array {
                     $pricingResult = $this->calculatePriceFor(
-                        distanceMeters: $matrix->distance,
-                        durationSeconds: $matrix->duration,
+                        distanceMeters: $ride->distance,
+                        durationSeconds: $ride->duration,
                         vehicleType: $vehicleType
                     );
 
@@ -289,35 +278,26 @@ final class RideService extends BaseService implements RideServiceInterface
 
     /**
      * UC-12: Xác nhận đặt xe.
-     * Nhận toàn bộ thông tin, nội bộ tạo draft và xác nhận trong 1 transaction.
+     * Khách hàng truyền vào loại xe đã chọn và giá kỳ vọ ng.
+     * Hệ thống sẽ tính lại giá theo loại xe và kiểm tra chênh lệch.
      */
     public function confirmBooking(ConfirmBookingDTO $dto): ServiceReturn
     {
-        return $this->execute(function () use ($dto): array {
-            /** @var \App\Modules\User\Model\User|null $user */
-            $user = $this->userRepository->findById($dto->customerId);
-            $this->validate($user !== null, 'Không tìm thấy thông tin khách hàng.', 404);
+        return $this->execute(function () use ($dto): ServiceReturn {
+            $ride = $this->rideRepository->findByIdAndCustomer($dto->rideId, $dto->customerId);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
 
             $this->validate(
-                $user->is_phone_verified,
-                'Vui lòng xác thực số điện thoại để đặt xe.',
-                403
+                $ride->status === RideStatus::DRAFT,
+                'Chuyến xe đã được xác nhận hoặc không hợp lệ.'
             );
 
+            // Dùng vehicle_type từ DTO (khách hàng chọn tại bước này)
             $vehicleType = VehicleType::from($dto->vehicleType);
 
-            // 1. Tính khoảng cách và thời gian từ bản đồ
-            $matrix = $this->mapService->getDistanceMatrix(
-                $dto->pickupLat,
-                $dto->pickupLng,
-                $dto->destinationLat,
-                $dto->destinationLng
-            );
-
-            // 2. Tính giá chính xác theo loại xe đã chọn
             $pricingResult = $this->calculatePriceFor(
-                distanceMeters: $matrix->distance,
-                durationSeconds: $matrix->duration,
+                distanceMeters: $ride->distance,
+                durationSeconds: $ride->duration,
                 vehicleType: $vehicleType
             );
             $this->validate(!$pricingResult->isError(), $pricingResult->getMessage());
@@ -325,85 +305,38 @@ final class RideService extends BaseService implements RideServiceInterface
             /** @var PricingResultDTO $pricingData */
             $pricingData = $pricingResult->getData();
             $discountAmount = 0.0;
-            $appliedVoucherCode = null;
 
-            // 3. Xử lý danh sách voucher (nếu có)
-            foreach ($dto->voucherCodes as $voucherCode) {
-                $discount = $this->resolveVoucherDiscount($voucherCode, $pricingData->finalFare);
-                if ($discount !== null) {
-                    $discountAmount += $discount;
-                    $appliedVoucherCode = $voucherCode; // Áp dụng voucher đầu tiên hợp lệ
-                    break;
+            if (!empty($ride->voucher_code)) {
+                $discountAmount = $this->resolveVoucherDiscount($ride->voucher_code, $pricingData->finalFare);
+
+                if ($discountAmount === null) {
+                    $this->rideRepository->clearVoucher($dto->rideId, $pricingData->finalFare);
+                    $this->throw('Voucher không còn khả dụng. Giá cước đã thay đổi, vui lòng xác nhận lại.', 409);
                 }
             }
 
             $finalFare = max(0, $pricingData->finalFare - $discountAmount);
 
-            // 4. Kiểm tra chênh lệch giá với giá kỳ vọ ng từ UC-09
             if (abs($finalFare - $dto->expectedPrice) > 1.0) {
-                $this->throw(
-                    sprintf(
-                        'Giá cước đã thay đổi (giá hiện tại: %s đ). Vui lòng xác nhận lại.',
-                        number_format($finalFare)
-                    ),
-                    409
-                );
+                if (!empty($ride->voucher_code)) {
+                    $this->rideRepository->applyVoucher($dto->rideId, $ride->voucher_code, $discountAmount, $finalFare);
+                } else {
+                    $this->rideRepository->clearVoucher($dto->rideId, $finalFare);
+                }
+
+                $this->throw('Giá cước đã thay đổi do tình hình giao thông, vui lòng xác nhận lại giá mới.', 409);
             }
 
-            // 5. Tạo ride và xác nhận ngay trong 1 bước (không có trạng thái DRAFT)
-            $ride = $this->rideRepository->create([
-                'customer_id'         => $dto->customerId,
-                'pickup_address'      => $dto->pickupAddress,
-                'pickup_lat'          => $dto->pickupLat,
-                'pickup_lng'          => $dto->pickupLng,
-                'destination_address' => $dto->destinationAddress,
-                'destination_lat'     => $dto->destinationLat,
-                'destination_lng'     => $dto->destinationLng,
-                'distance'            => $matrix->distance,
-                'duration'            => $matrix->duration,
-                'vehicle_type'        => $vehicleType->value,
-                'status'              => RideStatus::PENDING->value,
-                'base_price'          => $pricingData->baseFare,
-                'distance_price'      => $pricingData->distanceFare,
-                'time_fare'           => $pricingData->timeFare,
-                'total_price'         => $pricingData->finalFare,
-                'discount_amount'     => $discountAmount,
-                'voucher_code'        => $appliedVoucherCode,
-                'final_price'         => $finalFare,
-                'note'                => $dto->note,
-                'is_paid'             => false,
-            ]);
+            // Cập nhật loại xe và xác nhận chuyến
+            $this->rideRepository->updateById($dto->rideId, ['vehicle_type' => $vehicleType->value]);
+            $this->rideRepository->confirmBooking($dto->rideId, $finalFare);
 
-            // 6. Phát sự kiện RideBooked → Realtime Server bắt đầu tìm tài xế
+            $ride->refresh();
+
+            // Phát sự kiện RideBooked để DispatchService bắt đầu tìm tài xế
             event(new RideBooked(rideId: $ride->id, customerId: $dto->customerId));
 
-            return [
-                'ride_id'       => (string) $ride->id,
-                'status'        => $ride->status->value,
-                'pickup'        => [
-                    'address'   => $ride->pickup_address,
-                    'lat'       => (float) $ride->pickup_lat,
-                    'lng'       => (float) $ride->pickup_lng,
-                ],
-                'destination'   => [
-                    'address'   => $ride->destination_address,
-                    'lat'       => (float) $ride->destination_lat,
-                    'lng'       => (float) $ride->destination_lng,
-                ],
-                'vehicle_type'  => $ride->vehicle_type->value,
-                'fare_breakdown' => [
-                    'base_fare'       => $pricingData->baseFare,
-                    'distance_fare'   => $pricingData->distanceFare,
-                    'time_fare'       => $pricingData->timeFare,
-                    'original_fare'   => $pricingData->finalFare,
-                    'discount_amount' => $discountAmount,
-                    'final_fare'      => $finalFare,
-                ],
-                'voucher_code'  => $appliedVoucherCode,
-                'distance_km'   => round($matrix->distance / 1000, 2),
-                'duration_min'  => (int) round($matrix->duration / 60),
-                'note'          => $dto->note,
-            ];
+            return $this->success($ride->toArray(), 'Đặt xe thành công. Đang tìm tài xế.');
         }, useTransaction: true);
     }
 

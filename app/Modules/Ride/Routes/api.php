@@ -10,21 +10,21 @@ use Illuminate\Support\Facades\Route;
  * Các route dành cho Khách hàng (Customer) - Prefix: v1/ride
  */
 Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->group(function () {
-    // [DEPRECATED] UC-08: Tạo bản nháp chuyến xe — Không còn expose ra client
-    // Route::post('draft', [RideController::class, 'createDraft'])->name('ride.draft');
+    // UC-08: Tạo bản nháp chuyến xe
+    Route::post('draft', [RideController::class, 'createDraft'])->name('ride.draft');
 
-    // UC-09: Lấy danh sách loại xe kèm giá ước tính (Stateless — truyền tọa độ, không cần draft)
-    Route::get('vehicles', [RideController::class, 'getVehicleOptions'])->name('ride.vehicles');
+    // UC-09: Lấy danh sách loại xe kèm giá ước tính
+    Route::get('{rideId}/vehicles', [RideController::class, 'getVehicleOptions'])->name('ride.vehicles');
 
-    // UC-10: Xem chi tiết giá ước tính (giữ nguyên, dùng sau khi đã có ride)
+    // UC-10: Xem chi tiết giá ước tính
     Route::get('{rideId}/price', [RideController::class, 'getPriceEstimate'])->name('ride.price');
 
     // UC-11: Áp dụng / Xóa voucher
     Route::post('{rideId}/voucher', [RideController::class, 'applyVoucher'])->name('ride.voucher.apply');
     Route::delete('{rideId}/voucher', [RideController::class, 'removeVoucher'])->name('ride.voucher.remove');
 
-    // UC-12: Xác nhận đặt xe (tạo draft + confirm trong 1 bước)
-    Route::post('book', [RideController::class, 'confirmBooking'])->name('ride.book');
+    // UC-12: Xác nhận đặt xe (truyền vehicle_type và expected_price)
+    Route::post('{rideId}/confirm', [RideController::class, 'confirmBooking'])->name('ride.confirm');
 
     // UC-26: Đặt xe đi tỉnh
     Route::post('intercity', [RideController::class, 'createIntercity'])->name('ride.intercity');

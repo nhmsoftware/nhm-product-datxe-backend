@@ -10,7 +10,6 @@ use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
-use App\Modules\Ride\DTO\GetVehicleOptionsDTO;
 use App\Modules\Ride\DTO\RequestRideCancellationDTO;
 
 interface RideServiceInterface
@@ -25,12 +24,13 @@ interface RideServiceInterface
 
     /**
      * Lấy danh sách loại xe khả dụng kèm giá ước tính (UC-09).
-     * Stateless — nhận tọa độ trực tiếp, không cần draft trước.
+     * Dựa vào khoảng cách & thời gian từ draft ride đã tạo.
      *
-     * @param GetVehicleOptionsDTO $dto Tọa độ đón và đến
+     * @param string $rideId ID của ride draft
+     * @param string $customerId ID của khách hàng
      * @return ServiceReturn Danh sách VehicleOptionDTO[]
      */
-    public function getVehicleOptions(GetVehicleOptionsDTO $dto): ServiceReturn;
+    public function getVehicleOptions(string $rideId, string $customerId): ServiceReturn;
 
     /**
      * Xem chi tiết giá ước tính cho chuyến đi (UC-10).
