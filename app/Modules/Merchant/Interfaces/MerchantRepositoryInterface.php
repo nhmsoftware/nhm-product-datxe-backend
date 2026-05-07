@@ -32,4 +32,9 @@ interface MerchantRepositoryInterface extends BaseRepositoryInterface
      * UC-54 Set Opening Hours
      */
     public function updateOpeningHoursSchedule(string $merchantProfileId, array $schedule): bool;
+    /**
+     * Search and paginate merchants for Admin.
+     * UC-86 Manage Merchant
+     */
+    public function searchMerchants(\App\Modules\Merchant\DTO\MerchantFilterDTO $dto): \Illuminate\Pagination\LengthAwarePaginator;
 }

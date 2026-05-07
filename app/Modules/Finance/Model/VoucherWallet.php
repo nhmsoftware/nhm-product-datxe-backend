@@ -36,4 +36,12 @@ final class VoucherWallet extends Model
         'saved_at' => 'datetime',
         'used_at' => 'datetime',
     ];
+
+    /**
+     * Relationship tới Voucher.
+     */
+    public function voucher()
+    {
+        return $this->belongsTo(Voucher::class, 'voucher_id');
+    }
 }

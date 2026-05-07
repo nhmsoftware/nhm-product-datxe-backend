@@ -45,15 +45,19 @@ Route::prefix('v1/merchant')->group(function () {
 Route::prefix('v1/admin/merchant')
     ->middleware(['auth:sanctum'])
     ->group(function () {
-        Route::get('applications', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'index'])
-            ->name('admin.merchant.applications.index');
+        // UC-86 Manage Merchant
+        Route::get('/', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'index'])
+            ->name('admin.merchant.index');
 
-        Route::get('applications/{id}', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'show'])
-            ->name('admin.merchant.applications.show');
+        Route::get('/{id}', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'show'])
+            ->name('admin.merchant.show');
 
-        Route::post('applications/{id}/approve', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'approve'])
-            ->name('admin.merchant.application.approve');
+        Route::post('/{id}/approve', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'approve'])
+            ->name('admin.merchant.approve');
 
-        Route::post('applications/{id}/reject', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'reject'])
-            ->name('admin.merchant.application.reject');
+        Route::post('/{id}/reject', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'reject'])
+            ->name('admin.merchant.reject');
+
+        Route::post('/{id}/toggle-lock', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'toggleLock'])
+            ->name('admin.merchant.toggle_lock');
     });

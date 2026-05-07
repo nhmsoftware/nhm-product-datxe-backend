@@ -60,4 +60,37 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
             return true;
         });
     }
+    public function searchMerchants(\App\Modules\Merchant\DTO\MerchantFilterDTO $dto): \Illuminate\Pagination\LengthAwarePaginator
+    {
+        $query = $this->model->with(['user']);
+
+        if ($dto->storeName) {
+            $query->where('store_name', 'like', '%' . $dto->storeName . '%');
+        }
+
+        if ($dto->status !== null) {
+            $query->where('status', $dto->status);
+        }
+
+        if ($dto->ownerName || $dto->phone || $dto->email || $dto->isActive !== null) {
+            $query->whereHas('user', function ($q) use ($dto) {
+                if ($dto->ownerName) {
+                    $q->whereHas('customerProfile', function ($sq) use ($dto) {
+                        $sq->where('full_name', 'like', '%' . $dto->ownerName . '%');
+                    });
+                }
+                if ($dto->phone) {
+                    $q->where('phone', 'like', '%' . $dto->phone . '%');
+                }
+                if ($dto->email) {
+                    $q->where('email', 'like', '%' . $dto->email . '%');
+                }
+                if ($dto->isActive !== null) {
+                    $q->where('is_active', $dto->isActive);
+                }
+            });
+        }
+
+        return $query->latest()->paginate($dto->limit, ['*'], 'page', $dto->page);
+    }
 }

@@ -75,7 +75,17 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
             // 7. Upload + lưu tài liệu
             $this->storeAllDocuments($application->id, $dto->files);
 
-            // 8. Phát event
+            // 8. Tạo Merchant Profile bản nháp (Pending) để Admin có thể quản lý (UC-86)
+            $this->merchantRepository->create([
+                'user_id'                => $dto->userId,
+                'store_name'             => $dto->storeName,
+                'store_address'          => $dto->storeAddress,
+                'business_type'          => $dto->businessType,
+                'status'                 => \App\Modules\User\Model\Enums\KycStatus::Pending->value,
+                'is_open'                => false,
+            ]);
+
+            // 9. Phát event
             event(new MerchantRegistrationSubmitted(
                 userId:        $dto->userId,
                 applicationId: (string) $application->id,
@@ -189,18 +199,16 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
             $licenseImage   = $files->firstWhere('fileable_type', FileableType::MERCHANT_REVIEW_BUSINESS_LICENSE->value)?->path;
             $storeImage     = $files->firstWhere('fileable_type', FileableType::MERCHANT_REVIEW_STORE_IMAGE->value)?->path;
 
-            // 5. Tạo Merchant Profile
-            $this->merchantRepository->create([
-                'user_id'                => $userId,
-                'store_name'             => $snapshot['store_name'],
-                'store_address'          => $snapshot['store_address'],
-                'business_type'          => $snapshot['business_type'],
-                'citizen_id_image'       => $citizenIdImage,
-                'business_license_image' => $licenseImage,
-                'store_image'            => $storeImage,
-                'status'                 => \App\Modules\User\Model\Enums\KycStatus::Approved->value,
-                'is_open'                => false,
-            ]);
+            // 5. Cập nhật Merchant Profile
+            $merchantProfile = $this->merchantRepository->findByUserId($userId);
+            if ($merchantProfile) {
+                $this->merchantRepository->updateById($merchantProfile->id, [
+                    'citizen_id_image'       => $citizenIdImage,
+                    'business_license_image' => $licenseImage,
+                    'store_image'            => $storeImage,
+                    'status'                 => \App\Modules\User\Model\Enums\KycStatus::Approved->value,
+                ]);
+            }
 
             return [
                 'user_id' => $userId,

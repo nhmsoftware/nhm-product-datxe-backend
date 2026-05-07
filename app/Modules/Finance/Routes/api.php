@@ -11,6 +11,7 @@ use App\Modules\Finance\Http\Controllers\WalletController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1/vouchers')->middleware(['auth:sanctum', 'check.account.status'])->group(function () {
+    Route::get('my-vouchers', [VoucherController::class, 'myVouchers'])->name('vouchers.mine');
     Route::get('/', [VoucherController::class, 'index'])->name('vouchers.index');
     Route::get('{id}', [VoucherController::class, 'show'])->name('vouchers.show');
     Route::post('{id}/save', [VoucherController::class, 'save'])->name('vouchers.save');

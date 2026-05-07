@@ -46,4 +46,12 @@ interface VoucherServiceInterface
      * @return ServiceReturn
      */
     public function applyVoucherQuick(ApplyVoucherQuickDTO $dto): ServiceReturn;
+
+    /**
+     * Lấy danh sách voucher đã lưu trong ví của khách hàng.
+     * 
+     * @param string $customerId
+     * @return ServiceReturn
+     */
+    public function getSavedVouchers(string $customerId): ServiceReturn;
 }

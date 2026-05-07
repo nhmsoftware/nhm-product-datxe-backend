@@ -74,11 +74,14 @@ class MerchantProfile extends Model
         'average_rating',
         'total_orders',
         'status',
+        'reject_reason',
         'commission_rate',
         'commission_package',
     ];
 
     protected $casts = [
+        'id' => 'string',
+        'user_id' => 'string',
         'lat' => 'decimal:8',
         'lng' => 'decimal:8',
         'is_open' => 'boolean',

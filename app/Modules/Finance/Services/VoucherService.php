@@ -113,4 +113,19 @@ final class VoucherService extends BaseService implements VoucherServiceInterfac
             ];
         });
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getSavedVouchers(string $customerId): ServiceReturn
+    {
+        return $this->execute(function () use ($customerId): array {
+            $vouchers = $this->voucherWalletRepository->findVouchersByCustomer($customerId);
+
+            return $vouchers->map(function (Voucher $v) {
+                // Đối với voucher trong ví thì isSaved luôn là true
+                return VoucherDTO::fromModel($v, true)->toArray();
+            })->values()->toArray();
+        });
+    }
 }

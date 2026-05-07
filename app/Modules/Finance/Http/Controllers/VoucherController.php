@@ -112,4 +112,26 @@ final class VoucherController extends BaseController
 
         return $this->sendSuccess($result->getData(), 'Sẵn sàng áp dụng voucher.');
     }
+
+    #[OA\Get(
+        path: '/api/v1/vouchers/my-vouchers',
+        description: 'Lấy danh sách các voucher mà khách hàng đã lưu vào ví cá nhân.',
+        summary: 'Danh sách voucher đã lưu',
+        security: [['sanctum' => []]],
+        tags: ['Finance']
+    )]
+    #[OA\Response(
+        response: 200, 
+        description: 'Danh sách voucher đã lưu',
+        content: new OA\JsonContent(
+            type: 'array',
+            items: new OA\Items(ref: '#/components/schemas/VoucherResponse')
+        )
+    )]
+    public function myVouchers(Request $request): JsonResponse
+    {
+        $result = $this->voucherService->getSavedVouchers((string) $request->user()->id);
+
+        return $this->sendSuccess($result->getData(), 'Lấy danh sách voucher đã lưu thành công.');
+    }
 }

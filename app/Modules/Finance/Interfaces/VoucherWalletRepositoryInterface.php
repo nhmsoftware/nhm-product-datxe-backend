@@ -28,4 +28,12 @@ interface VoucherWalletRepositoryInterface extends BaseRepositoryInterface
      * @return bool
      */
     public function saveToWallet(string $customerId, string $voucherId): bool;
+
+    /**
+     * Lấy danh sách voucher trong ví của khách hàng.
+     * 
+     * @param string $customerId
+     * @return \Illuminate\Support\Collection
+     */
+    public function findVouchersByCustomer(string $customerId): \Illuminate\Support\Collection;
 }

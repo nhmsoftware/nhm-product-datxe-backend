@@ -1987,6 +1987,36 @@
                 ]
             }
         },
+        "/api/v1/vouchers/my-vouchers": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Danh sách voucher đã lưu",
+                "description": "Lấy danh sách các voucher mà khách hàng đã lưu vào ví cá nhân.",
+                "operationId": "d603e13cf33ebd5786252ff4ed61dbd3",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách voucher đã lưu",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/VoucherResponse"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/finance/wallet/manage": {
             "get": {
                 "tags": [
@@ -2333,14 +2363,75 @@
                 ]
             }
         },
-        "/api/v1/admin/merchant/applications": {
+        "/api/v1/admin/merchant": {
             "get": {
                 "tags": [
                     "Admin|Merchant"
                 ],
-                "summary": "Danh sách hồ sơ Merchant chờ duyệt",
-                "description": "Danh sách hồ sơ đăng ký Merchant đang chờ duyệt.",
-                "operationId": "4fd5ca3b8c7698f2572e820cda78fe62",
+                "summary": "Danh sách Merchant",
+                "description": "Danh sách Merchant (UC-86)",
+                "operationId": "04ee8a6c9cc5b464afac5a80f070d00a",
+                "parameters": [
+                    {
+                        "name": "store_name",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "owner_name",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "phone",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "description": "1: Pending, 2: Approved, 3: Rejected",
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Thành công"
@@ -2353,14 +2444,14 @@
                 ]
             }
         },
-        "/api/v1/admin/merchant/applications/{id}": {
+        "/api/v1/admin/merchant/{id}": {
             "get": {
                 "tags": [
                     "Admin|Merchant"
                 ],
-                "summary": "Chi tiết hồ sơ đăng ký Merchant",
-                "description": "Chi tiết hồ sơ đăng ký Merchant.",
-                "operationId": "f8283ad20141f9a6f43a630bbeca95cb",
+                "summary": "Chi tiết Merchant",
+                "description": "Chi tiết Merchant (UC-90)",
+                "operationId": "5a9f45e648a05f8790844e3111a424e3",
                 "parameters": [
                     {
                         "name": "id",
@@ -2373,10 +2464,75 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Thành công"
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "merchant": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string"
+                                                },
+                                                "store_name": {
+                                                    "type": "string"
+                                                },
+                                                "store_address": {
+                                                    "type": "string"
+                                                },
+                                                "business_type": {
+                                                    "type": "string"
+                                                },
+                                                "status": {
+                                                    "description": "Trạng thái duyệt",
+                                                    "type": "integer"
+                                                },
+                                                "business_license": {
+                                                    "type": "string"
+                                                },
+                                                "business_license_image": {
+                                                    "type": "string"
+                                                },
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "string"
+                                                        },
+                                                        "phone": {
+                                                            "type": "string"
+                                                        },
+                                                        "email": {
+                                                            "type": "string"
+                                                        },
+                                                        "is_active": {
+                                                            "type": "boolean"
+                                                        },
+                                                        "created_at": {
+                                                            "type": "string",
+                                                            "format": "date-time"
+                                                        },
+                                                        "customer_profile": {
+                                                            "properties": {
+                                                                "full_name": {
+                                                                    "type": "string"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Không tìm thấy"
+                        "description": "Merchant không tồn tại."
                     }
                 },
                 "security": [
@@ -2386,14 +2542,14 @@
                 ]
             }
         },
-        "/api/v1/admin/merchant/applications/{id}/approve": {
+        "/api/v1/admin/merchant/{id}/approve": {
             "post": {
                 "tags": [
                     "Admin|Merchant"
                 ],
-                "summary": "Duyệt hồ sơ Merchant",
-                "description": "Duyệt hồ sơ Merchant.",
-                "operationId": "814b54faeb511308185e10955aafb30a",
+                "summary": "Duyệt Merchant",
+                "description": "Duyệt Merchant (UC-86)",
+                "operationId": "26c026e5735e98c90f564753f253fa63",
                 "parameters": [
                     {
                         "name": "id",
@@ -2409,7 +2565,7 @@
                         "description": "Duyệt thành công"
                     },
                     "404": {
-                        "description": "Không tìm thấy hồ sơ"
+                        "description": "Không tìm thấy"
                     }
                 },
                 "security": [
@@ -2419,14 +2575,14 @@
                 ]
             }
         },
-        "/api/v1/admin/merchant/applications/{id}/reject": {
+        "/api/v1/admin/merchant/{id}/reject": {
             "post": {
                 "tags": [
                     "Admin|Merchant"
                 ],
-                "summary": "Từ chối hồ sơ Merchant",
-                "description": "Từ chối hồ sơ Merchant.",
-                "operationId": "fcf796710a8d0d7122cca5a8e2d28ed7",
+                "summary": "Từ chối Merchant",
+                "description": "Từ chối Merchant (UC-86)",
+                "operationId": "1dc202b298525c9c4543e9f354d03e44",
                 "parameters": [
                     {
                         "name": "id",
@@ -2459,6 +2615,69 @@
                 "responses": {
                     "200": {
                         "description": "Từ chối thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/{id}/toggle-lock": {
+            "post": {
+                "tags": [
+                    "Admin|Merchant"
+                ],
+                "summary": "Khóa/Mở khóa Merchant",
+                "description": "Khóa/Mở khóa Merchant (UC-89)",
+                "operationId": "924414d766643f8f24101d57a7f030ec",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "lock"
+                                ],
+                                "properties": {
+                                    "lock": {
+                                        "description": "true để khóa, false để mở khóa",
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "reason": {
+                                        "description": "Bắt buộc khi khóa",
+                                        "type": "string",
+                                        "example": "Vi phạm điều khoản"
+                                    },
+                                    "locked_days": {
+                                        "description": "Số ngày khóa, mặc định 2",
+                                        "type": "integer",
+                                        "example": 7
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ"
                     }
                 },
                 "security": [

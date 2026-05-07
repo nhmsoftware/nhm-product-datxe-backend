@@ -36,4 +36,18 @@ final class VoucherWalletRepository extends BaseRepository implements VoucherWal
             ['saved_at' => now()]
         );
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function findVouchersByCustomer(string $customerId): \Illuminate\Support\Collection
+    {
+        return $this->model
+            ->with('voucher')
+            ->where('customer_id', $customerId)
+            ->whereNull('used_at')
+            ->get()
+            ->pluck('voucher')
+            ->filter();
+    }
 }
