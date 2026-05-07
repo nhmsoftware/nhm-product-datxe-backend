@@ -21,7 +21,7 @@ final class RequestRideCancellationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rideId' => 'required|numeric|exists:rides,id',
+            'rideId' => ['bail', 'required', 'numeric', 'exists:rides,id'],
             'reason' => 'nullable|string|max:255',
         ];
     }

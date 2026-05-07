@@ -25,7 +25,7 @@ final class ConfirmBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rideId'         => ['required', 'numeric', 'exists:rides,id'],
+            'rideId'         => ['bail', 'required', 'numeric', 'exists:rides,id'],
             'vehicle_type'   => ['required', 'integer', 'in:1,2,3,4'],
             'expected_price' => ['required', 'numeric', 'min:0'],
         ];

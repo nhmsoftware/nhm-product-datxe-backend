@@ -25,6 +25,10 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function findByIdAndCustomer(string $rideId, string $customerId): ?Ride
     {
+        if (!is_numeric($rideId)) {
+            return null;
+        }
+
         /** @var Ride|null */
         return $this->model->where('id', $rideId)
             ->where('customer_id', $customerId)
@@ -33,6 +37,10 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function findWithDriverDetail(string $rideId, string $customerId): ?Ride
     {
+        if (!is_numeric($rideId)) {
+            return null;
+        }
+
         /** @var Ride|null */
         return $this->model->with(['driver', 'driver.driverProfile'])
             ->where('id', $rideId)
@@ -246,6 +254,10 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function findTrackingRideByIdAndCustomer(string $rideId, string $customerId): ?Ride
     {
+        if (!is_numeric($rideId)) {
+            return null;
+        }
+
         /** @var Ride|null */
         return $this->model->with(['driver.driverProfile'])
             ->where('id', $rideId)
@@ -364,6 +376,10 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function findAvailableById(string $rideId): ?Ride
     {
+        if (!is_numeric($rideId)) {
+            return null;
+        }
+
         /** @var Ride|null */
         return $this->model->whereRaw('id = ?::bigint', [$rideId])
             ->where('status', RideStatus::PENDING->value)
@@ -375,6 +391,10 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function findById(string|int $id, array $columns = ['*'], array $relations = []): ?Ride
     {
+        if (!is_numeric($id)) {
+            return null;
+        }
+
         /** @var Ride|null */
         return $this->model->with($relations)
             ->select($columns)
@@ -446,6 +466,11 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function pushToPool(array $rideIds): int
     {
+        $rideIds = array_filter($rideIds, 'is_numeric');
+        if (empty($rideIds)) {
+            return 0;
+        }
+
         return $this->model->whereIn('id', $rideIds)
             ->where('status', RideStatus::PENDING->value)
             ->update(['is_pushed_to_pool' => true]);

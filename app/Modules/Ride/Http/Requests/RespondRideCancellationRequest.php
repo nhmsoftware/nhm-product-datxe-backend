@@ -28,7 +28,15 @@ class RespondRideCancellationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'is_approved' => 'required|boolean',
+            'rideId'      => ['bail', 'required', 'numeric', 'exists:rides,id'],
+            'is_approved' => ['required', 'boolean'],
         ];
+    }
+
+    public function all($keys = null): array
+    {
+        $data = parent::all($keys);
+        $data['rideId'] = $this->route('rideId');
+        return $data;
     }
 }

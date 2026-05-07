@@ -17,7 +17,7 @@ final class AdminBulkPushRequest extends FormRequest
     {
         return [
             'ride_ids'   => 'required|array',
-            'ride_ids.*' => 'required|string',
+            'ride_ids.*' => 'required|numeric',
         ];
     }
 

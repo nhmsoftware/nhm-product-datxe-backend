@@ -4127,6 +4127,11 @@
                                         "description": "Loại phương tiện hỗ trợ. 1: Xe Máy (Bike), 2: Ô Tô 4 Chỗ (Car 4 Seats), 3: Ô Tô 7 Chỗ (Car 7 Seats), 4: Ô Tô 9 Chỗ (Car 9 Seats)",
                                         "type": "integer",
                                         "example": 1
+                                    },
+                                    "voucher_code": {
+                                        "description": "Mã giảm giá (tùy chọn)",
+                                        "type": "string",
+                                        "example": "GIAM20K"
                                     }
                                 },
                                 "type": "object"
