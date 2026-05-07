@@ -75,6 +75,16 @@ class UserOtp extends Model
         return $this->expired_at->isPast();
     }
 
+    public function isUsed(): bool
+    {
+        return $this->used_at !== null;
+    }
+
+    public function isVerified(): bool
+    {
+        return $this->verified_at !== null;
+    }
+
     /**
      * Verify OTP nhập vào với hash trong DB.
      * Dùng Hash::check thay vì so sánh string trực tiếp.

@@ -356,7 +356,7 @@ final class AuthService extends BaseService implements AuthServiceInterface
             $this->throw('Mã OTP không tồn tại.', 400);
         }
 
-        if ($otpRecord->used_at) {
+        if ($otpRecord->isUsed()) {
             $this->throw('Mã OTP đã sử dụng.', 400);
         }
 

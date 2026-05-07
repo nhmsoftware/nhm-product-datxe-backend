@@ -47,6 +47,7 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
             
             // Đánh dấu OTP đã sử dụng
             $this->authOtpRepository->markAsVerified($lastOtp);
+            $this->authOtpRepository->markLatestAsUsed($dto->phone, \App\Modules\User\Model\Enums\UserOtpType::VERIFY_MERCHANT_REGISTER);
 
             // 1. Kiểm tra User tồn tại
             $user = $this->userRepository->findById($dto->userId);
