@@ -769,14 +769,15 @@ final class RideService extends BaseService implements RideServiceInterface
                 'is_pushed_to_pool'   => $this->shouldPushToPoolImmediately(),
             ]);
 
-            // 5. Phát sự kiện để tìm tài xế (UC-12 reused)
-            event(new RideBooked($ride->id, $ride->customer_id));
+            // 5. Không phát sự kiện RideBooked ngay lập tức để tránh tự động dispatch (theo yêu cầu)
+            // Chuyến đi sẽ nằm trong Pool (Scheduled Rides) để tài xế tự chọn.
+            // event(new RideBooked($ride->id, $ride->customer_id));
 
             return [
                 'ride_id'      => $ride->id,
                 'ride_type'    => 'intercity',
                 'total_price'  => $totalPrice,
-                'status_label' => 'Đang tìm tài xế cho lịch trình của bạn',
+                'status_label' => 'Đã lưu lịch trình. Chuyến đi sẽ hiển thị cho tài xế nhận sớm.',
             ];
         }, useTransaction: true);
     }
@@ -834,14 +835,15 @@ final class RideService extends BaseService implements RideServiceInterface
                 'is_pushed_to_pool'   => $this->shouldPushToPoolImmediately(),
             ]);
 
-            // 5. Phát sự kiện để tìm tài xế (UC-12 reused)
-            event(new RideBooked($ride->id, $ride->customer_id));
+            // 5. Không phát sự kiện RideBooked ngay lập tức để tránh tự động dispatch (theo yêu cầu)
+            // Chuyến đi sẽ nằm trong Pool (Scheduled Rides) để tài xế tự chọn.
+            // event(new RideBooked($ride->id, $ride->customer_id));
 
             return [
                 'ride_id'      => $ride->id,
                 'ride_type'    => 'airport',
                 'total_price'  => $totalPrice,
-                'status_label' => 'Đang tìm tài xế cho lịch trình của bạn',
+                'status_label' => 'Đã lưu lịch trình. Chuyến đi sẽ hiển thị cho tài xế nhận sớm.',
             ];
         }, useTransaction: true);
     }

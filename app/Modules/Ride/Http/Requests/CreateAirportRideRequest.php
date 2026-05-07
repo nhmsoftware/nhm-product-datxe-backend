@@ -51,4 +51,21 @@ class CreateAirportRideRequest extends FormRequest
             'airport_direction.in' => 'Chiều đi không hợp lệ.',
         ];
     }
+
+    /**
+     * Kiểm tra bổ sung: Điểm đón và điểm đến không được trùng nhau.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $pLat = (float) $this->input('pickup_lat');
+            $pLng = (float) $this->input('pickup_lng');
+            $dLat = (float) $this->input('destination_lat');
+            $dLng = (float) $this->input('destination_lng');
+
+            if (abs($pLat - $dLat) < 0.000001 && abs($pLng - $dLng) < 0.000001) {
+                $validator->errors()->add('destination_address', 'Điểm đón và điểm đến không được trùng nhau.');
+            }
+        });
+    }
 }

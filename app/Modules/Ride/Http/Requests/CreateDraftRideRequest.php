@@ -43,15 +43,32 @@ class CreateDraftRideRequest extends FormRequest
      */
     public function messages(): array {
         return [
-            'pickup_address.required' => 'Vui lòng nhập địa chỉ.pickup.',
-            'pickup_lat.required' => 'Vui lòng nhập độ độ.pickup.',
-            'pickup_lng.required' => 'Vui lòng nhập độ độ.pickup.',
-            'destination_address.required' => 'Vui lòng nhập địa chỉ.destination.',
+            'pickup_address.required' => 'Vui lòng nhập địa chỉ pickup.',
+            'pickup_lat.required' => 'Vui lòng nhập tọa độ pickup.',
+            'pickup_lng.required' => 'Vui lòng nhập tọa độ pickup.',
+            'destination_address.required' => 'Vui lòng nhập địa chỉ destination.',
             'destination_lat.required' => 'Vui lòng nhập tọa độ destination.',
             'destination_lng.required' => 'Vui lòng nhập tọa độ destination.',
             'vehicle_type.required' => 'Vui lòng chọn loại xe.',
             'vehicle_type.in' => 'Vui lòng chọn loại xe hợp lệ.',
         ];
+    }
+
+    /**
+     * Kiểm tra bổ sung: Điểm đón và điểm đến không được trùng nhau.
+     */
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            $pLat = (float) $this->input('pickup_lat');
+            $pLng = (float) $this->input('pickup_lng');
+            $dLat = (float) $this->input('destination_lat');
+            $dLng = (float) $this->input('destination_lng');
+
+            if (abs($pLat - $dLat) < 0.000001 && abs($pLng - $dLng) < 0.000001) {
+                $validator->errors()->add('destination_address', 'Điểm đón và điểm đến không được trùng nhau.');
+            }
+        });
     }
 
     /**
