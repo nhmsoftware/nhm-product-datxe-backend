@@ -39,14 +39,11 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
     public function submitRegistration(RegisterMerchantDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto): array {
-            // 0. Xác thực OTP (Bundle xác thực vào bước nộp hồ sơ)
-            $lastOtp = $this->authOtpRepository->getLastOtp($dto->phone, \App\Modules\User\Model\Enums\UserOtpType::VERIFY_MERCHANT_REGISTER);
-            $this->validate($lastOtp !== null, 'Mã OTP không tồn tại hoặc đã hết hạn.', 400);
-            $this->validate(!$lastOtp->isUsed(), 'Mã OTP đã được sử dụng.', 400);
-            $this->validate($lastOtp->checkCode($dto->otp), 'Mã OTP không chính xác.', 400);
+            // 0. Kiểm tra OTP đã xác thực trước đó (UC-52 quy định tách riêng Verify OTP)
+            $lastOtp = $this->authOtpRepository->getLastVerified($dto->phone, \App\Modules\User\Model\Enums\UserOtpType::VERIFY_MERCHANT_REGISTER);
+            $this->validate($lastOtp !== null, 'Vui lòng xác thực số điện thoại bằng mã OTP trước khi đăng ký.', 400);
             
             // Đánh dấu OTP đã sử dụng
-            $this->authOtpRepository->markAsVerified($lastOtp);
             $this->authOtpRepository->markLatestAsUsed($dto->phone, \App\Modules\User\Model\Enums\UserOtpType::VERIFY_MERCHANT_REGISTER);
 
             // 1. Kiểm tra User tồn tại

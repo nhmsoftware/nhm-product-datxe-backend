@@ -21,7 +21,6 @@ class RegisterMerchantRequest extends FormRequest
         return [
             'full_name'               => ['required', 'string', 'max:255'],
             'phone'                   => ['required', 'string', 'regex:/^([0-9\s\-\+\(\)]*)$/', 'min:10'],
-            'otp'                     => ['required', 'string', 'size:6'],
             'citizen_id'              => ['required', 'string', 'max:20'],
             'store_name'              => ['required', 'string', 'max:255'],
             'store_address'           => ['required', 'string', 'max:500'],

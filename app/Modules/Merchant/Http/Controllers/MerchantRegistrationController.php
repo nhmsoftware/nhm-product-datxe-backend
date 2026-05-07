@@ -27,11 +27,10 @@ final class MerchantRegistrationController extends BaseController
             content: new OA\MediaType(
                 mediaType: 'multipart/form-data',
                 schema: new OA\Schema(
-                    required: ['full_name', 'phone', 'otp', 'citizen_id', 'store_name', 'store_address', 'business_type', 'citizen_id_image', 'store_image'],
+                    required: ['full_name', 'phone', 'citizen_id', 'store_name', 'store_address', 'business_type', 'citizen_id_image', 'store_image'],
                     properties: [
                         new OA\Property(property: 'full_name', description: 'Họ và tên', type: 'string', example: 'Nguyễn Văn A'),
                         new OA\Property(property: 'phone', description: 'Số điện thoại', type: 'string', example: '0901234567'),
-                        new OA\Property(property: 'otp', description: 'Mã OTP xác thực', type: 'string', example: '123456'),
                         new OA\Property(property: 'citizen_id', description: 'Số CMND/CCCD', type: 'string', example: '001234567890'),
                         new OA\Property(property: 'store_name', description: 'Tên cửa hàng', type: 'string', example: 'Phở Gia Truyền'),
                         new OA\Property(property: 'store_address', description: 'Địa chỉ cửa hàng', type: 'string', example: '123 Đường ABC, Quận 1'),

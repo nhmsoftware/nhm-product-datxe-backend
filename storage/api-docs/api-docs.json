@@ -3159,7 +3159,6 @@
                                 "required": [
                                     "full_name",
                                     "phone",
-                                    "otp",
                                     "citizen_id",
                                     "store_name",
                                     "store_address",
@@ -3177,11 +3176,6 @@
                                         "description": "Số điện thoại",
                                         "type": "string",
                                         "example": "0901234567"
-                                    },
-                                    "otp": {
-                                        "description": "Mã OTP xác thực",
-                                        "type": "string",
-                                        "example": "123456"
                                     },
                                     "citizen_id": {
                                         "description": "Số CMND/CCCD",
