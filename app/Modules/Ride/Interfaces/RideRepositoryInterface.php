@@ -225,10 +225,36 @@ interface RideRepositoryInterface
     /**
      * Danh sách chuyến đặt trước cho Admin quản lý.
      */
-    public function listScheduledRidesForAdmin(array $filters): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+    public function listScheduledRidesForAdmin(array $filters);
 
     /**
      * Đẩy các chuyến xe ra pool cho tất cả tài xế ngoài.
      */
     public function pushToPool(array $rideIds): int;
+
+    /**
+     * Đẩy toàn bộ chuyến đặt trước đang chờ ra pool.
+     * Được gọi khi Admin chuyển sang chế độ Open Pool (Tự động).
+     */
+    public function pushAllPendingScheduledToPool(): int;
+
+    /**
+     * Ẩn toàn bộ chuyến đặt trước đang chờ khỏi pool tài xế.
+     * Được gọi khi Admin bật chế độ Admin Priority (Thủ công).
+     */
+    public function hideAllPendingScheduledFromPool(): int;
+
+    // =========================================================
+    // UC-25: Giao hàng (Delivery)
+    // =========================================================
+
+    /**
+     * Tạo chuyến xe với RideType::DELIVERY.
+     */
+    public function createDeliveryRide(array $data): \App\Modules\Ride\Model\Ride;
+
+    /**
+     * Tạo bản ghi DeliveryOrder đính kèm thông tin giao hàng.
+     */
+    public function createDeliveryOrderDetail(array $data): \App\Modules\Ride\Model\DeliveryOrder;
 }

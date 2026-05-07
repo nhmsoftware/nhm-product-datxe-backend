@@ -12,13 +12,15 @@ use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Interfaces\ScheduledPricingRepositoryInterface;
 use App\Modules\Pricing\Interfaces\ScheduledPricingServiceInterface;
 use App\Modules\Pricing\Model\Enums\ScheduledDispatchMode;
+use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use Illuminate\Support\Facades\DB;
 
 final class ScheduledPricingService extends BaseService implements ScheduledPricingServiceInterface
 {
     public function __construct(
         private readonly ScheduledPricingRepositoryInterface $repository,
-        private readonly PricingGlobalSettingRepositoryInterface $globalSettingRepository
+        private readonly PricingGlobalSettingRepositoryInterface $globalSettingRepository,
+        private readonly RideRepositoryInterface $rideRepository,
     ) {}
 
     public function getCurrentSettings(): ServiceReturn
@@ -27,9 +29,15 @@ final class ScheduledPricingService extends BaseService implements ScheduledPric
             $config = $this->repository->getCurrentConfig();
             $global = $this->globalSettingRepository->getSettings();
 
+            $dispatchMode = $global?->scheduled_dispatch_mode?->value ?? ScheduledDispatchMode::INTERNAL_PRIORITY->value;
+
             return [
-                'pricing' => $config,
-                'dispatch_mode' => $global?->scheduled_dispatch_mode?->value ?? ScheduledDispatchMode::INTERNAL_PRIORITY->value,
+                'pricing'             => $config,
+                'dispatch_mode'       => $dispatchMode,
+                'dispatch_mode_label' => $dispatchMode === ScheduledDispatchMode::OPEN_POOL->value
+                    ? 'Tự động (Tài xế nhận chuyến)'
+                    : 'Admin phân phối (Thủ công)',
+                'is_admin_controlled' => $dispatchMode === ScheduledDispatchMode::INTERNAL_PRIORITY->value,
             ];
         });
     }
@@ -63,10 +71,73 @@ final class ScheduledPricingService extends BaseService implements ScheduledPric
                 }
 
                 return [
-                    'pricing' => $config->fresh(),
+                    'pricing'       => $config->fresh(),
                     'dispatch_mode' => $newMode->value,
                 ];
             });
+        });
+    }
+
+    /**
+     * Bật/Tắt chế độ phân phối chuyến đặt trước.
+     *
+     * Cơ chế:
+     *   - mode = 1 (INTERNAL_PRIORITY / BẬT Admin control):
+     *       Chuyến xe sẽ KHÔNG hiển thị cho tài xế. Admin tự tay gán tài xế.
+     *       → Tự động ẩn toàn bộ chuyến đang chờ khỏi pool.
+     *
+     *   - mode = 2 (OPEN_POOL / TẮT Admin control):
+     *       Chuyến xe tự động hiển thị cho tài xế phù hợp nhận.
+     *       → Tự động đẩy toàn bộ chuyến đang chờ ra pool.
+     */
+    public function toggleDispatchMode(int $mode): ServiceReturn
+    {
+        return $this->execute(function () use ($mode) {
+            $newMode = ScheduledDispatchMode::from($mode);
+
+            // 1. Lấy cấu hình hiện tại
+            $global = $this->globalSettingRepository->getSettings();
+            $oldMode = $global?->scheduled_dispatch_mode;
+
+            // 2. Cập nhật DB
+            if ($global) {
+                $this->globalSettingRepository->update($global->id, [
+                    'scheduled_dispatch_mode' => $newMode->value,
+                ]);
+            } else {
+                $this->globalSettingRepository->create([
+                    'is_free_mode'            => false,
+                    'scheduled_dispatch_mode' => $newMode->value,
+                ]);
+            }
+
+            // 3. Phát event nếu mode thay đổi
+            if ($oldMode !== $newMode) {
+                event(new ScheduledRideDispatchModeChanged($newMode, now()->toIso8601String()));
+            }
+
+            $affectedRides = 0;
+
+            // 4. Xử lý tự động pool khi chuyển mode
+            if ($newMode === ScheduledDispatchMode::OPEN_POOL) {
+                // Tắt Admin Priority → Tự động đẩy toàn bộ chuyến đang chờ ra pool
+                $affectedRides = $this->rideRepository->pushAllPendingScheduledToPool();
+            } elseif ($newMode === ScheduledDispatchMode::INTERNAL_PRIORITY) {
+                // Bật Admin Priority → Ẩn toàn bộ chuyến khỏi pool
+                $affectedRides = $this->rideRepository->hideAllPendingScheduledFromPool();
+            }
+
+            return [
+                'dispatch_mode'       => $newMode->value,
+                'dispatch_mode_label' => $newMode === ScheduledDispatchMode::OPEN_POOL
+                    ? 'Tự động (Tài xế nhận chuyến)'
+                    : 'Admin phân phối (Thủ công)',
+                'is_admin_controlled' => $newMode === ScheduledDispatchMode::INTERNAL_PRIORITY,
+                'affected_rides'      => $affectedRides,
+                'message'             => $newMode === ScheduledDispatchMode::OPEN_POOL
+                    ? "Đã bật chế độ tự động. {$affectedRides} chuyến đặt trước đã được đẩy cho tài xế."
+                    : "Đã bật chế độ Admin phân phối. {$affectedRides} chuyến đặt trước đã được ẩn khỏi pool tài xế.",
+            ];
         });
     }
 }

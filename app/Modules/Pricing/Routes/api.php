@@ -40,5 +40,11 @@ Route::prefix('v1/admin/pricing')
                 ->name('admin.pricing.scheduled.show');
             Route::post('/', [\App\Modules\Pricing\Http\Controllers\AdminScheduledPricingController::class, 'update'])
                 ->name('admin.pricing.scheduled.update');
+
+            // UC-122: Bật/Tắt chế độ phân phối thủ công
+            // POST { "mode": 1 } → BẬT Admin kiểm soát (tài xế không thấy chuyến)
+            // POST { "mode": 2 } → TẮT Admin / Tự động đẩy cho tài xế
+            Route::post('toggle-dispatch', [\App\Modules\Pricing\Http\Controllers\AdminScheduledPricingController::class, 'toggleDispatch'])
+                ->name('admin.pricing.scheduled.toggle_dispatch');
         });
     });

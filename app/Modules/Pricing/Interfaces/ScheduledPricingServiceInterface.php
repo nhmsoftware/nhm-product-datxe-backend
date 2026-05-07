@@ -18,4 +18,12 @@ interface ScheduledPricingServiceInterface
      * Cập nhật cấu hình giá và phân phối
      */
     public function updateSettings(UpdateScheduledPricingDTO $dto): ServiceReturn;
+
+    /**
+     * Toggle chế độ phân phối:
+     *   - admin_priority (bật): Admin giữ quyền gán tài xế thủ công.
+     *   - open_pool (tắt): Tự động đẩy chuyến vào pool cho tài xế nhận.
+     * Khi chuyển sang open_pool → tự động push toàn bộ chuyến đang chờ.
+     */
+    public function toggleDispatchMode(int $mode): ServiceReturn;
 }

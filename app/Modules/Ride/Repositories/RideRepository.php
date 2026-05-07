@@ -43,8 +43,11 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
         /** @var Ride|null */
         return $this->model->with(['driver', 'driver.driverProfile'])
-            ->where('id', $rideId)
-            ->where('customer_id', $customerId)
+            ->whereRaw('id = ?::bigint', [(string) $rideId])
+            ->where(function ($query) use ($customerId) {
+                $query->whereRaw('customer_id::text = ?', [(string) $customerId])
+                      ->orWhereRaw('driver_id::text = ?', [(string) $customerId]);
+            })
             ->first();
     }
 
@@ -340,19 +343,32 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->whereNotExists(function ($q) use ($filters) {
                 $q->select(DB::raw(1))
                     ->from('ride_rejects')
-                    ->whereRaw('ride_rejects.ride_id = rides.id::text')
-                    ->whereRaw('ride_rejects.driver_id = ?', [(string) ($filters['driverId'] ?? '')]);
+                    ->whereRaw('ride_rejects.ride_id::text = rides.id::text')
+                    ->whereRaw('ride_rejects.driver_id::text = ?', [(string) ($filters['driverId'] ?? '')]);
             });
+        
+        \Illuminate\Support\Facades\Log::debug('Driver Scheduled Rides Filter:', [
+            'vehicleType' => $vehicleType,
+            'filters' => $filters
+        ]);
 
         $startDate = $filters['travelDate'] ?? now()->toDateString();
         $query->where('travel_date', '>=', (string) $startDate);
 
+        // Chỉ lọc travel_time nếu ngày đi bằng ngày bắt đầu lọc (thường là hôm nay)
+        // Nếu ngày đi là ngày mai, thì 08:00 sáng vẫn phải hiển thị dù bây giờ là 10:00 sáng.
         if (!empty($filters['travelTime'])) {
-            $query->where('travel_time', '>=', (string) $filters['travelTime']);
+            $query->where(function ($q) use ($filters, $startDate) {
+                $q->where('travel_date', '>', (string) $startDate)
+                    ->orWhere(function ($q2) use ($filters, $startDate) {
+                        $q2->where('travel_date', (string) $startDate)
+                            ->where('travel_time', '>=', (string) $filters['travelTime']);
+                    });
+            });
         }
 
         if (!empty($filters['rideType'])) {
-            $query->where('ride_type', $filters['rideType']);
+            $query->where('ride_type', (int) $filters['rideType']);
         }
 
         if (isset($filters['minPrice'])) {
@@ -405,7 +421,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function findDriverAcceptedRides(string $driverId): Collection
     {
         return $this->model->with(['customer'])
-            ->where('driver_id', $driverId)
+            ->whereRaw('driver_id = ?::bigint', [(string) $driverId])
             ->whereNotIn('status', [
                 RideStatus::COMPLETED->value,
                 RideStatus::CANCELLED->value
@@ -436,26 +452,38 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * @inheritDoc
      */
-    public function listScheduledRidesForAdmin(array $filters): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    public function listScheduledRidesForAdmin(array $filters)
     {
         $query = $this->model->newQuery()
             ->with(['customer', 'driver'])
-            ->whereIn('ride_type', [RideType::INTERCITY->value, RideType::AIRPORT->value]);
+            ->whereNotNull('travel_date');
 
         if (!empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $statusMap = [
+                'waiting'   => RideStatus::PENDING->value,
+                'assigned'  => RideStatus::ACCEPTED->value,
+                'completed' => RideStatus::COMPLETED->value,
+                'canceled'  => RideStatus::CANCELLED->value,
+            ];
+
+            $status = $statusMap[$filters['status']] ?? $filters['status'];
+            $query->where('status', $status);
         }
 
         if (!empty($filters['keyword'])) {
             $keyword = '%' . $filters['keyword'] . '%';
             $query->where(function ($q) use ($keyword) {
-                $q->where('id', 'like', $keyword)
+                $q->whereRaw('id::text LIKE ?', [$keyword])
                     ->orWhere('pickup_address', 'like', $keyword)
                     ->orWhere('destination_address', 'like', $keyword)
                     ->orWhereHas('customer', function ($qc) use ($keyword) {
                         $qc->where('phone', 'like', $keyword);
                     });
             });
+        }
+
+        if (!empty($filters['no_pagination'])) {
+            return $query->latest()->get();
         }
 
         return $query->latest()->paginate($filters['per_page'] ?? 15);
@@ -474,5 +502,46 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         return $this->model->whereIn('id', $rideIds)
             ->where('status', RideStatus::PENDING->value)
             ->update(['is_pushed_to_pool' => true]);
+    }
+
+    /**
+     * Đẩy toàn bộ chuyến xe đặt trước đang chờ ra pool tài xế.
+     * Được gọi khi Admin chuyển chế độ phân phối từ "Admin Priority" → "Open Pool".
+     */
+    public function pushAllPendingScheduledToPool(): int
+    {
+        return $this->model
+            ->where('status', RideStatus::PENDING->value)
+            ->where('is_pushed_to_pool', false)
+            ->whereNotNull('travel_date')
+            ->update(['is_pushed_to_pool' => true]);
+    }
+
+    /**
+     * Ẩn toàn bộ chuyến xe đặt trước khỏi pool tài xế.
+     * Được gọi khi Admin chuyển chế độ phân phối từ "Open Pool" → "Admin Priority".
+     */
+    public function hideAllPendingScheduledFromPool(): int
+    {
+        return $this->model
+            ->where('status', RideStatus::PENDING->value)
+            ->where('is_pushed_to_pool', true)
+            ->whereNotNull('travel_date')
+            ->update(['is_pushed_to_pool' => false]);
+    }
+
+    // =========================================================
+    // UC-25: Giao hàng (Delivery)
+    // =========================================================
+
+    public function createDeliveryRide(array $data): \App\Modules\Ride\Model\Ride
+    {
+        /** @var \App\Modules\Ride\Model\Ride */
+        return $this->model->create($data);
+    }
+
+    public function createDeliveryOrderDetail(array $data): \App\Modules\Ride\Model\DeliveryOrder
+    {
+        return \App\Modules\Ride\Model\DeliveryOrder::create($data);
     }
 }

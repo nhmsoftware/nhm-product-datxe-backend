@@ -3904,6 +3904,326 @@
                 }
             }
         },
+        "/api/v1/admin/pricing/scheduled": {
+            "get": {
+                "tags": [
+                    "Admin Scheduled Pricing"
+                ],
+                "summary": "Lấy cấu hình phân phối chuyến đặt trước (UC-121)",
+                "description": "UC-121: Lấy cấu hình giá đặt trước và chế độ phân phối hiện tại",
+                "operationId": "194760362d172c5ed5867de8db9869bb",
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "dispatch_mode": {
+                                            "description": "1 = Admin phân phối, 2 = Tự động",
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "dispatch_mode_label": {
+                                            "type": "string",
+                                            "example": "Admin phân phối (Thủ công)"
+                                        },
+                                        "is_admin_controlled": {
+                                            "type": "boolean",
+                                            "example": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Scheduled Pricing"
+                ],
+                "summary": "Cập nhật cấu hình giá đặt trước (UC-121)",
+                "description": "UC-121: Cập nhật cấu hình giá đặt trước",
+                "operationId": "0f1000ef5f0ad431ff6a0499856a7c6f",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/pricing/scheduled/toggle-dispatch": {
+            "post": {
+                "tags": [
+                    "Admin Scheduled Pricing"
+                ],
+                "summary": "Bật/Tắt chế độ phân phối chuyến đặt trước (UC-122)",
+                "description": "UC-122: Bật/Tắt chế độ phân phối thủ công (Admin) cho chuyến đặt trước.\n\nBẬT (mode=1) → Admin kiểm soát, tài xế KHÔNG thấy chuyến.\nTẮT (mode=2) → Tự động, tài xế thấy và nhận chuyến.",
+                "operationId": "9dd6f0f9536e61f4461c77e8711b911d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "mode"
+                                ],
+                                "properties": {
+                                    "mode": {
+                                        "description": "1 = Bật Admin phân phối thủ công (tài xế không thấy chuyến). 2 = Tắt Admin / Tự động đẩy cho tài xế.",
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "dispatch_mode": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "dispatch_mode_label": {
+                                            "type": "string",
+                                            "example": "Tự động (Tài xế nhận chuyến)"
+                                        },
+                                        "is_admin_controlled": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "affected_rides": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Đã bật chế độ tự động. 12 chuyến đặt trước đã được đẩy cho tài xế."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/rides/scheduled": {
+            "get": {
+                "tags": [
+                    "Admin Scheduled Rides"
+                ],
+                "summary": "UC-122: Lấy danh sách chuyến xe đặt trước (Admin)",
+                "description": "Lấy toàn bộ danh sách các chuyến đi tỉnh và sân bay đang chờ xử lý.",
+                "operationId": "26247162ee6fb1ce59dd87fff00005ac",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Tìm theo ID, địa chỉ hoặc SĐT khách",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái (waiting, assigned, completed, canceled)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "no_pagination",
+                        "in": "query",
+                        "description": "Lấy toàn bộ không phân trang",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không có quyền Admin"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/rides/scheduled/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Scheduled Rides"
+                ],
+                "summary": "UC-122: Chi tiết chuyến xe đặt trước",
+                "description": "UC-122: Chi tiết chuyến xe đặt trước.",
+                "operationId": "b7f2a15c2349c3512ac0a7052f30b405",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/rides/scheduled/assign": {
+            "post": {
+                "tags": [
+                    "Admin Scheduled Rides"
+                ],
+                "summary": "UC-122: Chỉ định tài xế cho chuyến xe (Admin)",
+                "description": "Gán trực tiếp một tài xế cho chuyến xe đang chờ.",
+                "operationId": "f2b8aff75ee020d3f7504db11753c265",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ride_id",
+                                    "driver_id"
+                                ],
+                                "properties": {
+                                    "ride_id": {
+                                        "type": "string",
+                                        "example": "12345"
+                                    },
+                                    "driver_id": {
+                                        "type": "string",
+                                        "example": "67890"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/rides/scheduled/push-to-pool": {
+            "post": {
+                "tags": [
+                    "Admin Scheduled Rides"
+                ],
+                "summary": "UC-122: Đẩy chuyến xe ra danh sách chung (Pool)",
+                "description": "Làm cho chuyến xe hiển thị đối với tất cả tài xế phù hợp.",
+                "operationId": "c2feb7d01154d63d1ef1c867ae9d10f0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "ride_ids"
+                                ],
+                                "properties": {
+                                    "ride_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "123",
+                                            "456"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/ride/{rideId}/communication/messages": {
             "get": {
                 "tags": [
@@ -4969,6 +5289,177 @@
                 "responses": {
                     "200": {
                         "description": "Lấy danh sách thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/ride/delivery": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Tạo đơn giao hàng (UC-25)",
+                "description": "Customer tạo đơn giao hàng từ điểm lấy đến điểm giao. Hệ thống tính giá cước và tìm tài xế gướn đơn.",
+                "operationId": "eeb34b6293649ef1067695daa7601439",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "pickup_address",
+                                    "pickup_lat",
+                                    "pickup_lng",
+                                    "destination_address",
+                                    "destination_lat",
+                                    "destination_lng",
+                                    "vehicle_type",
+                                    "sender_name",
+                                    "sender_phone",
+                                    "receiver_name",
+                                    "receiver_phone",
+                                    "goods_type",
+                                    "goods_weight"
+                                ],
+                                "properties": {
+                                    "pickup_address": {
+                                        "type": "string",
+                                        "example": "Số 10 Trần Hưng Đạo, Hà Nội"
+                                    },
+                                    "pickup_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 21.0285
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.8542
+                                    },
+                                    "destination_address": {
+                                        "type": "string",
+                                        "example": "Số 5 Cầu Giấy, Hà Nội"
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 21.0334
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.7833
+                                    },
+                                    "vehicle_type": {
+                                        "description": "1 = Xe Máy, 2 = Ô Tô 4 Chỗ",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "sender_name": {
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A"
+                                    },
+                                    "sender_phone": {
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "receiver_name": {
+                                        "type": "string",
+                                        "example": "Trần Thị B"
+                                    },
+                                    "receiver_phone": {
+                                        "type": "string",
+                                        "example": "0987654321"
+                                    },
+                                    "goods_type": {
+                                        "description": "Loại hàng hóa",
+                                        "type": "string",
+                                        "example": "Quần áo"
+                                    },
+                                    "goods_weight": {
+                                        "description": "Cân nặng (kg), tối đa 50kg",
+                                        "type": "number",
+                                        "example": 2.5
+                                    },
+                                    "goods_note": {
+                                        "type": "string",
+                                        "example": "Dễ vỡ, xếp nhẹ tay",
+                                        "nullable": true
+                                    },
+                                    "is_fragile": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "voucher_code": {
+                                        "type": "string",
+                                        "example": "GIAO10",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đơn giao hàng được tạo thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "ride_id": {
+                                            "type": "string",
+                                            "example": "163891324676074472"
+                                        },
+                                        "ride_type": {
+                                            "type": "string",
+                                            "example": "delivery"
+                                        },
+                                        "total_price": {
+                                            "type": "number",
+                                            "example": 45000
+                                        },
+                                        "distance_km": {
+                                            "type": "number",
+                                            "example": 3.5
+                                        },
+                                        "duration_min": {
+                                            "type": "integer",
+                                            "example": 12
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "pending"
+                                        },
+                                        "status_label": {
+                                            "type": "string",
+                                            "example": "Đang tìm tài xế giao hàng."
+                                        },
+                                        "receiver_name": {
+                                            "type": "string",
+                                            "example": "Trần Thị B"
+                                        },
+                                        "receiver_phone": {
+                                            "type": "string",
+                                            "example": "0987654321"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ (A2-A6)"
                     }
                 },
                 "security": [
@@ -7872,6 +8363,14 @@
         {
             "name": "Admin.Pricing",
             "description": "Admin.Pricing"
+        },
+        {
+            "name": "Admin Scheduled Pricing",
+            "description": "Admin Scheduled Pricing"
+        },
+        {
+            "name": "Admin Scheduled Rides",
+            "description": "Admin Scheduled Rides"
         },
         {
             "name": "Ride Communication",

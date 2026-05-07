@@ -13,6 +13,8 @@ use App\Modules\Ride\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\DTO\CreateAirportRideDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
+use App\Modules\Ride\DTO\CreateDeliveryOrderDTO;
+use App\Modules\Ride\Http\Requests\CreateDeliveryOrderRequest;
 use App\Modules\Ride\Http\Requests\ApplyVoucherRequest;
 use App\Modules\Ride\Http\Requests\ConfirmBookingRequest;
 use App\Modules\Ride\Http\Requests\CreateIntercityRideRequest;
@@ -582,5 +584,80 @@ final class RideController extends BaseController
         }
 
         return $this->sendSuccess($result->getData(), 'Lấy danh sách sân bay thành công.');
+    }
+
+    #[OA\Post(
+        path: '/api/v1/ride/delivery',
+        summary: 'Tạo đơn giao hàng (UC-25)',
+        description: 'Customer tạo đơn giao hàng từ điểm lấy đến điểm giao. Hệ thống tính giá cước và tìm tài xế gướn đơn.',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: [
+                'pickup_address', 'pickup_lat', 'pickup_lng',
+                'destination_address', 'destination_lat', 'destination_lng',
+                'vehicle_type',
+                'sender_name', 'sender_phone',
+                'receiver_name', 'receiver_phone',
+                'goods_type', 'goods_weight',
+            ],
+            properties: [
+                new OA\Property(property: 'pickup_address',      type: 'string',  example: 'Số 10 Trần Hưng Đạo, Hà Nội'),
+                new OA\Property(property: 'pickup_lat',          type: 'number',  format: 'float', example: 21.0285),
+                new OA\Property(property: 'pickup_lng',          type: 'number',  format: 'float', example: 105.8542),
+                new OA\Property(property: 'destination_address', type: 'string',  example: 'Số 5 Cầu Giấy, Hà Nội'),
+                new OA\Property(property: 'destination_lat',     type: 'number',  format: 'float', example: 21.0334),
+                new OA\Property(property: 'destination_lng',     type: 'number',  format: 'float', example: 105.7833),
+                new OA\Property(
+                    property: 'vehicle_type',
+                    type: 'integer',
+                    example: 1,
+                    description: '1 = Xe Máy, 2 = Ô Tô 4 Chỗ'
+                ),
+                new OA\Property(property: 'sender_name',   type: 'string', example: 'Nguyễn Văn A'),
+                new OA\Property(property: 'sender_phone',  type: 'string', example: '0901234567'),
+                new OA\Property(property: 'receiver_name', type: 'string', example: 'Trần Thị B'),
+                new OA\Property(property: 'receiver_phone',type: 'string', example: '0987654321'),
+                new OA\Property(property: 'goods_type',   type: 'string', example: 'Quần áo', description: 'Loại hàng hóa'),
+                new OA\Property(property: 'goods_weight', type: 'number', example: 2.5,         description: 'Cân nặng (kg), tối đa 50kg'),
+                new OA\Property(property: 'goods_note',   type: 'string', example: 'Dễ vỡ, xếp nhẹ tay', nullable: true),
+                new OA\Property(property: 'is_fragile',   type: 'boolean', example: false),
+                new OA\Property(property: 'voucher_code', type: 'string', example: 'GIAO10', nullable: true),
+            ]
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Đơn giao hàng được tạo thành công',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'ride_id',        type: 'string',  example: '163891324676074472'),
+                new OA\Property(property: 'ride_type',      type: 'string',  example: 'delivery'),
+                new OA\Property(property: 'total_price',    type: 'number',  example: 45000),
+                new OA\Property(property: 'distance_km',    type: 'number',  example: 3.5),
+                new OA\Property(property: 'duration_min',   type: 'integer', example: 12),
+                new OA\Property(property: 'status',         type: 'string',  example: 'pending'),
+                new OA\Property(property: 'status_label',   type: 'string',  example: 'Đang tìm tài xế giao hàng.'),
+                new OA\Property(property: 'receiver_name',  type: 'string',  example: 'Trần Thị B'),
+                new OA\Property(property: 'receiver_phone', type: 'string',  example: '0987654321'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 401, description: 'Chưa đăng nhập')]
+    #[OA\Response(response: 422, description: 'Dữ liệu không hợp lệ (A2-A6)')]
+    public function createDelivery(CreateDeliveryOrderRequest $request): JsonResponse
+    {
+        $result = $this->rideService->createDeliveryOrder(
+            CreateDeliveryOrderDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), 'Đơn giao hàng được tạo thành công. Đang tìm tài xế.');
     }
 }

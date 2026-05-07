@@ -33,6 +33,9 @@ Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->
     Route::get('airports', [RideController::class, 'listAirports'])->name('ride.airports');
     Route::post('airport', [RideController::class, 'createAirport'])->name('ride.airport');
 
+    // UC-25: Tạo đơn giao hàng
+    Route::post('delivery', [RideController::class, 'createDelivery'])->name('ride.delivery');
+
     // UC-13: Theo dõi tài xế realtime
     Route::get('{rideId}/tracking', [RideController::class, 'showTracking'])->name('ride.tracking.show');
 

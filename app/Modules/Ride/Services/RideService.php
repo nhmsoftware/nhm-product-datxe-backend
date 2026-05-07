@@ -719,10 +719,15 @@ final class RideService extends BaseService implements RideServiceInterface
     public function createIntercity(CreateIntercityRideDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto): array {
-            // 1. Giả lập tính toán khoảng cách và thời gian (Trong thực tế dùng Google/Goong API)
-            // Giả sử khoảng cách tối thiểu là 30km cho đi tỉnh
-            $distanceMeters = 50000; // 50km
-            $durationSeconds = 3600; // 1h
+            // 1. Tính toán khoảng cách và thời gian thực tế từ MapService
+            $matrix = $this->mapService->getDistanceMatrix(
+                (float) $dto->pickupLat,
+                (float) $dto->pickupLng,
+                (float) $dto->destinationLat,
+                (float) $dto->destinationLng
+            );
+            $distanceMeters = $matrix->distance;
+            $durationSeconds = $matrix->duration;
 
             // 2. Tính giá cước
             $vehicleType = VehicleType::from($dto->vehicleType);
@@ -779,15 +784,21 @@ final class RideService extends BaseService implements RideServiceInterface
                 'total_price'  => $totalPrice,
                 'status_label' => 'Đã lưu lịch trình. Chuyến đi sẽ hiển thị cho tài xế nhận sớm.',
             ];
-        }, useTransaction: true);
+        }, true);
     }
 
     public function createAirport(CreateAirportRideDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto): array {
-            // 1. Giả lập tính toán khoảng cách và thời gian
-            $distanceMeters = 30000; // 30km
-            $durationSeconds = 2400; // 40p
+            // 1. Tính toán khoảng cách và thời gian thực tế từ MapService
+            $matrix = $this->mapService->getDistanceMatrix(
+                (float) $dto->pickupLat,
+                (float) $dto->pickupLng,
+                (float) $dto->destinationLat,
+                (float) $dto->destinationLng
+            );
+            $distanceMeters = $matrix->distance;
+            $durationSeconds = $matrix->duration;
 
             // 2. Tính giá cước
             $vehicleType = VehicleType::from($dto->vehicleType);
@@ -845,7 +856,109 @@ final class RideService extends BaseService implements RideServiceInterface
                 'total_price'  => $totalPrice,
                 'status_label' => 'Đã lưu lịch trình. Chuyến đi sẽ hiển thị cho tài xế nhận sớm.',
             ];
-        }, useTransaction: true);
+        }, true);
+    }
+
+    /**
+     * UC-25: Tạo đơn giao hàng.
+     *
+     * Luồng:
+     * 1. Tính khoảng cách thực tế qua MapService
+     * 2. Tính giá cước theo loại xe
+     * 3. Áp dụng voucher (nếu có)
+     * 4. Tạo Ride với ride_type = DELIVERY
+     * 5. Tạo DeliveryOrder đính kèm thông tin người gửi/nhận/hàng hóa
+     * 6. Phát Event RideBooked để hệ thống tìm tài xế
+     */
+    public function createDeliveryOrder(\App\Modules\Ride\DTO\CreateDeliveryOrderDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            // 1. Kiểm tra điểm lấy và điểm giao không được trùng (A2)
+            $this->validate(
+                !($dto->pickupLat === $dto->destinationLat && $dto->pickupLng === $dto->destinationLng),
+                'Điểm lấy và điểm giao không được trùng nhau.',
+                422
+            );
+
+            // 2. Tính khoảng cách & thời gian thực tế
+            $matrix = $this->mapService->getDistanceMatrix(
+                $dto->pickupLat,
+                $dto->pickupLng,
+                $dto->destinationLat,
+                $dto->destinationLng
+            );
+            $distanceMeters  = $matrix->distance;
+            $durationSeconds = $matrix->duration;
+
+            // 3. Tính giá cước theo loại xe
+            $vehicleType   = VehicleType::from($dto->vehicleType);
+            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleType);
+            if ($pricingResult->isError()) {
+                $this->throw($pricingResult->getMessage());
+            }
+
+            $priceData      = $pricingResult->getData();
+            $totalPrice     = (float) $priceData->finalFare;
+            $discountAmount = 0.0;
+
+            // 4. Áp dụng voucher (nếu có)
+            if ($dto->voucherCode) {
+                $discount = $this->resolveVoucherDiscount($dto->customerId, $dto->voucherCode, $totalPrice);
+                if ($discount !== null) {
+                    $discountAmount = $discount;
+                    $totalPrice     = max(0, $totalPrice - $discountAmount);
+                }
+            }
+
+            // 5. Tạo Ride với RideType::DELIVERY
+            $ride = $this->rideRepository->createDeliveryRide([
+                'customer_id'         => $dto->customerId,
+                'pickup_address'      => $dto->pickupAddress,
+                'pickup_lat'          => $dto->pickupLat,
+                'pickup_lng'          => $dto->pickupLng,
+                'destination_address' => $dto->destinationAddress,
+                'destination_lat'     => $dto->destinationLat,
+                'destination_lng'     => $dto->destinationLng,
+                'distance'            => $distanceMeters,
+                'duration'            => $durationSeconds,
+                'vehicle_type'        => $dto->vehicleType,
+                'ride_type'           => RideType::DELIVERY->value,
+                'status'              => RideStatus::PENDING->value,
+                'base_price'          => $priceData->baseFare,
+                'distance_price'      => $priceData->distanceFare,
+                'total_price'         => $totalPrice,
+                'voucher_code'        => $dto->voucherCode,
+                'discount_amount'     => $discountAmount,
+            ]);
+
+            // 6. Tạo DeliveryOrder đính kèm
+            $this->rideRepository->createDeliveryOrderDetail([
+                'ride_id'        => $ride->id,
+                'sender_name'    => $dto->senderName,
+                'sender_phone'   => $dto->senderPhone,
+                'receiver_name'  => $dto->receiverName,
+                'receiver_phone' => $dto->receiverPhone,
+                'goods_type'     => $dto->goodsType,
+                'goods_weight'   => $dto->goodsWeight,
+                'goods_note'     => $dto->goodsNote,
+                'is_fragile'     => $dto->isFragile,
+            ]);
+
+            // 7. Phát Event để hệ thống bắt đầu tìm tài xế
+            event(new RideBooked($ride->id, $ride->customer_id));
+
+            return [
+                'ride_id'        => $ride->id,
+                'ride_type'      => 'delivery',
+                'total_price'    => $totalPrice,
+                'distance_km'    => round($distanceMeters / 1000, 2),
+                'duration_min'   => round($durationSeconds / 60),
+                'status'         => 'pending',
+                'status_label'   => 'Đang tìm tài xế giao hàng.',
+                'receiver_name'  => $dto->receiverName,
+                'receiver_phone' => $dto->receiverPhone,
+            ];
+        }, true);
     }
 
     public function getRideDetail(string $rideId, string $customerId): ServiceReturn
@@ -1143,13 +1256,30 @@ final class RideService extends BaseService implements RideServiceInterface
         });
     }
 
+    /**
+     * Kiểm tra xem có nên tự động đẩy chuyến vào pool tài xế ngay khi tạo không.
+     *
+     * Logic:
+     *   - INTERNAL_PRIORITY (Bật chế độ Admin phân phối):
+     *       Admin giữ quyền kiểm soát → chuyến xe KHÔNG tự vào pool (is_pushed_to_pool = false)
+     *       Admin sẽ tự tay gán tài xế qua màn hình điều phối.
+     *
+     *   - OPEN_POOL (Tắt chế độ Admin / Tự động):
+     *       Hệ thống tự động đẩy chuyến vào pool → tài xế phù hợp thấy và nhận chuyến.
+     *
+     *   - Không có cấu hình: Mặc định OPEN_POOL (tự động).
+     */
     private function shouldPushToPoolImmediately(): bool
     {
         $settings = $this->pricingGlobalSettingRepository->getSettings();
-        if (!$settings) {
-            return true; // Default behavior
+
+        // Không có cấu hình → mặc định tự động đẩy vào pool
+        if (!$settings || $settings->scheduled_dispatch_mode === null) {
+            return true;
         }
 
+        // Chỉ tự động push khi mode là OPEN_POOL
+        // Khi INTERNAL_PRIORITY (Admin bật chế độ kiểm soát) → không tự push
         return $settings->scheduled_dispatch_mode === ScheduledDispatchMode::OPEN_POOL;
     }
 }

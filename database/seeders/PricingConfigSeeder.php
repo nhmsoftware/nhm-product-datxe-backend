@@ -61,7 +61,7 @@ class PricingConfigSeeder extends Seeder
         // Global Setting for Free Mode
         \App\Modules\Pricing\Model\PricingGlobalSetting::updateOrCreate(
             ['is_free_mode' => false],
-            ['is_free_mode' => false]
+            ['is_free_mode' => false, 'scheduled_dispatch_mode' => 2]
         );
 
         // Seed Admin User

@@ -12,6 +12,7 @@ enum RideType: int
     case CITY      = 1; // Nội thành
     case INTERCITY = 2; // Đi tỉnh
     case AIRPORT   = 3; // Sân bay
+    case DELIVERY  = 4; // Giao hàng
 
     public function getLabel(): string
     {
@@ -19,6 +20,7 @@ enum RideType: int
             self::CITY      => 'Nội thành',
             self::INTERCITY => 'Đi tỉnh',
             self::AIRPORT   => 'Sân bay',
+            self::DELIVERY  => 'Giao hàng',
         };
     }
 }

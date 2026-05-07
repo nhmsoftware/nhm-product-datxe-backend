@@ -151,4 +151,10 @@ interface RideServiceInterface
      * Admin đẩy chuyến xe ra pool cho tài xế ngoài.
      */
     public function pushScheduledRidesToPool(\App\Modules\Ride\DTO\BulkPushToPoolDTO $dto): ServiceReturn;
+
+    /**
+     * UC-25: Tạo đơn giao hàng.
+     * Bao gồm tạo Ride với type DELIVERY và DeliveryOrder đính kèm.
+     */
+    public function createDeliveryOrder(\App\Modules\Ride\DTO\CreateDeliveryOrderDTO $dto): ServiceReturn;
 }
