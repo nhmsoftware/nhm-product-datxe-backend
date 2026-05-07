@@ -34,7 +34,7 @@
                                         "example": "0901234567"
                                     },
                                     "type": {
-                                        "description": "Loại mã OTP. 1: Xác nhận đăng ký, 2: Xác nhận đăng nhập, 3: Xác nhận quên mật khẩu, 4: Xác nhận thay đổi thông tin, 5: Xác nhận đăng ký tài xế",
+                                        "description": "Loại mã OTP. 1: Xác nhận đăng ký, 2: Xác nhận đăng nhập, 3: Xác nhận quên mật khẩu, 4: Xác nhận thay đổi thông tin, 5: Xác nhận đăng ký tài xế, 6: Xác nhận đăng ký nhà hàng (Merchant)",
                                         "type": "integer",
                                         "example": 1
                                     }
@@ -2459,6 +2459,682 @@
                 "responses": {
                     "200": {
                         "description": "Từ chối thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/combos": {
+            "get": {
+                "tags": [
+                    "Merchant Combo"
+                ],
+                "summary": "Lấy danh sách combo của cửa hàng (UC-61)",
+                "operationId": "de836e6b70313b6a6d9af88109e6edd9",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Merchant Combo"
+                ],
+                "summary": "Thêm combo mới (UC-63)",
+                "operationId": "f5ca689ae5495ff58c1cf0f846f7b5d1",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Combo Gà Rán"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "2 miếng gà + 1 nước"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "example": 50000
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "menu_item_id": {
+                                                    "type": "string"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo thành công"
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/combos/{id}": {
+            "get": {
+                "tags": [
+                    "Merchant Combo"
+                ],
+                "summary": "Xem chi tiết combo (UC-62)",
+                "operationId": "50830f4805ce466d22ecf74d8a954c8a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy combo"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Merchant Combo"
+                ],
+                "summary": "Cập nhật combo (UC-64)",
+                "operationId": "7e37fce0154a34964ce5fbd62ff143f7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "menu_item_id": {
+                                                    "type": "string"
+                                                },
+                                                "quantity": {
+                                                    "type": "integer"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy combo"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Merchant Combo"
+                ],
+                "summary": "Xóa combo (UC-65)",
+                "operationId": "f814d15528e144cbc1d3c4f55fb1503b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công"
+                    },
+                    "403": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/combos/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Merchant Combo"
+                ],
+                "summary": "Thay đổi trạng thái combo (UC-61)",
+                "operationId": "78e4588248d4fb559d7766db7ffde991",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_available": {
+                                        "type": "boolean"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật trạng thái thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/menu": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Lấy danh sách thực đơn của cửa hàng (UC-57)",
+                "operationId": "c0aaedc1dc8c5b798a1610286c04d2aa",
+                "parameters": [
+                    {
+                        "name": "category_id",
+                        "in": "query",
+                        "description": "Lọc theo ID danh mục",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Tìm kiếm tên món ăn",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "order": {
+                                                        "type": "integer"
+                                                    },
+                                                    "items": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string"
+                                                                },
+                                                                "price": {
+                                                                    "type": "number",
+                                                                    "format": "float"
+                                                                },
+                                                                "is_available": {
+                                                                    "type": "boolean"
+                                                                },
+                                                                "image_path": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/menu/items": {
+            "post": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Thêm món ăn/đồ uống mới vào Menu (UC-58)",
+                "operationId": "b4cecbced847296a2a5cd3a95fe7be71",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price",
+                                    "category_name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Cơm tấm Sườn Bì Chả"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 45000
+                                    },
+                                    "category_name": {
+                                        "type": "string",
+                                        "example": "Món chính"
+                                    },
+                                    "category_id": {
+                                        "description": "ID danh mục nếu chọn từ list",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Sườn nướng mật ong thơm ngon"
+                                    },
+                                    "image": {
+                                        "description": "Hình ảnh món ăn",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "sizes": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Lớn"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "example": 10000
+                                                },
+                                                "is_default": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "toppings": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Thêm sườn"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "example": 15000
+                                                },
+                                                "max_quantity": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "is_required": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Thêm món ăn thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Thêm món ăn thành công."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ"
+                    },
+                    "403": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/menu/items/{id}": {
+            "post": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Cập nhật thông tin món ăn (UC-59)",
+                "description": "Sử dụng POST với tham số _method=PUT nếu cần giả lập PUT khi gửi kèm file.",
+                "operationId": "f1ce1f55a640dfce49459f40bfc49992",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của món ăn cần cập nhật",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price",
+                                    "category_name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Cơm tấm Sườn Bì Chả Đặc Biệt"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 55000
+                                    },
+                                    "category_name": {
+                                        "type": "string",
+                                        "example": "Món chính"
+                                    },
+                                    "category_id": {
+                                        "description": "ID danh mục nếu chọn từ list",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Sườn nướng mật ong thơm ngon, bì thính vàng rụm"
+                                    },
+                                    "image": {
+                                        "description": "Hình ảnh mới (nếu muốn thay đổi)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "sizes": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Lớn"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "example": 10000
+                                                },
+                                                "is_default": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "toppings": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Thêm sườn"
+                                                },
+                                                "price": {
+                                                    "type": "number",
+                                                    "example": 15000
+                                                },
+                                                "max_quantity": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "is_required": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật món ăn thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật món ăn thành công."
+                                        },
+                                        "data": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy món ăn"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ hoặc tên món đã tồn tại"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Xóa món ăn khỏi thực đơn (Soft Delete) (UC-60)",
+                "operationId": "a9a80079fee491a28b2258cfd9616c7f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của món ăn cần xóa",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa món ăn thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Xóa món ăn thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy món ăn"
+                    },
+                    "400": {
+                        "description": "Không thể xóa món ăn (ví dụ: đang trong đơn hàng)"
                     }
                 },
                 "security": [
@@ -6958,6 +7634,10 @@
         {
             "name": "Admin|Merchant",
             "description": "Admin|Merchant"
+        },
+        {
+            "name": "Merchant Combo",
+            "description": "Merchant Combo"
         },
         {
             "name": "Merchant",

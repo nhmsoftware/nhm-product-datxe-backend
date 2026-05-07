@@ -12,6 +12,11 @@ Module này quản lý toàn bộ nghiệp vụ liên quan đến Merchant (Quá
 - **UC-45 Setup hours**: Thiết lập giờ mở cửa/đóng cửa (Cơ bản).
 - **UC-46 Change status**: Thay đổi trạng thái hoạt động (Đóng/Mở).
 - **UC-47 Configure discount**: Cấu hình % chiết khấu.
+- **UC-61 Manage Combo**: Quản lý danh sách combo của cửa hàng.
+- **UC-62 View Combo Detail**: Xem chi tiết thông tin combo.
+- **UC-63 Add Combo**: Tạo mới combo cho cửa hàng.
+- **UC-64 Update Combo**: Cập nhật thông tin combo.
+- **UC-65 Delete Combo**: Xóa combo (xóa mềm).
 
 ## Architecture
 Tuân thủ Modular DDD:

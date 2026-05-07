@@ -42,7 +42,7 @@ final class AuthController extends BaseController
                     new OA\Property(property: 'phone', type: 'string',  example: '0901234567'),
                     new OA\Property(
                         property: 'type',
-                        description: 'Loại mã OTP. 1: Xác nhận đăng ký, 2: Xác nhận đăng nhập, 3: Xác nhận quên mật khẩu, 4: Xác nhận thay đổi thông tin, 5: Xác nhận đăng ký tài xế',
+                        description: 'Loại mã OTP. 1: Xác nhận đăng ký, 2: Xác nhận đăng nhập, 3: Xác nhận quên mật khẩu, 4: Xác nhận thay đổi thông tin, 5: Xác nhận đăng ký tài xế, 6: Xác nhận đăng ký nhà hàng (Merchant)',
                         type: 'integer',
                         example: 1,
                     ),

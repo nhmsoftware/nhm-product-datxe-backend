@@ -35,6 +35,30 @@ final class MerchantServiceProvider extends BaseModuleServiceProvider
             \App\Modules\Merchant\Interfaces\MerchantStoreServiceInterface::class,
             \App\Modules\Merchant\Services\MerchantStoreService::class
         );
+
+        // Menu Management
+        $this->app->singleton(
+            \App\Modules\Merchant\Interfaces\MenuRepositoryInterface::class,
+            \App\Modules\Merchant\Repositories\MenuRepository::class
+        );
+        $this->app->singleton(
+            \App\Modules\Merchant\Interfaces\MenuServiceInterface::class,
+            \App\Modules\Merchant\Services\MenuService::class
+        );
+
+        // Combo Management
+        $this->app->singleton(
+            \App\Modules\Merchant\Interfaces\ComboRepositoryInterface::class,
+            \App\Modules\Merchant\Repositories\ComboRepository::class
+        );
+        $this->app->singleton(
+            \App\Modules\Merchant\Interfaces\ComboItemRepositoryInterface::class,
+            \App\Modules\Merchant\Repositories\ComboItemRepository::class
+        );
+        $this->app->singleton(
+            \App\Modules\Merchant\Interfaces\ComboServiceInterface::class,
+            \App\Modules\Merchant\Services\ComboService::class
+        );
     }
 
     public function boot(): void
