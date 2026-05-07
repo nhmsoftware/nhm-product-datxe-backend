@@ -544,4 +544,65 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     {
         return \App\Modules\Ride\Model\DeliveryOrder::create($data);
     }
+
+    // =========================================================
+    // UC-37: Capture Pickup Proof
+    // =========================================================
+
+    /**
+     * Lưu bằng chứng lấy hàng vào bảng rides.
+     */
+    public function savePickupProof(
+        string $rideId,
+        ?string $photoUrl,
+        \Carbon\CarbonInterface $capturedAt,
+        ?float $capturedLat,
+        ?float $capturedLng,
+        ?string $skipReason,
+        ?string $note
+    ): bool {
+        return (bool) $this->model->where('id', $rideId)->update(array_filter([
+            'pickup_proof_photo_url'   => $photoUrl,
+            'pickup_proof_captured_at' => $capturedAt,
+            'pickup_proof_skip_reason' => $skipReason,
+            'pickup_proof_note'        => $note,
+            'status'                   => RideStatus::PICKED_UP->value,
+        ], fn ($v) => $v !== null));
+    }
+
+    /**
+     * Lưu bằng chứng giao hàng (UC-38).
+     */
+    public function saveDeliveryProof(
+        string $rideId,
+        ?string $photoUrl,
+        \Carbon\CarbonInterface $capturedAt,
+        ?float $capturedLat,
+        ?float $capturedLng,
+        ?string $skipReason,
+        ?string $note
+    ): bool {
+        return (bool) $this->model->where('id', $rideId)->update(array_filter([
+            'delivery_proof_photo_url'   => $photoUrl,
+            'delivery_proof_captured_at' => $capturedAt,
+            'delivery_proof_skip_reason' => $skipReason,
+            'delivery_proof_note'        => $note,
+        ], fn ($v) => $v !== null));
+    }
+
+    /**
+     * Tìm chuyến xe theo ID và Driver ID (UC-37 — xác thực quyền sở hữu).
+     */
+    public function findByIdAndDriver(string $rideId, string $driverId): ?Ride
+    {
+        if (!is_numeric($rideId)) {
+            return null;
+        }
+
+        /** @var Ride|null */
+        return $this->model->where('id', $rideId)
+            ->where('driver_id', $driverId)
+            ->first();
+    }
 }
+

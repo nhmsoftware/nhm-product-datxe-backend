@@ -157,4 +157,24 @@ interface RideServiceInterface
      * Bao gồm tạo Ride với type DELIVERY và DeliveryOrder đính kèm.
      */
     public function createDeliveryOrder(\App\Modules\Ride\DTO\CreateDeliveryOrderDTO $dto): ServiceReturn;
+
+    /**
+     * UC-37: Driver chụp/tải ảnh xác nhận đã lấy hàng thành công.
+     * Hỗ trợ 2 luồng:
+     *  - Normal: Có ảnh (photo) + GPS → upload & lưu proof → PICKED_UP.
+     *  - A3/A6:  Không ảnh → bắt buộc skip_reason + note → xác nhận thủ công → PICKED_UP.
+     *
+     * @param \App\Modules\Ride\DTO\CapturePickupProofDTO $dto
+     * @return ServiceReturn
+     */
+    public function capturePickupProof(\App\Modules\Ride\DTO\CapturePickupProofDTO $dto): ServiceReturn;
+
+    /**
+     * UC-38: Driver chụp/tải ảnh xác nhận đã giao hàng thành công.
+     * Tương tự UC-37 nhưng chuyển trạng thái về COMPLETED và hoàn tất đơn hàng.
+     *
+     * @param \App\Modules\Ride\DTO\CaptureDeliveryProofDTO $dto
+     * @return ServiceReturn
+     */
+    public function captureDeliveryProof(\App\Modules\Ride\DTO\CaptureDeliveryProofDTO $dto): ServiceReturn;
 }

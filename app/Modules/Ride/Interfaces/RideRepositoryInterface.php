@@ -257,4 +257,57 @@ interface RideRepositoryInterface
      * Tạo bản ghi DeliveryOrder đính kèm thông tin giao hàng.
      */
     public function createDeliveryOrderDetail(array $data): \App\Modules\Ride\Model\DeliveryOrder;
+
+    // =========================================================
+    // UC-37: Capture Pickup Proof
+    // =========================================================
+
+    /**
+     * Lưu bằng chứng lấy hàng (ảnh hoặc xác nhận thủ công A3/A6).
+     *
+     * @param string      $rideId        ID chuyến xe
+     * @param string|null $photoUrl      URL ảnh đã upload lên storage (null nếu A3/A6)
+     * @param \Carbon\CarbonInterface $capturedAt Thời điểm chụp
+     * @param float|null  $capturedLat   Vĩ độ GPS khi chụp
+     * @param float|null  $capturedLng   Kinh độ GPS khi chụp
+     * @param string|null $skipReason    Lý do bỏ qua (A3/A6)
+     * @param string|null $note          Ghi chú thêm (A3/A6)
+     * @return bool
+     */
+    public function savePickupProof(
+        string $rideId,
+        ?string $photoUrl,
+        \Carbon\CarbonInterface $capturedAt,
+        ?float $capturedLat,
+        ?float $capturedLng,
+        ?string $skipReason,
+        ?string $note
+    ): bool;
+
+    /**
+     * Lưu bằng chứng giao hàng (UC-38).
+     *
+     * @param string      $rideId
+     * @param string|null $photoUrl
+     * @param \Carbon\CarbonInterface $capturedAt
+     * @param float|null  $capturedLat
+     * @param float|null  $capturedLng
+     * @param string|null $skipReason
+     * @param string|null $note
+     * @return bool
+     */
+    public function saveDeliveryProof(
+        string $rideId,
+        ?string $photoUrl,
+        \Carbon\CarbonInterface $capturedAt,
+        ?float $capturedLat,
+        ?float $capturedLng,
+        ?string $skipReason,
+        ?string $note
+    ): bool;
+
+    /**
+     * Tìm chuyến xe theo ID và Driver ID (dùng để xác thực quyền sở hữu trong UC-37).
+     */
+    public function findByIdAndDriver(string $rideId, string $driverId): ?\App\Modules\Ride\Model\Ride;
 }

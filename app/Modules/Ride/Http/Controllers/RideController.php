@@ -14,7 +14,11 @@ use App\Modules\Ride\DTO\CreateAirportRideDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\DTO\CreateDeliveryOrderDTO;
+use App\Modules\Ride\DTO\CapturePickupProofDTO;
+use App\Modules\Ride\DTO\CaptureDeliveryProofDTO;
 use App\Modules\Ride\Http\Requests\CreateDeliveryOrderRequest;
+use App\Modules\Ride\Http\Requests\CapturePickupProofRequest;
+use App\Modules\Ride\Http\Requests\CaptureDeliveryProofRequest;
 use App\Modules\Ride\Http\Requests\ApplyVoucherRequest;
 use App\Modules\Ride\Http\Requests\ConfirmBookingRequest;
 use App\Modules\Ride\Http\Requests\CreateIntercityRideRequest;
@@ -660,4 +664,184 @@ final class RideController extends BaseController
 
         return $this->sendSuccess($result->getData(), 'Đơn giao hàng được tạo thành công. Đang tìm tài xế.');
     }
+
+    // =========================================================
+    // UC-37: Capture Pickup Proof
+    // =========================================================
+
+    #[OA\Post(
+        path: '/api/v1/driver/ride/{rideId}/pickup-proof',
+        summary: 'Chụp/tải ảnh xác nhận đã lấy hàng (UC-37)',
+        description: 'Driver gửi ảnh xác nhận đã lấy hàng thành công trước khi bắt đầu giao. Hỗ trợ 2 luồng: (1) Normal: gửi photo + GPS. (2) A3/A6: không chụp được → chọn skip_reason + note.',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    #[OA\Parameter(
+        name: 'rideId',
+        description: 'ID của chuyến xe',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\MediaType(
+            mediaType: 'multipart/form-data',
+            schema: new OA\Schema(
+                properties: [
+                    new OA\Property(
+                        property: 'photo',
+                        description: 'Ảnh xác nhận lấy hàng (JPG/PNG/WEBP, tối đa 10MB). Bỏ qua nếu A3/A6.',
+                        type: 'string',
+                        format: 'binary'
+                    ),
+                    new OA\Property(
+                        property: 'captured_lat',
+                        description: 'Vĩ độ GPS tại thời điểm chụp',
+                        type: 'number',
+                        format: 'float',
+                        example: 10.762622
+                    ),
+                    new OA\Property(
+                        property: 'captured_lng',
+                        description: 'Kinh độ GPS tại thời điểm chụp',
+                        type: 'number',
+                        format: 'float',
+                        example: 106.660172
+                    ),
+                    new OA\Property(
+                        property: 'skip_reason',
+                        description: 'A3/A6: Lý do không chụp được ảnh. Bắt buộc khi không có photo.',
+                        type: 'string',
+                        enum: ['merchant_refused', 'device_error', 'other'],
+                        example: 'merchant_refused'
+                    ),
+                    new OA\Property(
+                        property: 'note',
+                        description: 'A3/A6: Ghi chú thêm. Bắt buộc khi không có photo.',
+                        type: 'string',
+                        example: 'Merchant từ chối chụp ảnh vì lý do riêng tư.'
+                    ),
+                ]
+            )
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Xác nhận lấy hàng thành công. Trạng thái chuyến xe → PICKED_UP.',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'ride_id',      type: 'string',  example: '163891324676074472'),
+                new OA\Property(property: 'status',       type: 'integer', example: 7),
+                new OA\Property(property: 'status_label', type: 'string',  example: 'Đã lấy hàng'),
+                new OA\Property(property: 'photo_url',    type: 'string',  nullable: true, example: 'https://cdn.example.com/pickup-proofs/163891.../photo.jpg'),
+                new OA\Property(property: 'captured_at',  type: 'string',  example: '2026-05-07T19:00:00+07:00'),
+                new OA\Property(property: 'is_skipped',   type: 'boolean', example: false),
+                new OA\Property(property: 'skip_reason',  type: 'string',  nullable: true, example: null),
+                new OA\Property(property: 'message',      type: 'string',  example: 'Ảnh xác nhận lấy hàng đã được lưu thành công. Bạn có thể bắt đầu giao hàng.'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
+    #[OA\Response(response: 422, description: 'Điều kiện tiên quyết chưa đáp ứng hoặc ảnh không hợp lệ (A2/A3/A6)')]
+    #[OA\Response(response: 500, description: 'Lỗi tải ảnh lên storage (A4)')]
+    public function capturePickupProof(CapturePickupProofRequest $request): JsonResponse
+    {
+        $result = $this->rideService->capturePickupProof(
+            CapturePickupProofDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getData()['message'] ?? 'Xác nhận lấy hàng thành công.');
+    }
+
+    // =========================================================
+    // UC-38: Capture Delivery Proof
+    // =========================================================
+
+    #[OA\Post(
+        path: '/api/v1/driver/ride/{rideId}/delivery-proof',
+        summary: 'Chụp/tải ảnh xác nhận đã giao hàng (UC-38)',
+        description: 'Driver gửi ảnh xác nhận đã giao hàng thành công để hoàn tất đơn hàng. Hỗ trợ (1) Normal flow: photo + GPS. (2) A3 flow: không chụp được → chọn skip_reason + note. Yêu cầu GPS khớp với điểm đích (A6).',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    #[OA\Parameter(
+        name: 'rideId',
+        description: 'ID của chuyến xe',
+        in: 'path',
+        required: true,
+        schema: new OA\Schema(type: 'string')
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\MediaType(
+            mediaType: 'multipart/form-data',
+            schema: new OA\Schema(
+                properties: [
+                    new OA\Property(
+                        property: 'photo',
+                        description: 'Ảnh xác nhận giao hàng (JPG/PNG/WEBP, tối đa 10MB).',
+                        type: 'string',
+                        format: 'binary'
+                    ),
+                    new OA\Property(
+                        property: 'captured_lat',
+                        description: 'Vĩ độ GPS tại thời điểm chụp',
+                        type: 'number',
+                        format: 'float'
+                    ),
+                    new OA\Property(
+                        property: 'captured_lng',
+                        description: 'Kinh độ GPS tại thời điểm chụp',
+                        type: 'number',
+                        format: 'float'
+                    ),
+                    new OA\Property(
+                        property: 'skip_reason',
+                        description: 'A3: Lý do không chụp được ảnh.',
+                        type: 'string',
+                        enum: ['customer_refused', 'device_error', 'other']
+                    ),
+                    new OA\Property(
+                        property: 'note',
+                        description: 'A3: Ghi chú thêm.',
+                        type: 'string'
+                    ),
+                ]
+            )
+        )
+    )]
+    #[OA\Response(
+        response: 200,
+        description: 'Xác nhận giao hàng thành công. Trạng thái chuyến xe → COMPLETED.',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'ride_id',      type: 'string'),
+                new OA\Property(property: 'status',       type: 'integer', example: 5),
+                new OA\Property(property: 'status_label', type: 'string',  example: 'Đã hoàn thành'),
+                new OA\Property(property: 'earnings',     type: 'number',  example: 45000),
+                new OA\Property(property: 'photo_url',    type: 'string',  nullable: true),
+                new OA\Property(property: 'message',      type: 'string'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 404, description: 'Không tìm thấy chuyến xe')]
+    #[OA\Response(response: 422, description: 'Chưa đến đúng vị trí (A6) hoặc điều kiện không thỏa mãn')]
+    public function captureDeliveryProof(CaptureDeliveryProofRequest $request): JsonResponse
+    {
+        $result = $this->rideService->captureDeliveryProof(
+            CaptureDeliveryProofDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getData()['message'] ?? 'Xác nhận giao hàng thành công.');
+    }
 }
+

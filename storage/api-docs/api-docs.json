@@ -5469,6 +5469,241 @@
                 ]
             }
         },
+        "/api/v1/driver/ride/{rideId}/pickup-proof": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Chụp/tải ảnh xác nhận đã lấy hàng (UC-37)",
+                "description": "Driver gửi ảnh xác nhận đã lấy hàng thành công trước khi bắt đầu giao. Hỗ trợ 2 luồng: (1) Normal: gửi photo + GPS. (2) A3/A6: không chụp được → chọn skip_reason + note.",
+                "operationId": "0d7dfeafbaffc91ce126708d233f1e9f",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "photo": {
+                                        "description": "Ảnh xác nhận lấy hàng (JPG/PNG/WEBP, tối đa 10MB). Bỏ qua nếu A3/A6.",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "captured_lat": {
+                                        "description": "Vĩ độ GPS tại thời điểm chụp",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.762622
+                                    },
+                                    "captured_lng": {
+                                        "description": "Kinh độ GPS tại thời điểm chụp",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.660172
+                                    },
+                                    "skip_reason": {
+                                        "description": "A3/A6: Lý do không chụp được ảnh. Bắt buộc khi không có photo.",
+                                        "type": "string",
+                                        "example": "merchant_refused",
+                                        "enum": [
+                                            "merchant_refused",
+                                            "device_error",
+                                            "other"
+                                        ]
+                                    },
+                                    "note": {
+                                        "description": "A3/A6: Ghi chú thêm. Bắt buộc khi không có photo.",
+                                        "type": "string",
+                                        "example": "Merchant từ chối chụp ảnh vì lý do riêng tư."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Xác nhận lấy hàng thành công. Trạng thái chuyến xe → PICKED_UP.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "ride_id": {
+                                            "type": "string",
+                                            "example": "163891324676074472"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 7
+                                        },
+                                        "status_label": {
+                                            "type": "string",
+                                            "example": "Đã lấy hàng"
+                                        },
+                                        "photo_url": {
+                                            "type": "string",
+                                            "example": "https://cdn.example.com/pickup-proofs/163891.../photo.jpg",
+                                            "nullable": true
+                                        },
+                                        "captured_at": {
+                                            "type": "string",
+                                            "example": "2026-05-07T19:00:00+07:00"
+                                        },
+                                        "is_skipped": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "skip_reason": {
+                                            "type": "string",
+                                            "example": null,
+                                            "nullable": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ảnh xác nhận lấy hàng đã được lưu thành công. Bạn có thể bắt đầu giao hàng."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
+                    },
+                    "422": {
+                        "description": "Điều kiện tiên quyết chưa đáp ứng hoặc ảnh không hợp lệ (A2/A3/A6)"
+                    },
+                    "500": {
+                        "description": "Lỗi tải ảnh lên storage (A4)"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/ride/{rideId}/delivery-proof": {
+            "post": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Chụp/tải ảnh xác nhận đã giao hàng (UC-38)",
+                "description": "Driver gửi ảnh xác nhận đã giao hàng thành công để hoàn tất đơn hàng. Hỗ trợ (1) Normal flow: photo + GPS. (2) A3 flow: không chụp được → chọn skip_reason + note. Yêu cầu GPS khớp với điểm đích (A6).",
+                "operationId": "7ce14387e2641c19d259cdf03a87934e",
+                "parameters": [
+                    {
+                        "name": "rideId",
+                        "in": "path",
+                        "description": "ID của chuyến xe",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "photo": {
+                                        "description": "Ảnh xác nhận giao hàng (JPG/PNG/WEBP, tối đa 10MB).",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "captured_lat": {
+                                        "description": "Vĩ độ GPS tại thời điểm chụp",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "captured_lng": {
+                                        "description": "Kinh độ GPS tại thời điểm chụp",
+                                        "type": "number",
+                                        "format": "float"
+                                    },
+                                    "skip_reason": {
+                                        "description": "A3: Lý do không chụp được ảnh.",
+                                        "type": "string",
+                                        "enum": [
+                                            "customer_refused",
+                                            "device_error",
+                                            "other"
+                                        ]
+                                    },
+                                    "note": {
+                                        "description": "A3: Ghi chú thêm.",
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Xác nhận giao hàng thành công. Trạng thái chuyến xe → COMPLETED.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "ride_id": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "status_label": {
+                                            "type": "string",
+                                            "example": "Đã hoàn thành"
+                                        },
+                                        "earnings": {
+                                            "type": "number",
+                                            "example": 45000
+                                        },
+                                        "photo_url": {
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy chuyến xe"
+                    },
+                    "422": {
+                        "description": "Chưa đến đúng vị trí (A6) hoặc điều kiện không thỏa mãn"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/risk/anti-fraud/overview": {
             "get": {
                 "tags": [

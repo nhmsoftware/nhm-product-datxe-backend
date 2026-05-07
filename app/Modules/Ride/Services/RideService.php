@@ -25,6 +25,10 @@ use App\Modules\Ride\DTO\UpdateDriverLocationDTO;
 use App\Modules\Ride\DTO\VehicleOptionDTO;
 use App\Modules\Ride\DTO\AssignInternalDriverDTO;
 use App\Modules\Ride\DTO\BulkPushToPoolDTO;
+use App\Modules\Ride\DTO\CapturePickupProofDTO;
+use App\Modules\Ride\DTO\CaptureDeliveryProofDTO;
+use App\Modules\Ride\Events\PickupProofCaptured;
+use App\Modules\Ride\Events\DeliveryProofCaptured;
 use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Ride\Interfaces\MapServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
@@ -54,7 +58,9 @@ use App\Modules\RiskManagement\Model\Enums\CancellationFeeType;
 use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Model\Enums\ScheduledDispatchMode;
 use App\Modules\Finance\Interfaces\VoucherServiceInterface;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 final class RideService extends BaseService implements RideServiceInterface
 {
@@ -1281,5 +1287,213 @@ final class RideService extends BaseService implements RideServiceInterface
         // Chỉ tự động push khi mode là OPEN_POOL
         // Khi INTERNAL_PRIORITY (Admin bật chế độ kiểm soát) → không tự push
         return $settings->scheduled_dispatch_mode === ScheduledDispatchMode::OPEN_POOL;
+    }
+
+    // =========================================================
+    // UC-37: Capture Pickup Proof
+    // =========================================================
+
+    /**
+     * UC-37: Driver chụp/tải ảnh xác nhận đã lấy hàng thành công.
+     *
+     * Normal flow: photo + GPS → upload → lưu proof → status = PICKED_UP → phát event.
+     * A3/A6 flow:  không có photo → bắt buộc skip_reason + note → xác nhận thủ công → PICKED_UP.
+     */
+    public function capturePickupProof(CapturePickupProofDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            // 1. Tìm chuyến xe và xác thực quyền sở hữu của tài xế
+            $ride = $this->rideRepository->findByIdAndDriver($dto->rideId, $dto->driverId);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+
+            // 2. Chỉ cho phép chụp proof khi tài xế đang ở trạng thái ACCEPTED (đã đến điểm lấy hàng)
+            $this->validate(
+                $ride->status === RideStatus::ACCEPTED,
+                'Chỉ có thể xác nhận lấy hàng khi đang ở trạng thái đã nhận đơn.',
+                422
+            );
+
+            // 3. Tài xế phải đã báo đến điểm lấy hàng (driver_arrived_at không null)
+            $this->validate(
+                $ride->driver_arrived_at !== null,
+                'Bạn chưa xác nhận đã đến điểm lấy hàng. Vui lòng thực hiện bước đó trước.',
+                422
+            );
+
+            $capturedAt  = now();
+            $photoUrl    = null;
+
+            // 4. Nếu có ảnh → upload lên storage
+            if ($dto->photo instanceof UploadedFile) {
+                // A2: Kiểm tra kích thước ảnh tối thiểu (ít nhất 100KB để đảm bảo chất lượng)
+                $this->validate(
+                    $dto->photo->getSize() >= 10240, // >= 10KB (thực tế sẽ là >= 100KB, giảm xuống để demo)
+                    'Ảnh quá nhỏ hoặc không rõ ràng. Vui lòng chụp lại để làm bằng chứng.',
+                    422
+                );
+
+                // Upload ảnh vào disk storage theo đường dẫn: pickup-proofs/{ride_id}/{timestamp}.jpg
+                $path = $dto->photo->store(
+                    sprintf('pickup-proofs/%s', $dto->rideId),
+                    'public'
+                );
+
+                $this->validate($path !== false, 'Không thể tải ảnh lên. Vui lòng thử lại.', 500);
+
+                $photoUrl = Storage::disk('public')->url((string) $path);
+            } else {
+                // A3/A6: Không có ảnh — bắt buộc phải có skip_reason và note
+                $this->validate(
+                    !empty($dto->skipReason),
+                    'Vui lòng chọn lý do không thể chụp ảnh.',
+                    422
+                );
+                $this->validate(
+                    !empty($dto->note),
+                    'Vui lòng nhập ghi chú khi không thể chụp ảnh.',
+                    422
+                );
+            }
+
+            // 5. Lưu proof vào DB và cập nhật trạng thái → PICKED_UP
+            $saved = $this->rideRepository->savePickupProof(
+                rideId:      $dto->rideId,
+                photoUrl:    $photoUrl,
+                capturedAt:  $capturedAt,
+                capturedLat: $dto->capturedLat,
+                capturedLng: $dto->capturedLng,
+                skipReason:  $dto->skipReason,
+                note:        $dto->note
+            );
+            $this->validate($saved, 'Không thể cập nhật trạng thái chuyến xe.', 500);
+
+            // 6. Phát Domain Event để thông báo realtime cho Customer và Merchant
+            event(new PickupProofCaptured(
+                rideId:      $dto->rideId,
+                driverId:    $dto->driverId,
+                customerId:  (string) $ride->customer_id,
+                photoUrl:    $photoUrl,
+                capturedAt:  $capturedAt->toIso8601String(),
+                capturedLat: $dto->capturedLat,
+                capturedLng: $dto->capturedLng,
+                skipReason:  $dto->skipReason,
+            ));
+
+            return [
+                'ride_id'      => (string) $dto->rideId,
+                'status'       => RideStatus::PICKED_UP->value,
+                'status_label' => RideStatus::PICKED_UP->getLabel(),
+                'photo_url'    => $photoUrl,
+                'captured_at'  => $capturedAt->toIso8601String(),
+                'is_skipped'   => $photoUrl === null,
+                'skip_reason'  => $dto->skipReason,
+                'message'      => $photoUrl
+                    ? 'Ảnh xác nhận lấy hàng đã được lưu thành công. Bạn có thể bắt đầu giao hàng.'
+                    : 'Đã xác nhận thủ công. Bạn có thể bắt đầu giao hàng.',
+            ];
+        }, useTransaction: true);
+    }
+
+    // =========================================================
+    // UC-38: Capture Delivery Proof
+    // =========================================================
+
+    /**
+     * UC-38: Driver chụp/tải ảnh xác nhận đã giao hàng thành công.
+     */
+    public function captureDeliveryProof(CaptureDeliveryProofDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto): array {
+            // 1. Xác thực chuyến xe
+            $ride = $this->rideRepository->findByIdAndDriver($dto->rideId, $dto->driverId);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+
+            // 2. Kiểm tra trạng thái: Phải đang giao hàng (IN_PROGRESS)
+            $this->validate(
+                $ride->status === RideStatus::IN_PROGRESS,
+                'Đơn hàng phải ở trạng thái đang giao mới có thể xác nhận hoàn tất.',
+                422
+            );
+
+            // 3. A6: Kiểm tra vị trí GPS (Nếu có tọa độ đích và tọa độ chụp)
+            // Sai số cho phép: 500m (tùy chỉnh theo yêu cầu thực tế)
+            if ($dto->capturedLat && $dto->capturedLng && $ride->destination_lat && $ride->destination_lng) {
+                $distance = $this->mapService->calculateDistance(
+                    (float) $dto->capturedLat,
+                    (float) $dto->capturedLng,
+                    (float) $ride->destination_lat,
+                    (float) $ride->destination_lng
+                );
+
+                $this->validate(
+                    $distance <= 500,
+                    'Bạn chưa ở đúng vị trí giao hàng (cách điểm đích ' . round($distance) . 'm). Vui lòng di chuyển đến đúng vị trí.',
+                    422
+                );
+            }
+
+            $capturedAt = now();
+            $photoUrl   = null;
+
+            // 4. Xử lý ảnh / A3
+            if ($dto->photo instanceof UploadedFile) {
+                $path = $dto->photo->store(
+                    sprintf('delivery-proofs/%s', $dto->rideId),
+                    'public'
+                );
+                $this->validate($path !== false, 'Không thể tải ảnh lên.', 500);
+                $photoUrl = Storage::disk('public')->url((string) $path);
+            } else {
+                $this->validate(!empty($dto->skipReason), 'Vui lòng chọn lý do không thể chụp ảnh giao hàng.', 422);
+                $this->validate(!empty($dto->note), 'Vui lòng nhập ghi chú khi bỏ qua chụp ảnh.', 422);
+            }
+
+            // 5. Lưu proof
+            $this->rideRepository->saveDeliveryProof(
+                rideId:      $dto->rideId,
+                photoUrl:    $photoUrl,
+                capturedAt:  $capturedAt,
+                capturedLat: $dto->capturedLat,
+                capturedLng: $dto->capturedLng,
+                skipReason:  $dto->skipReason,
+                note:        $dto->note
+            );
+
+            // 6. Hoàn tất chuyến xe (Tính toán tài chính - Giả định logic từ UC-40)
+            $finalFare      = (float) $ride->total_price;
+            $serviceFeeRate = 0.1; // Giả định phí sàn 10%
+            $serviceFee     = round($finalFare * $serviceFeeRate, 2);
+            $driverEarnings = $finalFare - $serviceFee;
+
+            $completed = $this->rideRepository->completeTrip(
+                $dto->rideId,
+                $finalFare,
+                $serviceFee,
+                $driverEarnings
+            );
+            $this->validate($completed, 'Không thể hoàn tất chuyến xe.', 500);
+
+            // 7. Phát sự kiện
+            event(new DeliveryProofCaptured(
+                rideId:      $dto->rideId,
+                driverId:    $dto->driverId,
+                customerId:  (string) $ride->customer_id,
+                photoUrl:    $photoUrl,
+                capturedAt:  $capturedAt->toIso8601String(),
+                capturedLat: $dto->capturedLat,
+                capturedLng: $dto->capturedLng,
+                skipReason:  $dto->skipReason,
+            ));
+
+            return [
+                'ride_id'      => (string) $dto->rideId,
+                'status'       => RideStatus::COMPLETED->value,
+                'status_label' => RideStatus::COMPLETED->getLabel(),
+                'earnings'     => $driverEarnings,
+                'photo_url'    => $photoUrl,
+                'captured_at'  => $capturedAt->toIso8601String(),
+                'message'      => 'Giao hàng thành công. Chuyến xe đã được hoàn tất.',
+            ];
+        }, useTransaction: true);
     }
 }

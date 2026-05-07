@@ -31,8 +31,12 @@ use App\Modules\Ride\Listeners\NotifyRealtimeOnRideCancellationRequested;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnRideCancellationResponded;
 use App\Modules\Ride\Events\RideAssignedByAdmin;
 use App\Modules\Ride\Events\ScheduledRidesPushedToPool;
+use App\Modules\Ride\Events\PickupProofCaptured;
+use App\Modules\Ride\Events\DeliveryProofCaptured;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnRideAssignedByAdmin;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnScheduledRidesPushed;
+use App\Modules\Ride\Listeners\NotifyRealtimeOnPickupProofCaptured;
+use App\Modules\Ride\Listeners\NotifyRealtimeOnDeliveryProofCaptured;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Routing\Router;
@@ -92,6 +96,16 @@ class RideServiceProvider extends BaseModuleServiceProvider
         Event::listen(
             ScheduledRidesPushedToPool::class,
             NotifyRealtimeOnScheduledRidesPushed::class
+        );
+
+        Event::listen(
+            PickupProofCaptured::class,
+            NotifyRealtimeOnPickupProofCaptured::class
+        );
+
+        Event::listen(
+            DeliveryProofCaptured::class,
+            NotifyRealtimeOnDeliveryProofCaptured::class
         );
 
         parent::boot();
