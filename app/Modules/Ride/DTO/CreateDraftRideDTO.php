@@ -22,6 +22,7 @@ final class CreateDraftRideDTO
         public readonly float       $destinationLat,
         public readonly float       $destinationLng,
         public readonly VehicleType $vehicleType,
+        public readonly ?string     $voucherCode = null,
     ) {
     }
 
@@ -40,6 +41,7 @@ final class CreateDraftRideDTO
             destinationLat:      (float) $request->input('destination_lat'),
             destinationLng:      (float) $request->input('destination_lng'),
             vehicleType:         VehicleType::from((int) $request->input('vehicle_type')),
+            voucherCode:         $request->string('voucher_code')->trim()->isEmpty() ? null : $request->string('voucher_code')->trim()->toString(),
         );
     }
 }

@@ -34,6 +34,7 @@ class CreateDraftRideRequest extends FormRequest
             'destination_lat' => 'required|numeric|between:-90,90',
             'destination_lng' => 'required|numeric|between:-180,180',
             'vehicle_type' => 'required|integer|in:1,2,3,4',
+            'voucher_code' => 'nullable|string|max:50',
         ];
     }
 

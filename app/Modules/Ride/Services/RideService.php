@@ -122,8 +122,24 @@ final class RideService extends BaseService implements RideServiceInterface
                 'time_fare' => $pricingData->timeFare,
                 'total_price' => $pricingData->finalFare,
                 'discount_amount' => 0,
+                'voucher_code' => null,
                 'is_paid' => false,
             ]);
+
+            // Nếu có voucher_code ngay từ bước tạo draft, tiến hành áp dụng luôn
+            if ($dto->voucherCode) {
+                $voucherResult = $this->voucherService->validateAndCalculateDiscount($dto->customerId, $dto->voucherCode, $pricingData->finalFare, 'ride');
+                if ($voucherResult->isSuccess()) {
+                    $discountAmount = (float) $voucherResult->getData();
+                    $finalFare = max(0, $pricingData->finalFare - $discountAmount);
+
+                    $ride->update([
+                        'voucher_code' => $dto->voucherCode,
+                        'discount_amount' => $discountAmount,
+                        'total_price' => $finalFare
+                    ]);
+                }
+            }
 
             return $ride->toArray();
         }, useTransaction: true);
