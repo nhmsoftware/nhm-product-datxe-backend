@@ -21,13 +21,14 @@ class RegisterMerchantRequest extends FormRequest
         return [
             'full_name'               => ['required', 'string', 'max:255'],
             'phone'                   => ['required', 'string', 'regex:/^([0-9\s\-\+\(\)]*)$/', 'min:10'],
+            'otp'                     => ['required', 'string', 'size:6'],
             'citizen_id'              => ['required', 'string', 'max:20'],
             'store_name'              => ['required', 'string', 'max:255'],
             'store_address'           => ['required', 'string', 'max:500'],
             'business_type'           => ['required', 'string', 'max:100'],
-            'citizen_id_image'        => ['required', 'string'], // Expecting path from upload
-            'business_license_image'  => ['nullable', 'string'],
-            'store_image'             => ['required', 'string'],
+            'citizen_id_image'        => ['required', 'file', 'image', 'max:5120'], // Max 5MB
+            'business_license_image'  => ['nullable', 'file', 'image', 'max:5120'],
+            'store_image'             => ['required', 'file', 'image', 'max:5120'],
         ];
     }
 

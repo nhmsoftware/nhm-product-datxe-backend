@@ -8,6 +8,7 @@ use App\Core\Controller\BaseController;
 use App\Modules\Merchant\Interfaces\MerchantStoreServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use OpenApi\Attributes as OA;
 
 final class MerchantStoreController extends BaseController
 {
@@ -16,6 +17,7 @@ final class MerchantStoreController extends BaseController
     ) {}
 
     #[OA\Get(path: '/api/v1/merchant/store', summary: 'Lấy thông tin cửa hàng (UC-53)', tags: ['Merchant'])]
+    #[OA\Response(response: 200, description: 'Thành công')]
     public function getInfo(Request $request): JsonResponse
     {
         $result = $this->storeService->getStoreInfo((string)$request->user()->id);
@@ -24,6 +26,16 @@ final class MerchantStoreController extends BaseController
     }
 
     #[OA\Put(path: '/api/v1/merchant/store/status', summary: 'Cập nhật trạng thái đóng/mở (UC-46)', tags: ['Merchant'])]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['is_open'],
+            properties: [
+                new OA\Property(property: 'is_open', type: 'boolean', example: true)
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Cập nhật thành công')]
     public function updateStatus(Request $request): JsonResponse
     {
         $request->validate(['is_open' => ['required', 'boolean']]);
@@ -33,6 +45,17 @@ final class MerchantStoreController extends BaseController
     }
 
     #[OA\Put(path: '/api/v1/merchant/store/hours', summary: 'Thiết lập giờ mở cửa (Cơ bản) (UC-45)', tags: ['Merchant'])]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['opening_time', 'closing_time'],
+            properties: [
+                new OA\Property(property: 'opening_time', type: 'string', example: '08:00'),
+                new OA\Property(property: 'closing_time', type: 'string', example: '22:00'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Cập nhật thành công')]
     public function updateHours(Request $request): JsonResponse
     {
         $request->validate([
@@ -49,6 +72,27 @@ final class MerchantStoreController extends BaseController
     }
 
     #[OA\Put(path: '/api/v1/merchant/store/weekly-hours', summary: 'Thiết lập giờ mở cửa chi tiết theo tuần (UC-54)', tags: ['Merchant'])]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['schedule'],
+            properties: [
+                new OA\Property(
+                    property: 'schedule',
+                    type: 'array',
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'day_of_week', type: 'integer', example: 1),
+                            new OA\Property(property: 'is_closed', type: 'boolean', example: false),
+                            new OA\Property(property: 'opening_time', type: 'string', example: '08:00'),
+                            new OA\Property(property: 'closing_time', type: 'string', example: '22:00'),
+                        ]
+                    )
+                )
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Cập nhật thành công')]
     public function updateWeeklyHours(Request $request): JsonResponse
     {
         $request->validate([
@@ -69,6 +113,16 @@ final class MerchantStoreController extends BaseController
     }
 
     #[OA\Put(path: '/api/v1/merchant/store/discount', summary: 'Cấu hình chiết khấu (Cơ bản) (UC-47)', tags: ['Merchant'])]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['commission_rate'],
+            properties: [
+                new OA\Property(property: 'commission_rate', type: 'number', format: 'float', example: 20.5)
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Cập nhật thành công')]
     public function updateDiscount(Request $request): JsonResponse
     {
         $request->validate(['commission_rate' => ['required', 'numeric', 'min:0', 'max:100']]);
@@ -81,6 +135,7 @@ final class MerchantStoreController extends BaseController
     }
 
     #[OA\Get(path: '/api/v1/merchant/store/commission-packages', summary: 'Lấy danh sách gói chiết khấu (UC-56)', tags: ['Merchant'])]
+    #[OA\Response(response: 200, description: 'Thành công')]
     public function getPackages(): JsonResponse
     {
         $packages = $this->storeService->getCommissionPackages();
@@ -88,6 +143,16 @@ final class MerchantStoreController extends BaseController
     }
 
     #[OA\Put(path: '/api/v1/merchant/store/commission-package', summary: 'Thay đổi gói chiết khấu (UC-56)', tags: ['Merchant'])]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['package_key'],
+            properties: [
+                new OA\Property(property: 'package_key', type: 'string', example: 'PRIORITY')
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Cập nhật thành công')]
     public function updatePackage(Request $request): JsonResponse
     {
         $request->validate([

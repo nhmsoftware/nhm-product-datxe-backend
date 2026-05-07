@@ -284,6 +284,18 @@ final class AuthService extends BaseService implements AuthServiceInterface
     }
 
     /**
+     * POST /verify-otp
+     * Chỉ xác thực OTP mà không thực hiện hành động gì khác.
+     */
+    public function verifyOtp(string $phone, string $otp, UserOtpType $type): ServiceReturn
+    {
+        return $this->execute(function () use ($phone, $otp, $type) {
+            $this->verifyOtpOrFail($phone, $otp, $type);
+            return true;
+        });
+    }
+
+    /**
      * POST /logout
      */
     public function logout(User $user, bool $logoutAll = false): ServiceReturn
@@ -381,7 +393,8 @@ final class AuthService extends BaseService implements AuthServiceInterface
             UserOtpType::VERIFY_REGISTER,
             UserOtpType::VERIFY_DRIVER_REGISTER => $exists ? $this->throw('Số điện thoại đã đăng ký.', 409) : null,
             UserOtpType::VERIFY_LOGIN,
-            UserOtpType::VERIFY_FORGOT_PASSWORD => !$exists ? $this->throw('Số điện thoại chưa đăng ký.', 404) : null,
+            UserOtpType::VERIFY_FORGOT_PASSWORD,
+            UserOtpType::VERIFY_MERCHANT_REGISTER => !$exists ? $this->throw('Số điện thoại chưa đăng ký.', 404) : null,
             UserOtpType::CHANGE_PROFILE => null, // Cho phép cả số chưa và đã đăng ký
             default => $this->throw('Loại OTP không hợp lệ.', 400),
         };

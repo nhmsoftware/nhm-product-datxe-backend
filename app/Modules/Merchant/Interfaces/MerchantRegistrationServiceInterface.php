@@ -12,18 +12,31 @@ interface MerchantRegistrationServiceInterface
     /**
      * Submit merchant registration application.
      * UC-52 Register Merchant
+     * UC-52 Register Merchant
      */
     public function submitRegistration(RegisterMerchantDTO $dto): ServiceReturn;
 
     /**
-     * Send OTP for merchant registration.
-     * UC-52 Register Merchant
+     * Get pending merchant applications.
+     * Admin Side
      */
-    public function sendOtp(string $userId, string $phone): ServiceReturn;
+    public function getApplications(): ServiceReturn;
 
     /**
-     * Verify OTP for merchant registration.
-     * UC-52 Register Merchant
+     * Get application details.
+     * Admin Side
      */
-    public function verifyOtp(string $userId, string $otp): ServiceReturn;
+    public function getApplicationDetails(string $id): ServiceReturn;
+
+    /**
+     * Approve merchant registration.
+     * Admin Side
+     */
+    public function approveRegistration(string $applicationId): ServiceReturn;
+
+    /**
+     * Reject merchant registration.
+     * Admin Side
+     */
+    public function rejectRegistration(string $applicationId, string $reason): ServiceReturn;
 }

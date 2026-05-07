@@ -2333,6 +2333,452 @@
                 ]
             }
         },
+        "/api/v1/admin/merchant/applications": {
+            "get": {
+                "tags": [
+                    "Admin|Merchant"
+                ],
+                "summary": "Danh sách hồ sơ Merchant chờ duyệt",
+                "description": "Danh sách hồ sơ đăng ký Merchant đang chờ duyệt.",
+                "operationId": "4fd5ca3b8c7698f2572e820cda78fe62",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/applications/{id}": {
+            "get": {
+                "tags": [
+                    "Admin|Merchant"
+                ],
+                "summary": "Chi tiết hồ sơ đăng ký Merchant",
+                "description": "Chi tiết hồ sơ đăng ký Merchant.",
+                "operationId": "f8283ad20141f9a6f43a630bbeca95cb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/applications/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin|Merchant"
+                ],
+                "summary": "Duyệt hồ sơ Merchant",
+                "description": "Duyệt hồ sơ Merchant.",
+                "operationId": "814b54faeb511308185e10955aafb30a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Duyệt thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy hồ sơ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/applications/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin|Merchant"
+                ],
+                "summary": "Từ chối hồ sơ Merchant",
+                "description": "Từ chối hồ sơ Merchant.",
+                "operationId": "fcf796710a8d0d7122cca5a8e2d28ed7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Tài liệu không rõ ràng"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Từ chối thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/register": {
+            "post": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "UC-52: Đăng ký Merchant (Thông tin + KYC)",
+                "operationId": "0add2c56a4ea87f5728ece55d266ecbb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "full_name",
+                                    "phone",
+                                    "otp",
+                                    "citizen_id",
+                                    "store_name",
+                                    "store_address",
+                                    "business_type",
+                                    "citizen_id_image",
+                                    "store_image"
+                                ],
+                                "properties": {
+                                    "full_name": {
+                                        "description": "Họ và tên",
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A"
+                                    },
+                                    "phone": {
+                                        "description": "Số điện thoại",
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "otp": {
+                                        "description": "Mã OTP xác thực",
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "citizen_id": {
+                                        "description": "Số CMND/CCCD",
+                                        "type": "string",
+                                        "example": "001234567890"
+                                    },
+                                    "store_name": {
+                                        "description": "Tên cửa hàng",
+                                        "type": "string",
+                                        "example": "Phở Gia Truyền"
+                                    },
+                                    "store_address": {
+                                        "description": "Địa chỉ cửa hàng",
+                                        "type": "string",
+                                        "example": "123 Đường ABC, Quận 1"
+                                    },
+                                    "business_type": {
+                                        "description": "Loại hình kinh doanh",
+                                        "type": "string",
+                                        "example": "Ăn uống"
+                                    },
+                                    "citizen_id_image": {
+                                        "description": "Ảnh CCCD",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "business_license_image": {
+                                        "description": "Giấy phép kinh doanh",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "store_image": {
+                                        "description": "Ảnh cửa hàng",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng ký thành công — Chờ xét duyệt"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/store": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Lấy thông tin cửa hàng (UC-53)",
+                "operationId": "89ab09b31a9c2082f485f6929f96b35b",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/status": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Cập nhật trạng thái đóng/mở (UC-46)",
+                "operationId": "b2f4b5743c594b3b0e7c567fb04821ff",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_open"
+                                ],
+                                "properties": {
+                                    "is_open": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/hours": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Thiết lập giờ mở cửa (Cơ bản) (UC-45)",
+                "operationId": "bbcdcf0ea14e8b28eee6c66758a9edac",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "opening_time",
+                                    "closing_time"
+                                ],
+                                "properties": {
+                                    "opening_time": {
+                                        "type": "string",
+                                        "example": "08:00"
+                                    },
+                                    "closing_time": {
+                                        "type": "string",
+                                        "example": "22:00"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/weekly-hours": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Thiết lập giờ mở cửa chi tiết theo tuần (UC-54)",
+                "operationId": "3d34286d7b735dc5ea3e9ce0b79acdbf",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "schedule"
+                                ],
+                                "properties": {
+                                    "schedule": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "day_of_week": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_closed": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "opening_time": {
+                                                    "type": "string",
+                                                    "example": "08:00"
+                                                },
+                                                "closing_time": {
+                                                    "type": "string",
+                                                    "example": "22:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/discount": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Cấu hình chiết khấu (Cơ bản) (UC-47)",
+                "operationId": "b97b7f99f43dcf6c3c7a5e17d9fdf83b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "commission_rate"
+                                ],
+                                "properties": {
+                                    "commission_rate": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20.5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/commission-packages": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Lấy danh sách gói chiết khấu (UC-56)",
+                "operationId": "2bae28b5989e1d08048a5400164773c5",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/commission-package": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Thay đổi gói chiết khấu (UC-56)",
+                "operationId": "0b415e89824c183aa32a4570a9b2898d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "package_key"
+                                ],
+                                "properties": {
+                                    "package_key": {
+                                        "type": "string",
+                                        "example": "PRIORITY"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
         "/api/v1/operation/location": {
             "post": {
                 "tags": [
@@ -6508,6 +6954,14 @@
         {
             "name": "Homepage",
             "description": "Homepage"
+        },
+        {
+            "name": "Admin|Merchant",
+            "description": "Admin|Merchant"
+        },
+        {
+            "name": "Merchant",
+            "description": "Merchant"
         },
         {
             "name": "Operation",

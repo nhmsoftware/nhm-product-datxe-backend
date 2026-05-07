@@ -14,7 +14,7 @@ final class MerchantRegistrationSubmitted
 
     public function __construct(
         public readonly string $userId,
-        public readonly string $merchantProfileId,
+        public readonly string $applicationId,
         public readonly string $storeName,
         public readonly string $submittedAt = '',
     ) {
