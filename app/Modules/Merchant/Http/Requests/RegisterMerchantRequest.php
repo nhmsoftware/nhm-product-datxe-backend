@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Merchant\Http\Requests;
 
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Core\Traits\HandleApi;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -25,7 +27,7 @@ class RegisterMerchantRequest extends FormRequest
             'store_name'              => ['required', 'string', 'max:255'],
             'store_address'           => ['required', 'string', 'max:500'],
             'business_type'           => ['required', 'string', 'max:100'],
-            'citizen_id_image'        => ['required', 'file', 'image', 'max:5120'], // Max 5MB
+            'citizen_id_image'        => ['required', 'file', 'image', 'max:5120'],
             'business_license_image'  => ['nullable', 'file', 'image', 'max:5120'],
             'store_image'             => ['required', 'file', 'image', 'max:5120'],
         ];
@@ -43,5 +45,19 @@ class RegisterMerchantRequest extends FormRequest
             'citizen_id_image.required' => 'Vui lòng tải lên ảnh CCCD.',
             'store_image.required'      => 'Vui lòng tải lên ảnh cửa hàng.',
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(Validator $validator): void
+    {
+        throw new HttpResponseException(
+            response()->json([
+                'success' => false,
+                'message' => 'Thông tin không hợp lệ.',
+                'errors' => $validator->errors(),
+            ], 422)
+        );
     }
 }
