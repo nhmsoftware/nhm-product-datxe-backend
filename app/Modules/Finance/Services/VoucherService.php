@@ -128,4 +128,53 @@ final class VoucherService extends BaseService implements VoucherServiceInterfac
             })->values()->toArray();
         });
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function validateAndCalculateDiscount(string $customerId, string $voucherCode, float $orderAmount, string $serviceType): ServiceReturn
+    {
+        return $this->execute(function () use ($customerId, $voucherCode, $orderAmount, $serviceType): float {
+            $voucher = $this->voucherRepository->findByCode($voucherCode);
+            $this->validate($voucher !== null, 'Voucher không tồn tại.', 404);
+            $this->validate($voucher->isValid(), 'Voucher đã hết hạn hoặc hết lượt sử dụng.', 400);
+
+            // Kiểm tra loại dịch vụ
+            $type = match (strtolower($serviceType)) {
+                'ride' => [VoucherServiceType::RIDE, VoucherServiceType::BOTH],
+                'food' => [VoucherServiceType::FOOD, VoucherServiceType::BOTH],
+                default => [],
+            };
+            $this->validate(in_array($voucher->service_type, $type), 'Voucher không áp dụng cho dịch vụ này.', 400);
+
+            // Kiểm tra voucher đã được lưu trong ví chưa
+            $isSaved = $this->voucherWalletRepository->isSavedByCustomer($customerId, (string) $voucher->id);
+            $this->validate($isSaved, 'Bạn cần lưu voucher này vào ví trước khi sử dụng.', 400);
+
+            // Tính toán discount
+            $discount = $voucher->calculateDiscount($orderAmount);
+            $this->validate($discount > 0, 'Đơn hàng không đủ điều kiện áp dụng voucher.', 400);
+
+            return $discount;
+        });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function markAsUsed(string $customerId, string $voucherCode): ServiceReturn
+    {
+        return $this->execute(function () use ($customerId, $voucherCode): bool {
+            $voucher = $this->voucherRepository->findByCode($voucherCode);
+            $this->validate($voucher !== null, 'Voucher không tồn tại.', 404);
+
+            // 1. Cập nhật trong ví
+            $this->voucherWalletRepository->markAsUsed($customerId, (string) $voucher->id);
+
+            // 2. Tăng số lượt đã dùng của voucher tổng
+            $voucher->increment('used_count');
+
+            return true;
+        }, useTransaction: true);
+    }
 }

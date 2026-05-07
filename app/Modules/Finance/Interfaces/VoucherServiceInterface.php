@@ -54,4 +54,24 @@ interface VoucherServiceInterface
      * @return ServiceReturn
      */
     public function getSavedVouchers(string $customerId): ServiceReturn;
+
+    /**
+     * Kiểm tra tính hợp lệ và tính toán mức giảm giá của voucher.
+     * 
+     * @param string $customerId
+     * @param string $voucherCode
+     * @param float $orderAmount
+     * @param string $serviceType 'ride'|'food'
+     * @return ServiceReturn
+     */
+    public function validateAndCalculateDiscount(string $customerId, string $voucherCode, float $orderAmount, string $serviceType): ServiceReturn;
+
+    /**
+     * Đánh dấu voucher đã được sử dụng sau khi đơn hàng hoàn tất.
+     * 
+     * @param string $customerId
+     * @param string $voucherCode
+     * @return ServiceReturn
+     */
+    public function markAsUsed(string $customerId, string $voucherCode): ServiceReturn;
 }

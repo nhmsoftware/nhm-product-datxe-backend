@@ -36,4 +36,13 @@ interface VoucherWalletRepositoryInterface extends BaseRepositoryInterface
      * @return \Illuminate\Support\Collection
      */
     public function findVouchersByCustomer(string $customerId): \Illuminate\Support\Collection;
+
+    /**
+     * Đánh dấu voucher đã sử dụng.
+     * 
+     * @param string $customerId
+     * @param string $voucherId
+     * @return bool
+     */
+    public function markAsUsed(string $customerId, string $voucherId): bool;
 }

@@ -50,4 +50,15 @@ final class VoucherWalletRepository extends BaseRepository implements VoucherWal
             ->pluck('voucher')
             ->filter();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function markAsUsed(string $customerId, string $voucherId): bool
+    {
+        return (bool) $this->model
+            ->where('customer_id', $customerId)
+            ->where('voucher_id', $voucherId)
+            ->update(['used_at' => now()]);
+    }
 }

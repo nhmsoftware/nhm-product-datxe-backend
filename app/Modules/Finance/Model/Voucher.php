@@ -92,4 +92,26 @@ final class Voucher extends Model
     {
         return now()->gt($this->valid_until) || ($this->total_usage_limit !== null && $this->used_count >= $this->total_usage_limit);
     }
+
+    /**
+     * Tính toán số tiền giảm giá dựa trên tổng tiền đơn hàng.
+     */
+    public function calculateDiscount(float $orderAmount): float
+    {
+        if ($orderAmount < $this->min_order_amount) {
+            return 0.0;
+        }
+
+        $discount = 0.0;
+        if ($this->discount_type === VoucherDiscountType::FIXED) {
+            $discount = $this->discount_value;
+        } elseif ($this->discount_type === VoucherDiscountType::PERCENT) {
+            $discount = ($orderAmount * $this->discount_value) / 100;
+            if ($this->max_discount_amount !== null) {
+                $discount = min($discount, $this->max_discount_amount);
+            }
+        }
+
+        return min($discount, $orderAmount);
+    }
 }

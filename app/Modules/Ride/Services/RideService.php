@@ -53,6 +53,7 @@ use App\Modules\RiskManagement\Interfaces\CancellationConfigServiceInterface;
 use App\Modules\RiskManagement\Model\Enums\CancellationFeeType;
 use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Model\Enums\ScheduledDispatchMode;
+use App\Modules\Finance\Interfaces\VoucherServiceInterface;
 use Illuminate\Support\Facades\Log;
 
 final class RideService extends BaseService implements RideServiceInterface
@@ -66,7 +67,8 @@ final class RideService extends BaseService implements RideServiceInterface
         private readonly RideTrackingRealtimeInterface $rideTrackingRealtime,
         private readonly AirportRepositoryInterface $airportRepository,
         private readonly CancellationConfigServiceInterface $cancellationConfigService,
-        private readonly PricingGlobalSettingRepositoryInterface $pricingGlobalSettingRepository
+        private readonly PricingGlobalSettingRepositoryInterface $pricingGlobalSettingRepository,
+        private readonly VoucherServiceInterface $voucherService
     ) {
     }
 
@@ -230,8 +232,12 @@ final class RideService extends BaseService implements RideServiceInterface
             /** @var PricingResultDTO $pricingData */
             $pricingData = $pricingResult->getData();
 
-            $discountAmount = $this->resolveVoucherDiscount($dto->voucherCode, $pricingData->finalFare);
-            $this->validate($discountAmount !== null, 'Mã giảm giá không hợp lệ hoặc không thể áp dụng.');
+            $voucherResult = $this->voucherService->validateAndCalculateDiscount($dto->customerId, $dto->voucherCode, $pricingData->finalFare, 'ride');
+            if ($voucherResult->isError()) {
+                $this->throw($voucherResult->getMessage());
+            }
+
+            $discountAmount = (float) $voucherResult->getData();
 
             $finalFare = max(0, $pricingData->finalFare - $discountAmount);
 
@@ -307,12 +313,14 @@ final class RideService extends BaseService implements RideServiceInterface
             $discountAmount = 0.0;
 
             if (!empty($ride->voucher_code)) {
-                $discountAmount = $this->resolveVoucherDiscount($ride->voucher_code, $pricingData->finalFare);
+                $voucherResult = $this->voucherService->validateAndCalculateDiscount($dto->customerId, $ride->voucher_code, $pricingData->finalFare, 'ride');
 
-                if ($discountAmount === null) {
+                if ($voucherResult->isError()) {
                     $this->rideRepository->clearVoucher($dto->rideId, $pricingData->finalFare);
-                    $this->throw('Voucher không còn khả dụng. Giá cước đã thay đổi, vui lòng xác nhận lại.', 409);
+                    $this->throw('Voucher không còn khả dụng: ' . $voucherResult->getMessage(), 409);
                 }
+
+                $discountAmount = (float) $voucherResult->getData();
             }
 
             $finalFare = max(0, $pricingData->finalFare - $discountAmount);
@@ -444,31 +452,14 @@ final class RideService extends BaseService implements RideServiceInterface
         return $this->pricingService->calculatePrice($pricingRequest);
     }
 
-    private function resolveVoucherDiscount(string $code, float $currentFare): ?float
+    private function resolveVoucherDiscount(string $customerId, string $code, float $currentFare): ?float
     {
-        if (strlen(trim($code)) < 3) {
+        $result = $this->voucherService->validateAndCalculateDiscount($customerId, $code, $currentFare, 'ride');
+        if ($result->isError()) {
             return null;
         }
 
-        $mockVouchers = [
-            'DEMO10' => ['discount_amount' => 10000, 'min_fare' => 50000],
-            'DEMO50' => ['discount_amount' => 50000, 'min_fare' => 150000],
-            'DEMO100' => ['discount_amount' => 100000, 'min_fare' => 300000],
-        ];
-
-        $upperCode = strtoupper(trim($code));
-
-        if (!isset($mockVouchers[$upperCode])) {
-            $this->throw('Voucher không tồn tại.', 409);
-        }
-
-        $voucher = $mockVouchers[$upperCode];
-
-        if ($currentFare < (float) $voucher['min_fare']) {
-            $this->throw('Voucher không còn khả dụng. Giá cước không đủ để áp dụng voucher.', 409);
-        }
-
-        return (float) $voucher['discount_amount'];
+        return (float) $result->getData();
     }
 
     /**
@@ -731,7 +722,7 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // 3. Áp dụng voucher nếu có
             if ($dto->voucherCode) {
-                $discount = $this->resolveVoucherDiscount($dto->voucherCode, $totalPrice);
+                $discount = $this->resolveVoucherDiscount($dto->customerId, $dto->voucherCode, $totalPrice);
                 if ($discount !== null) {
                     $discountAmount = $discount;
                     $totalPrice = max(0, $totalPrice - $discountAmount);
@@ -794,7 +785,7 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // 3. Áp dụng voucher nếu có
             if ($dto->voucherCode) {
-                $discount = $this->resolveVoucherDiscount($dto->voucherCode, $totalPrice);
+                $discount = $this->resolveVoucherDiscount($dto->customerId, $dto->voucherCode, $totalPrice);
                 if ($discount !== null) {
                     $discountAmount = $discount;
                     $totalPrice = max(0, $totalPrice - $discountAmount);

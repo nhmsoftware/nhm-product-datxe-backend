@@ -26,6 +26,7 @@ use App\Modules\Operation\Interfaces\LocationRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
+use App\Modules\Finance\Interfaces\VoucherServiceInterface;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\DriverStatus;
@@ -50,6 +51,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
         private readonly RideRepositoryInterface $rideRepository,
         private readonly RideServiceInterface $rideService,
         private readonly LocationRepositoryInterface $locationRepository,
+        private readonly VoucherServiceInterface $voucherService,
     ) {}
 
     /**
@@ -227,6 +229,11 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 $driverEarnings
             );
             $this->validate($updated, 'Không thể hoàn thành chuyến xe. Vui lòng thử lại.', 500);
+
+            // [Voucher] Đánh dấu voucher đã sử dụng nếu có
+            if (!empty($ride->voucher_code)) {
+                $this->voucherService->markAsUsed((string) $ride->customer_id, $ride->voucher_code);
+            }
 
             // [UC-41] Driver KHÔNG tự động chuyển sang ACTIVE. 
             // Họ sẽ xem màn hình Trip Summary và nhấn "Confirm & Ready" sau.
