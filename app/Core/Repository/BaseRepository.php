@@ -34,6 +34,11 @@ abstract class BaseRepository implements BaseRepositoryInterface
         return $this->model->query();
     }
 
+    public function getModelInstance(): Model
+    {
+        return $this->model;
+    }
+
     public function getAll(array $columns = ['*'], array $relations = []): \Illuminate\Support\Collection
     {
         return $this->model->with($relations)->get($columns);

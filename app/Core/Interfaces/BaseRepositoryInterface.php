@@ -41,4 +41,9 @@ interface BaseRepositoryInterface
      * Xóa theo ID
      */
     public function deleteById($id);
+
+    /**
+     * Trả về instance của model để start query
+     */
+    public function getModelInstance(): Model;
 }

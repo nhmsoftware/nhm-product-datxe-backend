@@ -30,8 +30,6 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
     public function __construct(
         private readonly MerchantRepositoryInterface           $merchantRepository,
         private readonly UserRepositoryInterface               $userRepository,
-        private readonly AuthServiceInterface                   $authService,
-        private readonly AuthOtpRepositoryInterface            $authOtpRepository,
         private readonly DriverRegistrationRepositoryInterface $driverRegistrationRepository,
         private readonly FileRecordRepositoryInterface         $fileRecordRepository,
     ) {}
@@ -39,13 +37,6 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
     public function submitRegistration(RegisterMerchantDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto): array {
-            // 0. Kiểm tra OTP đã xác thực trước đó (UC-52 quy định tách riêng Verify OTP)
-            $lastOtp = $this->authOtpRepository->getLastVerified($dto->phone, \App\Modules\User\Model\Enums\UserOtpType::VERIFY_MERCHANT_REGISTER);
-            $this->validate($lastOtp !== null, 'Vui lòng xác thực số điện thoại bằng mã OTP trước khi đăng ký.', 400);
-            
-            // Đánh dấu OTP đã sử dụng
-            $this->authOtpRepository->markLatestAsUsed($dto->phone, \App\Modules\User\Model\Enums\UserOtpType::VERIFY_MERCHANT_REGISTER);
-
             // 1. Kiểm tra User tồn tại
             $user = $this->userRepository->findById($dto->userId);
             $this->validate($user !== null, 'Không tìm thấy thông tin người dùng.', 404);
@@ -186,7 +177,7 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
 
             // 2. Nâng cấp User role
             $this->userRepository->updateRole($userId, UserRole::Merchants);
-            
+
             // 3. Cập nhật CCCD cho User
             $this->userRepository->updateById($userId, [
                 'citizen_id' => $snapshot['citizen_id']

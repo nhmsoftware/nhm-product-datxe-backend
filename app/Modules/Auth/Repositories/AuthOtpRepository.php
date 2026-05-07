@@ -77,7 +77,7 @@ class AuthOtpRepository extends BaseRepository implements AuthOtpRepositoryInter
             'otp_hash'     => bcrypt($plainCode),
             'type'         => $type,
             'attempts'     => 0,
-            'expired_at'   => now()->addMinutes(),   // TTL ngắn: 1 phút
+            'expired_at'   => now()->addMinutes(10), // Tăng lên 10 phút để kịp nộp hồ sơ
             'verified_at'  => null,
             'used_at'      => null,
             'last_sent_at' => now(),
