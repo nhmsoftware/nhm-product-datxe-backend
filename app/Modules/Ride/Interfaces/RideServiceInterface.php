@@ -136,4 +136,19 @@ interface RideServiceInterface
      * Lấy danh sách sân bay hỗ trợ (UC-27).
      */
     public function getAirports(): ServiceReturn;
+
+    /**
+     * Danh sách chuyến đặt trước cho Admin.
+     */
+    public function listScheduledRidesForAdmin(array $filters): ServiceReturn;
+
+    /**
+     * Admin gán chuyến xe cho tài xế đội xe nhà.
+     */
+    public function assignInternalDriver(\App\Modules\Ride\DTO\AssignInternalDriverDTO $dto): ServiceReturn;
+
+    /**
+     * Admin đẩy chuyến xe ra pool cho tài xế ngoài.
+     */
+    public function pushScheduledRidesToPool(\App\Modules\Ride\DTO\BulkPushToPoolDTO $dto): ServiceReturn;
 }

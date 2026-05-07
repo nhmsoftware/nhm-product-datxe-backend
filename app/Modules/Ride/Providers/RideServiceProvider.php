@@ -29,6 +29,10 @@ use App\Modules\Ride\Events\RideCancellationResponded;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnRideCanceled;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnRideCancellationRequested;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnRideCancellationResponded;
+use App\Modules\Ride\Events\RideAssignedByAdmin;
+use App\Modules\Ride\Events\ScheduledRidesPushedToPool;
+use App\Modules\Ride\Listeners\NotifyRealtimeOnRideAssignedByAdmin;
+use App\Modules\Ride\Listeners\NotifyRealtimeOnScheduledRidesPushed;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Routing\Router;
@@ -78,6 +82,16 @@ class RideServiceProvider extends BaseModuleServiceProvider
         Event::listen(
             RideCanceled::class,
             NotifyRealtimeOnRideCanceled::class
+        );
+
+        Event::listen(
+            RideAssignedByAdmin::class,
+            NotifyRealtimeOnRideAssignedByAdmin::class
+        );
+
+        Event::listen(
+            ScheduledRidesPushedToPool::class,
+            NotifyRealtimeOnScheduledRidesPushed::class
         );
 
         parent::boot();

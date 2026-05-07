@@ -211,4 +211,24 @@ interface RideRepositoryInterface
      * Tìm danh sách các chuyến xe mà tài xế đã nhận (UC-51).
      */
     public function findDriverAcceptedRides(string $driverId): \Illuminate\Support\Collection;
+
+    /**
+     * Đếm tổng số chuyến xe trong hệ thống.
+     */
+    public function countTotalOrders(): int;
+
+    /**
+     * Tính tổng doanh thu hệ thống (các chuyến xe đã hoàn thành).
+     */
+    public function sumTotalRevenue(): float;
+
+    /**
+     * Danh sách chuyến đặt trước cho Admin quản lý.
+     */
+    public function listScheduledRidesForAdmin(array $filters): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+    /**
+     * Đẩy các chuyến xe ra pool cho tất cả tài xế ngoài.
+     */
+    public function pushToPool(array $rideIds): int;
 }

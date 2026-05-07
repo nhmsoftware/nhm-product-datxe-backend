@@ -401,6 +401,72 @@
                 }
             }
         },
+        "/api/v1/admin/dashboard": {
+            "get": {
+                "tags": [
+                    "Admin Dashboard"
+                ],
+                "summary": "Lấy dữ liệu thống kê Dashboard",
+                "description": "Cho phép Admin xem tổng quan tình trạng hoạt động của hệ thống (UC-76)",
+                "operationId": "6fd27f08f2bca9577fc2fa2fb401475a",
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Success"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "total_users": {
+                                                    "type": "integer",
+                                                    "example": 1500
+                                                },
+                                                "total_orders": {
+                                                    "type": "integer",
+                                                    "example": 5000
+                                                },
+                                                "total_revenue": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 120000000
+                                                },
+                                                "active_merchants": {
+                                                    "type": "integer",
+                                                    "example": 45
+                                                },
+                                                "active_drivers": {
+                                                    "type": "integer",
+                                                    "example": 120
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Không có quyền truy cập"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/driver/applications/{id}/approve": {
             "post": {
                 "tags": [
@@ -1292,6 +1358,149 @@
                 ]
             }
         },
+        "/api/v1/admin/finance/vouchers": {
+            "get": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Danh sách voucher (Admin) (UC-99)",
+                "operationId": "14130cb3c0f077f1d2938191cd272652",
+                "parameters": [
+                    {
+                        "name": "code",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Tạo voucher mới (Admin) (UC-99)",
+                "operationId": "46bd7e4bd8db505dc70e4eadd28edfd4",
+                "responses": {
+                    "201": {
+                        "description": "Tạo thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/vouchers/{id}": {
+            "get": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Chi tiết voucher (Admin) (UC-99)",
+                "operationId": "0aa16f167e789aeed0b0cca7770a64db",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Cập nhật voucher (Admin) (UC-99)",
+                "operationId": "8975acb0f0b525b4b4bbec5184c51d0f",
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Xóa voucher (Admin) (UC-99)",
+                "operationId": "fecd3831b8460ae3d3d5c59a5f333db2",
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/vouchers/assign": {
+            "post": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Gán voucher cho người dùng (Admin) (UC-99)",
+                "operationId": "2473ce3ac8a63d5367edba9ab7353b84",
+                "responses": {
+                    "200": {
+                        "description": "Gán thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/vouchers/{id}/deactivate": {
+            "patch": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Vô hiệu hóa voucher (Admin) (UC-102)",
+                "operationId": "3b20366774f839b667b6bc16cc79b595",
+                "responses": {
+                    "200": {
+                        "description": "Vô hiệu hóa thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/finance/rewards/overview": {
             "get": {
                 "tags": [
@@ -2124,6 +2333,452 @@
                 ]
             }
         },
+        "/api/v1/admin/merchant/applications": {
+            "get": {
+                "tags": [
+                    "Admin|Merchant"
+                ],
+                "summary": "Danh sách hồ sơ Merchant chờ duyệt",
+                "description": "Danh sách hồ sơ đăng ký Merchant đang chờ duyệt.",
+                "operationId": "4fd5ca3b8c7698f2572e820cda78fe62",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/applications/{id}": {
+            "get": {
+                "tags": [
+                    "Admin|Merchant"
+                ],
+                "summary": "Chi tiết hồ sơ đăng ký Merchant",
+                "description": "Chi tiết hồ sơ đăng ký Merchant.",
+                "operationId": "f8283ad20141f9a6f43a630bbeca95cb",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/applications/{id}/approve": {
+            "post": {
+                "tags": [
+                    "Admin|Merchant"
+                ],
+                "summary": "Duyệt hồ sơ Merchant",
+                "description": "Duyệt hồ sơ Merchant.",
+                "operationId": "814b54faeb511308185e10955aafb30a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Duyệt thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy hồ sơ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/applications/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Admin|Merchant"
+                ],
+                "summary": "Từ chối hồ sơ Merchant",
+                "description": "Từ chối hồ sơ Merchant.",
+                "operationId": "fcf796710a8d0d7122cca5a8e2d28ed7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Tài liệu không rõ ràng"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Từ chối thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/register": {
+            "post": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "UC-52: Đăng ký Merchant (Thông tin + KYC)",
+                "operationId": "0add2c56a4ea87f5728ece55d266ecbb",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "full_name",
+                                    "phone",
+                                    "otp",
+                                    "citizen_id",
+                                    "store_name",
+                                    "store_address",
+                                    "business_type",
+                                    "citizen_id_image",
+                                    "store_image"
+                                ],
+                                "properties": {
+                                    "full_name": {
+                                        "description": "Họ và tên",
+                                        "type": "string",
+                                        "example": "Nguyễn Văn A"
+                                    },
+                                    "phone": {
+                                        "description": "Số điện thoại",
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "otp": {
+                                        "description": "Mã OTP xác thực",
+                                        "type": "string",
+                                        "example": "123456"
+                                    },
+                                    "citizen_id": {
+                                        "description": "Số CMND/CCCD",
+                                        "type": "string",
+                                        "example": "001234567890"
+                                    },
+                                    "store_name": {
+                                        "description": "Tên cửa hàng",
+                                        "type": "string",
+                                        "example": "Phở Gia Truyền"
+                                    },
+                                    "store_address": {
+                                        "description": "Địa chỉ cửa hàng",
+                                        "type": "string",
+                                        "example": "123 Đường ABC, Quận 1"
+                                    },
+                                    "business_type": {
+                                        "description": "Loại hình kinh doanh",
+                                        "type": "string",
+                                        "example": "Ăn uống"
+                                    },
+                                    "citizen_id_image": {
+                                        "description": "Ảnh CCCD",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "business_license_image": {
+                                        "description": "Giấy phép kinh doanh",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "store_image": {
+                                        "description": "Ảnh cửa hàng",
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đăng ký thành công — Chờ xét duyệt"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/store": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Lấy thông tin cửa hàng (UC-53)",
+                "operationId": "89ab09b31a9c2082f485f6929f96b35b",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/status": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Cập nhật trạng thái đóng/mở (UC-46)",
+                "operationId": "b2f4b5743c594b3b0e7c567fb04821ff",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_open"
+                                ],
+                                "properties": {
+                                    "is_open": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/hours": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Thiết lập giờ mở cửa (Cơ bản) (UC-45)",
+                "operationId": "bbcdcf0ea14e8b28eee6c66758a9edac",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "opening_time",
+                                    "closing_time"
+                                ],
+                                "properties": {
+                                    "opening_time": {
+                                        "type": "string",
+                                        "example": "08:00"
+                                    },
+                                    "closing_time": {
+                                        "type": "string",
+                                        "example": "22:00"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/weekly-hours": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Thiết lập giờ mở cửa chi tiết theo tuần (UC-54)",
+                "operationId": "3d34286d7b735dc5ea3e9ce0b79acdbf",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "schedule"
+                                ],
+                                "properties": {
+                                    "schedule": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "day_of_week": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "is_closed": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "opening_time": {
+                                                    "type": "string",
+                                                    "example": "08:00"
+                                                },
+                                                "closing_time": {
+                                                    "type": "string",
+                                                    "example": "22:00"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/discount": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Cấu hình chiết khấu (Cơ bản) (UC-47)",
+                "operationId": "b97b7f99f43dcf6c3c7a5e17d9fdf83b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "commission_rate"
+                                ],
+                                "properties": {
+                                    "commission_rate": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20.5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/commission-packages": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Lấy danh sách gói chiết khấu (UC-56)",
+                "operationId": "2bae28b5989e1d08048a5400164773c5",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/merchant/store/commission-package": {
+            "put": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Thay đổi gói chiết khấu (UC-56)",
+                "operationId": "0b415e89824c183aa32a4570a9b2898d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "package_key"
+                                ],
+                                "properties": {
+                                    "package_key": {
+                                        "type": "string",
+                                        "example": "PRIORITY"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
         "/api/v1/operation/location": {
             "post": {
                 "tags": [
@@ -2213,6 +2868,151 @@
                         "sanctum": []
                     }
                 ]
+            }
+        },
+        "/api/v1/admin/pricing/surge-rules": {
+            "get": {
+                "tags": [
+                    "Admin Pricing"
+                ],
+                "summary": "Danh sách quy tắc giá cao điểm (UC-96)",
+                "operationId": "e0afb31987b6ee888fa750cb9e0e2395",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Pricing"
+                ],
+                "summary": "Lưu quy tắc giá cao điểm (UC-96)",
+                "operationId": "76f9de756fdecad9c76095025d560b23",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "vehicle_type": {
+                                        "type": "integer"
+                                    },
+                                    "conditions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "multiplier": {
+                                        "type": "number"
+                                    },
+                                    "start_time": {
+                                        "type": "string",
+                                        "format": "H:i"
+                                    },
+                                    "end_time": {
+                                        "type": "string",
+                                        "format": "H:i"
+                                    },
+                                    "area_id": {
+                                        "type": "string"
+                                    },
+                                    "rule_id": {
+                                        "type": "string"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/pricing/surge-rules/{ruleId}": {
+            "delete": {
+                "tags": [
+                    "Admin Pricing"
+                ],
+                "summary": "Xóa quy tắc giá cao điểm",
+                "operationId": "a221faaf8ff07e446729ed3d9a6cd116",
+                "parameters": [
+                    {
+                        "name": "ruleId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/pricing/configs": {
+            "get": {
+                "tags": [
+                    "Admin.Pricing"
+                ],
+                "summary": "Xem cấu hình giá (UC-91)",
+                "operationId": "746acce70747cf16e6b9fd1d8939db58",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/pricing/configure": {
+            "post": {
+                "tags": [
+                    "Admin.Pricing"
+                ],
+                "summary": "Thiết lập giá (UC-91)",
+                "operationId": "dd5873eebc50848e07955450addc2a7c",
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
+            }
+        },
+        "/api/v1/admin/pricing/toggle-free-mode": {
+            "post": {
+                "tags": [
+                    "Admin.Pricing"
+                ],
+                "summary": "Bật/tắt chế độ miễn phí (UC-91)",
+                "operationId": "a404a5eaec47f02e06aaa15b50ff7786",
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                }
             }
         },
         "/api/v1/ride/{rideId}/communication/messages": {
@@ -2629,7 +3429,7 @@
                     "Ride"
                 ],
                 "summary": "Xác nhận đặt xe (UC-12)",
-                "description": "Xác nhận đặt xe dựa trên giá trị draft. Hệ thống sẽ tính lại giá và so sánh với expected_price từ FE để báo lệch giá nếu có.",
+                "description": "Xác nhận đặt xe. Hệ thống tính lại giá theo loại xe đã chọn và so sánh với expected_price từ FE.",
                 "operationId": "3381684cb7f81eb00e88814a18bd3230",
                 "parameters": [
                     {
@@ -2648,13 +3448,20 @@
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "vehicle_type",
                                     "expected_price"
                                 ],
                                 "properties": {
+                                    "vehicle_type": {
+                                        "description": "1: Xe Máy, 2: 4 chỗ, 3: 7 chỗ, 4: 9 chỗ",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
                                     "expected_price": {
+                                        "description": "Giá kỳ vọ ng lấy từ UC-09 để kiểm tra chênh lệch",
                                         "type": "number",
                                         "format": "float",
-                                        "example": 25000
+                                        "example": 45000
                                     }
                                 },
                                 "type": "object"
@@ -2806,126 +3613,6 @@
                 "responses": {
                     "200": {
                         "description": "Thông tin theo dõi chuyến xe"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/ride/{rideId}/tracking/accept": {
-            "post": {
-                "tags": [
-                    "Ride"
-                ],
-                "summary": "Tài xế chấp nhận yêu cầu theo dõi (UC-13)",
-                "operationId": "a73dee68358f4ea30c263e4aec4dc7a5",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của chuyến xe",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Chấp nhận theo dõi thành công"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/ride/{rideId}/tracking/location": {
-            "post": {
-                "tags": [
-                    "Ride"
-                ],
-                "summary": "Cập nhật vị trí tài xế realtime (UC-13)",
-                "operationId": "4907e336b85d9c94217221d8146a5a9a",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của chuyến xe",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Cập nhật vị trí thành công"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/ride/{rideId}/tracking/arrived": {
-            "post": {
-                "tags": [
-                    "Ride"
-                ],
-                "summary": "Đánh dấu tài xế đã đến điểm đón (UC-13)",
-                "operationId": "cbd56ade3bfb6b38fe1745f5f0f0f75c",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của chuyến xe",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Cập nhật trạng thái thành công"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/ride/{rideId}/tracking/driver-cancel": {
-            "post": {
-                "tags": [
-                    "Ride"
-                ],
-                "summary": "Tài xế hủy chuyến trong quá trình tracking (UC-13)",
-                "operationId": "2fc713d436109b246da3f3f8259a2664",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của chuyến xe",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Hủy chuyến thành công"
                     }
                 },
                 "security": [
@@ -3393,6 +4080,645 @@
                 "security": [
                     {
                         "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/risk/anti-fraud/overview": {
+            "get": {
+                "tags": [
+                    "Admin Risk Management"
+                ],
+                "summary": "Tổng quan hệ thống chống gian lận (UC-104)",
+                "operationId": "15365003b86349181cbbb7fbf055fda6",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/risk/anti-fraud/alerts": {
+            "get": {
+                "tags": [
+                    "Admin Risk Management"
+                ],
+                "summary": "Danh sách cảnh báo gian lận (UC-104)",
+                "operationId": "31b61db93b15fc1d4debf261fa73c616",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "target_type",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "risk_level",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "fraud_type",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/risk/anti-fraud/alerts/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Risk Management"
+                ],
+                "summary": "Chi tiết cảnh báo gian lận (UC-104)",
+                "operationId": "65af1f028c0bf9b6cc8e0611fa4009b7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Không có quyền"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/drivers": {
+            "get": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Danh sách tài xế (UC-80)",
+                "description": "Lấy danh sách tài xế có phân trang và tìm kiếm",
+                "operationId": "e8e26b09d74e0b08bab0a7fa0ebe7f31",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Từ khóa tìm kiếm (Tên, SĐT, Email)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "kyc_status",
+                        "in": "query",
+                        "description": "Trạng thái duyệt (1: Chờ duyệt, 2: Đã duyệt, 3: Từ chối)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Trạng thái hoạt động",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số lượng trên mỗi trang",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Trang hiện tại",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/drivers/{userId}/approve": {
+            "post": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Duyệt tài xế (UC-81)",
+                "description": "Duyệt hồ sơ đăng ký tài xế",
+                "operationId": "b555aa34f611111742b71dff55676138",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID người dùng",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Hồ sơ đầy đủ"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/drivers/{userId}/reject": {
+            "post": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Từ chối tài xế (UC-82)",
+                "description": "Từ chối hồ sơ đăng ký tài xế kèm lý do",
+                "operationId": "fb9b0a3f46e07a4964d50e9a8ca1aeb5",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID người dùng",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Hình ảnh không rõ nét"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/drivers/{userId}": {
+            "get": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Chi tiết tài xế (UC-83)",
+                "description": "Xem thông tin chi tiết của một tài xế",
+                "operationId": "84d7c834577712d7a4e56f7782a34671",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID người dùng",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/drivers/{userId}/status": {
+            "put": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Khóa/Mở khóa tài xế (UC-84)",
+                "description": "Cập nhật trạng thái hoạt động của tài xế",
+                "operationId": "939696fb316120432fe0f1f3b0c8f4d4",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID người dùng",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "lock_reason": {
+                                        "type": "string",
+                                        "example": "Vi phạm quy định hệ thống"
+                                    },
+                                    "locked_days": {
+                                        "type": "integer",
+                                        "example": 7
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/drivers/{userId}/assign-group": {
+            "post": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Gán đội xe (UC-85)",
+                "description": "Gán tài xế vào đội xe nhà hoặc đối tác",
+                "operationId": "accbf4cb68ed79f271a9cf9fde0e1fd8",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID người dùng",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "group_type": {
+                                        "description": "1: Đội xe nhà, 2: Tài xế đối tác",
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/drivers/export": {
+            "get": {
+                "tags": [
+                    "Admin Driver Management"
+                ],
+                "summary": "Xuất Excel tài xế",
+                "description": "Xuất danh sách tài xế theo bộ lọc hiện tại",
+                "operationId": "5d7324cfb42b56f90e408c25ed155fef",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Từ khóa tìm kiếm",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "kyc_status",
+                        "in": "query",
+                        "description": "Trạng thái duyệt",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Trạng thái hoạt động",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/customers": {
+            "get": {
+                "tags": [
+                    "Admin User Management"
+                ],
+                "summary": "Danh sách khách hàng (UC-77)",
+                "description": "Lấy danh sách khách hàng có phân trang và tìm kiếm",
+                "operationId": "b24c623a9b7eb363ac9288503755f207",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Từ khóa tìm kiếm (Tên, SĐT, Email)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Trạng thái hoạt động",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số lượng trên mỗi trang",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Trang hiện tại",
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/{userId}": {
+            "get": {
+                "tags": [
+                    "Admin User Management"
+                ],
+                "summary": "Chi tiết người dùng (UC-79)",
+                "description": "Xem thông tin chi tiết của một tài khoản Customer",
+                "operationId": "e192798122b4ee16f5c1ccc2e2862970",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID người dùng",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/users/{userId}/status": {
+            "put": {
+                "tags": [
+                    "Admin User Management"
+                ],
+                "summary": "Khóa/Mở khóa người dùng (UC-69/UC-77)",
+                "description": "Cập nhật trạng thái hoạt động của người dùng",
+                "operationId": "05e04e2aa2d016c126caa06f2c89e05d",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "description": "ID người dùng",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "reason": {
+                                        "description": "Lý do khóa (bắt buộc nếu is_active=false)",
+                                        "type": "string",
+                                        "example": "Vi phạm điều khoản"
+                                    },
+                                    "locked_days": {
+                                        "description": "Số ngày khóa (mặc định 2)",
+                                        "type": "integer",
+                                        "example": 7
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi validation"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
                     }
                 ]
             }
@@ -5602,12 +6928,20 @@
             "description": "Auth"
         },
         {
+            "name": "Admin Dashboard",
+            "description": "Admin Dashboard"
+        },
+        {
             "name": "Admin|Driver",
             "description": "Admin|Driver"
         },
         {
             "name": "Driver",
             "description": "Driver"
+        },
+        {
+            "name": "Admin - Finance",
+            "description": "Admin - Finance"
         },
         {
             "name": "Finance - Rewards",
@@ -5622,8 +6956,24 @@
             "description": "Homepage"
         },
         {
+            "name": "Admin|Merchant",
+            "description": "Admin|Merchant"
+        },
+        {
+            "name": "Merchant",
+            "description": "Merchant"
+        },
+        {
             "name": "Operation",
             "description": "Operation"
+        },
+        {
+            "name": "Admin Pricing",
+            "description": "Admin Pricing"
+        },
+        {
+            "name": "Admin.Pricing",
+            "description": "Admin.Pricing"
         },
         {
             "name": "Ride Communication",
@@ -5632,6 +6982,18 @@
         {
             "name": "Ride",
             "description": "Ride"
+        },
+        {
+            "name": "Admin Risk Management",
+            "description": "Admin Risk Management"
+        },
+        {
+            "name": "Admin Driver Management",
+            "description": "Admin Driver Management"
+        },
+        {
+            "name": "Admin User Management",
+            "description": "Admin User Management"
         },
         {
             "name": "User Profile",

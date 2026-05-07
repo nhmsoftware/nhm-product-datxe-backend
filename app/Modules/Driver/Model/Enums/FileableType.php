@@ -19,6 +19,9 @@ enum FileableType: int
     case DRIVER_REVIEW_HEALTH_CERT                 = 7;
     case DRIVER_REVIEW_PORTRAIT                    = 8;
     case DRIVER_REVIEW_INSURANCE                   = 9;
+    case MERCHANT_REVIEW_CCCD                      = 10;
+    case MERCHANT_REVIEW_BUSINESS_LICENSE          = 11;
+    case MERCHANT_REVIEW_STORE_IMAGE               = 12;
 
     public function getLabel(): string
     {
@@ -32,6 +35,9 @@ enum FileableType: int
             self::DRIVER_REVIEW_HEALTH_CERT     => 'Giấy khám sức khỏe',
             self::DRIVER_REVIEW_PORTRAIT        => 'Ảnh chân dung',
             self::DRIVER_REVIEW_INSURANCE       => 'Bảo hiểm trách nhiệm dân sự',
+            self::MERCHANT_REVIEW_CCCD          => 'Ảnh CCCD',
+            self::MERCHANT_REVIEW_BUSINESS_LICENSE => 'Giấy phép kinh doanh',
+            self::MERCHANT_REVIEW_STORE_IMAGE   => 'Ảnh cửa hàng',
         };
     }
 
@@ -47,6 +53,15 @@ enum FileableType: int
             self::DRIVER_REVIEW_HEALTH_CERT,
             self::DRIVER_REVIEW_PORTRAIT,
             self::DRIVER_REVIEW_INSURANCE,
+        ];
+    }
+
+    /** Danh sách tài liệu bắt buộc cho UC-52 merchant registration. */
+    public static function requiredForMerchantRegistration(): array
+    {
+        return [
+            self::MERCHANT_REVIEW_CCCD,
+            self::MERCHANT_REVIEW_STORE_IMAGE,
         ];
     }
 }

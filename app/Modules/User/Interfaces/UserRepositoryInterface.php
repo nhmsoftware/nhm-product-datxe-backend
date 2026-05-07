@@ -6,6 +6,7 @@ namespace App\Modules\User\Interfaces;
 
 use App\Core\Interfaces\BaseRepositoryInterface;
 use App\Modules\User\Model\CustomerProfile;
+use App\Modules\User\Model\Enums\DriverGroupType;
 use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\User;
 
@@ -78,7 +79,58 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     public function updateRole(int|string $userId, UserRole $role): bool;
 
     /**
+     * Đếm tổng số lượng người dùng theo các vai trò.
+     * @param array $roles Mảng các giá trị của UserRole
+     */
+    public function countUsersByRoles(array $roles): int;
+
+    /**
+     * Đếm số lượng cửa hàng đang hoạt động.
+     */
+    public function countActiveMerchants(): int;
+
+    /**
      * Tìm driver kèm profile (UC-13).
      */
     public function findDriverWithProfileById(string $driverId): ?User;
+
+    /**
+     * Tìm danh sách khách hàng có phân trang và lọc (UC-77).
+     */
+    public function findCustomers(array $filters, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+    /**
+     * Cập nhật trạng thái hoạt động (Khóa/Mở khóa) và các thông tin liên quan (UC-78/UC-77).
+     */
+    public function updateActiveStatus(string|int $userId, array $data): bool;
+
+    /**
+     * Tìm danh sách tài xế theo bộ lọc (UC-80).
+     */
+    public function findDrivers(array $filters, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+    /**
+     * Duyệt hồ sơ tài xế (UC-81).
+     */
+    public function approveDriverApplication(string|int $userId): bool;
+
+    /**
+     * Từ chối hồ sơ tài xế (UC-82).
+     */
+    public function rejectDriverApplication(string|int $userId, string $reason): bool;
+
+    /**
+     * Tìm chi tiết tài xế (UC-83).
+     */
+    public function findDriverDetailById(string|int $userId): ?User;
+
+    /**
+     * Cập nhật nhóm tài xế (UC-85).
+     */
+    public function updateDriverGroup(string|int $userId, DriverGroupType $groupType): bool;
+
+    /**
+     * Tìm chi tiết người dùng kèm profile (UC-77/UC-79).
+     */
+    public function findDetailById(string|int $userId): ?User;
 }

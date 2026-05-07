@@ -322,6 +322,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     {
         $query = $this->model->newQuery()
             ->where('status', RideStatus::PENDING->value)
+            ->where('is_pushed_to_pool', true)
             ->where('vehicle_type', $vehicleType)
             // Lọc ra các đơn mà tài xế đã từ chối trước đó (nếu có lưu vết)
             ->whereNotExists(function ($q) use ($filters) {
@@ -392,5 +393,61 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->orderBy('travel_date')
             ->orderBy('travel_time')
             ->get();
+    }
+
+    /**
+     * Đếm tổng số chuyến xe trong hệ thống.
+     */
+    public function countTotalOrders(): int
+    {
+        return $this->model->count();
+    }
+
+    /**
+     * Tính tổng doanh thu hệ thống (các chuyến xe đã hoàn thành).
+     */
+    public function sumTotalRevenue(): float
+    {
+        return (float) $this->model
+            ->where('status', RideStatus::COMPLETED->value)
+            ->sum('total_price');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function listScheduledRidesForAdmin(array $filters): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $query = $this->model->newQuery()
+            ->with(['customer', 'driver'])
+            ->whereIn('ride_type', [RideType::INTERCITY->value, RideType::AIRPORT->value]);
+
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['keyword'])) {
+            $keyword = '%' . $filters['keyword'] . '%';
+            $query->where(function ($q) use ($keyword) {
+                $q->where('id', 'like', $keyword)
+                    ->orWhere('pickup_address', 'like', $keyword)
+                    ->orWhere('destination_address', 'like', $keyword)
+                    ->orWhereHas('customer', function ($qc) use ($keyword) {
+                        $qc->where('phone', 'like', $keyword);
+                    });
+            });
+        }
+
+        return $query->latest()->paginate($filters['per_page'] ?? 15);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function pushToPool(array $rideIds): int
+    {
+        return $this->model->whereIn('id', $rideIds)
+            ->where('status', RideStatus::PENDING->value)
+            ->update(['is_pushed_to_pool' => true]);
     }
 }

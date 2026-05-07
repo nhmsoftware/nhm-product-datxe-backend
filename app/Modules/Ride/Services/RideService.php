@@ -23,6 +23,8 @@ use App\Modules\Ride\DTO\PriceEstimateDTO;
 use App\Modules\Ride\DTO\ShowRideTrackingDTO;
 use App\Modules\Ride\DTO\UpdateDriverLocationDTO;
 use App\Modules\Ride\DTO\VehicleOptionDTO;
+use App\Modules\Ride\DTO\AssignInternalDriverDTO;
+use App\Modules\Ride\DTO\BulkPushToPoolDTO;
 use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Ride\Interfaces\MapServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
@@ -44,8 +46,13 @@ use App\Modules\Ride\Model\Ride;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\DriverProfile;
+use App\Modules\User\Model\Enums\DriverGroupType;
 use App\Modules\User\Model\Enums\DriverStatus;
 use App\Modules\User\Model\User;
+use App\Modules\RiskManagement\Interfaces\CancellationConfigServiceInterface;
+use App\Modules\RiskManagement\Model\Enums\CancellationFeeType;
+use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
+use App\Modules\Pricing\Model\Enums\ScheduledDispatchMode;
 use Illuminate\Support\Facades\Log;
 
 final class RideService extends BaseService implements RideServiceInterface
@@ -57,7 +64,9 @@ final class RideService extends BaseService implements RideServiceInterface
         private readonly UserRepositoryInterface $userRepository,
         private readonly DriverProfileRepositoryInterface $driverProfileRepository,
         private readonly RideTrackingRealtimeInterface $rideTrackingRealtime,
-        private readonly AirportRepositoryInterface $airportRepository
+        private readonly AirportRepositoryInterface $airportRepository,
+        private readonly CancellationConfigServiceInterface $cancellationConfigService,
+        private readonly PricingGlobalSettingRepositoryInterface $pricingGlobalSettingRepository
     ) {
     }
 
@@ -89,6 +98,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 durationSeconds: $matrix->duration,
                 vehicleType: $dto->vehicleType
             );
+            $this->validate(!$pricingResult->isError(), $pricingResult->getMessage());
 
             /** @var PricingResultDTO $pricingData */
             $pricingData = $pricingResult->getData();
@@ -118,7 +128,8 @@ final class RideService extends BaseService implements RideServiceInterface
     }
 
     /**
-     * UC-09: Lấy danh sách loại xe kèm giá ước tính
+     * UC-09: Lấy danh sách loại xe kèm giá ước tính.
+     * Dựa vào khoảng cách & thời gian đã tính từ draft.
      */
     public function getVehicleOptions(string $rideId, string $customerId): ServiceReturn
     {
@@ -266,7 +277,9 @@ final class RideService extends BaseService implements RideServiceInterface
     }
 
     /**
-     * UC-12: Xác nhận đặt xe
+     * UC-12: Xác nhận đặt xe.
+     * Khách hàng truyền vào loại xe đã chọn và giá kỳ vọ ng.
+     * Hệ thống sẽ tính lại giá theo loại xe và kiểm tra chênh lệch.
      */
     public function confirmBooking(ConfirmBookingDTO $dto): ServiceReturn
     {
@@ -279,10 +292,13 @@ final class RideService extends BaseService implements RideServiceInterface
                 'Chuyến xe đã được xác nhận hoặc không hợp lệ.'
             );
 
+            // Dùng vehicle_type từ DTO (khách hàng chọn tại bước này)
+            $vehicleType = VehicleType::from($dto->vehicleType);
+
             $pricingResult = $this->calculatePriceFor(
                 distanceMeters: $ride->distance,
                 durationSeconds: $ride->duration,
-                vehicleType: $ride->vehicle_type
+                vehicleType: $vehicleType
             );
             $this->validate(!$pricingResult->isError(), $pricingResult->getMessage());
 
@@ -311,6 +327,8 @@ final class RideService extends BaseService implements RideServiceInterface
                 $this->throw('Giá cước đã thay đổi do tình hình giao thông, vui lòng xác nhận lại giá mới.', 409);
             }
 
+            // Cập nhật loại xe và xác nhận chuyến
+            $this->rideRepository->updateById($dto->rideId, ['vehicle_type' => $vehicleType->value]);
             $this->rideRepository->confirmBooking($dto->rideId, $finalFare);
 
             $ride->refresh();
@@ -360,9 +378,33 @@ final class RideService extends BaseService implements RideServiceInterface
 
             $cancellationFee = 0.0;
 
-            if ($ride->status === RideStatus::ACCEPTED) {
-                $cancellationFee = 10000.0;
+            // Tính toán thời gian còn lại đến khi đón khách (cho chuyến đặt trước)
+            $minutesUntilPickup = 999999; // Mặc định rất lớn cho chuyến nội thành (City)
+            if ($ride->travel_date && $ride->travel_time) {
+                $pickupDateTime = \Illuminate\Support\Carbon::parse(
+                    $ride->travel_date->format('Y-m-d') . ' ' . $ride->travel_time
+                );
+                $minutesUntilPickup = (int) now()->diffInMinutes($pickupDateTime, false);
+            }
 
+            // Lấy quy tắc phí hủy từ cấu hình
+            $feeResult = $this->cancellationConfigService->getApplicableFee($ride->ride_type->value, $minutesUntilPickup);
+
+            if ($feeResult->isSuccess()) {
+                $feeData = $feeResult->getData();
+                if ($feeData['fee_type'] === CancellationFeeType::FIXED->value) {
+                    $cancellationFee = (float) $feeData['fee_value'];
+                } elseif ($feeData['fee_type'] === CancellationFeeType::PERCENTAGE->value) {
+                    $cancellationFee = ($ride->total_price * (float) $feeData['fee_value']) / 100;
+                }
+            }
+
+            // Fallback: Nếu là chuyến nội thành đã có tài xế và chưa có cấu hình riêng, áp dụng phí mặc định 10k
+            if ($ride->ride_type === RideType::CITY && $ride->status === RideStatus::ACCEPTED && $cancellationFee <= 0) {
+                $cancellationFee = 10000.0;
+            }
+
+            if ($ride->status === RideStatus::ACCEPTED) {
                 // Cảnh báo gian lận
                 $driverProfile = $this->driverProfileRepository->findByUserId((string) $ride->driver_id);
                 if ($driverProfile) {
@@ -528,7 +570,7 @@ final class RideService extends BaseService implements RideServiceInterface
             return 350.0;
         }
 
-        return match ($driverProfile->vehicle_type) {
+        return match ($driverProfile->vehicle_type->value) {
             VehicleType::BIKE->value => 450.0,
             VehicleType::CAR_4_SEATS->value, VehicleType::CAR_7_SEATS->value, VehicleType::CAR_9_SEATS->value => 350.0,
             default => 350.0,
@@ -717,6 +759,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'total_price'         => $totalPrice,
                 'voucher_code'        => $dto->voucherCode,
                 'discount_amount'     => $discountAmount,
+                'is_pushed_to_pool'   => $this->shouldPushToPoolImmediately(),
             ]);
 
             // 5. Phát sự kiện để tìm tài xế (UC-12 reused)
@@ -781,6 +824,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'total_price'         => $totalPrice,
                 'voucher_code'        => $dto->voucherCode,
                 'discount_amount'     => $discountAmount,
+                'is_pushed_to_pool'   => $this->shouldPushToPoolImmediately(),
             ]);
 
             // 5. Phát sự kiện để tìm tài xế (UC-12 reused)
@@ -839,7 +883,7 @@ final class RideService extends BaseService implements RideServiceInterface
             // 2. Lấy danh sách từ repository
             $filters = (array) $dto;
             $rides = $this->rideRepository->findAvailableScheduledRides(
-                (int) $driver->driverProfile->vehicle_type,
+                $driver->driverProfile->vehicle_type->value,
                 $filters
             );
 
@@ -881,7 +925,7 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // 3. Kiểm tra phù hợp loại xe
             $this->validate(
-                $ride->vehicle_type->value === (int) $driver->driverProfile->vehicle_type,
+                $ride->vehicle_type->value === $driver->driverProfile->vehicle_type->value,
                 'Bạn không đủ điều kiện để xem chuyến xe này.',
                 403
             );
@@ -927,7 +971,7 @@ final class RideService extends BaseService implements RideServiceInterface
             // 3. Kiểm tra trạng thái và loại xe
             $this->validate($ride->status === RideStatus::PENDING, 'Chuyến xe đã được tài xế khác nhận hoặc không còn khả dụng.', 400);
             $this->validate(
-                $ride->vehicle_type->value === (int) $driver->driverProfile->vehicle_type,
+                $ride->vehicle_type->value === $driver->driverProfile->vehicle_type->value,
                 'Loại xe của bạn không phù hợp với chuyến này.',
                 403
             );
@@ -1035,5 +1079,68 @@ final class RideService extends BaseService implements RideServiceInterface
                 'lng'  => (float) $airport->lng,
             ])->toArray();
         });
+    }
+    public function listScheduledRidesForAdmin(array $filters): ServiceReturn
+    {
+        return $this->execute(function () use ($filters) {
+            return $this->rideRepository->listScheduledRidesForAdmin($filters);
+        });
+    }
+
+    public function assignInternalDriver(AssignInternalDriverDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $ride = $this->rideRepository->findById($dto->rideId);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+            $this->validate($ride->status === RideStatus::PENDING, 'Chuyến xe đã được phân phối hoặc không hợp lệ.');
+
+            $driver = $this->userRepository->findDriverWithProfileById($dto->driverId);
+            $this->validate($driver !== null, 'Không tìm thấy tài xế.', 404);
+            $this->validate(
+                $driver->driverProfile->driver_group_type === DriverGroupType::INTERNAL->value,
+                'Tài xế này không thuộc đội xe nhà.'
+            );
+
+            $success = $this->rideRepository->assignDriver($dto->rideId, $dto->driverId, now());
+            $this->validate($success, 'Không thể gán chuyến xe. Vui lòng thử lại.');
+
+            \App\Modules\Ride\Events\RideAssignedByAdmin::dispatch(
+                $ride->id,
+                $dto->driverId,
+                $ride->customer_id
+            );
+
+            return [
+                'ride_id' => $dto->rideId,
+                'driver_id' => $dto->driverId,
+                'status' => RideStatus::ACCEPTED->getLabel(),
+            ];
+        });
+    }
+
+    public function pushScheduledRidesToPool(BulkPushToPoolDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $count = $this->rideRepository->pushToPool($dto->rideIds);
+
+            if ($count > 0) {
+                \App\Modules\Ride\Events\ScheduledRidesPushedToPool::dispatch($dto->rideIds);
+            }
+
+            return [
+                'updated_count' => $count,
+                'message' => "Đã đẩy $count chuyến xe ra danh sách chung.",
+            ];
+        });
+    }
+
+    private function shouldPushToPoolImmediately(): bool
+    {
+        $settings = $this->pricingGlobalSettingRepository->getSettings();
+        if (!$settings) {
+            return true; // Default behavior
+        }
+
+        return $settings->scheduled_dispatch_mode === ScheduledDispatchMode::OPEN_POOL;
     }
 }

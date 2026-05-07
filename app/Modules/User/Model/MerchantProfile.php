@@ -61,6 +61,7 @@ class MerchantProfile extends Model
         'user_id',
         'store_name',
         'store_address',
+        'business_type',
         'lat',
         'lng',
         'opening_time',
@@ -68,8 +69,13 @@ class MerchantProfile extends Model
         'is_open',
         'business_license',
         'business_license_image',
+        'citizen_id_image',
+        'store_image',
         'average_rating',
         'total_orders',
+        'status',
+        'commission_rate',
+        'commission_package',
     ];
 
     protected $casts = [
@@ -78,7 +84,17 @@ class MerchantProfile extends Model
         'is_open' => 'boolean',
         'average_rating' => 'decimal:2',
         'total_orders' => 'integer',
+        'commission_rate' => 'decimal:2',
+        'status' => \App\Modules\User\Model\Enums\KycStatus::class,
     ];
+
+    /**
+     * Get the opening hours for the merchant.
+     */
+    public function openingHours(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(MerchantOpeningHour::class);
+    }
 
     /**
      * Get the user that owns the merchant profile.

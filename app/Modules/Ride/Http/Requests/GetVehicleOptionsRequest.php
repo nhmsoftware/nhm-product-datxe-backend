@@ -13,21 +13,19 @@ use Illuminate\Http\Exceptions\HttpResponseException;
  * FormRequest cho UC-09: Lấy danh sách xe khả dụng.
  * Yêu cầu ride_id để lấy đúng thông tin khoảng cách từ draft đã tạo.
  */
-class GetVehicleOptionsRequest extends FormRequest
+final class GetVehicleOptionsRequest extends FormRequest
 {
     use HandleApi;
+
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * @return array<string, array<string, mixed>>
-     */
     public function rules(): array
     {
         return [
-            'rideId' => 'required|numeric|exists:rides,id',
+            'rideId' => ['required', 'numeric', 'exists:rides,id'],
         ];
     }
 
@@ -44,7 +42,7 @@ class GetVehicleOptionsRequest extends FormRequest
     /**
      * @throws HttpResponseException
      */
-    protected function failedValidation(Validator $validator)
+    protected function failedValidation(Validator $validator): void
     {
         throw new HttpResponseException(
             $this->sendValidation('Dữ liệu không hợp lệ.', $validator->errors()->toArray(), 400)

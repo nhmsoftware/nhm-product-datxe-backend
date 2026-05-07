@@ -1,0 +1,39 @@
+# Merchant Module
+
+## Overview
+Module này quản lý toàn bộ nghiệp vụ liên quan đến Merchant (Quán ăn/Đối tác cửa hàng), bao gồm đăng ký, quản lý hồ sơ, và các hoạt động vận hành của Merchant.
+
+## Use Cases implemented
+- **UC-52 Register Merchant**: Cho phép người dùng đăng ký trở thành Merchant.
+- **UC-53 Manage Store**: Quản lý thông tin vận hành cửa hàng.
+- **UC-54 Set Opening Hours**: Thiết lập giờ mở cửa/đóng cửa chi tiết theo tuần (hỗ trợ bán xuyên đêm).
+- **UC-55 Set Store Status**: Thay đổi trạng thái Đóng/Mở tức thời (override lịch hoạt động).
+- **UC-56 Configure Commission**: Thay đổi gói chiết khấu/hoa hồng (Basic, Priority, Exclusive).
+- **UC-45 Setup hours**: Thiết lập giờ mở cửa/đóng cửa (Cơ bản).
+- **UC-46 Change status**: Thay đổi trạng thái hoạt động (Đóng/Mở).
+- **UC-47 Configure discount**: Cấu hình % chiết khấu.
+
+## Architecture
+Tuân thủ Modular DDD:
+- **DTO**: Chứa các đối tượng chuyển đổi dữ liệu.
+- **Services**: Chứa logic nghiệp vụ chính (`MerchantRegistrationService`, `MerchantStoreService`).
+- **Repositories**: Xử lý truy vấn database thông qua Model `MerchantProfile`.
+- **Events**: Phát các sự kiện domain khi có thay đổi trạng thái quan trọng.
+
+## API Endpoints
+### Registration
+- `POST /api/v1/merchant/send-otp`: Gửi OTP xác thực số điện thoại để đăng ký.
+- `POST /api/v1/merchant/verify-otp`: Xác thực mã OTP.
+- `POST /api/v1/merchant/register`: Gửi hồ sơ đăng ký Merchant (sau khi verify OTP).
+
+### Store Management
+- `GET /api/v1/merchant/store`: Lấy thông tin cửa hàng hiện tại.
+- `PUT /api/v1/merchant/store/status`: Cập nhật trạng thái đóng/mở.
+- `PUT /api/v1/merchant/store/hours`: Cập nhật giờ hoạt động.
+- `PUT /api/v1/merchant/store/discount`: Cập nhật cấu hình chiết khấu.
+
+## Flow Đăng ký Merchant (UC-52)
+1. User gọi API `send-otp`.
+2. User gọi API `verify-otp`.
+3. User gọi API `register` kèm theo thông tin cửa hàng và các tài liệu (đã upload trước đó).
+4. Hệ thống tạo hồ sơ với trạng thái `Pending` và chờ Admin duyệt.

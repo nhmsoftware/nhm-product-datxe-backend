@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *
  * @property int $id
  * @property string $code
+ * @property string|null $name
  * @property VoucherServiceType $service_type
  * @property VoucherDiscountType $discount_type
  * @property float $discount_value
@@ -35,6 +36,7 @@ final class Voucher extends Model
 
     protected $fillable = [
         'code',
+        'name',
         'service_type',
         'discount_type',
         'discount_value',

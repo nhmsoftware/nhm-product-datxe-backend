@@ -6,6 +6,8 @@ namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
 use App\Modules\User\Model\Enums\DriverStatus;
+use App\Modules\User\Model\Enums\VehicleType;
+use App\Modules\User\Model\Enums\VehicleColor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -16,14 +18,14 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $full_name
  * @property int|null $driver_group_id
  * @property int $driver_group_type
- * @property int $vehicle_type
+ * @property \App\Modules\User\Model\Enums\VehicleType $vehicle_type
  * @property string $vehicle_name
- * @property int $vehicle_color
+ * @property \App\Modules\User\Model\Enums\VehicleColor $vehicle_color
  * @property string $vehicle_number
  * @property bool $is_online
  * @property numeric|null $current_lat
  * @property numeric|null $current_lng
- * @property int $status
+ * @property \App\Modules\User\Model\Enums\DriverStatus $status
  * @property \Illuminate\Support\Carbon|null $cooldown_until
  * @property int $cancel_count_today
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -114,6 +116,8 @@ class DriverProfile extends Model
         'total_trips'    => 'integer',
         'cooldown_until' => 'datetime',
         'status'         => DriverStatus::class,
+        'vehicle_type'   => VehicleType::class,
+        'vehicle_color'  => VehicleColor::class,
     ];
 
     /**

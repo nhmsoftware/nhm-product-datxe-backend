@@ -1,0 +1,41 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Modules\User\Http\Requests\Admin;
+
+use Illuminate\Foundation\Http\FormRequest;
+use App\Core\Traits\HandleApi;
+use Illuminate\Contracts\Validation\Validator;
+use Illuminate\Http\Exceptions\HttpResponseException;
+
+class RejectDriverRequest extends FormRequest
+{
+    use HandleApi;
+
+    public function authorize(): bool
+    {
+        return true;
+    }
+
+    public function rules(): array
+    {
+        return [
+            'reason' => 'required|string|max:500',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'reason.required' => 'Vui lòng nhập lý do từ chối.',
+        ];
+    }
+
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            $this->sendValidation('Dữ liệu không hợp lệ.', $validator->errors()->toArray(), 400)
+        );
+    }
+}

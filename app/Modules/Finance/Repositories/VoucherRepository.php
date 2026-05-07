@@ -36,4 +36,35 @@ final class VoucherRepository extends BaseRepository implements VoucherRepositor
         /** @var Voucher|null */
         return $this->model->where('code', $code)->first();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function search(array $filters): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $query = $this->model->query();
+
+        if (!empty($filters['code'])) {
+            $query->where('code', 'ilike', '%' . $filters['code'] . '%');
+        }
+
+        if (!empty($filters['description'])) {
+            $query->where('description', 'ilike', '%' . $filters['description'] . '%');
+        }
+
+        if (isset($filters['is_active'])) {
+            $query->where('is_active', $filters['is_active']);
+        }
+
+        if (!empty($filters['valid_from'])) {
+            $query->where('valid_from', '>=', $filters['valid_from']);
+        }
+
+        if (!empty($filters['valid_until'])) {
+            $query->where('valid_until', '<=', $filters['valid_until']);
+        }
+
+        return $query->orderBy('created_at', 'desc')
+            ->paginate($filters['per_page'] ?? 20);
+    }
 }

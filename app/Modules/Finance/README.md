@@ -50,3 +50,14 @@ Payload Example:
   "occurred_at": "2026-04-22T13:47:27+07:00"
 }
 ```
+
+## UC-99: Manage Voucher (Admin)
+Admin management of vouchers including CRUD and assignment.
+
+### Endpoints:
+- `GET /api/v1/admin/finance/vouchers`: List and search vouchers
+- `GET /api/v1/admin/finance/vouchers/{id}`: View voucher details
+- `POST /api/v1/admin/finance/vouchers`: Create new voucher
+- `PUT /api/v1/admin/finance/vouchers/{id}`: Update voucher
+- `DELETE /api/v1/admin/finance/vouchers/{id}`: Delete voucher
+- `POST /api/v1/admin/finance/vouchers/assign`: Assign voucher to users

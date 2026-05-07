@@ -55,6 +55,11 @@ interface DriverProfileRepositoryInterface extends BaseRepositoryInterface
     public function findEligibleDrivers(array $userIds, int $vehicleType, ?int $groupType = null): \Illuminate\Support\Collection;
 
     /**
+     * Đếm số lượng tài xế đang hoạt động (Online và Active)
+     */
+    public function countActiveDrivers(): int;
+
+    /**
      * Cập nhật vị trí hiện tại của tài xế.
      */
     public function updateLocation(string $driverId, float $lat, float $lng): bool;

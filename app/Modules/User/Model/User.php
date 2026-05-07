@@ -88,6 +88,10 @@ class User extends Authenticatable
         'avatar',
         'address',
         'citizen_id',
+        'lock_reason',
+        'locked_days',
+        'locked_at',
+        'lock_expired_at',
     ];
 
     protected $hidden = [
@@ -102,6 +106,9 @@ class User extends Authenticatable
         'is_phone_verified' => 'boolean',
         'is_active'         => 'boolean',
         'deleted_at'        => 'datetime',
+        'locked_at'         => 'datetime',
+        'lock_expired_at'   => 'datetime',
+        'locked_days'       => 'integer',
     ];
 
     // ─── Relationships ───────────────────────────────────────────
@@ -123,6 +130,11 @@ class User extends Authenticatable
     public function userDevices(): HasMany
     {
         return $this->hasMany(UserDevice::class);
+    }
+
+    public function userReviewApplications(): HasMany
+    {
+        return $this->hasMany(UserReviewApplication::class);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────
@@ -190,11 +202,10 @@ class User extends Authenticatable
 
     /**
      * Kiểm tra tài khoản có bị khóa hay không.
-     * Tài khoản bị khóa khi: is_active = false VÀ deleted_at != null
      */
     public function isLocked(): bool
     {
-        return !$this->is_active && $this->deleted_at !== null;
+        return !$this->is_active;
     }
 
     /**

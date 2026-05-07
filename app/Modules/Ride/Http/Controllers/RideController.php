@@ -198,7 +198,7 @@ final class RideController extends BaseController
 
     #[OA\Post(
         path: '/api/v1/ride/{rideId}/confirm',
-        description: 'Xác nhận đặt xe dựa trên giá trị draft. Hệ thống sẽ tính lại giá và so sánh với expected_price từ FE để báo lệch giá nếu có.',
+        description: 'Xác nhận đặt xe. Hệ thống tính lại giá theo loại xe đã chọn và so sánh với expected_price từ FE.',
         summary: 'Xác nhận đặt xe (UC-12)',
         security: [['sanctum' => []]],
         tags: ['Ride']
@@ -207,9 +207,10 @@ final class RideController extends BaseController
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
-            required: ['expected_price'],
+            required: ['vehicle_type', 'expected_price'],
             properties: [
-                new OA\Property(property: 'expected_price', type: 'number', format: 'float', example: 25000),
+                new OA\Property(property: 'vehicle_type', type: 'integer', example: 2, description: '1: Xe Máy, 2: 4 chỗ, 3: 7 chỗ, 4: 9 chỗ'),
+                new OA\Property(property: 'expected_price', type: 'number', format: 'float', example: 45000, description: 'Giá kỳ vọ ng lấy từ UC-09 để kiểm tra chênh lệch'),
             ]
         )
     )]

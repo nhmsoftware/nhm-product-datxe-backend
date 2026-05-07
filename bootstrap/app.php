@@ -15,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Cấu hình cho phép Frontend gọi API (CORS)
+        $middleware->statefulApi();
+        
         // Đăng ký middleware kiểm tra trạng thái tài khoản toàn cục
         $middleware->alias([
             'check.account.status' => CheckAccountStatus::class,
