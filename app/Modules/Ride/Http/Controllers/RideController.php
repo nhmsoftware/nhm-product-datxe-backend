@@ -70,6 +70,7 @@ final class RideController extends BaseController
                     type: 'integer',
                     example: 1
                 ),
+                new OA\Property(property: 'voucher_code', type: 'string', example: 'GIAM20K', description: 'Mã giảm giá (tùy chọn)'),
             ]
         )
     )]
