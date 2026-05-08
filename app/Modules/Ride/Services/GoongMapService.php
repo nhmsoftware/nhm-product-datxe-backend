@@ -126,7 +126,7 @@ class GoongMapService implements MapServiceInterface
      */
     private function getFallbackMatrix(float $originLat, float $originLng, float $destLat, float $destLng): MapMatrixDTO
     {
-        $birdDistance = $this->calculateHaversineDistance($originLat, $originLng, $destLat, $destLng);
+        $birdDistance = $this->calculateDistance($originLat, $originLng, $destLat, $destLng);
         $roadDistance = (int) ($birdDistance * 1.3);
         
         // Ước tính thời gian dựa trên vận tốc trung bình 30km/h (8.33 m/s)
@@ -139,9 +139,9 @@ class GoongMapService implements MapServiceInterface
     }
 
     /**
-     * Công thức Haversine tính khoảng cách đường chim bay (mét).
+     * @inheritDoc
      */
-    private function calculateHaversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): int
+    public function calculateDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
         $earthRadius = 6371000;
         $dLat = deg2rad($lat2 - $lat1);
@@ -150,6 +150,6 @@ class GoongMapService implements MapServiceInterface
             cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
             sin($dLng / 2) * sin($dLng / 2);
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-        return (int) ($earthRadius * $c);
+        return (float) ($earthRadius * $c);
     }
 }

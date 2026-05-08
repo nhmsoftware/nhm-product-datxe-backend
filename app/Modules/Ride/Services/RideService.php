@@ -1459,21 +1459,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 note:        $dto->note
             );
 
-            // 6. Hoàn tất chuyến xe (Tính toán tài chính - Giả định logic từ UC-40)
-            $finalFare      = (float) $ride->total_price;
-            $serviceFeeRate = 0.1; // Giả định phí sàn 10%
-            $serviceFee     = round($finalFare * $serviceFeeRate, 2);
-            $driverEarnings = $finalFare - $serviceFee;
-
-            $completed = $this->rideRepository->completeTrip(
-                $dto->rideId,
-                $finalFare,
-                $serviceFee,
-                $driverEarnings
-            );
-            $this->validate($completed, 'Không thể hoàn tất chuyến xe.', 500);
-
-            // 7. Phát sự kiện
+            // 6. Phát sự kiện
             event(new DeliveryProofCaptured(
                 rideId:      $dto->rideId,
                 driverId:    $dto->driverId,
@@ -1487,12 +1473,11 @@ final class RideService extends BaseService implements RideServiceInterface
 
             return [
                 'ride_id'      => (string) $dto->rideId,
-                'status'       => RideStatus::COMPLETED->value,
-                'status_label' => RideStatus::COMPLETED->getLabel(),
-                'earnings'     => $driverEarnings,
+                'status'       => $ride->status->value,
+                'status_label' => $ride->status->getLabel(),
                 'photo_url'    => $photoUrl,
                 'captured_at'  => $capturedAt->toIso8601String(),
-                'message'      => 'Giao hàng thành công. Chuyến xe đã được hoàn tất.',
+                'message'      => 'Đã lưu bằng chứng giao hàng. Vui lòng bấm hoàn tất chuyến xe để kết thúc.',
             ];
         }, useTransaction: true);
     }

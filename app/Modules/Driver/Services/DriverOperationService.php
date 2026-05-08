@@ -91,7 +91,10 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 $this->throw('Bạn chưa đủ gần điểm đón để thông báo đã đến (Bán kính 200m).', 422);
             }
 
-            // Gửi sự kiện Domain Event với driverProfile->id để listener tìm thấy
+            // 4. Cập nhật thời điểm đến vào DB để thỏa mãn điều kiện các bước sau (vd: chụp ảnh bằng chứng)
+            $this->rideRepository->markDriverArrived($ride->id, now());
+
+            // 5. Gửi sự kiện Domain Event với driverProfile->id để listener tìm thấy
             event(new DriverArrivedAtPickup($ride->id, $driverProfile->id));
 
             return $this->success([], 'Đã gửi thông báo đến khách hàng.');
