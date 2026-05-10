@@ -21,12 +21,17 @@ final class NotifyRealtimeOnUserStatusUpdated implements ShouldQueue
     public function handle(UserStatusUpdated $event): void
     {
         try {
+            $message = $event->isActive 
+                ? 'Tài khoản của bạn đã được mở khóa. Bạn có thể tiếp tục sử dụng dịch vụ.'
+                : 'Tài khoản của bạn tạm thời bị khóa' . ($event->reason ? ' do ' . $event->reason : '') . '. Vui lòng liên hệ tổng đài để được hỗ trợ.';
+
             $payload = [
                 'event'           => 'user.status_updated',
                 'user_id'         => (string) $event->userId,
                 'is_active'       => $event->isActive,
                 'lock_reason'     => $event->reason,
                 'lock_expired_at' => $event->expiredAt,
+                'message'         => $message,
                 'occurred_at'     => now()->toIso8601String(),
             ];
 

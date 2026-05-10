@@ -13,15 +13,17 @@ final class UpdateUserStatusDTO
         public readonly bool       $isActive,
         public readonly ?string    $reason = null,
         public readonly ?int       $lockedDays = null,
+        public readonly ?string    $lockExpiredAt = null,
     ) {}
 
     public static function fromRequest(Request $request, string|int $userId): self
     {
         return new self(
-            userId:     $userId,
-            isActive:   $request->boolean('is_active'),
-            reason:     $request->input('reason'),
-            lockedDays: $request->input('locked_days') ? (int) $request->input('locked_days') : null,
+            userId:        $userId,
+            isActive:      $request->boolean('is_active'),
+            reason:        $request->input('reason'),
+            lockedDays:    $request->input('locked_days') ? (int) $request->input('locked_days') : null,
+            lockExpiredAt: $request->input('lock_expired_at'),
         );
     }
 }

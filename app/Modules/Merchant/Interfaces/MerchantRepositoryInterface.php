@@ -37,4 +37,9 @@ interface MerchantRepositoryInterface extends BaseRepositoryInterface
      * UC-86 Manage Merchant
      */
     public function searchMerchants(\App\Modules\Merchant\DTO\MerchantFilterDTO $dto): \Illuminate\Pagination\LengthAwarePaginator;
+
+    /**
+     * Update average rating and total orders based on ratings table.
+     */
+    public function updateRatingStats(string $merchantProfileId): bool;
 }

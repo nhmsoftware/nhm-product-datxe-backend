@@ -17,6 +17,17 @@ Module này quản lý toàn bộ nghiệp vụ liên quan đến Merchant (Quá
 - **UC-63 Add Combo**: Tạo mới combo cho cửa hàng.
 - **UC-64 Update Combo**: Cập nhật thông tin combo.
 - **UC-65 Delete Combo**: Xóa combo (xóa mềm).
+- **UC-66 View total daily orders**: Xem tổng số đơn hàng trong ngày của cửa hàng.
+- **UC-67 View daily revenue**: Xem tổng doanh thu trong ngày của cửa hàng.
+- **UC-68 Toggle Availability**: Bật/tắt trạng thái bán của món ăn hoặc combo.
+- **UC-69 Process Order**: Xử lý đơn hàng (Xác nhận, Từ chối, Chuẩn bị, Sẵn sàng).
+- **UC-70 View Order Detail**: Xem chi tiết đơn hàng của Merchant.
+- **UC-71 Accept Order**: Merchant xác nhận nhận đơn hàng.
+- **UC-72 Reject Order**: Merchant từ chối đơn hàng kèm lý do.
+- **UC-64 Mark Preparing**: Cập nhật đơn hàng đang trong quá trình chuẩn bị.
+- **UC-73 Mark Ready**: Đánh dấu món đã sẵn sàng để tài xế đến lấy.
+- **UC-75 Cancel Order**: Hủy đơn hàng (từ phía Merchant).
+- **UC-74 Handle Cancellation**: Xử lý yêu cầu hủy từ khách hàng/hệ thống.
 
 ## Architecture
 Tuân thủ Modular DDD:
@@ -36,6 +47,19 @@ Tuân thủ Modular DDD:
 - `PUT /api/v1/merchant/store/status`: Cập nhật trạng thái đóng/mở.
 - `PUT /api/v1/merchant/store/hours`: Cập nhật giờ hoạt động.
 - `PUT /api/v1/merchant/store/discount`: Cập nhật cấu hình chiết khấu.
+- `GET /api/v1/merchant/store/stats/daily-orders`: Xem tổng số đơn hàng hôm nay (UC-66).
+- `GET /api/v1/merchant/store/stats/daily-revenue`: Xem tổng doanh thu hôm nay (UC-67).
+- `PATCH /api/v1/merchant/menu/items/{id}/status`: Bật/tắt trạng thái món ăn (UC-68).
+- `PATCH /api/v1/merchant/combos/{id}/status`: Bật/tắt trạng thái combo (UC-68).
+
+### Order Management
+- `GET /api/v1/merchant/orders/{id}`: Xem chi tiết đơn hàng (UC-70).
+- `POST /api/v1/merchant/orders/{id}/accept`: Nhận đơn hàng (UC-71).
+- `POST /api/v1/merchant/orders/{id}/reject`: Từ chối đơn hàng (UC-72).
+- `POST /api/v1/merchant/orders/{id}/preparing`: Đang chuẩn bị (UC-64).
+- `POST /api/v1/merchant/orders/{id}/ready`: Sẵn sàng giao (UC-73).
+- `POST /api/v1/merchant/orders/{id}/cancel`: Hủy đơn hàng (UC-75).
+- `POST /api/v1/merchant/orders/{id}/cancellation/handle`: Xử lý yêu cầu hủy (UC-74).
 
 ## Flow Đăng ký Merchant (UC-52)
 1. User gọi API `send-otp`.

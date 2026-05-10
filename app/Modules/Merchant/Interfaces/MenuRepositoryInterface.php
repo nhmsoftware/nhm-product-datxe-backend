@@ -81,4 +81,19 @@ interface MenuRepositoryInterface extends BaseRepositoryInterface
      * @return bool
      */
     public function deleteItem(string $itemId): bool;
+
+    /**
+     * Update average rating and total reviews for a menu item.
+     */
+    public function updateRatingStats(string $itemId): bool;
+
+    /**
+     * Update availability status of a menu item.
+     * UC-68 Toggle Availability
+     *
+     * @param string $itemId
+     * @param bool $isAvailable
+     * @return bool
+     */
+    public function updateItemStatus(string $itemId, bool $isAvailable): bool;
 }

@@ -167,4 +167,42 @@ final class MerchantStoreController extends BaseController
         if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
         return $this->sendSuccess($result->getData(), $result->getMessage());
     }
+
+    #[OA\Get(path: '/api/v1/merchant/store/stats/daily-orders', summary: 'Xem tổng số đơn hàng trong ngày (UC-66)', security: [['sanctum' => []]], tags: ['Merchant'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Thành công',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'total_orders_today', type: 'integer', example: 15),
+                new OA\Property(property: 'date', type: 'string', format: 'date', example: '2026-05-08'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 404, description: 'Không tìm thấy cửa hàng')]
+    public function getDailyOrderStats(Request $request): JsonResponse
+    {
+        $result = $this->storeService->getDailyOrderStats((string)$request->user()->id);
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(path: '/api/v1/merchant/store/stats/daily-revenue', summary: 'Xem tổng doanh thu trong ngày (UC-67)', security: [['sanctum' => []]], tags: ['Merchant'])]
+    #[OA\Response(
+        response: 200,
+        description: 'Thành công',
+        content: new OA\JsonContent(
+            properties: [
+                new OA\Property(property: 'total_revenue_today', type: 'number', format: 'float', example: 1500000.5),
+                new OA\Property(property: 'date', type: 'string', format: 'date', example: '2026-05-08'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 404, description: 'Không tìm thấy cửa hàng')]
+    public function getDailyRevenueStats(Request $request): JsonResponse
+    {
+        $result = $this->storeService->getDailyRevenueStats((string)$request->user()->id);
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
 }

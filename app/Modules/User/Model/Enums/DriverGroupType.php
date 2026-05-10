@@ -16,8 +16,8 @@ enum DriverGroupType: int
     public function label(): string
     {
         return match ($this) {
-            self::INTERNAL => 'Đội xe nhà',
-            self::PARTNER  => 'Tài xế đối tác',
+            self::INTERNAL => 'Xe nhà',
+            self::PARTNER  => 'Xe khách',
         };
     }
 }

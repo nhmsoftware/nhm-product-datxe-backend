@@ -12,6 +12,7 @@ final class ListDriversDTO
         public readonly ?string $keyword = null,
         public readonly ?int    $kycStatus = null,
         public readonly ?bool   $isActive = null,
+        public readonly ?int    $driverGroupType = null,
         public readonly int     $perPage = 20,
         public readonly int     $page = 1,
     ) {}
@@ -22,6 +23,7 @@ final class ListDriversDTO
             keyword:   $request->query('keyword'),
             kycStatus: $request->filled('kyc_status') || $request->query('kyc_status') === '0' ? (int) $request->query('kyc_status') : null,
             isActive:  $request->has('is_active') ? $request->boolean('is_active') : null,
+            driverGroupType: $request->filled('driver_group_type') ? (int) $request->query('driver_group_type') : null,
             perPage:   (int) $request->query('per_page', 20),
             page:      (int) $request->query('page', 1),
         );
@@ -33,6 +35,7 @@ final class ListDriversDTO
             'keyword'    => $this->keyword,
             'kyc_status' => $this->kycStatus,
             'is_active'  => $this->isActive,
+            'driver_group_type' => $this->driverGroupType,
             'per_page'   => $this->perPage,
             'page'       => $this->page,
         ];

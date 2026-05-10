@@ -604,5 +604,221 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->where('driver_id', $driverId)
             ->first();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRevenueAnalytics(CarbonInterface $start, CarbonInterface $end, string $interval): array
+    {
+        $groupBy = match ($interval) {
+            'month' => "TO_CHAR(created_at, 'YYYY-MM')",
+            'year'  => "TO_CHAR(created_at, 'YYYY')",
+            default => "TO_CHAR(created_at, 'YYYY-MM-DD')"
+        };
+
+        return $this->model->newQuery()
+            ->whereBetween('created_at', [$start, $end])
+            ->where('status', RideStatus::COMPLETED->value)
+            ->select([
+                DB::raw("$groupBy as period"),
+                DB::raw("SUM(total_price) as gmv"),
+                DB::raw("SUM(total_price - discount_amount) as actual_revenue"),
+                DB::raw("COUNT(*) as order_count"),
+                DB::raw("AVG(total_price) as aov")
+            ])
+            ->groupBy('period')
+            ->orderBy('period')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getAreaAnalytics(CarbonInterface $start, CarbonInterface $end): array
+    {
+        // Phân tích theo khu vực (Dựa trên pickup_address, giả định phần cuối là Tỉnh/Thành)
+        // Trong thực tế nên có bảng khu vực riêng, ở đây demo bằng cách lấy text sau dấu phẩy cuối cùng
+        return $this->model->newQuery()
+            ->whereBetween('created_at', [$start, $end])
+            ->select([
+                DB::raw("TRIM(SUBSTRING(pickup_address FROM '([^,]+)$')) as area"),
+                DB::raw("COUNT(*) as total_rides"),
+                DB::raw("SUM(total_price) as total_revenue")
+            ])
+            ->groupBy('area')
+            ->orderByDesc('total_revenue')
+            ->limit(10)
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getOrderOperationalStats(CarbonInterface $start, CarbonInterface $end): array
+    {
+        $total = $this->model->whereBetween('created_at', [$start, $end])->count();
+        if ($total === 0) {
+            return [
+                'completion_rate' => 0,
+                'cancellation_rate' => 0,
+                'status_distribution' => [],
+                'cancel_reasons' => []
+            ];
+        }
+
+        $completed = $this->model->whereBetween('created_at', [$start, $end])
+            ->where('status', RideStatus::COMPLETED->value)
+            ->count();
+
+        $cancelled = $this->model->whereBetween('created_at', [$start, $end])
+            ->where('status', RideStatus::CANCELLED->value)
+            ->count();
+
+        $statusDistribution = $this->model->whereBetween('created_at', [$start, $end])
+            ->select('status', DB::raw('count(*) as count'))
+            ->groupBy('status')
+            ->get()
+            ->pluck('count', 'status')
+            ->toArray();
+
+        $cancelReasons = $this->model->whereBetween('created_at', [$start, $end])
+            ->where('status', RideStatus::CANCELLED->value)
+            ->whereNotNull('cancel_reason')
+            ->select('cancel_reason', DB::raw('count(*) as count'))
+            ->groupBy('cancel_reason')
+            ->orderByDesc('count')
+            ->get()
+            ->toArray();
+
+        return [
+            'total_orders' => $total,
+            'completed_orders' => $completed,
+            'cancelled_orders' => $cancelled,
+            'completion_rate' => round(($completed / $total) * 100, 2),
+            'cancellation_rate' => round(($cancelled / $total) * 100, 2),
+            'status_distribution' => $statusDistribution,
+            'cancel_reasons' => $cancelReasons
+        ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCommissionAnalytics(CarbonInterface $start, CarbonInterface $end): array
+    {
+        // Thống kê hoa hồng bóc tách theo loại đội xe
+        // driver_group_type: 1 = Xe nhà, 2 = Xe khách (Giả định)
+        return $this->model->newQuery()
+            ->join('driver_profiles', 'rides.driver_id', '=', 'driver_profiles.user_id')
+            ->whereBetween('rides.completed_at', [$start, $end])
+            ->where('rides.status', RideStatus::COMPLETED->value)
+            ->select([
+                'driver_profiles.driver_group_type',
+                DB::raw("SUM(rides.service_fee) as system_commission"),
+                DB::raw("COUNT(*) as total_rides"),
+                DB::raw("SUM(rides.total_price) as gmv")
+            ])
+            ->groupBy('driver_profiles.driver_group_type')
+            ->get()
+            ->map(function($item) {
+                $item->group_label = $item->driver_group_type == 1 ? 'Đội xe nhà' : 'Đối tác ngoài';
+                return $item;
+            })
+            ->toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getCommissionDetails(CarbonInterface $start, CarbonInterface $end, int $limit = 50): array
+    {
+        return $this->model->newQuery()
+            ->join('driver_profiles', 'rides.driver_id', '=', 'driver_profiles.user_id')
+            ->whereBetween('rides.completed_at', [$start, $end])
+            ->where('rides.status', RideStatus::COMPLETED->value)
+            ->select([
+                'rides.id as ride_id',
+                'driver_profiles.full_name as driver_name',
+                'rides.vehicle_type',
+                'rides.total_price as total_amount',
+                'rides.service_fee as commission_amount',
+                DB::raw("CASE WHEN rides.total_price > 0 THEN (rides.service_fee / rides.total_price * 100) ELSE 0 END as commission_percent"),
+                'rides.completed_at',
+                'rides.is_paid as payment_status'
+            ])
+            ->orderByDesc('rides.completed_at')
+            ->limit($limit)
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getVehicleTypeAnalytics(CarbonInterface $start, CarbonInterface $end): array
+    {
+        return $this->model->newQuery()
+            ->whereBetween('created_at', [$start, $end])
+            ->where('status', RideStatus::COMPLETED->value)
+            ->select([
+                'vehicle_type',
+                DB::raw("COUNT(*) as total_rides"),
+                DB::raw("SUM(total_price) as total_revenue")
+            ])
+            ->groupBy('vehicle_type')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRideTypeAnalytics(CarbonInterface $start, CarbonInterface $end): array
+    {
+        return $this->model->newQuery()
+            ->whereBetween('created_at', [$start, $end])
+            ->where('status', RideStatus::COMPLETED->value)
+            ->select([
+                'ride_type',
+                DB::raw("COUNT(*) as total_rides"),
+                DB::raw("SUM(total_price) as total_revenue")
+            ])
+            ->groupBy('ride_type')
+            ->get()
+            ->toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    /**
+     * @inheritDoc
+     */
+    public function getTopDriversAnalytics(CarbonInterface $start, CarbonInterface $end, int $limit = 10, ?int $driverGroupType = null): array
+    {
+        $query = $this->model->newQuery()
+            ->join('driver_profiles', 'rides.driver_id', '=', 'driver_profiles.user_id')
+            ->whereBetween('rides.created_at', [$start, $end])
+            ->where('rides.status', RideStatus::COMPLETED->value);
+
+        if ($driverGroupType !== null) {
+            $query->where('driver_profiles.driver_group_type', $driverGroupType);
+        }
+
+        return $query->select([
+            'rides.driver_id',
+            'driver_profiles.full_name as driver_name',
+            'driver_profiles.driver_group_type',
+            DB::raw("COUNT(rides.id) as total_rides"),
+            DB::raw("SUM(rides.total_price) as total_revenue")
+        ])
+        ->groupBy('rides.driver_id', 'driver_profiles.full_name', 'driver_profiles.driver_group_type')
+        ->orderByRaw('SUM(rides.total_price) DESC')
+        ->limit($limit)
+        ->get()
+        ->toArray();
+    }
 }
 

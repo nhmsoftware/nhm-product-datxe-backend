@@ -93,4 +93,20 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
 
         return $query->latest()->paginate($dto->limit, ['*'], 'page', $dto->page);
     }
+
+    public function updateRatingStats(string $merchantProfileId): bool
+    {
+        $stats = DB::table('food_ratings')
+            ->where('merchant_id', $merchantProfileId)
+            ->select([
+                DB::raw('COUNT(*) as total_orders'),
+                DB::raw('AVG(rating) as average_rating')
+            ])
+            ->first();
+
+        return (bool) $this->model->where('id', $merchantProfileId)->update([
+            'average_rating' => $stats->average_rating ?? 0,
+            'total_orders'   => $stats->total_orders ?? 0,
+        ]);
+    }
 }

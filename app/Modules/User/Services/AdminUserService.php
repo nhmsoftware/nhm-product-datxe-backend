@@ -75,6 +75,7 @@ final class AdminUserService extends BaseService implements AdminUserServiceInte
 
     /**
      * @inheritDoc
+     * UC-78 Lock/Unlock User
      */
     public function updateUserStatus(UpdateUserStatusDTO $dto): ServiceReturn
     {
@@ -88,13 +89,19 @@ final class AdminUserService extends BaseService implements AdminUserServiceInte
                 // Thao tác Lock User
                 $this->validate($user->is_active, 'Trạng thái tài khoản đã được cập nhật trước đó.');
                 
-                $lockedDays = $dto->lockedDays ?? 2;
                 $lockedAt = now();
-                $lockExpiredAt = (clone $lockedAt)->addDays($lockedDays);
+                $lockExpiredAt = null;
+
+                if ($dto->lockExpiredAt) {
+                    $lockExpiredAt = \Illuminate\Support\Carbon::parse($dto->lockExpiredAt);
+                } else {
+                    $lockedDays = $dto->lockedDays ?? 3; // Default to 3 days as per requirement
+                    $lockExpiredAt = (clone $lockedAt)->addDays($lockedDays);
+                }
 
                 $updateData = array_merge($updateData, [
                     'lock_reason'     => $dto->reason,
-                    'locked_days'     => $lockedDays,
+                    'locked_days'     => $dto->lockedDays ?? ($dto->lockExpiredAt ? $lockedAt->diffInDays($lockExpiredAt) : 3),
                     'locked_at'       => $lockedAt,
                     'lock_expired_at' => $lockExpiredAt,
                 ]);

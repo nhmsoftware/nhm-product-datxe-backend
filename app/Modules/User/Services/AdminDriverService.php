@@ -42,6 +42,8 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                     'phone'            => $user->phone,
                     'email'            => $user->email,
                     'is_active'        => $user->is_active,
+                    'driver_group_type' => $user->driverProfile?->driver_group_type,
+                    'group_label'      => $user->driverProfile?->driver_group_type === 1 ? 'Xe nhà' : ($user->driverProfile?->driver_group_type === 2 ? 'Đối tác' : 'Chưa gán'),
                     'kyc_status'       => $latestKyc?->kyc_status?->value ?? 0,
                     'kyc_status_label' => $latestKyc?->kyc_status?->label() ?? 'Chưa có hồ sơ',
                     'created_at'       => $user->created_at?->toIso8601String(),

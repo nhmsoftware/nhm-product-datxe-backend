@@ -164,4 +164,27 @@ final class MenuService extends BaseService implements MenuServiceInterface
 
         return $this->menuRepository->findOrCreateCategory($dto->merchantProfileId, $dto->categoryName);
     }
+
+    public function updateMenuItemStatus(string $itemId, string $merchantProfileId, bool $isAvailable): ServiceReturn
+    {
+        return $this->execute(function () use ($itemId, $merchantProfileId, $isAvailable) {
+            // 1. Find item and verify ownership
+            $item = $this->menuRepository->findItem($itemId);
+            if (!$item || $item->merchant_profile_id !== $merchantProfileId) {
+                $this->throw('Không tìm thấy món ăn.', 404);
+            }
+
+            // 2. Update Status
+            $this->menuRepository->updateItemStatus($itemId, $isAvailable);
+
+            // 3. Dispatch Event
+            event(new \App\Modules\Merchant\Events\MenuItemUpdated(
+                itemId: $itemId,
+                merchantProfileId: $merchantProfileId,
+                categoryId: (string) $item->category_id
+            ));
+
+            return $this->success(null, 'Cập nhật trạng thái thành công.');
+        }, true, 'UpdateMenuItemStatus');
+    }
 }

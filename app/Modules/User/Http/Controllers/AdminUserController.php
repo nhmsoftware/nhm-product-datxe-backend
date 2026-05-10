@@ -23,7 +23,7 @@ final class AdminUserController extends BaseController
         path: '/api/v1/admin/users/customers',
         summary: 'Danh sách khách hàng (UC-77)',
         description: 'Lấy danh sách khách hàng có phân trang và tìm kiếm',
-        security: [['bearerAuth' => []]],
+        security: [['sanctum' => []]],
         tags: ['Admin User Management'],
         parameters: [
             new OA\Parameter(name: 'keyword', in: 'query', description: 'Từ khóa tìm kiếm (Tên, SĐT, Email)', schema: new OA\Schema(type: 'string')),
@@ -52,7 +52,7 @@ final class AdminUserController extends BaseController
         path: '/api/v1/admin/users/{userId}',
         summary: 'Chi tiết người dùng (UC-79)',
         description: 'Xem thông tin chi tiết của một tài khoản Customer',
-        security: [['bearerAuth' => []]],
+        security: [['sanctum' => []]],
         tags: ['Admin User Management'],
         parameters: [
             new OA\Parameter(name: 'userId', in: 'path', required: true, description: 'ID người dùng', schema: new OA\Schema(type: 'integer')),
@@ -75,9 +75,9 @@ final class AdminUserController extends BaseController
 
     #[OA\Put(
         path: '/api/v1/admin/users/{userId}/status',
-        summary: 'Khóa/Mở khóa người dùng (UC-69/UC-77)',
+        summary: 'Khóa/Mở khóa người dùng (UC-78)',
         description: 'Cập nhật trạng thái hoạt động của người dùng',
-        security: [['bearerAuth' => []]],
+        security: [['sanctum' => []]],
         tags: ['Admin User Management'],
         parameters: [
             new OA\Parameter(name: 'userId', in: 'path', required: true, description: 'ID người dùng', schema: new OA\Schema(type: 'integer')),
@@ -88,7 +88,8 @@ final class AdminUserController extends BaseController
                 properties: [
                     new OA\Property(property: 'is_active', type: 'boolean', example: false),
                     new OA\Property(property: 'reason', type: 'string', description: 'Lý do khóa (bắt buộc nếu is_active=false)', example: 'Vi phạm điều khoản'),
-                    new OA\Property(property: 'locked_days', type: 'integer', description: 'Số ngày khóa (mặc định 2)', example: 7),
+                    new OA\Property(property: 'locked_days', type: 'integer', description: 'Số ngày khóa (3 hoặc 7)', example: 7),
+                    new OA\Property(property: 'lock_expired_at', type: 'string', format: 'date', description: 'Ngày hết hạn khóa cụ thể (YYYY-MM-DD)', example: '2026-12-31'),
                 ]
             )
         ),

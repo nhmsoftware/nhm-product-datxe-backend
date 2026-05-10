@@ -20,6 +20,7 @@ Route::prefix('v1/merchant')->group(function () {
         Route::get('/menu', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'index'])->name('merchant.menu.index');
         Route::post('/menu/items', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'store'])->name('merchant.menu.items.store');
         Route::post('/menu/items/{id}', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'update'])->name('merchant.menu.items.update');
+        Route::patch('/menu/items/{id}/status', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'updateStatus'])->name('merchant.menu.items.update_status');
         Route::delete('/menu/items/{id}', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'delete'])->name('merchant.menu.items.delete');
 
         // Store Management (UC-53, UC-46, UC-45, etc.)
@@ -30,6 +31,8 @@ Route::prefix('v1/merchant')->group(function () {
         Route::get('/store/commission-packages', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getPackages'])->name('merchant.store.commission_packages');
         Route::put('/store/commission-package', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'updatePackage'])->name('merchant.store.update_commission_package');
         Route::put('/store/discount', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'updateDiscount'])->name('merchant.store.update_discount');
+        Route::get('/store/stats/daily-orders', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getDailyOrderStats'])->name('merchant.store.stats.daily_orders');
+        Route::get('/store/stats/daily-revenue', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getDailyRevenueStats'])->name('merchant.store.stats.daily_revenue');
 
         // Combo Management (UC-61, UC-54, UC-55, UC-56, UC-62)
         Route::get('/combos', [\App\Modules\Merchant\Http\Controllers\MerchantComboController::class, 'index'])->name('merchant.combos.index');
@@ -38,6 +41,17 @@ Route::prefix('v1/merchant')->group(function () {
         Route::put('/combos/{id}', [\App\Modules\Merchant\Http\Controllers\MerchantComboController::class, 'update'])->name('merchant.combos.update');
         Route::delete('/combos/{id}', [\App\Modules\Merchant\Http\Controllers\MerchantComboController::class, 'destroy'])->name('merchant.combos.destroy');
         Route::patch('/combos/{id}/status', [\App\Modules\Merchant\Http\Controllers\MerchantComboController::class, 'updateStatus'])->name('merchant.combos.update_status');
+
+        // Order Management (UC-69, UC-70, UC-61 -> UC-67)
+        Route::prefix('orders')->group(function () {
+            Route::get('/{id}', [\App\Modules\Merchant\Http\Controllers\MerchantOrderController::class, 'show'])->name('merchant.orders.show');
+            Route::post('/{id}/accept', [\App\Modules\Merchant\Http\Controllers\MerchantOrderController::class, 'accept'])->name('merchant.orders.accept'); // UC-71
+            Route::post('/{id}/reject', [\App\Modules\Merchant\Http\Controllers\MerchantOrderController::class, 'reject'])->name('merchant.orders.reject'); // UC-72
+            Route::post('/{id}/preparing', [\App\Modules\Merchant\Http\Controllers\MerchantOrderController::class, 'preparing'])->name('merchant.orders.preparing');
+            Route::post('/{id}/ready', [\App\Modules\Merchant\Http\Controllers\MerchantOrderController::class, 'ready'])->name('merchant.orders.ready'); // UC-73
+            Route::post('/{id}/cancel', [\App\Modules\Merchant\Http\Controllers\MerchantOrderController::class, 'cancel'])->name('merchant.orders.cancel'); // UC-75
+            Route::post('/{id}/cancellation/handle', [\App\Modules\Merchant\Http\Controllers\MerchantOrderController::class, 'handleCancellation'])->name('merchant.orders.handle_cancellation'); // UC-74
+        });
     });
 });
 

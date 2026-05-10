@@ -24,6 +24,7 @@ class ListDriversRequest extends FormRequest
             'keyword'    => 'nullable|string|max:255',
             'kyc_status' => 'nullable|integer',
             'is_active'  => 'nullable|boolean',
+            'driver_group_type' => 'nullable|integer|in:1,2',
             'per_page'   => 'nullable|integer|min:1|max:100',
             'page'       => 'nullable|integer|min:1',
         ];

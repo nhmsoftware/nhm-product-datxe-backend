@@ -8,11 +8,13 @@ use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Merchant\Interfaces\MerchantStoreServiceInterface;
 use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
+use App\Modules\Order\Interfaces\OrderRepositoryInterface;
 
 final class MerchantStoreService extends BaseService implements MerchantStoreServiceInterface
 {
     public function __construct(
         private readonly MerchantRepositoryInterface $merchantRepository,
+        private readonly OrderRepositoryInterface $orderRepository,
     ) {}
 
     public function getStoreInfo(string $userId): ServiceReturn
@@ -181,5 +183,35 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
                 'message'            => "Đã cập nhật sang {$selectedPackage['name']} thành công.",
             ];
         }, useTransaction: true);
+    }
+
+    public function getDailyOrderStats(string $userId): ServiceReturn
+    {
+        return $this->execute(function () use ($userId) {
+            $store = $this->merchantRepository->findByUserId($userId);
+            $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
+
+            $totalOrders = $this->orderRepository->countDailyOrdersByMerchant((string) $store->id);
+
+            return [
+                'total_orders_today' => $totalOrders,
+                'date'               => now()->toDateString(),
+            ];
+        });
+    }
+
+    public function getDailyRevenueStats(string $userId): ServiceReturn
+    {
+        return $this->execute(function () use ($userId) {
+            $store = $this->merchantRepository->findByUserId($userId);
+            $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
+
+            $totalRevenue = $this->orderRepository->sumDailyRevenueByMerchant((string) $store->id);
+
+            return [
+                'total_revenue_today' => $totalRevenue,
+                'date'                => now()->toDateString(),
+            ];
+        });
     }
 }

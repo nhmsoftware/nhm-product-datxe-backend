@@ -310,4 +310,66 @@ interface RideRepositoryInterface
      * Tìm chuyến xe theo ID và Driver ID (dùng để xác thực quyền sở hữu trong UC-37).
      */
     public function findByIdAndDriver(string $rideId, string $driverId): ?\App\Modules\Ride\Model\Ride;
+
+    /**
+     * Lấy dữ liệu phân tích doanh thu theo thời gian (UC-Dashboard).
+     *
+     * @param \Carbon\CarbonInterface $start
+     * @param \Carbon\CarbonInterface $end
+     * @param string $interval (day, month, year)
+     * @return array
+     */
+    public function getRevenueAnalytics(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end, string $interval): array;
+
+    /**
+     * Lấy dữ liệu phân tích doanh thu theo khu vực (UC-Dashboard).
+     *
+     * @param \Carbon\CarbonInterface $start
+     * @param \Carbon\CarbonInterface $end
+     * @return array
+     */
+    public function getAreaAnalytics(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): array;
+
+    /**
+     * Lấy thống kê vận hành đơn hàng (UC-Dashboard).
+     *
+     * @param \Carbon\CarbonInterface $start
+     * @param \Carbon\CarbonInterface $end
+     * @return array
+     */
+    public function getOrderOperationalStats(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): array;
+
+    /**
+     * Lấy dữ liệu phân tích hoa hồng (UC-Dashboard).
+     *
+     * @param \Carbon\CarbonInterface $start
+     * @param \Carbon\CarbonInterface $end
+     * @return array
+     */
+    public function getCommissionAnalytics(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): array;
+
+    /**
+     * Lấy danh sách chi tiết hoa hồng (UC-Dashboard).
+     *
+     * @param \Carbon\CarbonInterface $start
+     * @param \Carbon\CarbonInterface $end
+     * @param int $limit
+     * @return array
+     */
+    public function getCommissionDetails(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end, int $limit = 50): array;
+
+    /**
+     * Lấy phân tích theo loại xe (UC-Dashboard).
+     */
+    public function getVehicleTypeAnalytics(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): array;
+
+    /**
+     * Lấy phân tích theo loại dịch vụ (Standard, Intercity, Airport, Delivery) (UC-Dashboard).
+     */
+    public function getRideTypeAnalytics(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): array;
+
+    /**
+     * Lấy danh sách Top tài xế theo doanh thu (UC-Dashboard).
+     */
+    public function getTopDriversAnalytics(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end, int $limit = 10, ?int $driverGroupType = null): array;
 }

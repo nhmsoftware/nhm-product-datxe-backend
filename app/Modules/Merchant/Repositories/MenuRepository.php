@@ -105,4 +105,27 @@ final class MenuRepository extends BaseRepository implements MenuRepositoryInter
     {
         return (bool) MenuItem::findOrFail($itemId)->delete();
     }
+
+    public function updateRatingStats(string $itemId): bool
+    {
+        $stats = DB::table('food_item_ratings')
+            ->where('menu_item_id', $itemId)
+            ->select([
+                DB::raw('COUNT(*) as total_reviews'),
+                DB::raw('AVG(rating) as rating')
+            ])
+            ->first();
+
+        return (bool) MenuItem::where('id', $itemId)->update([
+            'rating'        => $stats->rating ?? 0,
+            'total_reviews' => $stats->total_reviews ?? 0,
+        ]);
+    }
+
+    public function updateItemStatus(string $itemId, bool $isAvailable): bool
+    {
+        return (bool) MenuItem::where('id', $itemId)->update([
+            'is_available' => $isAvailable
+        ]);
+    }
 }

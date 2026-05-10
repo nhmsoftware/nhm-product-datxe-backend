@@ -62,4 +62,125 @@ final class DashboardController extends BaseController
 
         return $this->sendSuccess($result->getData(), $result->getMessage());
     }
+
+    #[OA\Get(
+        path: '/api/v1/admin/dashboard/revenue',
+        summary: 'Báo cáo doanh thu',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Dashboard'],
+        parameters: [
+            new OA\Parameter(name: 'start_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'end_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'interval', in: 'query', schema: new OA\Schema(type: 'string', enum: ['day', 'month', 'year'])),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function getRevenueReport(\App\Modules\Dashboard\Http\Requests\DashboardReportRequest $request): JsonResponse
+    {
+        $result = $this->dashboardService->getRevenueReport(\App\Modules\Dashboard\DTO\DashboardReportFilterDTO::fromRequest($request));
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/admin/dashboard/area',
+        summary: 'Báo cáo theo khu vực',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Dashboard'],
+        parameters: [
+            new OA\Parameter(name: 'start_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'end_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function getAreaReport(\App\Modules\Dashboard\Http\Requests\DashboardReportRequest $request): JsonResponse
+    {
+        $result = $this->dashboardService->getAreaReport(\App\Modules\Dashboard\DTO\DashboardReportFilterDTO::fromRequest($request));
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/admin/dashboard/commission',
+        summary: 'Báo cáo hoa hồng',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Dashboard'],
+        parameters: [
+            new OA\Parameter(name: 'start_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'end_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function getCommissionReport(\App\Modules\Dashboard\Http\Requests\DashboardReportRequest $request): JsonResponse
+    {
+        $result = $this->dashboardService->getCommissionReport(\App\Modules\Dashboard\DTO\DashboardReportFilterDTO::fromRequest($request));
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/admin/dashboard/orders',
+        summary: 'Báo cáo quản lý đơn hàng',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Dashboard'],
+        parameters: [
+            new OA\Parameter(name: 'start_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'end_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function getOrderReport(\App\Modules\Dashboard\Http\Requests\DashboardReportRequest $request): JsonResponse
+    {
+        $result = $this->dashboardService->getOrderReport(\App\Modules\Dashboard\DTO\DashboardReportFilterDTO::fromRequest($request));
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/admin/dashboard/detailed',
+        summary: 'Báo cáo chi tiết loại xe và dịch vụ',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Dashboard'],
+        parameters: [
+            new OA\Parameter(name: 'start_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'end_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function getDetailedReport(\App\Modules\Dashboard\Http\Requests\DashboardReportRequest $request): JsonResponse
+    {
+        $result = $this->dashboardService->getDetailedReport(\App\Modules\Dashboard\DTO\DashboardReportFilterDTO::fromRequest($request));
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/admin/dashboard/top-drivers',
+        summary: 'Báo cáo top tài xế theo doanh thu',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Dashboard'],
+        parameters: [
+            new OA\Parameter(name: 'start_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'end_date', in: 'query', schema: new OA\Schema(type: 'string', format: 'date')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function getTopDriversReport(\App\Modules\Dashboard\Http\Requests\DashboardReportRequest $request): JsonResponse
+    {
+        $result = $this->dashboardService->getTopDriversReport(\App\Modules\Dashboard\DTO\DashboardReportFilterDTO::fromRequest($request));
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
 }

@@ -2301,6 +2301,199 @@
                 }
             }
         },
+        "/api/v1/food/order": {
+            "post": {
+                "tags": [
+                    "Food"
+                ],
+                "summary": "Đặt món ăn (UC-18)",
+                "operationId": "fc5c4f7fdb0c431cd53ec18faf0da2d7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "merchant_id",
+                                    "delivery_address",
+                                    "delivery_lat",
+                                    "delivery_lng",
+                                    "customer_phone",
+                                    "items"
+                                ],
+                                "properties": {
+                                    "merchant_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "delivery_address": {
+                                        "type": "string",
+                                        "example": "123 Nguyễn Trãi, Q1, HCM"
+                                    },
+                                    "delivery_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10.762622
+                                    },
+                                    "delivery_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 106.660172
+                                    },
+                                    "customer_phone": {
+                                        "type": "string",
+                                        "example": "0901234567"
+                                    },
+                                    "notes": {
+                                        "type": "string",
+                                        "example": "Giao lầu 3"
+                                    },
+                                    "voucher_code": {
+                                        "type": "string",
+                                        "example": "KM50"
+                                    },
+                                    "items": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "menu_item_id": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "quantity": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "notes": {
+                                                    "type": "string",
+                                                    "example": "Ít cay"
+                                                },
+                                                "options": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Size"
+                                                            },
+                                                            "value": {
+                                                                "type": "string",
+                                                                "example": "L"
+                                                            },
+                                                            "price": {
+                                                                "type": "number",
+                                                                "example": 5000
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đặt món thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ"
+                    },
+                    "422": {
+                        "description": "Lỗi validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/food/order/estimate": {
+            "post": {
+                "tags": [
+                    "Food"
+                ],
+                "summary": "Xem giá ước tính đơn hàng (UC-18)",
+                "operationId": "e61695dfcf27ee418fad9185621fbb2c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CreateFoodOrderRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/food/order/{orderId}/rate": {
+            "post": {
+                "tags": [
+                    "Food"
+                ],
+                "summary": "Đánh giá đơn đồ ăn (UC-20)",
+                "operationId": "c337d75376f49c6a736cafb9cc98ba47",
+                "parameters": [
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "description": "ID của đơn hàng đồ ăn (ULID)",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RateFoodRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Đánh giá thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ (đã đánh giá hoặc chưa hoàn thành)"
+                    },
+                    "403": {
+                        "description": "Không có quyền đánh giá"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/homepage": {
             "get": {
                 "tags": [
@@ -3363,6 +3556,336 @@
                 ]
             }
         },
+        "/api/v1/merchant/menu/items/{id}/status": {
+            "patch": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Thay đổi trạng thái bán của món ăn (UC-68)",
+                "operationId": "c900ebc069aa3d63092cd6dec6c886c7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của món ăn cần thay đổi trạng thái",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_available"
+                                ],
+                                "properties": {
+                                    "is_available": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật trạng thái thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Cập nhật trạng thái thành công."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy món ăn"
+                    },
+                    "403": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/orders/{id}/accept": {
+            "post": {
+                "tags": [
+                    "Merchant Order"
+                ],
+                "summary": "Nhận đơn hàng (UC-71)",
+                "operationId": "4e38b847a5b245b2aaaee6df6b7879e2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Nhận đơn thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/orders/{id}/reject": {
+            "post": {
+                "tags": [
+                    "Merchant Order"
+                ],
+                "summary": "Từ chối đơn hàng (UC-72)",
+                "operationId": "903cbcd2caa962583e486fef85723568",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Hết món"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Từ chối đơn thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/orders/{id}/preparing": {
+            "post": {
+                "tags": [
+                    "Merchant Order"
+                ],
+                "summary": "Đánh dấu đang chuẩn bị (UC-64)",
+                "operationId": "acdd58e84ec38aa4524baba1dda9ae2b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/orders/{id}/ready": {
+            "post": {
+                "tags": [
+                    "Merchant Order"
+                ],
+                "summary": "Đánh dấu sẵn sàng giao (UC-73)",
+                "operationId": "6983743e9c74371636dddc2afc3874e5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/orders/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Merchant Order"
+                ],
+                "summary": "Hủy đơn hàng (UC-75)",
+                "operationId": "dfb2c857d895c756e61108c075e420b3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Khách hàng yêu cầu hủy"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Hủy đơn thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/orders/{id}/cancellation/handle": {
+            "post": {
+                "tags": [
+                    "Merchant Order"
+                ],
+                "summary": "Xử lý yêu cầu hủy (UC-74)",
+                "operationId": "7e5af1371813b20f5f61bd025999cd00",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "action"
+                                ],
+                                "properties": {
+                                    "action": {
+                                        "type": "string",
+                                        "example": "accept",
+                                        "enum": [
+                                            "accept",
+                                            "reject"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Xử lý thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/orders/{id}": {
+            "get": {
+                "tags": [
+                    "Merchant Order"
+                ],
+                "summary": "Xem chi tiết đơn hàng (UC-70)",
+                "operationId": "671df3999093c66fafceea421b3c5f24",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Đơn hàng không tồn tại"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/merchant/register": {
             "post": {
                 "tags": [
@@ -3668,6 +4191,87 @@
                 }
             }
         },
+        "/api/v1/merchant/store/stats/daily-orders": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Xem tổng số đơn hàng trong ngày (UC-66)",
+                "operationId": "a51242427d227c14b5770600c430192f",
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_orders_today": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "date": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2026-05-08"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy cửa hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/store/stats/daily-revenue": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Xem tổng doanh thu trong ngày (UC-67)",
+                "operationId": "b1f7e7cd684eb21ae7a76491f9935994",
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_revenue_today": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 1500000.5
+                                        },
+                                        "date": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2026-05-08"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy cửa hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/operation/location": {
             "post": {
                 "tags": [
@@ -3750,6 +4354,125 @@
                     },
                     "404": {
                         "description": "Không tìm thấy chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/customer/orders": {
+            "get": {
+                "tags": [
+                    "Order History"
+                ],
+                "summary": "Xem lịch sử đơn hàng (UC-19)",
+                "description": "Lấy danh sách các chuyến xe và đơn hàng đồ ăn của khách hàng, có hỗ trợ lọc và phân trang.",
+                "operationId": "cbdb3ee41c3d0c81edfabbc37d545555",
+                "parameters": [
+                    {
+                        "name": "service_type",
+                        "in": "query",
+                        "description": "Loại dịch vụ (ride/food)",
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ride",
+                                "food"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái đơn",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Từ ngày (Y-m-d)",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "Đến ngày (Y-m-d)",
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số bản ghi mỗi trang",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Danh sách đơn hàng"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/customer/orders/{orderId}": {
+            "get": {
+                "tags": [
+                    "Order History"
+                ],
+                "summary": "Xem chi tiết đơn hàng (UC-19)",
+                "description": "Lấy thông tin chi tiết của một đơn hàng hoặc chuyến xe cụ thể.",
+                "operationId": "95edf51f071bb5927a32a2d9ab76cf43",
+                "parameters": [
+                    {
+                        "name": "orderId",
+                        "in": "path",
+                        "description": "ID đơn hàng",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "service_type",
+                        "in": "query",
+                        "description": "Loại dịch vụ (ride/food)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ride",
+                                "food"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chi tiết đơn hàng"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn hàng"
                     }
                 },
                 "security": [
@@ -6241,7 +6964,7 @@
                 },
                 "security": [
                     {
-                        "bearerAuth": []
+                        "sanctum": []
                     }
                 ]
             }
@@ -6275,7 +6998,7 @@
                 },
                 "security": [
                     {
-                        "bearerAuth": []
+                        "sanctum": []
                     }
                 ]
             }
@@ -6285,7 +7008,7 @@
                 "tags": [
                     "Admin User Management"
                 ],
-                "summary": "Khóa/Mở khóa người dùng (UC-69/UC-77)",
+                "summary": "Khóa/Mở khóa người dùng (UC-78)",
                 "description": "Cập nhật trạng thái hoạt động của người dùng",
                 "operationId": "05e04e2aa2d016c126caa06f2c89e05d",
                 "parameters": [
@@ -6338,7 +7061,7 @@
                 },
                 "security": [
                     {
-                        "bearerAuth": []
+                        "sanctum": []
                     }
                 ]
             }
@@ -8531,6 +9254,180 @@
                     }
                 },
                 "type": "object"
+            },
+            "CreateFoodOrderRequest": {
+                "required": [
+                    "merchant_id",
+                    "delivery_address",
+                    "delivery_lat",
+                    "delivery_lng",
+                    "customer_phone",
+                    "items"
+                ],
+                "properties": {
+                    "merchant_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "delivery_address": {
+                        "type": "string",
+                        "example": "123 Nguyễn Trãi, Q1, HCM"
+                    },
+                    "delivery_lat": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 10.762622
+                    },
+                    "delivery_lng": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 106.660172
+                    },
+                    "customer_phone": {
+                        "type": "string",
+                        "example": "0901234567"
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Giao lầu 3"
+                    },
+                    "voucher_code": {
+                        "type": "string",
+                        "example": "KM50"
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "menu_item_id": {
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "quantity": {
+                                    "type": "integer",
+                                    "example": 2
+                                },
+                                "notes": {
+                                    "type": "string",
+                                    "example": "Ít cay"
+                                },
+                                "options": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Size"
+                                            },
+                                            "value": {
+                                                "type": "string",
+                                                "example": "L"
+                                            },
+                                            "price": {
+                                                "type": "number",
+                                                "example": 5000
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "RateFoodRequest": {
+                "required": [
+                    "rating"
+                ],
+                "properties": {
+                    "rating": {
+                        "type": "integer",
+                        "example": 5,
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "comment": {
+                        "type": "string",
+                        "example": "Món ăn rất ngon, giao hàng nhanh.",
+                        "maxLength": 1000
+                    },
+                    "food_quality_rating": {
+                        "type": "integer",
+                        "example": 5,
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "delivery_time_rating": {
+                        "type": "integer",
+                        "example": 4,
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "service_rating": {
+                        "type": "integer",
+                        "example": 5,
+                        "maximum": 5,
+                        "minimum": 1
+                    },
+                    "items": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "menu_item_id": {
+                                    "type": "integer",
+                                    "example": 10
+                                },
+                                "rating": {
+                                    "type": "integer",
+                                    "example": 5,
+                                    "maximum": 5,
+                                    "minimum": 1
+                                },
+                                "comment": {
+                                    "type": "string",
+                                    "example": "Rất đậm đà.",
+                                    "maxLength": 255
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                },
+                "type": "object"
+            },
+            "GetOrderHistoryRequest": {
+                "properties": {
+                    "service_type": {
+                        "type": "string",
+                        "nullable": true,
+                        "enum": [
+                            "ride",
+                            "food"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "nullable": true
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 15
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -8572,6 +9469,10 @@
             "description": "Finance"
         },
         {
+            "name": "Food",
+            "description": "Food"
+        },
+        {
             "name": "Homepage",
             "description": "Homepage"
         },
@@ -8588,8 +9489,16 @@
             "description": "Merchant"
         },
         {
+            "name": "Merchant Order",
+            "description": "Merchant Order"
+        },
+        {
             "name": "Operation",
             "description": "Operation"
+        },
+        {
+            "name": "Order History",
+            "description": "Order History"
         },
         {
             "name": "Admin Pricing",

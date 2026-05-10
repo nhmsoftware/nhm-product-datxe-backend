@@ -40,4 +40,15 @@ interface MenuServiceInterface
      * @return \App\Core\Services\ServiceReturn
      */
     public function deleteMenuItem(\App\Modules\Merchant\DTO\DeleteMenuItemDTO $dto): \App\Core\Services\ServiceReturn;
+
+    /**
+     * Update availability status of a menu item.
+     * UC-68 Toggle Availability
+     *
+     * @param string $itemId
+     * @param string $merchantProfileId
+     * @param bool $isAvailable
+     * @return \App\Core\Services\ServiceReturn
+     */
+    public function updateMenuItemStatus(string $itemId, string $merchantProfileId, bool $isAvailable): \App\Core\Services\ServiceReturn;
 }

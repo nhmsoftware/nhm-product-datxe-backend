@@ -21,7 +21,7 @@ interface AdminUserServiceInterface
     public function getCustomerDetail(string|int $userId): ServiceReturn;
 
     /**
-     * Cập nhật trạng thái người dùng (Khóa/Mở khóa) (UC-69/UC-77).
+     * Cập nhật trạng thái người dùng (Khóa/Mở khóa) (UC-78).
      */
     public function updateUserStatus(UpdateUserStatusDTO $dto): ServiceReturn;
 }

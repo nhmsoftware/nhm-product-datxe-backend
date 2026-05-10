@@ -51,4 +51,22 @@ trait HandleApi
             'message' => $message,
         ], $code);
     }
+    /**
+     * Định dạng tiền tệ VNĐ.
+     */
+    protected function formatVnd(float|int $amount): string
+    {
+        return number_format($amount, 0, ',', '.') . 'đ';
+    }
+
+    /**
+     * Định dạng ngày tháng Việt Nam.
+     */
+    protected function formatDate(\DateTimeInterface|string $date): string
+    {
+        if (is_string($date)) {
+            $date = new \DateTime($date);
+        }
+        return $date->format('d/m/Y');
+    }
 }

@@ -49,4 +49,16 @@ interface MerchantStoreServiceInterface
      * UC-56 Configure Commission
      */
     public function updateCommissionPackage(string $userId, string $packageKey): ServiceReturn;
+
+    /**
+     * Get daily order statistics for the merchant.
+     * UC-66 View total daily orders
+     */
+    public function getDailyOrderStats(string $userId): ServiceReturn;
+
+    /**
+     * Get daily revenue statistics for the merchant.
+     * UC-67 View daily revenue
+     */
+    public function getDailyRevenueStats(string $userId): ServiceReturn;
 }

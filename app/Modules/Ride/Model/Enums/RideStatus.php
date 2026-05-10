@@ -51,14 +51,14 @@ enum RideStatus: int
     public function getLabel(): string
     {
         return match ($this) {
-            self::DRAFT       => 'Nháp',
-            self::PENDING     => 'Đang tìm tài xế',
-            self::ACCEPTED    => 'Tài xế đã nhận',
+            self::DRAFT       => 'Đang chờ (Nháp)',
+            self::PENDING     => 'Đang chờ',
+            self::ACCEPTED    => 'Đã tiếp nhận',
             self::IN_PROGRESS => 'Đang di chuyển',
+            self::PICKED_UP   => 'Đang di chuyển (Đã đón khách)',
             self::COMPLETED   => 'Hoàn thành',
             self::CANCELLED   => 'Đã hủy',
-            self::PICKED_UP   => 'Đã đón khách / Đã lấy hàng',
-            self::CANCELLATION_REQUESTED => 'Đang chờ tài xế xác nhận hủy',
+            self::CANCELLATION_REQUESTED => 'Đang chờ xác nhận hủy',
         };
     }
 }

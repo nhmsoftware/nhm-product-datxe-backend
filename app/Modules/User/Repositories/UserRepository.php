@@ -232,6 +232,12 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
         if (isset($filters['is_active'])) {
             $query->where('is_active', (bool) $filters['is_active']);
         }
+        
+        if (!empty($filters['driver_group_type'])) {
+            $query->whereHas('driverProfile', function ($q) use ($filters) {
+                $q->where('driver_group_type', (int) $filters['driver_group_type']);
+            });
+        }
 
         return $query->latest()->paginate($perPage);
     }

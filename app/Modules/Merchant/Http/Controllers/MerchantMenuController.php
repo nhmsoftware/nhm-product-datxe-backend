@@ -298,4 +298,58 @@ final class MerchantMenuController extends BaseController
 
         return $this->sendSuccess(null, $result->getMessage());
     }
+
+    #[OA\Patch(
+        path: '/api/v1/merchant/menu/items/{id}/status',
+        summary: 'Thay đổi trạng thái bán của món ăn (UC-68)',
+        tags: ['Merchant'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                in: 'path',
+                required: true,
+                description: 'ID của món ăn cần thay đổi trạng thái',
+                schema: new OA\Schema(type: 'string')
+            ),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['is_available'],
+                properties: [
+                    new OA\Property(property: 'is_available', type: 'boolean', example: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Cập nhật trạng thái thành công',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'message', type: 'string', example: 'Cập nhật trạng thái thành công.'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'Không tìm thấy món ăn'),
+            new OA\Response(response: 403, description: 'Không có quyền'),
+        ]
+    )]
+    public function updateStatus(Request $request, string $id): JsonResponse
+    {
+        $request->validate(['is_available' => 'required|boolean']);
+        
+        $merchantProfileId = (string) $request->user()->merchantProfile->id;
+        $isAvailable = (bool) $request->input('is_available');
+
+        $result = $this->menuService->updateMenuItemStatus($id, $merchantProfileId, $isAvailable);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess(null, $result->getMessage());
+    }
 }

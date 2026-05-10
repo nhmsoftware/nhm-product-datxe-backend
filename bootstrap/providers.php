@@ -26,4 +26,6 @@ return [
     App\Modules\Dashboard\Providers\DashboardServiceProvider::class,
     App\Modules\RiskManagement\Providers\RiskManagementServiceProvider::class,
     App\Modules\Merchant\Providers\MerchantServiceProvider::class,
+    App\Modules\Food\Providers\FoodServiceProvider::class,
+    App\Modules\Order\Providers\OrderServiceProvider::class,
 ];
