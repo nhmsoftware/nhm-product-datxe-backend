@@ -680,7 +680,9 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->get()
-            ->pluck('count', 'status')
+            ->mapWithKeys(function ($item) {
+                return [$item->status instanceof \UnitEnum ? $item->status->value : $item->status => $item->count];
+            })
             ->toArray();
 
         $cancelReasons = $this->model->whereBetween('created_at', [$start, $end])
