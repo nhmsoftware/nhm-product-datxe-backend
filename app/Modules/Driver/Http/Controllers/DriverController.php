@@ -21,6 +21,24 @@ final class DriverController extends BaseController
     ) {}
 
     /**
+     * UC-30 Lấy danh sách dịch vụ tài xế có thể đăng ký.
+     */
+    #[OA\Get(
+        path: '/api/v1/driver/register/services',
+        summary: 'UC-30: Lấy danh sách dịch vụ tài xế có thể đăng ký',
+        security: [['sanctum' => []]],
+        tags: ['Driver'],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function getRegistrationServices(): JsonResponse
+    {
+        $result = $this->driverRegistrationService->getRegistrationServices();
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    /**
      * UC-30 Nộp hồ sơ đăng ký tài xế (Thông tin cá nhân, phương tiện, KYC).
      */
     #[OA\Post(
@@ -32,7 +50,7 @@ final class DriverController extends BaseController
             content: new OA\MediaType(
                 mediaType: 'multipart/form-data',
                 schema: new OA\Schema(
-                    required: ['full_name', 'phone', 'citizen_id', 'vehicle_type', 'vehicle_name', 'vehicle_color', 'vehicle_number', 'vehicle_year', 'cccd_front', 'cccd_back', 'driver_license', 'vehicle_reg', 'criminal_record', 'health_cert', 'portrait', 'insurance'],
+                    required: ['full_name', 'phone', 'citizen_id', 'vehicle_type', 'vehicle_name', 'vehicle_color', 'vehicle_number', 'vehicle_year', 'services', 'cccd_front', 'cccd_back', 'driver_license', 'vehicle_reg', 'criminal_record', 'health_cert', 'portrait', 'insurance'],
                     properties: [
                         new OA\Property(property: 'full_name', description: 'Họ và tên', type: 'string', example: 'Nguyễn Văn A'),
                         new OA\Property(property: 'phone', description: 'Số điện thoại', type: 'string', example: '0901234567'),
@@ -52,6 +70,12 @@ final class DriverController extends BaseController
                         ),
                         new OA\Property(property: 'vehicle_number', description: 'Biển số xe', type: 'string', example: '51K-12345'),
                         new OA\Property(property: 'vehicle_year', description: 'Năm xuất xứ xe', type: 'integer', example: 2020),
+                        new OA\Property(
+                            property: 'services', 
+                            description: 'Danh sách ID dịch vụ đăng ký (mảng số nguyên)', 
+                            type: 'array', 
+                            items: new OA\Items(type: 'integer', example: 1)
+                        ),
                         new OA\Property(property: 'cccd_front', description: 'CCCD trước', type: 'string', format: 'binary'),
                         new OA\Property(property: 'cccd_back', description: 'CCCD sau', type: 'string', format: 'binary'),
                         new OA\Property(property: 'driver_license', description: 'Bằng lái xe', type: 'string', format: 'binary'),

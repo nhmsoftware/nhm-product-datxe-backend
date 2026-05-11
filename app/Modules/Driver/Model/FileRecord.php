@@ -45,4 +45,15 @@ class FileRecord extends Model
         'fileable_type' => FileableType::class,
         'size'          => 'integer',
     ];
+
+    /**
+     * URL truy cập file thông qua Proxy Controller (do file nằm trong local disk).
+     */
+    public function getLinkAttribute(): string
+    {
+        $baseUrl = app()->runningInConsole() ? config('app.url') : request()->root();
+        return rtrim($baseUrl, '/') . '/api/v1/driver/files/' . $this->id;
+    }
+
+    protected $appends = ['link'];
 }

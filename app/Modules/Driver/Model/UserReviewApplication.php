@@ -48,4 +48,13 @@ class UserReviewApplication extends Model
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
+    /**
+     * Danh sách file đính kèm hồ sơ.
+     */
+    public function files(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(FileRecord::class, 'fileable_id')
+            ->where('fileable_type', \App\Modules\Driver\Model\Enums\FileableType::DRIVER_REVIEW_APPLICATION->value);
+    }
 }

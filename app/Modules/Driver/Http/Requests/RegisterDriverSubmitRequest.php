@@ -42,6 +42,10 @@ class RegisterDriverSubmitRequest extends FormRequest
             'vehicle_number' => 'required|string|max:20',
             'vehicle_year'   => "required|integer|min:1990|max:{$maxYear}",
 
+            // Danh sách dịch vụ đăng ký (UC-30 mới)
+            'services'   => 'required|array|min:1',
+            'services.*' => 'integer|in:1,2,3,4,5,6,7,8',
+
             // Tài liệu xác minh — BẮT BUỘC tất cả (UC-30 bước 7, A3)
             'cccd_front'      => "required|file|mimes:{$this->mimes()}|max:" . self::MAX_SIZE_KB,
             'cccd_back'       => "required|file|mimes:{$this->mimes()}|max:" . self::MAX_SIZE_KB,
@@ -70,6 +74,10 @@ class RegisterDriverSubmitRequest extends FormRequest
             'vehicle_year.required' => 'Vui lòng nhập năm sản xuất.',
             'vehicle_year.min'      => 'Năm sản xuất phải từ 1990 trở về sau.',
             'vehicle_year.max'      => 'Năm sản xuất không được lớn hơn năm hiện tại.',
+
+            'services.required' => 'Vui lòng chọn ít nhất một dịch vụ đăng ký.',
+            'services.array'    => 'Danh sách dịch vụ không hợp lệ.',
+            'services.*.in'     => 'Một hoặc nhiều dịch vụ đã chọn không hợp lệ.',
 
             'cccd_front.required'      => 'Vui lòng tải lên CCCD mặt trước.',
             'cccd_back.required'       => 'Vui lòng tải lên CCCD mặt sau.',

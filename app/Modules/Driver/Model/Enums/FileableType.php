@@ -64,4 +64,19 @@ enum FileableType: int
             self::MERCHANT_REVIEW_STORE_IMAGE,
         ];
     }
+
+    public function getRegisterKey(): ?string
+    {
+        return match ($this) {
+            self::DRIVER_REVIEW_CCCD_FRONT      => 'cccd_front',
+            self::DRIVER_REVIEW_CCCD_BACK       => 'cccd_back',
+            self::DRIVER_REVIEW_LICENSE         => 'driver_license',
+            self::DRIVER_REVIEW_VEHICLE_REG     => 'vehicle_reg',
+            self::DRIVER_REVIEW_CRIMINAL_RECORD => 'criminal_record',
+            self::DRIVER_REVIEW_HEALTH_CERT     => 'health_cert',
+            self::DRIVER_REVIEW_PORTRAIT        => 'portrait',
+            self::DRIVER_REVIEW_INSURANCE       => 'insurance',
+            default                             => null,
+        };
+    }
 }

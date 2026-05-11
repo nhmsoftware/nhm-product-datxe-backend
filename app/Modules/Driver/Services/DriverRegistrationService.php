@@ -23,6 +23,8 @@ use App\Modules\User\Interfaces\DriverGroupRepositoryInterface;
 use App\Modules\User\Model\Enums\DriverGroupType;
 use App\Modules\User\Model\Enums\DriverStatus;
 use App\Modules\User\Model\Enums\UserRole;
+use App\Modules\User\Model\Enums\VehicleType;
+use App\Modules\User\Model\Enums\VehicleColor;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
@@ -84,6 +86,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
                 'vehicle_color'  => $dto->vehicleColor->value,
                 'vehicle_number' => $dto->vehicleNumber,
                 'vehicle_year'   => $dto->vehicleYear,
+                'services'       => $dto->services,
                 'submitted_at'   => now()->toISOString(),
             ];
 
@@ -98,7 +101,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
             $this->storeAllDocuments($application->id, $dto->files);
 
             // 6. Raise Domain Event — Admin nhận thông báo hồ sơ mới
-            event(new DriverApplicationSubmitted($application->id, $dto->userId));
+            event(new DriverApplicationSubmitted((string)$application->id, $dto->userId));
 
             // 7. Response
             return $this->success(
@@ -139,17 +142,25 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
             // Xác định loại đội xe (Xe nhà vs Đối tác)
             $driverGroupType = $dto->driverGroupId ? DriverGroupType::INTERNAL : DriverGroupType::PARTNER;
 
+            // - Lấy danh sách file đã upload để đồng bộ sang DriverProfile
+            $files = $this->fileRecordRepository->findByApplicationId($application->id);
+            $fileMap = $files->mapWithKeys(fn($file) => [$file->fileable_type->value => $file->path])->toArray();
+
             $this->driverProfileRepository->create([
                 'user_id'           => $userId,
                 'full_name'         => $snapshotData['full_name'] ?? 'Driver ' . $userId,
                 'driver_group_id'   => $dto->driverGroupId,
                 'driver_group_type' => $driverGroupType->value,
-                'vehicle_type'      => (int) ($snapshotData['vehicle_type'] ?? 1),
+                'vehicle_type'      => VehicleType::tryFrom((int)($snapshotData['vehicle_type'] ?? 1))?->value ?? VehicleType::BIKE->value,
                 'vehicle_name'      => $snapshotData['vehicle_name'] ?? 'N/A',
-                'vehicle_color'     => (int) ($snapshotData['vehicle_color'] ?? 0),
+                'vehicle_color'     => VehicleColor::tryFrom((int)($snapshotData['vehicle_color'] ?? 0))?->value ?? VehicleColor::Unknown->value,
                 'vehicle_number'    => $snapshotData['vehicle_number'] ?? 'N/A',
                 'is_online'         => false,
                 'status'            => DriverStatus::ACTIVE->value, // Sẵn sàng hoạt động
+                // Đồng bộ ảnh KYC
+                'license_number'      => $snapshotData['license_number'] ?? ($snapshotData['citizen_id'] ?? null),
+                'license_front_image' => $fileMap[FileableType::DRIVER_REVIEW_LICENSE->value] ?? null,
+                'license_back_image'  => $fileMap[FileableType::DRIVER_REVIEW_CCCD_FRONT->value] ?? null,
             ]);
 
             // - Raise Domain Event — Thông báo realtime cho frontend
@@ -242,6 +253,17 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
 
             $files = $this->fileRecordRepository->findByApplicationId((int) $id);
 
+            // Gộp các link ảnh vào snapshot_data để UI dễ hiển thị
+            $snapshotData = $application->snapshot_data;
+            foreach ($files as $file) {
+                // Ví dụ: cccd_front -> cccd_front_url
+                $key = $file->fileable_type->getRegisterKey(); 
+                if ($key) {
+                    $snapshotData[$key . '_url'] = $file->link;
+                }
+            }
+            $application->snapshot_data = $snapshotData;
+
             return [
                 'application' => $application,
                 'files'       => $files,
@@ -256,6 +278,16 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
     {
         return $this->execute(function () {
             return $this->driverGroupRepository->getAllGroups();
+        });
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRegistrationServices(): ServiceReturn
+    {
+        return $this->execute(function () {
+            return \App\Modules\Driver\Model\Enums\DriverServiceType::getList();
         });
     }
 }

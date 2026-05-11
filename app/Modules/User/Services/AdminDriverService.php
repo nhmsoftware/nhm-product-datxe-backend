@@ -18,11 +18,14 @@ use App\Modules\User\Model\Enums\KycStatus;
 use App\Modules\User\Model\Enums\KycType;
 use App\Modules\User\Interfaces\AdminDriverServiceInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
+use App\Modules\Driver\Interfaces\DriverRegistrationServiceInterface;
+use App\Modules\Driver\DTO\ApproveRegistrationDTO;
 
 final class AdminDriverService extends BaseService implements AdminDriverServiceInterface
 {
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
+        private readonly DriverRegistrationServiceInterface $driverRegistrationService,
     ) {}
 
     /**
@@ -70,23 +73,32 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 ->latest()
                 ->first();
 
-            $this->validate($latestApplication !== null, 'Tài xế không tồn tại.', 404);
+            $this->validate($latestApplication !== null, 'Tài xế chưa nộp hồ sơ đăng ký.', 404);
             
             if ($latestApplication->kyc_status === KycStatus::Approved) {
-                $this->validate(false, 'Tài xế đã được duyệt trước đó.', 400);
+                $this->validate(false, 'Hồ sơ tài xế đã được duyệt trước đó.', 400);
             }
 
-            $this->validate($latestApplication->kyc_status === KycStatus::Pending, 'Tài xế đang không ở trạng thái chờ duyệt.', 400);
+            $this->validate($latestApplication->kyc_status === KycStatus::Pending, 'Hồ sơ tài xế đang không ở trạng thái chờ duyệt.', 400);
 
-            $success = $this->userRepository->approveDriverApplication($dto->userId);
-            $this->validate($success, 'Không thể duyệt tài xế. Vui lòng thử lại.', 500);
+            // Gọi DriverRegistrationService để thực hiện quy trình duyệt đầy đủ (Status -> Role -> DriverProfile)
+            $approveDto = new ApproveRegistrationDTO(
+                applicationId: (int) $latestApplication->id,
+                driverGroupId: null // Mặc định là Đối tác như yêu cầu
+            );
+
+            $result = $this->driverRegistrationService->approveRegistration($approveDto);
+            
+            if ($result->isError()) {
+                $this->throw($result->getMessage(), $result->getCode());
+            }
 
             // Phát sự kiện realtime
             DriverApplicationApproved::dispatch($dto->userId);
 
             return [
                 'user_id' => $dto->userId,
-                'message' => 'Duyệt tài xế thành công.',
+                'message' => 'Duyệt tài xế thành công và đã tạo hồ sơ vận hành.',
             ];
         }, useTransaction: true);
     }
@@ -130,11 +142,46 @@ final class AdminDriverService extends BaseService implements AdminDriverService
     public function getDriverDetail(string|int $userId): ServiceReturn
     {
         return $this->execute(function () use ($userId) {
-            $user = $this->userRepository->findDriverDetailById($userId);
+            $user = $this->userRepository->findById($userId, relations: ['driverProfile']);
             $this->validate($user !== null, 'Tài xế không tồn tại.', 404);
 
             $driverProfile = $user->driverProfile;
-            $latestKyc = $user->userReviewApplications->first();
+            $latestKyc = $user->userReviewApplications()->latest()->first();
+            
+            $kycPhotos = [];
+            if ($latestKyc) {
+                // Load files liên quan
+                $files = \App\Modules\Driver\Model\FileRecord::where('fileable_id', $latestKyc->id)
+                    ->where('fileable_type', '>=', 2) // Các loại ảnh driver kyc
+                    ->get();
+                
+                foreach ($files as $file) {
+                    $key = $file->fileable_type->getRegisterKey();
+                    if ($key) {
+                        $kycPhotos[$key . '_url'] = $file->link;
+                    }
+                }
+            }
+
+            // Fix avatar URL
+            $avatar = $user->avatar;
+            if ($avatar && !str_starts_with($avatar, 'http')) {
+                $avatar = rtrim(config('app.url'), '/') . '/storage/' . ltrim($avatar, '/');
+            }
+            if (!$avatar && isset($kycPhotos['portrait_url'])) {
+                $avatar = $kycPhotos['portrait_url'];
+            }
+
+            // Fix license images
+            $licenseFront = $kycPhotos['driver_license_url'] ?? null;
+            if (!$licenseFront && $driverProfile?->license_front_image) {
+                $licenseFront = rtrim(config('app.url'), '/') . '/storage/' . ltrim($driverProfile->license_front_image, '/');
+            }
+            
+            $licenseBack = $kycPhotos['cccd_front_url'] ?? null;
+            if (!$licenseBack && $driverProfile?->license_back_image) {
+                $licenseBack = rtrim(config('app.url'), '/') . '/storage/' . ltrim($driverProfile->license_back_image, '/');
+            }
 
             return [
                 'id'                 => $user->id,
@@ -144,7 +191,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 'gender'             => $user->gender?->value,
                 'gender_label'       => $user->gender?->label(),
                 'address'            => $user->address,
-                'avatar'             => $user->avatar,
+                'avatar'             => $avatar,
                 'vehicle_info'       => [
                     'vehicle_type'   => $driverProfile?->vehicle_type?->value,
                     'vehicle_name'   => $driverProfile?->vehicle_name,
@@ -153,15 +200,19 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 ],
                 'license_info'       => [
                     'license_number'      => $driverProfile?->license_number,
-                    'license_front_image' => $driverProfile?->license_front_image,
-                    'license_back_image'  => $driverProfile?->license_back_image,
+                    'license_front_image' => $licenseFront,
+                    'license_back_image'  => $licenseBack,
                 ],
+                'driver_group_type'  => $driverProfile?->driver_group_type,
+                'group_label'        => $driverProfile?->driver_group_type === 1 ? 'Xe nhà' : ($driverProfile?->driver_group_type === 2 ? 'Đối tác' : 'Chưa gán'),
                 'is_active'          => $user->is_active,
                 'lock_reason'        => $user->lock_reason,
                 'lock_expired_at'    => $user->lock_expired_at?->toIso8601String(),
                 'kyc_status'         => $latestKyc?->kyc_status?->value,
                 'kyc_status_label'   => $latestKyc?->kyc_status?->label() ?? 'Chưa có hồ sơ',
                 'kyc_cancel_reason'  => $latestKyc?->cancel_reason,
+                'kyc_photos'         => $kycPhotos,
+                'snapshot_data'      => $latestKyc?->snapshot_data,
                 'created_at'         => $user->created_at?->toIso8601String(),
             ];
         });
@@ -199,7 +250,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
             $success = $this->userRepository->updateActiveStatus($dto->userId, $updateData);
             $this->validate($success, 'Không thể cập nhật trạng thái tài khoản. Vui lòng thử lại.', 500);
 
-            // Phát sự kiện realtime (UC-78/UC-84 chia sẻ chung event status updated)
+            // Phát sự kiện realtime
             UserStatusUpdated::dispatch($dto->userId, $dto->isActive, $updateData['lock_reason'] ?? null);
 
             $message = $dto->isActive ? 'Mở khóa tài khoản tài xế thành công.' : 'Khóa tài khoản tài xế thành công.';
@@ -218,23 +269,47 @@ final class AdminDriverService extends BaseService implements AdminDriverService
     public function assignDriverGroup(AssignDriverGroupDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {
-            $user = $this->userRepository->findById($dto->userId, relations: ['driverProfile']);
+            $user = $this->userRepository->findById($dto->userId, relations: ['driverProfile', 'userReviewApplications']);
             $this->validate($user !== null, 'Tài xế không tồn tại.', 404);
 
             $driverProfile = $user->driverProfile;
-            $this->validate($driverProfile !== null, 'Tài xế không tồn tại.', 404);
+            
+            // Trường hợp hy hữu: Đã duyệt hồ sơ nhưng chưa có DriverProfile (do lỗi logic phiên bản cũ)
+            // Chúng ta sẽ tự động tạo Profile từ snapshot của hồ sơ đã duyệt
+            if ($driverProfile === null) {
+                $latestApprovedApp = $user->userReviewApplications()
+                    ->where('kyc_type', KycType::Driver->value)
+                    ->where('kyc_status', KycStatus::Approved)
+                    ->latest()
+                    ->first();
+
+                if ($latestApprovedApp) {
+                    // Cần tạo Profile thông qua DriverRegistrationService
+                    // Nhưng Service đó validate trạng thái Pending, nên ta sẽ tạo thủ công ở đây hoặc cập nhật Service
+                    // Để đảm bảo tính nhất quán, ta sẽ gán group trực tiếp sau khi đảm bảo Profile tồn tại
+                    
+                    // Giả lập DTO để gọi approve (nhưng vì kyc_status là Approved nên sẽ fail validation)
+                    // Vậy ta nên fix dữ liệu bằng cách gọi UserRepository tạo profile
+                    // Hoặc đơn giản là báo lỗi yêu cầu admin liên hệ kỹ thuật nếu kyc_status=Approved mà profile=null
+                    
+                    $this->validate(false, 'Hồ sơ đã duyệt nhưng thiếu thông tin vận hành. Vui lòng liên hệ kỹ thuật để đồng bộ lại dữ liệu cho tài xế này.', 400);
+                }
+
+                $this->validate($driverProfile !== null, 'Vui lòng duyệt hồ sơ tài xế trước khi gán đội xe.', 400);
+            }
 
             if ($driverProfile->driver_group_type === $dto->groupType) {
-                $this->validate(false, 'Tài xế đã thuộc đội xe nhà.', 400);
+                $label = $dto->groupType === \App\Modules\User\Model\Enums\DriverGroupType::INTERNAL ? 'đội xe nhà' : 'đối tác';
+                $this->validate(false, "Tài xế đã thuộc {$label}.", 400);
             }
 
             $success = $this->userRepository->updateDriverGroup($dto->userId, $dto->groupType);
-            $this->validate($success, 'Không thể gán tài xế vào đội xe nhà. Vui lòng thử lại.', 500);
+            $this->validate($success, 'Không thể gán đội xe. Vui lòng thử lại.', 500);
 
             return [
                 'user_id'    => $dto->userId,
                 'group_type' => $dto->groupType->value,
-                'message'    => 'Gán tài xế vào đội xe nhà thành công.',
+                'message'    => 'Cập nhật đội xe thành công.',
             ];
         }, useTransaction: true);
     }
@@ -268,4 +343,3 @@ final class AdminDriverService extends BaseService implements AdminDriverService
         });
     }
 }
-

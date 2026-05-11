@@ -30,7 +30,7 @@ final class AdminVoucherService extends BaseService implements AdminVoucherServi
     {
         return $this->execute(function () use ($filters): array {
             $paginator = $this->voucherRepository->search($filters);
-            
+
             return [
                 'items' => collect($paginator->items())->map(fn(Voucher $v) => AdminVoucherDTO::fromModel($v)->toArray())->toArray(),
                 'pagination' => [
@@ -64,9 +64,9 @@ final class AdminVoucherService extends BaseService implements AdminVoucherServi
     {
         return $this->execute(function () use ($dto): array {
             $voucher = $this->voucherRepository->create($dto->toArray());
-            
-            event(new \App\Modules\Finance\Events\VoucherCreated((string) $voucher->id)); 
-            
+
+            event(new \App\Modules\Finance\Events\VoucherCreated((string) $voucher->id));
+
             return AdminVoucherDTO::fromModel($voucher)->toArray();
         }, useTransaction: true);
     }
@@ -125,7 +125,7 @@ final class AdminVoucherService extends BaseService implements AdminVoucherServi
         return $this->execute(function () use ($dto): string {
             /** @var Voucher|null $voucher */
             $voucher = $this->voucherRepository->findById($dto->voucherId);
-            
+
             // A1 - Voucher không tồn tại
             $this->validate($voucher !== null, 'Voucher không tồn tại.', 404);
 
@@ -156,7 +156,7 @@ final class AdminVoucherService extends BaseService implements AdminVoucherServi
                 $this->throw('Người dùng đã có voucher này.');
             }
 
-            return "Gán voucher cho người dùng thành công. ({$count} thành công, {$alreadyAssignedCount} bỏ qua)";
+            return "Gán voucher cho người dùng thành công.";
         }, useTransaction: true);
     }
 
@@ -168,7 +168,7 @@ final class AdminVoucherService extends BaseService implements AdminVoucherServi
         return $this->execute(function () use ($id): string {
             /** @var Voucher|null $voucher */
             $voucher = $this->voucherRepository->findById($id);
-            
+
             // A2 - Voucher không tồn tại
             $this->validate($voucher !== null, 'Voucher không tồn tại.', 404);
 

@@ -69,7 +69,11 @@ final class AuthService extends BaseService implements AuthServiceInterface
     public function register(RegisterDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {
-            $otpType = $dto->role === UserRole::Driver ? UserOtpType::VERIFY_DRIVER_REGISTER : UserOtpType::VERIFY_REGISTER;
+            $otpType = match ($dto->role) {
+                UserRole::Driver    => UserOtpType::VERIFY_DRIVER_REGISTER,
+                UserRole::Merchants => UserOtpType::VERIFY_MERCHANT_REGISTER,
+                default             => UserOtpType::VERIFY_REGISTER,
+            };
             $this->verifyOtpOrFail($dto->phone, $dto->otp, $otpType);
 
             if ($this->userRepository->existsByPhone($dto->phone)) {

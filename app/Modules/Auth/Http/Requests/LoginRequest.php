@@ -21,7 +21,7 @@ class LoginRequest extends FormRequest
     {
         return [
             'phone'        => ['required', 'string', 'regex:/^0[3-9]\d{8}$/'],
-            'password'     => ['required', 'string', 'min:8'],
+            'password'     => ['required', 'string', 'min:3'],
             'device_id'    => ['nullable', 'string', 'max:255'],
             'device_token' => ['nullable', 'string', 'max:500'],
             'device_type'  => ['nullable', 'string', 'max:50'],

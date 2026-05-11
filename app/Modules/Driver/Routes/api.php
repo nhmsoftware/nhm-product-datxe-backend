@@ -5,6 +5,7 @@ namespace App\Modules\Driver\Routes;
 use App\Modules\Driver\Http\Controllers\DriverController;
 use App\Modules\Driver\Http\Controllers\DriverOperationController;
 use App\Modules\Driver\Http\Controllers\AdminDriverController;
+use App\Modules\Driver\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,6 +14,18 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+// ── Public Routes ────────────────────────────────────────────────────────
+Route::prefix('v1/driver')->group(function () {
+    // UC-30 — Lấy danh sách dịch vụ tài xế có thể đăng ký
+    Route::get('register/services', [DriverController::class, 'getRegistrationServices'])
+        ->name('register.services');
+
+    // Route phục vụ ảnh KYC từ storage local (Proxy)
+    Route::get('files/{id}', [FileController::class, 'show'])
+        ->name('driver.files.show');
+});
+
+// ── Protected Routes (Auth Required) ─────────────────────────────────────
 Route::prefix('v1/driver')
     ->middleware(['auth:sanctum', 'check.account.status'])
     ->group(function () {
@@ -63,7 +76,7 @@ Route::prefix('v1/driver')
             ->name('driver.ride.confirm_ready');
     });
 
-// Admin Routes
+// ── Admin Routes ─────────────────────────────────────────────────────────
 Route::prefix('v1/admin/driver')
     ->middleware(['auth:sanctum'])
     ->group(function () {

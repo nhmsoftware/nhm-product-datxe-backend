@@ -835,6 +835,26 @@
                 ]
             }
         },
+        "/api/v1/driver/register/services": {
+            "get": {
+                "tags": [
+                    "Driver"
+                ],
+                "summary": "UC-30: Lấy danh sách dịch vụ tài xế có thể đăng ký",
+                "description": "UC-30 Lấy danh sách dịch vụ tài xế có thể đăng ký.",
+                "operationId": "52fbe60d01ae5dc112ba5da8c1bb532f",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/driver/register/submit": {
             "post": {
                 "tags": [
@@ -857,6 +877,7 @@
                                     "vehicle_color",
                                     "vehicle_number",
                                     "vehicle_year",
+                                    "services",
                                     "cccd_front",
                                     "cccd_back",
                                     "driver_license",
@@ -906,6 +927,14 @@
                                         "description": "Năm xuất xứ xe",
                                         "type": "integer",
                                         "example": 2020
+                                    },
+                                    "services": {
+                                        "description": "Danh sách ID dịch vụ đăng ký (mảng số nguyên)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer",
+                                            "example": 1
+                                        }
                                     },
                                     "cccd_front": {
                                         "description": "CCCD trước",
@@ -1590,6 +1619,34 @@
                         "sanctum": []
                     }
                 ]
+            }
+        },
+        "/api/v1/driver/files/{id}": {
+            "get": {
+                "tags": [
+                    "Driver|Files"
+                ],
+                "summary": "Xem nội dung ảnh/tài liệu KYC",
+                "description": "Trả về nội dung file ảnh/pdf từ storage.",
+                "operationId": "213f592e64774cc6fbb096416ef25afd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Trả về file binary (image/jpeg, image/png, application/pdf)"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy file"
+                    }
+                }
             }
         },
         "/api/v1/admin/finance/vouchers": {
@@ -9703,6 +9760,10 @@
         {
             "name": "Driver",
             "description": "Driver"
+        },
+        {
+            "name": "Driver|Files",
+            "description": "Driver|Files"
         },
         {
             "name": "Admin - Finance",

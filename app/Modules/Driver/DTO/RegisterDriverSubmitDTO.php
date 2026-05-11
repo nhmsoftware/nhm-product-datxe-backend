@@ -26,6 +26,7 @@ final class RegisterDriverSubmitDTO
         public readonly VehicleColor $vehicleColor,
         public readonly string       $vehicleNumber,
         public readonly int          $vehicleYear,
+        public readonly array        $services,
         public readonly array        $files,
     ) {}
 
@@ -41,6 +42,7 @@ final class RegisterDriverSubmitDTO
             vehicleColor:  VehicleColor::from((int) $request->input('vehicle_color')),
             vehicleNumber: $request->string('vehicle_number')->toString(),
             vehicleYear:   (int) $request->input('vehicle_year'),
+            services:      (array) $request->input('services', []),
             files: [
                 'cccd_front'      => $request->file('cccd_front'),
                 'cccd_back'       => $request->file('cccd_back'),

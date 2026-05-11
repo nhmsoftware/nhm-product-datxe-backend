@@ -35,4 +35,9 @@ interface DriverRegistrationServiceInterface
      * Lấy danh sách đội xe (Driver Groups).
      */
     public function getDriverGroups(): ServiceReturn;
+
+    /**
+     * Lấy danh sách các dịch vụ tài xế có thể đăng ký (UC-30).
+     */
+    public function getRegistrationServices(): ServiceReturn;
 }
