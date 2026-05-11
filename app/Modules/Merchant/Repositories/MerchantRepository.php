@@ -62,7 +62,20 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
     }
     public function searchMerchants(\App\Modules\Merchant\DTO\MerchantFilterDTO $dto): \Illuminate\Pagination\LengthAwarePaginator
     {
-        $query = $this->model->with(['user']);
+        $query = $this->model->with(['user', 'user.customerProfile']);
+
+        if ($dto->keyword) {
+            $query->where(function ($q) use ($dto) {
+                $q->where('store_name', 'like', '%' . $dto->keyword . '%')
+                    ->orWhereHas('user', function ($uq) use ($dto) {
+                        $uq->where('phone', 'like', '%' . $dto->keyword . '%')
+                            ->orWhere('email', 'like', '%' . $dto->keyword . '%')
+                            ->orWhereHas('customerProfile', function ($sq) use ($dto) {
+                                $sq->where('full_name', 'like', '%' . $dto->keyword . '%');
+                            });
+                    });
+            });
+        }
 
         if ($dto->storeName) {
             $query->where('store_name', 'like', '%' . $dto->storeName . '%');

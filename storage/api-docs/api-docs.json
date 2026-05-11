@@ -2800,6 +2800,14 @@
                 "operationId": "04ee8a6c9cc5b464afac5a80f070d00a",
                 "parameters": [
                     {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Tìm theo tên, SĐT, Email",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
                         "name": "store_name",
                         "in": "query",
                         "schema": {

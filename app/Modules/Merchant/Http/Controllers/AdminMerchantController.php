@@ -30,6 +30,7 @@ final class AdminMerchantController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Admin|Merchant'],
         parameters: [
+            new OA\Parameter(name: 'keyword', in: 'query', schema: new OA\Schema(type: 'string'), description: 'Tìm theo tên, SĐT, Email'),
             new OA\Parameter(name: 'store_name', in: 'query', schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'owner_name', in: 'query', schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'phone', in: 'query', schema: new OA\Schema(type: 'string')),

@@ -19,6 +19,7 @@ final class MerchantListRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'keyword'    => ['nullable', 'string', 'max:255'],
             'store_name' => ['nullable', 'string', 'max:255'],
             'owner_name' => ['nullable', 'string', 'max:255'],
             'phone'      => ['nullable', 'string', 'max:20'],
