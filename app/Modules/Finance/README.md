@@ -61,3 +61,28 @@ Admin management of vouchers including CRUD and assignment.
 - `PUT /api/v1/admin/finance/vouchers/{id}`: Update voucher
 - `DELETE /api/v1/admin/finance/vouchers/{id}`: Delete voucher
 - `POST /api/v1/admin/finance/vouchers/assign`: Assign voucher to users
+- `PATCH /api/v1/admin/finance/vouchers/{id}/deactivate`: Deactivate voucher
+
+## UC-109: Handle Refund (Admin)
+Cho phép Admin xử lý yêu cầu hoàn tiền cho khách hàng.
+
+### Endpoints:
+- `GET /api/v1/admin/finance/refunds`: Danh sách yêu cầu hoàn tiền
+- `GET /api/v1/admin/finance/refunds/{id}`: Chi tiết yêu cầu hoàn tiền
+- `POST /api/v1/admin/finance/refunds/{id}/process`: Phê duyệt/Từ chối/Hoàn tất hoàn tiền
+
+### Realtime Events:
+Channel: `finance.events`
+Event: `finance.refund.processed`
+Payload:
+```json
+{
+  "event": "finance.refund.processed",
+  "user_id": "customer_id",
+  "refund_id": "refund_id",
+  "status": "APPROVED|REJECTED|COMPLETED",
+  "amount": 50000,
+  "message": "...",
+  "occurred_at": "..."
+}
+```

@@ -60,4 +60,9 @@ Route::prefix('v1/admin/finance')->middleware(['auth:sanctum'])->group(function 
     Route::get('commissions', [\App\Modules\Finance\Http\Controllers\AdminCommissionController::class, 'index'])->name('admin.finance.commissions.index');
     Route::post('commissions', [\App\Modules\Finance\Http\Controllers\AdminCommissionController::class, 'store'])->name('admin.finance.commissions.store');
     Route::delete('commissions/{id}', [\App\Modules\Finance\Http\Controllers\AdminCommissionController::class, 'destroy'])->name('admin.finance.commissions.destroy');
+
+    // UC-109: Handle Refund
+    Route::get('refunds', [\App\Modules\Finance\Http\Controllers\RefundController::class, 'index'])->name('admin.finance.refunds.index');
+    Route::get('refunds/{id}', [\App\Modules\Finance\Http\Controllers\RefundController::class, 'show'])->name('admin.finance.refunds.show');
+    Route::post('refunds/{id}/process', [\App\Modules\Finance\Http\Controllers\RefundController::class, 'process'])->name('admin.finance.refunds.process');
 });

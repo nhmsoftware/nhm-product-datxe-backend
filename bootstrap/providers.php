@@ -29,4 +29,5 @@ return [
     App\Modules\Food\Providers\FoodServiceProvider::class,
     App\Modules\Order\Providers\OrderServiceProvider::class,
     App\Modules\Chauffeur\Providers\ChauffeurServiceProvider::class,
+    App\Modules\Complaint\Providers\ComplaintServiceProvider::class,
 ];

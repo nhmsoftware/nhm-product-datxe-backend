@@ -17,6 +17,11 @@ use App\Modules\RiskManagement\Interfaces\CancellationConfigRepositoryInterface;
 use App\Modules\RiskManagement\Interfaces\CancellationConfigServiceInterface;
 use App\Modules\RiskManagement\Repositories\CancellationConfigRepository;
 use App\Modules\RiskManagement\Services\CancellationConfigService;
+use App\Modules\RiskManagement\Interfaces\UserViolationRepositoryInterface;
+use App\Modules\RiskManagement\Interfaces\ViolationServiceInterface;
+use App\Modules\RiskManagement\Repositories\UserViolationRepository;
+use App\Modules\RiskManagement\Services\ViolationService;
+
 
 /**
  * Service Provider quản lý module RiskManagement.
@@ -34,15 +39,23 @@ final class RiskManagementServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(FraudAlertRepositoryInterface::class, FraudAlertRepository::class);
         $this->app->singleton(PenaltyRuleRepositoryInterface::class, PenaltyRuleRepository::class);
         $this->app->singleton(CancellationConfigRepositoryInterface::class, CancellationConfigRepository::class);
+        $this->app->singleton(UserViolationRepositoryInterface::class, UserViolationRepository::class);
 
         // ── Services ──────
         $this->app->singleton(AntiFraudServiceInterface::class, AntiFraudService::class);
         $this->app->singleton(PenaltyRuleServiceInterface::class, PenaltyRuleService::class);
         $this->app->singleton(CancellationConfigServiceInterface::class, CancellationConfigService::class);
+        $this->app->singleton(ViolationServiceInterface::class, ViolationService::class);
+
     }
 
     public function boot(): void
     {
         parent::boot();
+
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Modules\RiskManagement\Events\UserWarned::class,
+            \App\Modules\RiskManagement\Listeners\NotifyRealtimeOnUserWarned::class
+        );
     }
 }

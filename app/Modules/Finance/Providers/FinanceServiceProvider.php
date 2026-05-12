@@ -41,6 +41,11 @@ use App\Modules\Finance\Services\SubscriptionService;
 use App\Modules\Finance\Services\AdminVoucherService;
 use App\Modules\Finance\Services\CommissionRuleService;
 use App\Modules\Finance\Repositories\CommissionRuleRepository;
+use App\Modules\Finance\Interfaces\RefundRepositoryInterface;
+use App\Modules\Finance\Interfaces\RefundServiceInterface;
+use App\Modules\Finance\Repositories\RefundRepository;
+use App\Modules\Finance\Services\RefundService;
+
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Routing\Router;
 
@@ -68,6 +73,8 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(SubscriptionPackageRepositoryInterface::class, SubscriptionPackageRepository::class);
         $this->app->singleton(DriverSubscriptionRepositoryInterface::class, DriverSubscriptionRepository::class);
         $this->app->singleton(CommissionRuleRepositoryInterface::class, CommissionRuleRepository::class);
+        $this->app->singleton(RefundRepositoryInterface::class, RefundRepository::class);
+
 
         // ── Services ──────
         $this->app->singleton(VoucherServiceInterface::class, VoucherService::class);
@@ -78,6 +85,8 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(FinanceRealtimeInterface::class, RedisFinanceRealtimeService::class);
         $this->app->singleton(AdminVoucherServiceInterface::class, AdminVoucherService::class);
         $this->app->singleton(CommissionRuleServiceInterface::class, CommissionRuleService::class);
+        $this->app->singleton(RefundServiceInterface::class, RefundService::class);
+
 
     }
 
@@ -91,6 +100,12 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $router = $this->app['router'];
         $router->aliasMiddleware('check.account.status', CheckAccountStatus::class);
 
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Modules\Finance\Events\RefundProcessed::class,
+            \App\Modules\Finance\Listeners\NotifyRealtimeOnRefundProcessed::class
+        );
+
         parent::boot();
+
     }
 }

@@ -137,6 +137,22 @@ class User extends Authenticatable
         return $this->hasMany(UserReviewApplication::class);
     }
 
+    /**
+     * Get all violations for the user.
+     */
+    public function violations(): HasMany
+    {
+        return $this->hasMany(\App\Modules\RiskManagement\Model\UserViolation::class);
+    }
+
+    /**
+     * Get all complaints filed by the user.
+     */
+    public function complaints(): HasMany
+    {
+        return $this->hasMany(\App\Modules\Complaint\Model\Complaint::class, 'sender_id');
+    }
+
     // ─── Helpers ─────────────────────────────────────────────────
     public function isCustomer(): bool
     {

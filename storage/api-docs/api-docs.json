@@ -401,6 +401,271 @@
                 }
             }
         },
+        "/api/v1/chauffeur/book": {
+            "post": {
+                "tags": [
+                    "Chauffeur"
+                ],
+                "summary": "Đặt dịch vụ Lái hộ (UC-124)",
+                "description": "Khách hàng đặt dịch vụ lái hộ (tài xế lái xe của khách). Yêu cầu nhập đầy đủ thông tin xe cá nhân.",
+                "operationId": "4972c0f1a00b790e4715ac7cbbff7181",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "pickup_address",
+                                    "pickup_lat",
+                                    "pickup_lng",
+                                    "destination_address",
+                                    "destination_lat",
+                                    "destination_lng",
+                                    "license_plate",
+                                    "car_type",
+                                    "car_brand",
+                                    "car_color"
+                                ],
+                                "properties": {
+                                    "pickup_address": {
+                                        "type": "string",
+                                        "example": "Số 1 Đào Duy Anh, Hà Nội"
+                                    },
+                                    "pickup_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 21.0072
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.8428
+                                    },
+                                    "destination_address": {
+                                        "type": "string",
+                                        "example": "Sân bay Nội Bài"
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 21.2129
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.8042
+                                    },
+                                    "license_plate": {
+                                        "description": "Biển số xe của khách",
+                                        "type": "string",
+                                        "example": "30A-123.45"
+                                    },
+                                    "car_type": {
+                                        "description": "Loại xe (SUV, Sedan...)",
+                                        "type": "string",
+                                        "example": "Sedan 4 chỗ"
+                                    },
+                                    "car_brand": {
+                                        "description": "Hãng xe (Toyota, Honda...)",
+                                        "type": "string",
+                                        "example": "Toyota"
+                                    },
+                                    "car_color": {
+                                        "description": "Màu xe",
+                                        "type": "string",
+                                        "example": "Trắng"
+                                    },
+                                    "pickup_time": {
+                                        "description": "Thời gian đón (Y-m-d H:i:s). Bỏ trống nếu đi ngay.",
+                                        "type": "string",
+                                        "example": "2024-05-20 08:30:00"
+                                    },
+                                    "voucher_code": {
+                                        "description": "Mã giảm giá",
+                                        "type": "string",
+                                        "example": "LAIHO10"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Yêu cầu lái hộ được tạo thành công, hệ thống đang tìm tài xế.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "ride_id": {
+                                            "type": "string",
+                                            "example": "123456789"
+                                        },
+                                        "total_price": {
+                                            "type": "number",
+                                            "example": 150000
+                                        },
+                                        "status_label": {
+                                            "type": "string",
+                                            "example": "Đang tìm tài xế lái hộ..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Chưa xác thực số điện thoại"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/complaints": {
+            "get": {
+                "tags": [
+                    "Complaint"
+                ],
+                "summary": "Danh sách khiếu nại (UC-108)",
+                "operationId": "c05843f9bbacfaabcd8ade6e12531c04",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/complaints/{id}": {
+            "get": {
+                "tags": [
+                    "Complaint"
+                ],
+                "summary": "Chi tiết khiếu nại (UC-108)",
+                "operationId": "538103534edba26c13ac6fc5a84b7f36",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/complaints/{id}/handle": {
+            "post": {
+                "tags": [
+                    "Complaint"
+                ],
+                "summary": "Xử lý khiếu nại (UC-108)",
+                "operationId": "ed2948ddb613c478b2ceb636929714f3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "action"
+                                ],
+                                "properties": {
+                                    "action": {
+                                        "description": "REFUND, WARN_DRIVER, WARN_CUSTOMER, REJECT, REQUEST_INFO",
+                                        "type": "string",
+                                        "example": "WARN_DRIVER"
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Cảnh báo tài xế về thái độ phục vụ."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy khiếu nại"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/dashboard": {
             "get": {
                 "tags": [
@@ -1900,6 +2165,140 @@
                 "responses": {
                     "200": {
                         "description": "Vô hiệu hóa thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/refunds": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Danh sách yêu cầu hoàn tiền (UC-109)",
+                "operationId": "26309cb9786ae51e65aaa85bb5b536f3",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/refunds/{id}": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Chi tiết yêu cầu hoàn tiền (UC-109)",
+                "operationId": "925a4a063396cfdaa77189709d053111",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/refunds/{id}/process": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Xử lý yêu cầu hoàn tiền (UC-109)",
+                "operationId": "966d6b13b6a142ad11305e3bcc170314",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "status"
+                                ],
+                                "properties": {
+                                    "status": {
+                                        "description": "APPROVED, REJECTED, COMPLETED",
+                                        "type": "string",
+                                        "example": "APPROVED"
+                                    },
+                                    "amount": {
+                                        "description": "Số tiền hoàn trả (bắt buộc khi APPROVED)",
+                                        "type": "number",
+                                        "example": 50000
+                                    },
+                                    "note": {
+                                        "type": "string",
+                                        "example": "Đã liên hệ khách hàng và hoàn tiền qua ngân hàng."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy yêu cầu"
                     }
                 },
                 "security": [
@@ -5277,15 +5676,65 @@
         "/api/v1/admin/pricing/configure": {
             "post": {
                 "tags": [
-                    "Admin.Pricing"
+                    "Admin Pricing"
                 ],
-                "summary": "Thiết lập giá (UC-91)",
+                "summary": "Thiết lập cấu hình giá (UC-91, UC-125)",
+                "description": "Cho phép Admin cấu hình giá cho các loại dịch vụ, bao gồm dịch vụ Lái hộ (Chauffeur). Các trường bao gồm phí mở cửa, giá/km, giá/phút, giá tối thiểu và hệ số tăng giá.",
                 "operationId": "dd5873eebc50848e07955450addc2a7c",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "vehicle_type": {
+                                        "description": "1: Bike, 2: Car4, 3: Car7, 4: Car9, 6: Chauffeur",
+                                        "type": "integer",
+                                        "example": 6
+                                    },
+                                    "base_price": {
+                                        "type": "number",
+                                        "example": 50000
+                                    },
+                                    "distance_rate": {
+                                        "type": "number",
+                                        "example": 15000
+                                    },
+                                    "time_rate": {
+                                        "type": "number",
+                                        "example": 1000
+                                    },
+                                    "min_fare": {
+                                        "type": "number",
+                                        "example": 60000
+                                    },
+                                    "surge_multiplier": {
+                                        "type": "number",
+                                        "example": 1
+                                    },
+                                    "commission_rate": {
+                                        "type": "number",
+                                        "example": 25
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
-                        "description": "Cập nhật thành công"
+                        "description": "Cập nhật cấu hình giá thành công"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ (A1)"
                     }
-                }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/admin/pricing/toggle-free-mode": {
@@ -5300,6 +5749,35 @@
                         "description": "Cập nhật thành công"
                     }
                 }
+            }
+        },
+        "/api/v1/admin/pricing/history/{vehicleType}": {
+            "get": {
+                "tags": [
+                    "Admin Pricing"
+                ],
+                "summary": "Lấy lịch sử thay đổi cấu hình giá (UC-125)",
+                "operationId": "b4fc3ffd924f1acd6bccc7eb50198036",
+                "parameters": [
+                    {
+                        "name": "vehicleType",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
             }
         },
         "/api/v1/admin/pricing/scheduled": {
@@ -5422,6 +5900,64 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/chauffeur/rides": {
+            "get": {
+                "tags": [
+                    "Admin Chauffeur"
+                ],
+                "summary": "Danh sách chuyến xe Lái hộ (Admin)",
+                "description": "Lấy toàn bộ danh sách các chuyến xe Lái hộ (RideType: 5).",
+                "operationId": "2a425695da5bca6170d3f07335becb46",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Tìm theo ID, địa chỉ hoặc SĐT khách",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái (waiting, assigned, completed, canceled)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không có quyền Admin"
                     }
                 },
                 "security": [
@@ -10126,6 +10662,14 @@
             "description": "Auth"
         },
         {
+            "name": "Chauffeur",
+            "description": "Chauffeur"
+        },
+        {
+            "name": "Complaint",
+            "description": "Complaint"
+        },
+        {
             "name": "Admin Dashboard",
             "description": "Admin Dashboard"
         },
@@ -10150,12 +10694,12 @@
             "description": "Admin - Finance"
         },
         {
-            "name": "Finance - Rewards",
-            "description": "Finance - Rewards"
-        },
-        {
             "name": "Finance",
             "description": "Finance"
+        },
+        {
+            "name": "Finance - Rewards",
+            "description": "Finance - Rewards"
         },
         {
             "name": "Food",
@@ -10200,6 +10744,10 @@
         {
             "name": "Admin Scheduled Pricing",
             "description": "Admin Scheduled Pricing"
+        },
+        {
+            "name": "Admin Chauffeur",
+            "description": "Admin Chauffeur"
         },
         {
             "name": "Admin Scheduled Rides",

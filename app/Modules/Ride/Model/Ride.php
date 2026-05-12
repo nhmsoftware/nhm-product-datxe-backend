@@ -183,4 +183,12 @@ class Ride extends Model
     {
         return $this->belongsTo(User::class, 'driver_id');
     }
+
+    /**
+     * Get all complaints for the ride.
+     */
+    public function complaints(): \Illuminate\Database\Eloquent\Relations\MorphMany
+    {
+        return $this->morphMany(\App\Modules\Complaint\Model\Complaint::class, 'complaintable');
+    }
 }
