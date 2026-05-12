@@ -251,7 +251,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
             $this->validate($success, 'Không thể cập nhật trạng thái tài khoản. Vui lòng thử lại.', 500);
 
             // Phát sự kiện realtime
-            UserStatusUpdated::dispatch($dto->userId, $dto->isActive, $updateData['lock_reason'] ?? null);
+            UserStatusUpdated::dispatch($dto->userId, $dto->isActive, $updateData['lock_reason'] ?? null, $updateData['lock_expired_at']?->toIso8601String());
 
             $message = $dto->isActive ? 'Mở khóa tài khoản tài xế thành công.' : 'Khóa tài khoản tài xế thành công.';
 
