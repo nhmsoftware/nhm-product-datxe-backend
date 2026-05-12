@@ -98,13 +98,13 @@ final class AdminUserService extends BaseService implements AdminUserServiceInte
                 if ($dto->lockExpiredAt) {
                     $lockExpiredAt = \Illuminate\Support\Carbon::parse($dto->lockExpiredAt);
                 } else {
-                    $lockedDays = $dto->lockedDays ?? 3; // Default to 3 days as per requirement
+                    $lockedDays = $dto->lockedDays ?? 2; // Default to 2 days as per UC-84
                     $lockExpiredAt = (clone $lockedAt)->addDays($lockedDays);
                 }
 
                 $updateData = array_merge($updateData, [
                     'lock_reason'     => $dto->reason,
-                    'locked_days'     => $dto->lockedDays ?? ($dto->lockExpiredAt ? $lockedAt->diffInDays($lockExpiredAt) : 3),
+                    'locked_days'     => $dto->lockedDays ?? ($dto->lockExpiredAt ? $lockedAt->diffInDays($lockExpiredAt) : 2),
                     'locked_at'       => $lockedAt,
                     'lock_expired_at' => $lockExpiredAt,
                 ]);

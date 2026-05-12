@@ -12,6 +12,7 @@ use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\KycStatus;
 use App\Modules\User\Model\Enums\UserRole;
+use App\Modules\User\Events\UserStatusUpdated;
 use App\Modules\Driver\Interfaces\DriverRegistrationRepositoryInterface;
 use App\Modules\Driver\Model\Enums\KycType;
 use App\Modules\Driver\Model\Enums\KycStatus as AppKycStatus;
@@ -151,6 +152,14 @@ final class MerchantAdminService extends BaseService implements MerchantAdminSer
                     'lock_expired_at' => null,
                 ]);
             }
+
+            // Phát sự kiện realtime đồng bộ với Driver/Customer
+            UserStatusUpdated::dispatch(
+                $user->id,
+                !$lock,
+                $reason,
+                $lock ? $expiredAt->toIso8601String() : null
+            );
 
             event(new \App\Modules\Merchant\Events\MerchantAccountStatusChanged(
                 $id, 
