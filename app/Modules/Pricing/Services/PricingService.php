@@ -18,6 +18,8 @@ use App\Modules\Pricing\Interfaces\PricingConfigRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingSurgeRuleRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
+use App\Modules\Finance\Interfaces\CommissionRuleServiceInterface;
+use App\Modules\Finance\Model\Enums\CommissionServiceType;
 
 final class PricingService extends BaseService implements PricingServiceInterface
 {
@@ -25,6 +27,7 @@ final class PricingService extends BaseService implements PricingServiceInterfac
         private readonly PricingConfigRepositoryInterface $pricingConfigRepository,
         private readonly PricingGlobalSettingRepositoryInterface $pricingGlobalSettingRepository,
         private readonly PricingSurgeRuleRepositoryInterface $pricingSurgeRuleRepository,
+        private readonly CommissionRuleServiceInterface $commissionRuleService,
     ) {}
 
     private const RATE_CONFIG = [
@@ -134,8 +137,30 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             // Giá cuối cùng = max(Giá tăng đột biến, Giá tối thiểu), làm tròn 1000 VND
             $finalFare = round(max($surgeFare, $minFare) / 1000) * 1000;
 
-            $commissionRate = (float) ($config['commission_rate'] ?? 20.0);
-            $commissionFare = round(($finalFare * ($commissionRate / 100)) / 100) * 100; // Làm tròn 100 VND cho hoa hồng
+            // Lấy tỷ lệ hoa hồng động từ module Finance (UC-97)
+            $commissionResult = $this->commissionRuleService->getApplicableCommission(CommissionServiceType::RIDE);
+            
+            if (!$commissionResult->isError()) {
+                $rule = $commissionResult->getData();
+                $commissionRate = (float) $rule['commission_rate'];
+                $minCommission  = $rule['min_commission'] ? (float) $rule['min_commission'] : 0.0;
+                $maxCommission  = $rule['max_commission'] ? (float) $rule['max_commission'] : null;
+                
+                $commissionFare = ($finalFare * ($commissionRate / 100));
+                
+                if ($minCommission > 0) {
+                    $commissionFare = max($commissionFare, $minCommission);
+                }
+                if ($maxCommission !== null && $maxCommission > 0) {
+                    $commissionFare = min($commissionFare, $maxCommission);
+                }
+                
+                $commissionFare = round($commissionFare / 100) * 100; // Làm tròn 100 VND
+            } else {
+                // Fallback về config cũ nếu không tìm thấy rule trong Finance
+                $commissionRate = (float) ($config['commission_rate'] ?? 20.0);
+                $commissionFare = round(($finalFare * ($commissionRate / 100)) / 100) * 100;
+            }
 
             return PricingResultDTO::create(
                 baseFare:        $baseFare,
@@ -171,7 +196,6 @@ final class PricingService extends BaseService implements PricingServiceInterfac
                         'time_rate'        => (float) $dto->timeRate,
                         'min_fare'         => (float) $dto->minFare,
                         'surge_multiplier' => (float) $dto->surgeMultiplier,
-                        'commission_rate'  => (float) $dto->commissionRate,
                     ];
                 } else {
                     $default = self::RATE_CONFIG[$i];
@@ -182,7 +206,6 @@ final class PricingService extends BaseService implements PricingServiceInterfac
                         'time_rate'        => (float) $default['time_rate'],
                         'min_fare'         => (float) $default['min_fare'],
                         'surge_multiplier' => (float) $default['surge_multiplier'],
-                        'commission_rate'  => (float) $default['commission_rate'],
                     ];
                 }
             }
@@ -208,7 +231,6 @@ final class PricingService extends BaseService implements PricingServiceInterfac
                 'time_rate'        => $dto->timeRate,
                 'min_fare'         => $dto->minFare,
                 'surge_multiplier' => $dto->surgeMultiplier,
-                'commission_rate'  => $dto->commissionRate,
             ];
 
             if ($config) {
@@ -298,7 +320,6 @@ final class PricingService extends BaseService implements PricingServiceInterfac
                 'distance_rate'    => (float) $dbConfig->distance_rate,
                 'time_rate'        => (float) $dbConfig->time_rate,
                 'surge_multiplier' => (float) $dbConfig->surge_multiplier,
-                'commission_rate'  => (float) $dbConfig->commission_rate,
             ];
         }
 

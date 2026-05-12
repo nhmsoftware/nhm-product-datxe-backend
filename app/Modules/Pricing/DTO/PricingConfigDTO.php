@@ -17,7 +17,6 @@ final class PricingConfigDTO
         public readonly float  $timeRate,
         public readonly float  $minFare,
         public readonly float  $surgeMultiplier,
-        public readonly float  $commissionRate,
     ) {}
 
     public static function fromModel(PricingConfig $model): self
@@ -34,7 +33,6 @@ final class PricingConfigDTO
             timeRate:        (float) $model->time_rate,
             minFare:         (float) $model->min_fare,
             surgeMultiplier: (float) $model->surge_multiplier,
-            commissionRate:  (float) $model->commission_rate,
         );
     }
 }

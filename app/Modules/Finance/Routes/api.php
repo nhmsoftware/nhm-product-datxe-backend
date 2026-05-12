@@ -55,4 +55,9 @@ Route::prefix('v1/admin/finance')->middleware(['auth:sanctum'])->group(function 
     Route::delete('vouchers/{id}', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'destroy'])->name('admin.finance.vouchers.destroy');
     Route::post('vouchers/assign', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'assign'])->name('admin.finance.vouchers.assign');
     Route::patch('vouchers/{id}/deactivate', [\App\Modules\Finance\Http\Controllers\AdminVoucherController::class, 'deactivate'])->name('admin.finance.vouchers.deactivate');
+
+    // UC-97: Configure Commission
+    Route::get('commissions', [\App\Modules\Finance\Http\Controllers\AdminCommissionController::class, 'index'])->name('admin.finance.commissions.index');
+    Route::post('commissions', [\App\Modules\Finance\Http\Controllers\AdminCommissionController::class, 'store'])->name('admin.finance.commissions.store');
+    Route::delete('commissions/{id}', [\App\Modules\Finance\Http\Controllers\AdminCommissionController::class, 'destroy'])->name('admin.finance.commissions.destroy');
 });

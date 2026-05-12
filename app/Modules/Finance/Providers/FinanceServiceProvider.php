@@ -21,6 +21,8 @@ use App\Modules\Finance\Interfaces\WalletServiceInterface;
 use App\Modules\Finance\Interfaces\SubscriptionServiceInterface;
 use App\Modules\Finance\Interfaces\FinanceRealtimeInterface;
 use App\Modules\Finance\Interfaces\AdminVoucherServiceInterface;
+use App\Modules\Finance\Interfaces\CommissionRuleRepositoryInterface;
+use App\Modules\Finance\Interfaces\CommissionRuleServiceInterface;
 use App\Modules\Finance\Repositories\RewardRepository;
 use App\Modules\Finance\Repositories\RewardWalletRepository;
 use App\Modules\Finance\Repositories\VoucherRepository;
@@ -37,6 +39,8 @@ use App\Modules\Finance\Services\RedisFinanceRealtimeService;
 use App\Modules\Finance\Services\WalletService;
 use App\Modules\Finance\Services\SubscriptionService;
 use App\Modules\Finance\Services\AdminVoucherService;
+use App\Modules\Finance\Services\CommissionRuleService;
+use App\Modules\Finance\Repositories\CommissionRuleRepository;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Routing\Router;
 
@@ -63,6 +67,7 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(TopUpRepositoryInterface::class, TopUpRepository::class);
         $this->app->singleton(SubscriptionPackageRepositoryInterface::class, SubscriptionPackageRepository::class);
         $this->app->singleton(DriverSubscriptionRepositoryInterface::class, DriverSubscriptionRepository::class);
+        $this->app->singleton(CommissionRuleRepositoryInterface::class, CommissionRuleRepository::class);
 
         // ── Services ──────
         $this->app->singleton(VoucherServiceInterface::class, VoucherService::class);
@@ -72,6 +77,7 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(SubscriptionServiceInterface::class, SubscriptionService::class);
         $this->app->singleton(FinanceRealtimeInterface::class, RedisFinanceRealtimeService::class);
         $this->app->singleton(AdminVoucherServiceInterface::class, AdminVoucherService::class);
+        $this->app->singleton(CommissionRuleServiceInterface::class, CommissionRuleService::class);
 
     }
 

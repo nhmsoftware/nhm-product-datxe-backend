@@ -16,7 +16,6 @@ final class UpdatePricingConfigDTO
         public readonly float       $timeRate,
         public readonly float       $minFare,
         public readonly float       $surgeMultiplier,
-        public readonly float       $commissionRate,
     ) {}
 
     public static function fromRequest(Request $request): self
@@ -28,7 +27,6 @@ final class UpdatePricingConfigDTO
             timeRate:        (float) $request->input('time_rate'),
             minFare:         (float) $request->input('min_fare'),
             surgeMultiplier: (float) $request->input('surge_multiplier', 1.0),
-            commissionRate:  (float) $request->input('commission_rate', 20.0),
         );
     }
 }
