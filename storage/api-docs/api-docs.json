@@ -4607,13 +4607,30 @@
                 }
             }
         },
-        "/api/v1/merchant/store/stats/daily-orders": {
+        "/api/v1/merchant/store/stats/orders": {
             "get": {
                 "tags": [
                     "Merchant"
                 ],
-                "summary": "Xem tổng số đơn hàng trong ngày (UC-66)",
-                "operationId": "a51242427d227c14b5770600c430192f",
+                "summary": "Xem thống kê số lượng đơn hàng (UC-66)",
+                "operationId": "de91b2042bb93f0ac0105ea4a491c233",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Khoảng thời gian (today, week, month)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "today",
+                            "enum": [
+                                "today",
+                                "week",
+                                "month"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Thành công",
@@ -4621,9 +4638,13 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "total_orders_today": {
+                                        "total_orders": {
                                             "type": "integer",
                                             "example": 15
+                                        },
+                                        "period": {
+                                            "type": "string",
+                                            "example": "today"
                                         },
                                         "date": {
                                             "type": "string",
@@ -4647,13 +4668,30 @@
                 ]
             }
         },
-        "/api/v1/merchant/store/stats/daily-revenue": {
+        "/api/v1/merchant/store/stats/revenue": {
             "get": {
                 "tags": [
                     "Merchant"
                 ],
-                "summary": "Xem tổng doanh thu trong ngày (UC-67)",
-                "operationId": "b1f7e7cd684eb21ae7a76491f9935994",
+                "summary": "Xem thống kê doanh thu (UC-67)",
+                "operationId": "f64e033b7f33b3c4019f27ef056e2379",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Khoảng thời gian (today, week, month)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "today",
+                            "enum": [
+                                "today",
+                                "week",
+                                "month"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Thành công",
@@ -4661,10 +4699,14 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
-                                        "total_revenue_today": {
+                                        "total_revenue": {
                                             "type": "number",
                                             "format": "float",
                                             "example": 1500000.5
+                                        },
+                                        "period": {
+                                            "type": "string",
+                                            "example": "today"
                                         },
                                         "date": {
                                             "type": "string",
@@ -4673,6 +4715,223 @@
                                         }
                                     },
                                     "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy cửa hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/store/stats/average-order-value": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Xem giá trị trung bình đơn hàng (UC-67.a)",
+                "operationId": "c31eddb64f1278a4a44650500048266d",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Khoảng thời gian (today, week, month)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "today",
+                            "enum": [
+                                "today",
+                                "week",
+                                "month"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "average_order_value": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 150000.5
+                                        },
+                                        "total_revenue": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 1500000
+                                        },
+                                        "total_orders": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "period": {
+                                            "type": "string",
+                                            "example": "today"
+                                        },
+                                        "date": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "example": "2026-05-08"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy cửa hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/store/stats/revenue-chart": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Xem biểu đồ doanh thu (UC-67.b)",
+                "operationId": "6c9f2595cf5ee7791c33239dedcd1b3a",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Khoảng thời gian (today, week, month)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "today",
+                            "enum": [
+                                "today",
+                                "week",
+                                "month"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "chart_data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "label": {
+                                                        "type": "string",
+                                                        "example": "10:00 hoặc 12/05"
+                                                    },
+                                                    "revenue": {
+                                                        "type": "number",
+                                                        "format": "float",
+                                                        "example": 500000
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "period": {
+                                            "type": "string",
+                                            "example": "today"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": ""
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy cửa hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/merchant/store/stats/recent-transactions": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Xem giao dịch gần đây (UC-67.c)",
+                "operationId": "352e854defdaa673a72784ab777e3a9a",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Số lượng giao dịch (mặc định 5)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "transaction_id": {
+                                                "type": "string",
+                                                "example": "TX123456"
+                                            },
+                                            "time": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            },
+                                            "amount": {
+                                                "type": "number",
+                                                "format": "float",
+                                                "example": 150000
+                                            },
+                                            "payment_method": {
+                                                "type": "string",
+                                                "example": "Ví hệ thống"
+                                            },
+                                            "status": {
+                                                "type": "string",
+                                                "example": "Thành công"
+                                            },
+                                            "description": {
+                                                "type": "string"
+                                            },
+                                            "type": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
                                 }
                             }
                         }

@@ -92,8 +92,31 @@ final class AdminPricingController extends BaseController
         return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 
-    #[OA\Post(path: '/api/v1/admin/pricing/configure', summary: 'Thiết lập giá (UC-91)', tags: ['Admin.Pricing'])]
-    #[OA\Response(response: 200, description: 'Cập nhật thành công')]
+    #[OA\Post(
+        path: '/api/v1/admin/pricing/configure', 
+        summary: 'Thiết lập cấu hình giá (UC-91, UC-125)', 
+        description: 'Cho phép Admin cấu hình giá cho các loại dịch vụ, bao gồm dịch vụ Lái hộ (Chauffeur). Các trường bao gồm phí mở cửa, giá/km, giá/phút, giá tối thiểu và hệ số tăng giá.',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Pricing'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'vehicle_type', type: 'integer', example: 6, description: '1: Bike, 2: Car4, 3: Car7, 4: Car9, 6: Chauffeur'),
+                    new OA\Property(property: 'base_price', type: 'number', example: 50000),
+                    new OA\Property(property: 'distance_rate', type: 'number', example: 15000),
+                    new OA\Property(property: 'time_rate', type: 'number', example: 1000),
+                    new OA\Property(property: 'min_fare', type: 'number', example: 60000),
+                    new OA\Property(property: 'surge_multiplier', type: 'number', example: 1.0),
+                    new OA\Property(property: 'commission_rate', type: 'number', example: 25.0),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Cập nhật cấu hình giá thành công'),
+            new OA\Response(response: 422, description: 'Dữ liệu không hợp lệ (A1)')
+        ]
+    )]
     public function configure(ConfigurePricingRequest $request): JsonResponse
     {
         $result = $this->pricingService->updateConfig(UpdatePricingConfigDTO::fromRequest($request));
@@ -112,6 +135,23 @@ final class AdminPricingController extends BaseController
             return $this->sendError($result->getMessage(), $result->getCode());
         }
         return $this->sendSuccess($result->getData(), 'Cập nhật chế độ miễn phí thành công.');
+    }
+
+    #[OA\Get(
+        path: '/api/v1/admin/pricing/history/{vehicleType}',
+        summary: 'Lấy lịch sử thay đổi cấu hình giá (UC-125)',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Pricing'],
+        parameters: [new OA\Parameter(name: 'vehicleType', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))],
+        responses: [new OA\Response(response: 200, description: 'Thành công')]
+    )]
+    public function getHistory(int $vehicleType): JsonResponse
+    {
+        $result = $this->pricingService->getPricingHistory($vehicleType);
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+        return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 
     public function resetToDefault(int $vehicleType): JsonResponse

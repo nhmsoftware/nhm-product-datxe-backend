@@ -105,23 +105,83 @@ final class OrderRepository implements OrderRepositoryInterface
         return null;
     }
 
-    public function countDailyOrdersByMerchant(string $merchantId): int
+    public function countOrdersByMerchant(string $merchantId, string $period = 'today'): int
     {
-        return DB::table('food_orders')
+        $query = DB::table('food_orders')
             ->where('merchant_id', $merchantId)
-            ->whereDate('created_at', now()->toDateString())
-            ->whereNull('deleted_at')
-            ->count();
+            ->whereNull('deleted_at');
+
+        match ($period) {
+            'week'  => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'month' => $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
+            default => $query->whereDate('created_at', now()->toDateString()),
+        };
+
+        return $query->count();
     }
 
-    public function sumDailyRevenueByMerchant(string $merchantId): float
+    public function sumRevenueByMerchant(string $merchantId, string $period = 'today'): float
     {
-        return (float) DB::table('food_orders')
+        $query = DB::table('food_orders')
             ->where('merchant_id', $merchantId)
             ->where('status', 6) // FoodOrderStatus::DELIVERED
-            ->whereDate('created_at', now()->toDateString())
-            ->whereNull('deleted_at')
-            ->sum('total_price');
+            ->whereNull('deleted_at');
+
+        match ($period) {
+            'week'  => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'month' => $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
+            default => $query->whereDate('created_at', now()->toDateString()),
+        };
+
+        return (float) $query->sum('total_price');
+    }
+
+    public function countCompletedOrdersByMerchant(string $merchantId, string $period = 'today'): int
+    {
+        $query = DB::table('food_orders')
+            ->where('merchant_id', $merchantId)
+            ->where('status', 6) // FoodOrderStatus::DELIVERED
+            ->whereNull('deleted_at');
+
+        match ($period) {
+            'week'  => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'month' => $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
+            default => $query->whereDate('created_at', now()->toDateString()),
+        };
+
+        return $query->count();
+    }
+
+    public function getRevenueChartData(string $merchantId, string $period = 'today'): array
+    {
+        $trunc = match ($period) {
+            'today' => 'hour',
+            default => 'day',
+        };
+
+        $query = DB::table('food_orders')
+            ->select([
+                DB::raw("date_trunc('$trunc', created_at) as time_label"),
+                DB::raw("SUM(total_price) as revenue")
+            ])
+            ->where('merchant_id', $merchantId)
+            ->where('status', 6) // FoodOrderStatus::DELIVERED
+            ->whereNull('deleted_at');
+
+        match ($period) {
+            'week'  => $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]),
+            'month' => $query->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year),
+            default => $query->whereDate('created_at', now()->toDateString()),
+        };
+
+        return $query->groupBy('time_label')
+            ->orderBy('time_label')
+            ->get()
+            ->map(fn($item) => [
+                'label'   => $item->time_label,
+                'revenue' => (float) $item->revenue
+            ])
+            ->toArray();
     }
 
     public function updateFoodOrderStatus(string $orderId, int $status): bool

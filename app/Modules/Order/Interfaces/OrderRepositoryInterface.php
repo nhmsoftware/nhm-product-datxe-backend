@@ -20,16 +20,28 @@ interface OrderRepositoryInterface
     public function getDetail(string $orderId, string $serviceType, ?string $merchantId = null): ?array;
 
     /**
-     * Count total orders for a merchant in the current day.
-     * UC-66 View total daily orders
+     * Count total orders for a merchant by period (today, week, month).
+     * UC-66 View order statistics
      */
-    public function countDailyOrdersByMerchant(string $merchantId): int;
+    public function countOrdersByMerchant(string $merchantId, string $period = 'today'): int;
 
     /**
-     * Sum total revenue for a merchant in the current day (Completed orders).
-     * UC-67 View daily revenue
+     * Sum total revenue for a merchant by period (Completed orders).
+     * UC-67 View revenue statistics
      */
-    public function sumDailyRevenueByMerchant(string $merchantId): float;
+    public function sumRevenueByMerchant(string $merchantId, string $period = 'today'): float;
+
+    /**
+     * Count completed orders for a merchant by period.
+     * UC-67.a View average order value
+     */
+    public function countCompletedOrdersByMerchant(string $merchantId, string $period = 'today'): int;
+
+    /**
+     * Get aggregated revenue data for merchant chart.
+     * UC-67.b View revenue chart
+     */
+    public function getRevenueChartData(string $merchantId, string $period = 'today'): array;
 
     /**
      * Update status of a food order.

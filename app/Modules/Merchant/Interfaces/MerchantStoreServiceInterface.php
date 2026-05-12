@@ -51,14 +51,30 @@ interface MerchantStoreServiceInterface
     public function updateCommissionPackage(string $userId, string $packageKey): ServiceReturn;
 
     /**
-     * Get daily order statistics for the merchant.
-     * UC-66 View total daily orders
+     * Get order statistics for the merchant by period.
+     * UC-66 View order statistics
      */
-    public function getDailyOrderStats(string $userId): ServiceReturn;
+    public function getOrderStats(string $userId, string $period = 'today'): ServiceReturn;
 
     /**
-     * Get daily revenue statistics for the merchant.
-     * UC-67 View daily revenue
+     * Get revenue statistics for the merchant by period.
+     * UC-67 View revenue statistics
      */
-    public function getDailyRevenueStats(string $userId): ServiceReturn;
+    public function getRevenueStats(string $userId, string $period = 'today'): ServiceReturn;
+
+    /**
+     * Get average order value for the merchant by period.
+     * UC-67.a View average order value
+     */
+    public function getAverageOrderValue(string $userId, string $period = 'today'): ServiceReturn;
+    /**
+     * Get revenue chart data for the merchant by period.
+     * UC-67.b View revenue chart
+     */
+    public function getRevenueChart(string $userId, string $period = 'today'): ServiceReturn;
+    /**
+     * Get recent transactions for the merchant.
+     * UC-67.c View recent transactions
+     */
+    public function getRecentTransactions(string $userId, int $limit = 5): ServiceReturn;
 }

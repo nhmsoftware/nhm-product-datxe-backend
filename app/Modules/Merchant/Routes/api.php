@@ -31,8 +31,11 @@ Route::prefix('v1/merchant')->group(function () {
         Route::get('/store/commission-packages', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getPackages'])->name('merchant.store.commission_packages');
         Route::put('/store/commission-package', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'updatePackage'])->name('merchant.store.update_commission_package');
         Route::put('/store/discount', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'updateDiscount'])->name('merchant.store.update_discount');
-        Route::get('/store/stats/daily-orders', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getDailyOrderStats'])->name('merchant.store.stats.daily_orders');
-        Route::get('/store/stats/daily-revenue', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getDailyRevenueStats'])->name('merchant.store.stats.daily_revenue');
+        Route::get('/store/stats/orders', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getOrderStats'])->name('merchant.store.stats.orders');
+        Route::get('/store/stats/revenue', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getRevenueStats'])->name('merchant.store.stats.revenue');
+        Route::get('/store/stats/average-order-value', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getAverageOrderValue'])->name('merchant.store.stats.average_order_value');
+        Route::get('/store/stats/revenue-chart', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getRevenueChart'])->name('merchant.store.stats.revenue_chart');
+        Route::get('/store/stats/recent-transactions', [\App\Modules\Merchant\Http\Controllers\MerchantStoreController::class, 'getRecentTransactions'])->name('merchant.store.stats.recent_transactions');
 
         // Combo Management (UC-61, UC-54, UC-55, UC-56, UC-62)
         Route::get('/combos', [\App\Modules\Merchant\Http\Controllers\MerchantComboController::class, 'index'])->name('merchant.combos.index');

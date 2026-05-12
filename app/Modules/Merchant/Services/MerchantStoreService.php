@@ -15,6 +15,8 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
     public function __construct(
         private readonly MerchantRepositoryInterface $merchantRepository,
         private readonly OrderRepositoryInterface $orderRepository,
+        private readonly \App\Modules\Finance\Interfaces\WalletRepositoryInterface $walletRepository,
+        private readonly \App\Modules\Finance\Interfaces\WalletTransactionRepositoryInterface $walletTransactionRepository,
     ) {}
 
     public function getStoreInfo(string $userId): ServiceReturn
@@ -185,33 +187,108 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
         }, useTransaction: true);
     }
 
-    public function getDailyOrderStats(string $userId): ServiceReturn
+    public function getOrderStats(string $userId, string $period = 'today'): ServiceReturn
     {
-        return $this->execute(function () use ($userId) {
+        return $this->execute(function () use ($userId, $period) {
             $store = $this->merchantRepository->findByUserId($userId);
             $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
 
-            $totalOrders = $this->orderRepository->countDailyOrdersByMerchant((string) $store->id);
+            $totalOrders = $this->orderRepository->countOrdersByMerchant((string) $store->id, $period);
 
             return [
-                'total_orders_today' => $totalOrders,
-                'date'               => now()->toDateString(),
+                'total_orders' => $totalOrders,
+                'period'       => $period,
+                'date'         => now()->toDateString(),
             ];
         });
     }
 
-    public function getDailyRevenueStats(string $userId): ServiceReturn
+    public function getRevenueStats(string $userId, string $period = 'today'): ServiceReturn
     {
-        return $this->execute(function () use ($userId) {
+        return $this->execute(function () use ($userId, $period) {
             $store = $this->merchantRepository->findByUserId($userId);
             $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
 
-            $totalRevenue = $this->orderRepository->sumDailyRevenueByMerchant((string) $store->id);
+            $totalRevenue = $this->orderRepository->sumRevenueByMerchant((string) $store->id, $period);
 
             return [
-                'total_revenue_today' => $totalRevenue,
+                'total_revenue' => $totalRevenue,
+                'period'        => $period,
+                'date'          => now()->toDateString(),
+            ];
+        });
+    }
+
+    public function getAverageOrderValue(string $userId, string $period = 'today'): ServiceReturn
+    {
+        return $this->execute(function () use ($userId, $period) {
+            $store = $this->merchantRepository->findByUserId($userId);
+            $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
+
+            $totalRevenue = $this->orderRepository->sumRevenueByMerchant((string) $store->id, $period);
+            $totalCompletedOrders = $this->orderRepository->countCompletedOrdersByMerchant((string) $store->id, $period);
+
+            $averageValue = 0;
+            if ($totalCompletedOrders > 0) {
+                $averageValue = $totalRevenue / $totalCompletedOrders;
+            }
+
+            return [
+                'average_order_value' => round($averageValue, 2),
+                'total_revenue'       => $totalRevenue,
+                'total_orders'        => $totalCompletedOrders,
+                'period'              => $period,
                 'date'                => now()->toDateString(),
             ];
+        });
+    }
+
+    public function getRevenueChart(string $userId, string $period = 'today'): ServiceReturn
+    {
+        return $this->execute(function () use ($userId, $period) {
+            $store = $this->merchantRepository->findByUserId($userId);
+            $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
+
+            $rawData = $this->orderRepository->getRevenueChartData((string) $store->id, $period);
+
+            $formattedData = array_map(function ($item) use ($period) {
+                $date = new \DateTime($item['label']);
+                $label = match ($period) {
+                    'today' => $date->format('H:00'),
+                    default => $date->format('d/m'),
+                };
+
+                return [
+                    'label'   => $label,
+                    'revenue' => $item['revenue'],
+                ];
+            }, $rawData);
+
+            return [
+                'chart_data' => $formattedData,
+                'period'     => $period,
+                'message'    => empty($formattedData) ? 'Không có dữ liệu doanh thu.' : '',
+            ];
+        });
+    }
+
+    public function getRecentTransactions(string $userId, int $limit = 5): ServiceReturn
+    {
+        return $this->execute(function () use ($userId, $limit) {
+            $wallet = $this->walletRepository->findByUserId($userId);
+            if (!$wallet) return [];
+
+            $transactions = $this->walletTransactionRepository->getRecentByWalletId((string) $wallet->id, $limit);
+
+            return $transactions->map(fn($t) => [
+                'transaction_id' => (string) $t->id,
+                'time'           => $t->created_at->toIso8601String(),
+                'amount'         => (float) $t->amount,
+                'payment_method' => 'Ví hệ thống', // Giả định thanh toán qua ví
+                'status'         => 'Thành công',
+                'description'    => $t->description,
+                'type'           => $t->type->getLabel(),
+            ])->toArray();
         });
     }
 }

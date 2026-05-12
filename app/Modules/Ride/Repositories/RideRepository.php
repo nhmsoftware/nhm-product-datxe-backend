@@ -492,6 +492,42 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * @inheritDoc
      */
+    public function listChauffeurRidesForAdmin(array $filters)
+    {
+        $query = $this->model->newQuery()
+            ->with(['customer', 'driver'])
+            ->where('ride_type', \App\Modules\Ride\Model\Enums\RideType::CHAUFFEUR->value);
+
+        if (!empty($filters['status'])) {
+            $statusMap = [
+                'waiting'   => RideStatus::PENDING->value,
+                'assigned'  => RideStatus::ACCEPTED->value,
+                'completed' => RideStatus::COMPLETED->value,
+                'canceled'  => RideStatus::CANCELLED->value,
+            ];
+
+            $status = $statusMap[$filters['status']] ?? $filters['status'];
+            $query->where('status', $status);
+        }
+
+        if (!empty($filters['keyword'])) {
+            $keyword = '%' . $filters['keyword'] . '%';
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw('id::text LIKE ?', [$keyword])
+                    ->orWhere('pickup_address', 'like', $keyword)
+                    ->orWhere('destination_address', 'like', $keyword)
+                    ->orWhereHas('customer', function ($qc) use ($keyword) {
+                        $qc->where('phone', 'like', $keyword);
+                    });
+            });
+        }
+
+        return $query->latest()->paginate($filters['per_page'] ?? 15);
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function pushToPool(array $rideIds): int
     {
         $rideIds = array_filter($rideIds, 'is_numeric');

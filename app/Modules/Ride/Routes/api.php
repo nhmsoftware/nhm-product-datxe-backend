@@ -96,3 +96,10 @@ Route::prefix('v1/admin/rides')->middleware(['auth:sanctum'])->group(function ()
         Route::post('/push-to-pool', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'pushToPool'])->name('admin.rides.scheduled.push_to_pool');
     });
 });
+
+/**
+ * Các route dành cho Quản trị viên (Admin) - Dịch vụ Lái hộ
+ */
+Route::prefix('v1/admin/chauffeur')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('/rides', [\App\Modules\Ride\Http\Controllers\AdminChauffeurRideController::class, 'index'])->name('admin.chauffeur.rides.index');
+});

@@ -22,6 +22,9 @@ Route::prefix('v1/admin/pricing')
         Route::delete('/configs/{vehicleType}/reset', [AdminPricingController::class, 'resetToDefault'])
             ->name('admin.pricing.configs.reset');
 
+        Route::get('history/{vehicleType}', [AdminPricingController::class, 'getHistory'])
+            ->name('admin.pricing.history');
+
         Route::post('toggle-free-mode', [AdminPricingController::class, 'toggleFreeMode'])
             ->name('admin.pricing.toggle_free_mode');
 

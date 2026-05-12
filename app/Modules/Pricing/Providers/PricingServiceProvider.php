@@ -50,6 +50,11 @@ final class PricingServiceProvider extends BaseModuleServiceProvider
         $router = $this->app['router'];
         $router->aliasMiddleware('check.account.status', CheckAccountStatus::class);
 
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Modules\Pricing\Events\PricingConfigUpdated::class,
+            \App\Modules\Pricing\Listeners\LogPricingConfigHistory::class
+        );
+
         parent::boot();
     }
 }

@@ -124,6 +124,10 @@ class Ride extends Model
         'delivery_proof_skip_reason',
         'delivery_proof_note',
         'tracking_last_ping_at',
+        'chauffeur_license_plate',
+        'chauffeur_vehicle_type',
+        'chauffeur_brand',
+        'chauffeur_color',
         'started_at',
         'completed_at',
     ];

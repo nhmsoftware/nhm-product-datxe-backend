@@ -168,40 +168,216 @@ final class MerchantStoreController extends BaseController
         return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 
-    #[OA\Get(path: '/api/v1/merchant/store/stats/daily-orders', summary: 'Xem tổng số đơn hàng trong ngày (UC-66)', security: [['sanctum' => []]], tags: ['Merchant'])]
-    #[OA\Response(
-        response: 200,
-        description: 'Thành công',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'total_orders_today', type: 'integer', example: 15),
-                new OA\Property(property: 'date', type: 'string', format: 'date', example: '2026-05-08'),
-            ]
-        )
+    #[OA\Get(
+        path: '/api/v1/merchant/store/stats/orders',
+        summary: 'Xem thống kê số lượng đơn hàng (UC-66)',
+        security: [['sanctum' => []]],
+        tags: ['Merchant'],
+        parameters: [
+            new OA\Parameter(
+                name: 'period',
+                in: 'query',
+                description: 'Khoảng thời gian (today, week, month)',
+                required: false,
+                schema: new OA\Schema(type: 'string', enum: ['today', 'week', 'month'], default: 'today')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Thành công',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'total_orders', type: 'integer', example: 15),
+                        new OA\Property(property: 'period', type: 'string', example: 'today'),
+                        new OA\Property(property: 'date', type: 'string', format: 'date', example: '2026-05-08'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'Không tìm thấy cửa hàng')
+        ]
     )]
-    #[OA\Response(response: 404, description: 'Không tìm thấy cửa hàng')]
-    public function getDailyOrderStats(Request $request): JsonResponse
+    public function getOrderStats(\App\Modules\Merchant\Http\Requests\GetOrderStatsRequest $request): JsonResponse
     {
-        $result = $this->storeService->getDailyOrderStats((string)$request->user()->id);
+        $result = $this->storeService->getOrderStats(
+            (string)$request->user()->id,
+            $request->query('period', 'today')
+        );
         if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
         return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 
-    #[OA\Get(path: '/api/v1/merchant/store/stats/daily-revenue', summary: 'Xem tổng doanh thu trong ngày (UC-67)', security: [['sanctum' => []]], tags: ['Merchant'])]
-    #[OA\Response(
-        response: 200,
-        description: 'Thành công',
-        content: new OA\JsonContent(
-            properties: [
-                new OA\Property(property: 'total_revenue_today', type: 'number', format: 'float', example: 1500000.5),
-                new OA\Property(property: 'date', type: 'string', format: 'date', example: '2026-05-08'),
-            ]
-        )
+    #[OA\Get(
+        path: '/api/v1/merchant/store/stats/revenue',
+        summary: 'Xem thống kê doanh thu (UC-67)',
+        security: [['sanctum' => []]],
+        tags: ['Merchant'],
+        parameters: [
+            new OA\Parameter(
+                name: 'period',
+                in: 'query',
+                description: 'Khoảng thời gian (today, week, month)',
+                required: false,
+                schema: new OA\Schema(type: 'string', enum: ['today', 'week', 'month'], default: 'today')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Thành công',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'total_revenue', type: 'number', format: 'float', example: 1500000.5),
+                        new OA\Property(property: 'period', type: 'string', example: 'today'),
+                        new OA\Property(property: 'date', type: 'string', format: 'date', example: '2026-05-08'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'Không tìm thấy cửa hàng')
+        ]
     )]
-    #[OA\Response(response: 404, description: 'Không tìm thấy cửa hàng')]
-    public function getDailyRevenueStats(Request $request): JsonResponse
+    public function getRevenueStats(\App\Modules\Merchant\Http\Requests\GetOrderStatsRequest $request): JsonResponse
     {
-        $result = $this->storeService->getDailyRevenueStats((string)$request->user()->id);
+        $result = $this->storeService->getRevenueStats(
+            (string)$request->user()->id,
+            $request->query('period', 'today')
+        );
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/merchant/store/stats/average-order-value',
+        summary: 'Xem giá trị trung bình đơn hàng (UC-67.a)',
+        security: [['sanctum' => []]],
+        tags: ['Merchant'],
+        parameters: [
+            new OA\Parameter(
+                name: 'period',
+                in: 'query',
+                description: 'Khoảng thời gian (today, week, month)',
+                required: false,
+                schema: new OA\Schema(type: 'string', enum: ['today', 'week', 'month'], default: 'today')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Thành công',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'average_order_value', type: 'number', format: 'float', example: 150000.5),
+                        new OA\Property(property: 'total_revenue', type: 'number', format: 'float', example: 1500000.0),
+                        new OA\Property(property: 'total_orders', type: 'integer', example: 10),
+                        new OA\Property(property: 'period', type: 'string', example: 'today'),
+                        new OA\Property(property: 'date', type: 'string', format: 'date', example: '2026-05-08'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'Không tìm thấy cửa hàng')
+        ]
+    )]
+    public function getAverageOrderValue(\App\Modules\Merchant\Http\Requests\GetOrderStatsRequest $request): JsonResponse
+    {
+        $result = $this->storeService->getAverageOrderValue(
+            (string)$request->user()->id,
+            $request->query('period', 'today')
+        );
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/merchant/store/stats/revenue-chart',
+        summary: 'Xem biểu đồ doanh thu (UC-67.b)',
+        security: [['sanctum' => []]],
+        tags: ['Merchant'],
+        parameters: [
+            new OA\Parameter(
+                name: 'period',
+                in: 'query',
+                description: 'Khoảng thời gian (today, week, month)',
+                required: false,
+                schema: new OA\Schema(type: 'string', enum: ['today', 'week', 'month'], default: 'today')
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Thành công',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(
+                            property: 'chart_data',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'label', type: 'string', example: '10:00 hoặc 12/05'),
+                                    new OA\Property(property: 'revenue', type: 'number', format: 'float', example: 500000.0)
+                                ]
+                            )
+                        ),
+                        new OA\Property(property: 'period', type: 'string', example: 'today'),
+                        new OA\Property(property: 'message', type: 'string', example: '')
+                    ]
+                )
+            ),
+            new OA\Response(response: 404, description: 'Không tìm thấy cửa hàng')
+        ]
+    )]
+    public function getRevenueChart(\App\Modules\Merchant\Http\Requests\GetOrderStatsRequest $request): JsonResponse
+    {
+        $result = $this->storeService->getRevenueChart(
+            (string)$request->user()->id,
+            $request->query('period', 'today')
+        );
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Get(
+        path: '/api/v1/merchant/store/stats/recent-transactions',
+        summary: 'Xem giao dịch gần đây (UC-67.c)',
+        security: [['sanctum' => []]],
+        tags: ['Merchant'],
+        parameters: [
+            new OA\Parameter(
+                name: 'limit',
+                in: 'query',
+                description: 'Số lượng giao dịch (mặc định 5)',
+                required: false,
+                schema: new OA\Schema(type: 'integer', default: 5)
+            )
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Thành công',
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'transaction_id', type: 'string', example: 'TX123456'),
+                            new OA\Property(property: 'time', type: 'string', format: 'date-time'),
+                            new OA\Property(property: 'amount', type: 'number', format: 'float', example: 150000.0),
+                            new OA\Property(property: 'payment_method', type: 'string', example: 'Ví hệ thống'),
+                            new OA\Property(property: 'status', type: 'string', example: 'Thành công'),
+                            new OA\Property(property: 'description', type: 'string'),
+                            new OA\Property(property: 'type', type: 'string')
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 404, description: 'Không tìm thấy cửa hàng')
+        ]
+    )]
+    public function getRecentTransactions(Request $request): JsonResponse
+    {
+        $limit = (int) $request->query('limit', 5);
+        $result = $this->storeService->getRecentTransactions(
+            (string)$request->user()->id,
+            $limit
+        );
         if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
         return $this->sendSuccess($result->getData(), $result->getMessage());
     }

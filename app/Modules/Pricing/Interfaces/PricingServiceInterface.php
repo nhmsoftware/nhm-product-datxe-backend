@@ -68,4 +68,14 @@ interface PricingServiceInterface
      * @return ServiceReturn
      */
     public function deleteSurgeRule(string $ruleId): ServiceReturn;
+
+    /**
+     * Reset pricing to default by deleting custom config.
+     */
+    public function resetToDefault(int $vehicleType): ServiceReturn;
+
+    /**
+     * Lấy lịch sử thay đổi cấu hình giá cho một loại xe (UC-125).
+     */
+    public function getPricingHistory(int $vehicleType): ServiceReturn;
 }

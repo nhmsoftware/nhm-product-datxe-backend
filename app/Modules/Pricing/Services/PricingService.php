@@ -63,6 +63,14 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             'commission_rate' => 20.0,
             'surge_multiplier' => 1.0,
         ],
+        6 => [ // CHAUFFEUR
+            'base_fare'     => 50000.0,
+            'min_fare'      => 60000.0,
+            'distance_rate' => 15000.0,
+            'time_rate'     => 1000.0,
+            'commission_rate' => 25.0,
+            'surge_multiplier' => 1.0,
+        ],
     ];
 
     public function calculatePrice(PricingRequestDTO $dto): ServiceReturn
@@ -182,15 +190,16 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             $globalSettings = $this->pricingGlobalSettingRepository->getSettings();
 
             $finalConfigs = [];
-            // Đảm bảo luôn trả về 4 loại xe (1: Bike, 2: Car4, 3: Car7, 4: Car9)
-            for ($i = 1; $i <= 4; $i++) {
-                $config = $dbConfigs->get($i);
+            // Lấy danh sách các vehicle types được hỗ trợ từ RATE_CONFIG
+            $supportedTypes = array_keys(self::RATE_CONFIG);
+
+            foreach ($supportedTypes as $typeId) {
+                $config = $dbConfigs->get($typeId);
                 
                 if ($config) {
                     $dto = PricingConfigDTO::fromModel($config);
-                    // Ép kiểu vehicleType về số để Frontend dễ xử lý
                     $finalConfigs[] = [
-                        'vehicle_type'     => $i,
+                        'vehicle_type'     => $typeId,
                         'base_price'       => (float) $dto->basePrice,
                         'distance_rate'    => (float) $dto->distanceRate,
                         'time_rate'        => (float) $dto->timeRate,
@@ -198,9 +207,9 @@ final class PricingService extends BaseService implements PricingServiceInterfac
                         'surge_multiplier' => (float) $dto->surgeMultiplier,
                     ];
                 } else {
-                    $default = self::RATE_CONFIG[$i];
+                    $default = self::RATE_CONFIG[$typeId];
                     $finalConfigs[] = [
-                        'vehicle_type'     => $i,
+                        'vehicle_type'     => $typeId,
                         'base_price'       => (float) $default['base_fare'],
                         'distance_rate'    => (float) $default['distance_rate'],
                         'time_rate'        => (float) $default['time_rate'],
@@ -236,10 +245,10 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             if ($config) {
                 $oldData = $config->toArray();
                 $this->pricingConfigRepository->updateById($config->id, $data);
-                event(new PricingConfigUpdated($dto->vehicleType->value, $oldData, $data));
+                event(new PricingConfigUpdated($dto->vehicleType->value, $oldData, $data, $dto->adminId));
             } else {
                 $this->pricingConfigRepository->create($data);
-                event(new PricingConfigUpdated($dto->vehicleType->value, [], $data));
+                event(new PricingConfigUpdated($dto->vehicleType->value, [], $data, $dto->adminId));
             }
 
             return ['status' => 'success'];
@@ -308,6 +317,15 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             }
             return ['status' => 'success'];
         }, useTransaction: true);
+    }
+
+    public function getPricingHistory(int $vehicleType): ServiceReturn
+    {
+        return $this->execute(function () use ($vehicleType) {
+            return \App\Modules\Pricing\Model\PricingConfigHistory::where('vehicle_type', $vehicleType)
+                ->orderByDesc('created_at')
+                ->get();
+        });
     }
 
     private function getConfigForVehicleType(int $vehicleType): array

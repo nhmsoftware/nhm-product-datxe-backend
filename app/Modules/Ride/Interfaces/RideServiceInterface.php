@@ -143,6 +143,11 @@ interface RideServiceInterface
     public function listScheduledRidesForAdmin(array $filters): ServiceReturn;
 
     /**
+     * Danh sách chuyến Lái hộ cho Admin.
+     */
+    public function listChauffeurRidesForAdmin(array $filters): ServiceReturn;
+
+    /**
      * Admin gán chuyến xe cho tài xế đội xe nhà.
      */
     public function assignInternalDriver(\App\Modules\Ride\DTO\AssignInternalDriverDTO $dto): ServiceReturn;
