@@ -1919,7 +1919,7 @@
                 "tags": [
                     "Admin Finance"
                 ],
-                "summary": "Danh sách cấu hình hoa hồng (UC-97)",
+                "summary": "Danh sách cấu hình hoa hồng (UC-119)",
                 "operationId": "dde34b4155c7be5c825558ebc21c2164",
                 "responses": {
                     "200": {
@@ -1936,7 +1936,7 @@
                 "tags": [
                     "Admin Finance"
                 ],
-                "summary": "Tạo cấu hình hoa hồng mới (UC-97)",
+                "summary": "Tạo cấu hình hoa hồng mới (UC-119)",
                 "operationId": "8a50c7780c8772eadbc949a0dfa7b0c7",
                 "requestBody": {
                     "required": true,
@@ -1948,11 +1948,18 @@
                                         "type": "string",
                                         "example": "Hoa hồng Ride HCM"
                                     },
+                                    "target_type": {
+                                        "description": "1: Driver, 2: Merchant",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
                                     "service_type": {
+                                        "description": "1: Ride, 2: Food, 3: Delivery",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "scope": {
+                                        "description": "1: System, 2: Regional",
                                         "type": "integer",
                                         "example": 2
                                     },
@@ -2022,6 +2029,100 @@
                 "responses": {
                     "200": {
                         "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/credit-wallet-config": {
+            "get": {
+                "tags": [
+                    "Admin Finance Config"
+                ],
+                "summary": "Lấy cấu hình Credit Wallet hiện tại (UC-117)",
+                "operationId": "ab3454a5b0db1a2e4b3249473f727fc7",
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "min_balance": {
+                                            "type": "number",
+                                            "example": 50000
+                                        },
+                                        "auto_lock": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "commission_rule": {
+                                            "type": "string",
+                                            "example": "Default rule description"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Finance Config"
+                ],
+                "summary": "Cập nhật cấu hình Credit Wallet (UC-117)",
+                "operationId": "00d6dd6888e8593da91e641277ea485d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "min_balance"
+                                ],
+                                "properties": {
+                                    "min_balance": {
+                                        "type": "number",
+                                        "example": 100000
+                                    },
+                                    "auto_lock": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "commission_rule": {
+                                        "type": "string",
+                                        "example": "New deduction rule"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cấu hình Credit Wallet thành công."
+                    },
+                    "400": {
+                        "description": "Thông tin cấu hình không hợp lệ."
+                    },
+                    "500": {
+                        "description": "Không thể cập nhật Credit Wallet Configuration."
                     }
                 },
                 "security": [
@@ -2104,6 +2205,263 @@
                     },
                     "403": {
                         "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/subscriptions/packages": {
+            "get": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Danh sách tất cả gói thuê bao (Admin) (UC-118)",
+                "operationId": "f680e387d6d3277522ad6b4e68a526ae",
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Gói tháng Tiêu chuẩn"
+                                                    },
+                                                    "package_type": {
+                                                        "type": "string",
+                                                        "example": "monthly"
+                                                    },
+                                                    "price": {
+                                                        "type": "number",
+                                                        "example": 300000
+                                                    },
+                                                    "duration_days": {
+                                                        "type": "integer",
+                                                        "example": 30
+                                                    },
+                                                    "service_fee_reduction_percent": {
+                                                        "type": "number",
+                                                        "example": 100
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Tạo gói thuê bao mới (Admin) (UC-118)",
+                "operationId": "633c3441a476b5189ade7a4f251f9ce2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "package_type",
+                                    "price",
+                                    "duration_days"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Gói tháng Tiêu chuẩn"
+                                    },
+                                    "package_type": {
+                                        "type": "string",
+                                        "example": "monthly",
+                                        "enum": [
+                                            "daily",
+                                            "weekly",
+                                            "monthly"
+                                        ]
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "example": 300000
+                                    },
+                                    "duration_days": {
+                                        "type": "integer",
+                                        "example": 30
+                                    },
+                                    "service_fee_reduction_percent": {
+                                        "type": "number",
+                                        "example": 100
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Nhận 100% cước, không hoa hồng trong 30 ngày"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo thành công"
+                    },
+                    "400": {
+                        "description": "Vui lòng nhập đầy đủ thông tin gói thuê bao."
+                    },
+                    "422": {
+                        "description": "Gói thuê bao này đã tồn tại."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/subscriptions/packages/{id}": {
+            "put": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Cập nhật gói thuê bao (Admin) (UC-118)",
+                "operationId": "846042bc375fcbd681d5ee9511b70476",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "package_type",
+                                    "price",
+                                    "duration_days"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Gói tháng Premium"
+                                    },
+                                    "package_type": {
+                                        "type": "string",
+                                        "example": "monthly",
+                                        "enum": [
+                                            "daily",
+                                            "weekly",
+                                            "monthly"
+                                        ]
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "example": 500000
+                                    },
+                                    "duration_days": {
+                                        "type": "integer",
+                                        "example": 30
+                                    },
+                                    "service_fee_reduction_percent": {
+                                        "type": "number",
+                                        "example": 100
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Nhận 100% cước trong 30 ngày"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy gói thuê bao."
+                    },
+                    "422": {
+                        "description": "Gói thuê bao này đã tồn tại."
+                    },
+                    "500": {
+                        "description": "Không thể cập nhật Subscription Package."
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/subscriptions/packages/{id}/disable": {
+            "patch": {
+                "tags": [
+                    "Admin - Finance"
+                ],
+                "summary": "Vô hiệu hóa gói thuê bao (Admin) (UC-118 - A5)",
+                "operationId": "324468b76c1a98ed9a8cecda99b3d408",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Vô hiệu hóa thành công. Tài xế đang dùng vẫn có hiệu lực đến ngày hết hạn."
+                    },
+                    "404": {
+                        "description": "Không tìm thấy gói thuê bao."
+                    },
+                    "409": {
+                        "description": "Gói thuê bao này đã bị vô hiệu hóa."
                     }
                 },
                 "security": [
@@ -10930,6 +11288,10 @@
         {
             "name": "Admin Finance",
             "description": "Admin Finance"
+        },
+        {
+            "name": "Admin Finance Config",
+            "description": "Admin Finance Config"
         },
         {
             "name": "Admin - Finance",
