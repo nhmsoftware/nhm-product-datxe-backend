@@ -16,7 +16,10 @@ use App\Modules\Finance\Interfaces\WalletRepositoryInterface;
 use App\Modules\Finance\Interfaces\WalletServiceInterface;
 use App\Modules\Finance\Interfaces\WalletTransactionRepositoryInterface;
 use App\Modules\Finance\Model\Enums\WalletTransactionType;
+use App\Modules\Finance\Interfaces\CreditWalletConfigRepositoryInterface;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
+use App\Modules\User\Model\Enums\DriverGroupType;
+use App\Modules\User\Model\Enums\DriverStatus;
 
 final class WalletService extends BaseService implements WalletServiceInterface
 {
@@ -26,6 +29,7 @@ final class WalletService extends BaseService implements WalletServiceInterface
         private readonly DriverProfileRepositoryInterface     $driverProfileRepository,
         private readonly TopUpRepositoryInterface             $topUpRepository,
         private readonly FinanceRealtimeInterface             $realtimeService,
+        private readonly CreditWalletConfigRepositoryInterface $walletConfigRepository,
     ) {}
 
     /**
@@ -172,6 +176,9 @@ final class WalletService extends BaseService implements WalletServiceInterface
                 'balance' => $balanceAfter,
             ]);
 
+            // UC-117: Tự động khóa/mở nhận cuốc
+            $this->syncDriverDispatchStatus((string) $topUp->user_id, $balanceAfter);
+
             // 3. Create Wallet Transaction
             $this->transactionRepository->create([
                 'wallet_id'      => $wallet->id,
@@ -202,6 +209,36 @@ final class WalletService extends BaseService implements WalletServiceInterface
                 ],
             ];
         }, useTransaction: true);
+    }
+
+    /**
+     * UC-117: Đồng bộ trạng thái Dispatch của tài xế dựa trên số dư ví.
+     */
+    private function syncDriverDispatchStatus(string $userId, float $currentBalance): void
+    {
+        $driver = $this->driverProfileRepository->findByUserId($userId);
+        if (!$driver || $driver->driver_group_type === DriverGroupType::INTERNAL->value) {
+            return;
+        }
+
+        $config = $this->walletConfigRepository->getLatestConfig();
+        if (!$config->auto_lock) {
+            return;
+        }
+
+        if ($currentBalance < $config->min_balance) {
+            // Khóa nhận cuốc nếu đang ACTIVE
+            if ($driver->status === DriverStatus::ACTIVE) {
+                $this->driverProfileRepository->updateStatus($driver->id, DriverStatus::DISPATCH_LOCKED);
+                Log::info("UC-117: Driver {$userId} locked due to low balance ({$currentBalance} < {$config->min_balance})");
+            }
+        } else {
+            // Mở khóa nếu đang DISPATCH_LOCKED
+            if ($driver->status === DriverStatus::DISPATCH_LOCKED) {
+                $this->driverProfileRepository->updateStatus($driver->id, DriverStatus::ACTIVE);
+                Log::info("UC-117: Driver {$userId} unlocked as balance is sufficient ({$currentBalance} >= {$config->min_balance})");
+            }
+        }
     }
 
     /**

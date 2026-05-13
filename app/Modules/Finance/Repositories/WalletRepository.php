@@ -30,4 +30,11 @@ final class WalletRepository extends BaseRepository implements WalletRepositoryI
             'total_withdrawn' => 0,
         ]);
     }
+
+    public function getLowBalanceUserIds(float $minBalance): array
+    {
+        return $this->model->where('balance', '<', $minBalance)
+            ->pluck('user_id')
+            ->toArray();
+    }
 }

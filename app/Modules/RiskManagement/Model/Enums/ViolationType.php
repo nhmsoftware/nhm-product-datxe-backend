@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace App\Modules\RiskManagement\Model\Enums;
 
-enum ViolationType: string
+enum ViolationType: int
 {
-    case ATTITUDE = 'ATTITUDE'; // Thái độ không phù hợp
-    case CANCELLATION = 'CANCELLATION'; // Hủy chuyến nhiều lần
-    case INCOMPLETE_TRIP = 'INCOMPLETE_TRIP'; // Không hoàn thành đơn
-    case LATE_DELIVERY = 'LATE_DELIVERY'; // Giao hàng chậm
-    case FRAUD = 'FRAUD'; // Gian lận
-    case SPAM_BOOKING = 'SPAM_BOOKING'; // Spam đặt chuyến
-    case VOUCHER_ABUSE = 'VOUCHER_ABUSE'; // Lạm dụng voucher
-    case HARASSMENT = 'HARASSMENT'; // Quấy rối
-    case OTHER = 'OTHER'; // Lý do khác
+    case ATTITUDE = 1; // Thái độ không phù hợp
+    case CANCELLATION = 2; // Hủy chuyến nhiều lần
+    case INCOMPLETE_TRIP = 3; // Không hoàn thành đơn
+    case LATE_DELIVERY = 4; // Giao hàng chậm
+    case FRAUD = 5; // Gian lận
+    case SPAM_BOOKING = 6; // Spam đặt chuyến
+    case VOUCHER_ABUSE = 7; // Lạm dụng voucher
+    case HARASSMENT = 8; // Quấy rối
+    case OTHER = 9; // Lý do khác
 
     public function getLabel(): string
     {

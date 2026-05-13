@@ -17,11 +17,16 @@ interface CommissionRuleRepositoryInterface extends BaseRepositoryInterface
     /**
      * Lấy quy tắc đang hoạt động cho một loại dịch vụ và khu vực.
      * 
+     * @param \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType
      * @param CommissionServiceType $serviceType
      * @param string|null $areaId
      * @return CommissionRule|null
      */
-    public function getActiveRule(CommissionServiceType $serviceType, ?string $areaId = null): ?CommissionRule;
+    public function getActiveRule(
+        \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType,
+        CommissionServiceType $serviceType,
+        ?string               $areaId = null
+    ): ?CommissionRule;
 
     /**
      * Lấy danh sách tất cả quy tắc (UC-97).
@@ -42,6 +47,7 @@ interface CommissionRuleRepositoryInterface extends BaseRepositoryInterface
      * @return bool
      */
     public function hasOverlappingRule(
+        \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType,
         CommissionServiceType $serviceType,
         int                   $scope,
         ?string               $areaId,

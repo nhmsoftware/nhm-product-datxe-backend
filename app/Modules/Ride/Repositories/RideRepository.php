@@ -452,6 +452,16 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * @inheritDoc
      */
+    public function sumTotalCommission(): float
+    {
+        return (float) $this->model
+            ->where('status', RideStatus::COMPLETED->value)
+            ->sum('service_fee');
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function listScheduledRidesForAdmin(array $filters)
     {
         $query = $this->model->newQuery()

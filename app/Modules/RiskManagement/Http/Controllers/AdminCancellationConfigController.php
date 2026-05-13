@@ -30,7 +30,7 @@ final class AdminCancellationConfigController extends BaseController
         $result = $this->service->createConfig($dto);
 
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess($result->getData(), 'Cấu hình hủy chuyến thành công.', 201);
@@ -41,7 +41,7 @@ final class AdminCancellationConfigController extends BaseController
         $result = $this->service->getConfig($id);
 
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess($result->getData(), 'Lấy thông tin cấu hình thành công.');
@@ -53,7 +53,7 @@ final class AdminCancellationConfigController extends BaseController
         $result = $this->service->updateConfig($id, $dto);
 
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess($result->getData(), 'Cập nhật cấu hình hủy chuyến thành công.');
@@ -64,7 +64,7 @@ final class AdminCancellationConfigController extends BaseController
         $result = $this->service->deleteConfig($id);
 
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess(null, 'Xóa cấu hình hủy chuyến thành công.');

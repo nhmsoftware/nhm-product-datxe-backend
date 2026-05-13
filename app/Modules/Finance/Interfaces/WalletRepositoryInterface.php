@@ -18,4 +18,9 @@ interface WalletRepositoryInterface extends BaseRepositoryInterface
      * Create wallet for user if not exists
      */
     public function firstOrCreateForUser(string $userId): Wallet;
+
+    /**
+     * Lấy danh sách user_id có số dư ví thấp hơn mức tối thiểu.
+     */
+    public function getLowBalanceUserIds(float $minBalance): array;
 }

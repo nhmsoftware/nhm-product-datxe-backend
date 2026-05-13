@@ -30,7 +30,7 @@ final class AdminPenaltyRuleController extends BaseController
         $result = $this->penaltyRuleService->createRule($dto);
 
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess($result->getData(), 'Cấu hình quy tắc xử phạt thành công.');
@@ -41,7 +41,7 @@ final class AdminPenaltyRuleController extends BaseController
         $result = $this->penaltyRuleService->getRule($id);
         
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess($result->getData(), 'Lấy thông tin quy tắc thành công.');
@@ -53,7 +53,7 @@ final class AdminPenaltyRuleController extends BaseController
         $result = $this->penaltyRuleService->updateRule($id, $dto);
 
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess($result->getData(), 'Cập nhật quy tắc xử phạt thành công.');
@@ -64,7 +64,7 @@ final class AdminPenaltyRuleController extends BaseController
         $result = $this->penaltyRuleService->deleteRule($id);
 
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess(null, 'Xóa quy tắc xử phạt thành công.');
@@ -76,7 +76,7 @@ final class AdminPenaltyRuleController extends BaseController
         $result = $this->penaltyRuleService->toggleStatus($id, $isActive);
 
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess(null, 'Cập nhật trạng thái thành công.');

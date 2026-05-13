@@ -65,4 +65,17 @@ Route::prefix('v1/admin/finance')->middleware(['auth:sanctum'])->group(function 
     Route::get('refunds', [\App\Modules\Finance\Http\Controllers\RefundController::class, 'index'])->name('admin.finance.refunds.index');
     Route::get('refunds/{id}', [\App\Modules\Finance\Http\Controllers\RefundController::class, 'show'])->name('admin.finance.refunds.show');
     Route::post('refunds/{id}/process', [\App\Modules\Finance\Http\Controllers\RefundController::class, 'process'])->name('admin.finance.refunds.process');
+
+    // UC-116: Manage Driver Financial Model
+    Route::get('driver-summary', [\App\Modules\Finance\Http\Controllers\AdminDriverFinanceController::class, 'summary'])->name('admin.finance.driver-summary');
+
+    // UC-117: Configure Credit Wallet
+    Route::get('credit-wallet-config', [\App\Modules\Finance\Http\Controllers\AdminCreditWalletConfigController::class, 'show'])->name('admin.finance.credit-wallet-config.show');
+    Route::post('credit-wallet-config', [\App\Modules\Finance\Http\Controllers\AdminCreditWalletConfigController::class, 'update'])->name('admin.finance.credit-wallet-config.update');
+
+    // UC-118: Configure Subscription Package
+    Route::get('subscriptions/packages', [\App\Modules\Finance\Http\Controllers\AdminSubscriptionController::class, 'index'])->name('admin.finance.subscriptions.packages.index');
+    Route::post('subscriptions/packages', [\App\Modules\Finance\Http\Controllers\AdminSubscriptionController::class, 'store'])->name('admin.finance.subscriptions.packages.store');
+    Route::put('subscriptions/packages/{id}', [\App\Modules\Finance\Http\Controllers\AdminSubscriptionController::class, 'update'])->name('admin.finance.subscriptions.packages.update');
+    Route::patch('subscriptions/packages/{id}/disable', [\App\Modules\Finance\Http\Controllers\AdminSubscriptionController::class, 'disable'])->name('admin.finance.subscriptions.packages.disable');
 });

@@ -123,9 +123,24 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
      */
     public function updateLocation(string $driverId, float $lat, float $lng): bool
     {
-        return (bool) $this->model->where('user_id', $driverId)->update([
+        return (bool) $this->model->where('id', $driverId)->update([
             'current_lat' => $lat,
             'current_lng' => $lng,
         ]);
+    }
+
+    public function countTotalDrivers(): int
+    {
+        return $this->model->count();
+    }
+
+    public function countByGroupType(\App\Modules\User\Model\Enums\DriverGroupType $type): int
+    {
+        return $this->model->where('driver_group_type', $type->value)->count();
+    }
+
+    public function countByStatus(DriverStatus $status): int
+    {
+        return $this->model->where('status', $status->value)->count();
     }
 }

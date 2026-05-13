@@ -6,6 +6,7 @@ namespace App\Modules\Finance\Model;
 
 use App\Modules\Finance\Model\Enums\CommissionScope;
 use App\Modules\Finance\Model\Enums\CommissionServiceType;
+use App\Modules\Finance\Model\Enums\CommissionTargetType;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * 
  * @property string $id
  * @property string|null $name
+ * @property CommissionTargetType $target_type
  * @property CommissionServiceType $service_type
  * @property CommissionScope $scope
  * @property string|null $area_id
@@ -33,6 +35,7 @@ final class CommissionRule extends Model
 
     protected $fillable = [
         'name',
+        'target_type',
         'service_type',
         'scope',
         'area_id',
@@ -46,6 +49,7 @@ final class CommissionRule extends Model
 
     protected $casts = [
         'id'              => 'string',
+        'target_type'     => CommissionTargetType::class,
         'service_type'    => CommissionServiceType::class,
         'scope'           => CommissionScope::class,
         'commission_rate' => 'float',

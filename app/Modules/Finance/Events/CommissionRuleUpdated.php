@@ -14,6 +14,7 @@ final class CommissionRuleUpdated
 
     public function __construct(
         public readonly string $ruleId,
+        public readonly int    $targetType,
         public readonly int    $serviceType,
         public readonly float  $oldRate,
         public readonly float  $newRate,

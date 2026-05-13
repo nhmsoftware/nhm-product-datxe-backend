@@ -13,6 +13,7 @@ final class SubscriptionPackage extends Model
 
     protected $fillable = [
         'name',
+        'package_type',
         'description',
         'price',
         'duration_days',

@@ -85,7 +85,7 @@ final class AdminScheduledRideController extends BaseController
         $result = $this->rideService->getScheduledRideDetail($id, '');
         
         if ($result->isError()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess(
@@ -124,7 +124,7 @@ final class AdminScheduledRideController extends BaseController
         $result = $this->rideService->assignInternalDriver($dto);
 
         if ($result->isError()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess($result->getData(), 'Phân phối chuyến xe cho đội xe nhà thành công.');
@@ -158,7 +158,7 @@ final class AdminScheduledRideController extends BaseController
         $result = $this->rideService->pushScheduledRidesToPool($dto);
 
         if ($result->isError()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess($result->getData(), 'Phân phối chuyến xe ra pool thành công.');

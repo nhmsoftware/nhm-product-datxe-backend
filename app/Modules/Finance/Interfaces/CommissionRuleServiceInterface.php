@@ -28,11 +28,16 @@ interface CommissionRuleServiceInterface
     /**
      * Lấy tỷ lệ hoa hồng áp dụng cho một đơn hàng cụ thể.
      * 
+     * @param \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType
      * @param CommissionServiceType $serviceType
      * @param string|null $areaId
      * @return ServiceReturn
      */
-    public function getApplicableCommission(CommissionServiceType $serviceType, ?string $areaId = null): ServiceReturn;
+    public function getApplicableCommission(
+        \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType,
+        CommissionServiceType $serviceType,
+        ?string               $areaId = null
+    ): ServiceReturn;
 
     /**
      * Xóa/Hủy kích hoạt rule.

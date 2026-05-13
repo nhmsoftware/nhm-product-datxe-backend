@@ -62,7 +62,7 @@ final class AdminScheduledPricingController extends BaseController
         $result = $this->service->updateSettings($dto);
 
         if (!$result->isSuccess()) {
-            return $this->sendError($result->getMessage(), $result->getStatusCode());
+            return $this->sendError($result->getMessage(), $result->getCode());
         }
 
         return $this->sendSuccess($result->getData(), 'Cập nhật cấu hình giá thành công.');

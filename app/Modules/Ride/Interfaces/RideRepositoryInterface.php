@@ -223,6 +223,11 @@ interface RideRepositoryInterface
     public function sumTotalRevenue(): float;
 
     /**
+     * Tính tổng hoa hồng hệ thống (phí dịch vụ các chuyến xe đã hoàn thành).
+     */
+    public function sumTotalCommission(): float;
+
+    /**
      * Danh sách chuyến đặt trước cho Admin quản lý.
      */
     public function listScheduledRidesForAdmin(array $filters);

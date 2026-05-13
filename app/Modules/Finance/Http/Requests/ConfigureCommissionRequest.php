@@ -23,6 +23,7 @@ final class ConfigureCommissionRequest extends FormRequest
     {
         return [
             'name'            => ['nullable', 'string', 'max:255'],
+            'target_type'     => ['required', new Enum(\App\Modules\Finance\Model\Enums\CommissionTargetType::class)],
             'service_type'    => ['required', new Enum(CommissionServiceType::class)],
             'scope'           => ['required', new Enum(CommissionScope::class)],
             'area_id'         => ['nullable', 'string', 'max:255'],

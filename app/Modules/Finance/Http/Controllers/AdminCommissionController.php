@@ -19,7 +19,7 @@ final class AdminCommissionController extends BaseController
 
     #[OA\Get(
         path: '/api/v1/admin/finance/commissions',
-        summary: 'Danh sách cấu hình hoa hồng (UC-97)',
+        summary: 'Danh sách cấu hình hoa hồng (UC-119)',
         security: [['bearerAuth' => []]],
         tags: ['Admin Finance'],
         responses: [new OA\Response(response: 200, description: 'Thành công')]
@@ -32,7 +32,7 @@ final class AdminCommissionController extends BaseController
 
     #[OA\Post(
         path: '/api/v1/admin/finance/commissions',
-        summary: 'Tạo cấu hình hoa hồng mới (UC-97)',
+        summary: 'Tạo cấu hình hoa hồng mới (UC-119)',
         security: [['bearerAuth' => []]],
         tags: ['Admin Finance'],
         requestBody: new OA\RequestBody(
@@ -40,8 +40,9 @@ final class AdminCommissionController extends BaseController
             content: new OA\JsonContent(
                 properties: [
                     new OA\Property(property: 'name', type: 'string', example: 'Hoa hồng Ride HCM'),
-                    new OA\Property(property: 'service_type', type: 'integer', example: 1),
-                    new OA\Property(property: 'scope', type: 'integer', example: 2),
+                    new OA\Property(property: 'target_type', type: 'integer', example: 1, description: '1: Driver, 2: Merchant'),
+                    new OA\Property(property: 'service_type', type: 'integer', example: 1, description: '1: Ride, 2: Food, 3: Delivery'),
+                    new OA\Property(property: 'scope', type: 'integer', example: 2, description: '1: System, 2: Regional'),
                     new OA\Property(property: 'area_id', type: 'string', example: 'hcm_area_01'),
                     new OA\Property(property: 'commission_rate', type: 'number', example: 20.0),
                     new OA\Property(property: 'min_commission', type: 'number', example: 5000),

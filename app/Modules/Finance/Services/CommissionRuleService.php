@@ -24,6 +24,7 @@ final class CommissionRuleService extends BaseService implements CommissionRuleS
         return $this->execute(function () use ($dto) {
             // 1. Kiểm tra trùng lặp (Overlap)
             $isOverlap = $this->commissionRuleRepository->hasOverlappingRule(
+                $dto->targetType,
                 $dto->serviceType,
                 $dto->scope->value,
                 $dto->areaId,
@@ -36,6 +37,7 @@ final class CommissionRuleService extends BaseService implements CommissionRuleS
             // 2. Tạo rule mới
             $rule = $this->commissionRuleRepository->create([
                 'name'            => $dto->name,
+                'target_type'     => $dto->targetType->value,
                 'service_type'    => $dto->serviceType->value,
                 'scope'           => $dto->scope->value,
                 'area_id'         => $dto->areaId,
@@ -50,10 +52,11 @@ final class CommissionRuleService extends BaseService implements CommissionRuleS
             // 3. Phát event
             event(new CommissionRuleUpdated(
                 ruleId:      $rule->id,
+                targetType:  $rule->target_type->value,
                 serviceType: $rule->service_type->value,
                 oldRate:     0, // Giả sử đây là rule mới, chưa quan tâm rule cũ ở đây
                 newRate:     $rule->commission_rate,
-                adminId:     Auth::id() // Lấy từ auth nếu có
+                adminId:     (string) Auth::id() // Lấy từ auth nếu có
             ));
 
             return $rule->toArray();
@@ -67,10 +70,13 @@ final class CommissionRuleService extends BaseService implements CommissionRuleS
         });
     }
 
-    public function getApplicableCommission(CommissionServiceType $serviceType, ?string $areaId = null): ServiceReturn
-    {
-        return $this->execute(function () use ($serviceType, $areaId) {
-            $rule = $this->commissionRuleRepository->getActiveRule($serviceType, $areaId);
+    public function getApplicableCommission(
+        \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType,
+        CommissionServiceType $serviceType,
+        ?string               $areaId = null
+    ): ServiceReturn {
+        return $this->execute(function () use ($targetType, $serviceType, $areaId) {
+            $rule = $this->commissionRuleRepository->getActiveRule($targetType, $serviceType, $areaId);
             $this->validate($rule !== null, 'Không tìm thấy cấu hình hoa hồng hợp lệ.', 404);
 
             return $rule->toArray();

@@ -43,8 +43,15 @@ use App\Modules\Finance\Services\CommissionRuleService;
 use App\Modules\Finance\Repositories\CommissionRuleRepository;
 use App\Modules\Finance\Interfaces\RefundRepositoryInterface;
 use App\Modules\Finance\Interfaces\RefundServiceInterface;
-use App\Modules\Finance\Repositories\RefundRepository;
 use App\Modules\Finance\Services\RefundService;
+use App\Modules\Finance\Interfaces\AdminDriverFinanceServiceInterface;
+use App\Modules\Finance\Services\AdminDriverFinanceService;
+use App\Modules\Finance\Interfaces\CreditWalletConfigRepositoryInterface;
+use App\Modules\Finance\Repositories\CreditWalletConfigRepository;
+use App\Modules\Finance\Interfaces\CreditWalletConfigServiceInterface;
+use App\Modules\Finance\Services\CreditWalletConfigService;
+use App\Modules\Finance\Interfaces\AdminSubscriptionServiceInterface;
+use App\Modules\Finance\Services\AdminSubscriptionService;
 
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Routing\Router;
@@ -74,6 +81,7 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(DriverSubscriptionRepositoryInterface::class, DriverSubscriptionRepository::class);
         $this->app->singleton(CommissionRuleRepositoryInterface::class, CommissionRuleRepository::class);
         $this->app->singleton(RefundRepositoryInterface::class, RefundRepository::class);
+        $this->app->singleton(CreditWalletConfigRepositoryInterface::class, CreditWalletConfigRepository::class);
 
 
         // ── Services ──────
@@ -86,6 +94,9 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(AdminVoucherServiceInterface::class, AdminVoucherService::class);
         $this->app->singleton(CommissionRuleServiceInterface::class, CommissionRuleService::class);
         $this->app->singleton(RefundServiceInterface::class, RefundService::class);
+        $this->app->singleton(AdminDriverFinanceServiceInterface::class, AdminDriverFinanceService::class);
+        $this->app->singleton(CreditWalletConfigServiceInterface::class, CreditWalletConfigService::class);
+        $this->app->singleton(AdminSubscriptionServiceInterface::class, AdminSubscriptionService::class);
 
 
     }

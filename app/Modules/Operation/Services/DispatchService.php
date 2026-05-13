@@ -12,6 +12,8 @@ use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Model\Enums\DriverGroupType;
+use App\Modules\Finance\Interfaces\CreditWalletConfigRepositoryInterface;
+use App\Modules\Finance\Interfaces\WalletRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
@@ -24,7 +26,9 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
     public function __construct(
         private readonly RideRepositoryInterface $rideRepository,
         private readonly LocationRepositoryInterface $locationRepository,
-        private readonly DriverProfileRepositoryInterface $driverProfileRepository
+        private readonly DriverProfileRepositoryInterface $driverProfileRepository,
+        private readonly CreditWalletConfigRepositoryInterface $walletConfigRepository,
+        private readonly WalletRepositoryInterface $walletRepository
     ) {
     }
 
@@ -101,6 +105,15 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
                 vehicleType: (int) $ride->vehicle_type->value,
                 groupType: DriverGroupType::PARTNER->value // Chỉ lấy đối tác ở vòng 2
             );
+
+            // UC-117: Kiểm tra Credit Wallet cho Partner drivers
+            $config = $this->walletConfigRepository->getLatestConfig();
+            if ($config->auto_lock) {
+                $blockedUserIds = $this->walletRepository->getLowBalanceUserIds($config->min_balance);
+                $eligibleDrivers = $eligibleDrivers->filter(function ($driver) use ($blockedUserIds) {
+                    return !in_array($driver->user_id, $blockedUserIds);
+                });
+            }
 
             // 2. Thông báo (loại trừ những người đã từ chối đơn này)
             $notifiedCount = 0;

@@ -10,6 +10,7 @@ enum DriverStatus: int
     case COOLDOWN = 2;
     case BANNED   = 3;
     case BUSY     = 4;
+    case DISPATCH_LOCKED = 5; // Khóa nhận cuốc (ví thấp)
 
     public function getLabel(): string
     {
@@ -18,6 +19,7 @@ enum DriverStatus: int
             self::COOLDOWN => 'Đang bị đóng băng',
             self::BANNED   => 'Bị khóa',
             self::BUSY     => 'Đang bận',
+            self::DISPATCH_LOCKED => 'Khóa nhận cuốc',
         };
     }
 }

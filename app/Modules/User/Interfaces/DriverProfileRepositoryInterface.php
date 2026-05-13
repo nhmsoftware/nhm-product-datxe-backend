@@ -63,4 +63,19 @@ interface DriverProfileRepositoryInterface extends BaseRepositoryInterface
      * Cập nhật vị trí hiện tại của tài xế.
      */
     public function updateLocation(string $driverId, float $lat, float $lng): bool;
+
+    /**
+     * Đếm tổng số tài xế.
+     */
+    public function countTotalDrivers(): int;
+
+    /**
+     * Đếm tài xế theo loại đội xe.
+     */
+    public function countByGroupType(\App\Modules\User\Model\Enums\DriverGroupType $type): int;
+
+    /**
+     * Đếm tài xế theo trạng thái.
+     */
+    public function countByStatus(DriverStatus $status): int;
 }

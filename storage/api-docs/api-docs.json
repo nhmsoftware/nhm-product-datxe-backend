@@ -2031,6 +2031,88 @@
                 ]
             }
         },
+        "/api/v1/admin/finance/driver-summary": {
+            "get": {
+                "tags": [
+                    "Admin Finance"
+                ],
+                "summary": "Tổng quan tài chính tài xế (UC-116)",
+                "operationId": "66b448ea97ecd24581b87fe1729e053f",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "total_drivers": {
+                                            "type": "integer",
+                                            "example": 150
+                                        },
+                                        "total_drivers_internal": {
+                                            "type": "integer",
+                                            "example": 50
+                                        },
+                                        "total_drivers_partner": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "total_revenue": {
+                                            "type": "number",
+                                            "example": 150000000
+                                        },
+                                        "total_commission": {
+                                            "type": "number",
+                                            "example": 30000000
+                                        },
+                                        "total_drivers_blocked": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "currency": {
+                                            "type": "string",
+                                            "example": "VND"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/finance/vouchers": {
             "get": {
                 "tags": [
@@ -7754,6 +7836,166 @@
                 ]
             }
         },
+        "/api/v1/admin/risk/violations/{userId}": {
+            "get": {
+                "tags": [
+                    "RiskManagement"
+                ],
+                "summary": "Lịch sử vi phạm của người dùng (UC-110)",
+                "operationId": "12d336cb382e5f7ec699e26c5e0fcd4e",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy người dùng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/risk/violations/{userId}/warn": {
+            "post": {
+                "tags": [
+                    "RiskManagement"
+                ],
+                "summary": "Gửi cảnh báo cho Driver (UC-110)",
+                "operationId": "4fdb6e5d19d1dcce81ab3586366b3181",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "description": "ATTITUDE, CANCELLATION, INCOMPLETE_TRIP, LATE_DELIVERY, FRAUD, OTHER",
+                                        "type": "string",
+                                        "example": "ATTITUDE"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Tài xế có thái độ khiếm nhã với khách hàng."
+                                    },
+                                    "complaint_id": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Gửi cảnh báo thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ hoặc thiếu thông tin"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy Driver"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/risk/violations/customer/{userId}/warn": {
+            "post": {
+                "tags": [
+                    "RiskManagement"
+                ],
+                "summary": "Gửi cảnh báo cho Customer (UC-111)",
+                "operationId": "8aa6c4ccfbe56145c85201f5778d7231",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "reason"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "description": "ATTITUDE, CANCELLATION, FRAUD, SPAM_BOOKING, VOUCHER_ABUSE, HARASSMENT, OTHER",
+                                        "type": "string",
+                                        "example": "SPAM_BOOKING"
+                                    },
+                                    "reason": {
+                                        "type": "string",
+                                        "example": "Khách hàng có hành vi đặt chuyến ảo nhiều lần."
+                                    },
+                                    "complaint_id": {
+                                        "type": "string",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Gửi cảnh báo thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ hoặc thiếu thông tin"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy Customer"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/drivers": {
             "get": {
                 "tags": [
@@ -10764,6 +11006,10 @@
         {
             "name": "Admin Risk Management",
             "description": "Admin Risk Management"
+        },
+        {
+            "name": "RiskManagement",
+            "description": "RiskManagement"
         },
         {
             "name": "Admin Driver Management",

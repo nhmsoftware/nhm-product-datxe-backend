@@ -13,6 +13,7 @@ final class ConfigureCommissionDTO
 {
     public function __construct(
         public readonly string                $name,
+        public readonly \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType,
         public readonly CommissionServiceType $serviceType,
         public readonly CommissionScope       $scope,
         public readonly ?string               $areaId,
@@ -28,6 +29,7 @@ final class ConfigureCommissionDTO
     {
         return new self(
             name:           $request->string('name')->toString(),
+            targetType:     \App\Modules\Finance\Model\Enums\CommissionTargetType::from((int) $request->input('target_type')),
             serviceType:    CommissionServiceType::from((int) $request->input('service_type')),
             scope:          CommissionScope::from((int) $request->input('scope')),
             areaId:         $request->input('area_id'),

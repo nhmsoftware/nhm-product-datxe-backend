@@ -22,7 +22,7 @@ final class WarnUserDTO
         return new self(
             userId: $userId,
             adminId: (string) $request->user()->id,
-            type: ViolationType::from($request->input('type')),
+            type: ViolationType::from((int) $request->input('type')),
             reason: $request->input('reason'),
             complaintId: $request->input('complaint_id'),
         );

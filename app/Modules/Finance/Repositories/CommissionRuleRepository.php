@@ -18,10 +18,14 @@ final class CommissionRuleRepository extends BaseRepository implements Commissio
         return CommissionRule::class;
     }
 
-    public function getActiveRule(CommissionServiceType $serviceType, ?string $areaId = null): ?CommissionRule
-    {
+    public function getActiveRule(
+        \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType,
+        CommissionServiceType $serviceType,
+        ?string               $areaId = null
+    ): ?CommissionRule {
         $now = now();
-        $query = $this->model->where('service_type', $serviceType->value)
+        $query = $this->model->where('target_type', $targetType->value)
+            ->where('service_type', $serviceType->value)
             ->where('is_active', true)
             ->where('effective_from', '<=', $now)
             ->where(function ($q) use ($now) {
@@ -53,6 +57,7 @@ final class CommissionRuleRepository extends BaseRepository implements Commissio
     }
 
     public function hasOverlappingRule(
+        \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType,
         CommissionServiceType $serviceType,
         int                   $scope,
         ?string               $areaId,
@@ -60,7 +65,8 @@ final class CommissionRuleRepository extends BaseRepository implements Commissio
         ?string               $to = null,
         ?string               $excludeId = null
     ): bool {
-        $query = $this->model->where('service_type', $serviceType->value)
+        $query = $this->model->where('target_type', $targetType->value)
+            ->where('service_type', $serviceType->value)
             ->where('scope', $scope)
             ->where('is_active', true);
 
