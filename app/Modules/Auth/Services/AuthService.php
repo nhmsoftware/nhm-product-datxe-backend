@@ -143,47 +143,48 @@ final class AuthService extends BaseService implements AuthServiceInterface
      */
     public function forgotPassword(ForgotPasswordDTO $dto): ServiceReturn
     {
-        // Kiểm tra user tồn tại ngoài transaction
-        $user = $this->userRepository->findByPhone($dto->phone);
+        return $this->execute(function () use ($dto) {
+            // 1. Kiểm tra user tồn tại
+            $user = $this->userRepository->findByPhone($dto->phone);
 
-        if (!$user) {
-            $this->throw('Số điện thoại này chưa được đăng ký trên hệ thống.', 404);
-        }
+            if (!$user) {
+                $this->throw('Số điện thoại này chưa được đăng ký trên hệ thống.', 404);
+            }
 
-        if ($user->isLocked()) {
-            $this->throw('Tài khoản này đã bị khóa. Vui lòng liên hệ hỗ trợ.', 403);
-        }
+            if ($user->isLocked()) {
+                $this->throw('Tài khoản này đã bị khóa. Vui lòng liên hệ hỗ trợ.', 403);
+            }
 
-        if (Hash::check($dto->password, $user->password)) {
-            // Dùng $this->throw() thay vì ServiceReturn::error() — theo quy tắc kiến trúc
-            $this->throw('Mật khẩu mới không được trùng mật khẩu cũ.', 422);
-        }
+            if (Hash::check($dto->password, $user->password)) {
+                $this->throw('Mật khẩu mới không được trùng mật khẩu cũ.', 422);
+            }
 
-        // Xác thực OTP ngoài transaction để record attempts không bị rollback
-        $this->verifyOtpOrFail($dto->phone, $dto->otp, UserOtpType::VERIFY_FORGOT_PASSWORD);
+            // 2. Xác thực OTP (ngoài transaction để record attempts không bị rollback)
+            $this->verifyOtpOrFail($dto->phone, $dto->otp, UserOtpType::VERIFY_FORGOT_PASSWORD);
 
-        return $this->execute(function () use ($dto, $user) {
-            $this->userRepository->updateById($user->id, [
-                'password' => bcrypt($dto->password),
-            ]);
+            // 3. Thực hiện cập nhật mật khẩu trong transaction
+            return $this->execute(function () use ($dto, $user) {
+                $this->userRepository->updateById($user->id, [
+                    'password' => bcrypt($dto->password),
+                ]);
 
-            $this->authOtpRepository->markLatestAsUsed($dto->phone, UserOtpType::VERIFY_FORGOT_PASSWORD);
+                $this->authOtpRepository->markLatestAsUsed($dto->phone, UserOtpType::VERIFY_FORGOT_PASSWORD);
 
-            $this->upsertDeviceIfPresent($user, $dto->deviceId, $dto->deviceToken, $dto->deviceType);
-            $token = $this->generateTokenAuth($user);
-            $user->load($this->getProfileRelation($user->role));
+                $this->upsertDeviceIfPresent($user, $dto->deviceId, $dto->deviceToken, $dto->deviceType);
+                $token = $this->generateTokenAuth($user);
+                $user->load($this->getProfileRelation($user->role));
 
-            event(new \App\Modules\Auth\Events\PasswordReset(
-                userId: (string) $user->id,
-                occurredAt: now()->toIso8601String()
-            ));
+                event(new \App\Modules\Auth\Events\PasswordReset(
+                    userId: (string) $user->id,
+                    occurredAt: now()->toIso8601String()
+                ));
 
-            return [
-                'user'  => $user,
-                'token' => $token,
-            ];
-        }, useTransaction: true);
-
+                return [
+                    'user'  => $user,
+                    'token' => $token,
+                ];
+            }, useTransaction: true);
+        }, useTransaction: false);
     }
 
     /**
