@@ -4,10 +4,28 @@ declare(strict_types=1);
 
 namespace App\Modules\Auth\Http\Requests;
 
+use App\Core\Traits\HandleApi;
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Http\Exceptions\HttpResponseException;
 
 class ForgotPasswordRequest extends FormRequest
 {
+    use HandleApi;
+
+    /**
+     * Xử lý khi xác thực thất bại.
+     *
+     * @param Validator $validator
+     * @throws HttpResponseException
+     */
+    protected function failedValidation(Validator $validator)
+    {
+        throw new HttpResponseException(
+            $this->sendValidation('Dữ liệu không hợp lệ.', $validator->errors()->toArray())
+        );
+    }
+
     /**
      * Xác định xem người dùng có được phép thực hiện yêu cầu này hay không.
      *

@@ -13,5 +13,3 @@ Route::middleware(['auth:sanctum', 'check.account.status'])->group(function () {
     Route::get('/auth/me', [AuthController::class, 'me']);
 });
 
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/register', [AuthController::class, 'register']);

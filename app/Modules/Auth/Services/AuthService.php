@@ -173,11 +173,17 @@ final class AuthService extends BaseService implements AuthServiceInterface
             $token = $this->generateTokenAuth($user);
             $user->load($this->getProfileRelation($user->role));
 
+            event(new \App\Modules\Auth\Events\PasswordReset(
+                userId: (string) $user->id,
+                occurredAt: now()->toIso8601String()
+            ));
+
             return [
                 'user'  => $user,
                 'token' => $token,
             ];
         }, useTransaction: true);
+
     }
 
     /**
@@ -417,7 +423,9 @@ final class AuthService extends BaseService implements AuthServiceInterface
      */
     private function upsertDeviceIfPresent(User $user, ?string $deviceId, ?string $deviceToken, ?string $deviceType): void
     {
-        if (!$deviceId) {
+        // Chỉ lưu thiết bị nếu có đủ ID và Token. 
+        // Token ở đây là FCM Token/Device Token để gửi Notify, không phải Auth Token.
+        if (!$deviceId || !$deviceToken) {
             return;
         }
 
@@ -427,6 +435,7 @@ final class AuthService extends BaseService implements AuthServiceInterface
             'device_type' => $deviceType,
         ]);
     }
+
 
     /**
      * Xác minh token Google — throw nếu sai.
