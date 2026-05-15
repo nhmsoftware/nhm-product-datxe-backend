@@ -43,6 +43,11 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     public function upsertDevice(User $user, array $data): void;
 
     /**
+     * Xóa token thiết bị khi logout (UC-127)
+     */
+    public function clearDeviceToken(User $user, string $deviceId): bool;
+
+    /**
      * Tìm user theo googleId
      * @param string $googleId
      * @return User|null

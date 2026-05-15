@@ -111,6 +111,16 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
     }
 
     /**
+     * @inheritDoc
+     */
+    public function clearDeviceToken(User $user, string $deviceId): bool
+    {
+        return (bool) $user->userDevices()
+            ->where('device_id', $deviceId)
+            ->update(['token' => null]);
+    }
+
+    /**
      * Cập nhật vai trò của user.
      */
     public function updateRole(int|string $userId, UserRole $role): bool

@@ -30,4 +30,5 @@ return [
     App\Modules\Order\Providers\OrderServiceProvider::class,
     App\Modules\Chauffeur\Providers\ChauffeurServiceProvider::class,
     App\Modules\Complaint\Providers\ComplaintServiceProvider::class,
+    App\Modules\Notification\Providers\NotificationServiceProvider::class,
 ];

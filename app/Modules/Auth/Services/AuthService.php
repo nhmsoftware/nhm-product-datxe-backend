@@ -309,13 +309,17 @@ final class AuthService extends BaseService implements AuthServiceInterface
     /**
      * POST /logout
      */
-    public function logout(User $user, bool $logoutAll = false): ServiceReturn
+    public function logout(User $user, bool $logoutAll = false, ?string $deviceId = null): ServiceReturn
     {
-        return $this->execute(function () use ($user, $logoutAll) {
+        return $this->execute(function () use ($user, $logoutAll, $deviceId) {
             if ($logoutAll) {
                 $user->tokens()->delete();
             } else {
                 $user->currentAccessToken()->delete();
+            }
+
+            if ($deviceId) {
+                $this->userRepository->clearDeviceToken($user, $deviceId);
             }
         });
     }

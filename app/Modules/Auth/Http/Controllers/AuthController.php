@@ -221,6 +221,12 @@ final class AuthController extends BaseController
                         type: 'boolean',
                         example: false,
                     ),
+                    new OA\Property(
+                        property: 'device_id',
+                        description: 'ID của thiết bị để xóa push token',
+                        type: 'string',
+                        example: 'abc123',
+                    ),
                 ]
             )
         ),
@@ -234,6 +240,7 @@ final class AuthController extends BaseController
         $result = $this->authService->logout(
             user:      $request->user(),
             logoutAll: (bool) $request->input('logout_all', false),
+            deviceId:  (string) $request->input('device_id'),
         );
 
         if ($result->isError()) {

@@ -281,6 +281,11 @@
                                         "description": "true = thu hồi tất cả token trên mọi thiết bị",
                                         "type": "boolean",
                                         "example": false
+                                    },
+                                    "device_id": {
+                                        "description": "ID của thiết bị để xóa push token",
+                                        "type": "string",
+                                        "example": "abc123"
                                     }
                                 },
                                 "type": "object"
@@ -5777,6 +5782,191 @@
                     },
                     "404": {
                         "description": "Không tìm thấy cửa hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/notifications": {
+            "get": {
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "Xem danh sách thông báo (UC-126)",
+                "operationId": "a76e3cfe6d38f3208c6dc72077cff607",
+                "parameters": [
+                    {
+                        "name": "category",
+                        "in": "query",
+                        "description": "Lọc theo nhóm: promotion, order, system",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "promotion",
+                                "order",
+                                "system"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số lượng item mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/notifications/{id}/read": {
+            "post": {
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "Đánh dấu đã đọc một thông báo (UC-128)",
+                "operationId": "ede39fa7f1da1e0b34149609735628f3",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của thông báo",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy thông báo"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/notifications/read-all": {
+            "post": {
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "Đánh dấu đã đọc tất cả thông báo (UC-126)",
+                "operationId": "1b9518024b5cabea8b17d10f8d4ab9b7",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/notifications/{id}": {
+            "delete": {
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "Xóa thông báo (UC-126)",
+                "operationId": "7030edd5ce13061cf090a0c782395cae",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của thông báo",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy thông báo"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/notifications/update-token": {
+            "post": {
+                "tags": [
+                    "Notification"
+                ],
+                "summary": "Cập nhật Push Token thiết bị (UC-127)",
+                "operationId": "8c7fdaf9e89c26502a6003dbb253ada0",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "device_id",
+                                    "device_token"
+                                ],
+                                "properties": {
+                                    "device_id": {
+                                        "type": "string",
+                                        "example": "abc123"
+                                    },
+                                    "device_token": {
+                                        "type": "string",
+                                        "example": "fcm_token_here"
+                                    },
+                                    "device_type": {
+                                        "type": "string",
+                                        "example": "android"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
                     }
                 },
                 "security": [
@@ -11328,6 +11518,10 @@
         {
             "name": "Merchant Order",
             "description": "Merchant Order"
+        },
+        {
+            "name": "Notification",
+            "description": "Notification"
         },
         {
             "name": "Operation",

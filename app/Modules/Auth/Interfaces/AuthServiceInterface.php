@@ -36,7 +36,7 @@ interface AuthServiceInterface
     /**
      * POST /logout
      */
-    public function logout(User $user, bool $logoutAll = false): ServiceReturn;
+    public function logout(User $user, bool $logoutAll = false, ?string $deviceId = null): ServiceReturn;
 
     /**
      * POST /google-login
