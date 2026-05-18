@@ -8,13 +8,13 @@ use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Merchant\Interfaces\MerchantStoreServiceInterface;
 use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
-use App\Modules\Order\Interfaces\OrderRepositoryInterface;
+use App\Modules\Food\Interfaces\FoodOrderRepositoryInterface;
 
 final class MerchantStoreService extends BaseService implements MerchantStoreServiceInterface
 {
     public function __construct(
         private readonly MerchantRepositoryInterface $merchantRepository,
-        private readonly OrderRepositoryInterface $orderRepository,
+        private readonly FoodOrderRepositoryInterface $foodOrderRepository,
         private readonly \App\Modules\Finance\Interfaces\WalletRepositoryInterface $walletRepository,
         private readonly \App\Modules\Finance\Interfaces\WalletTransactionRepositoryInterface $walletTransactionRepository,
     ) {}
@@ -40,7 +40,7 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
             $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
 
             // Giả lập check đơn hàng hoạt động (UC-55 A1)
-            // Trong tương lai sẽ gọi OrderRepository::countActiveOrders($store->id)
+            // Trong tương lai sẽ gọi foodOrderRepository::countActiveOrders($store->id)
             $activeOrdersCount = 0; 
 
             $store->update(['is_open' => $isOpen]);
@@ -193,7 +193,7 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
             $store = $this->merchantRepository->findByUserId($userId);
             $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
 
-            $totalOrders = $this->orderRepository->countOrdersByMerchant((string) $store->id, $period);
+            $totalOrders = $this->foodOrderRepository->countOrdersByMerchant((string) $store->id, $period);
 
             return [
                 'total_orders' => $totalOrders,
@@ -209,7 +209,7 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
             $store = $this->merchantRepository->findByUserId($userId);
             $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
 
-            $totalRevenue = $this->orderRepository->sumRevenueByMerchant((string) $store->id, $period);
+            $totalRevenue = $this->foodOrderRepository->sumRevenueByMerchant((string) $store->id, $period);
 
             return [
                 'total_revenue' => $totalRevenue,
@@ -225,8 +225,8 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
             $store = $this->merchantRepository->findByUserId($userId);
             $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
 
-            $totalRevenue = $this->orderRepository->sumRevenueByMerchant((string) $store->id, $period);
-            $totalCompletedOrders = $this->orderRepository->countCompletedOrdersByMerchant((string) $store->id, $period);
+            $totalRevenue = $this->foodOrderRepository->sumRevenueByMerchant((string) $store->id, $period);
+            $totalCompletedOrders = $this->foodOrderRepository->countCompletedOrdersByMerchant((string) $store->id, $period);
 
             $averageValue = 0;
             if ($totalCompletedOrders > 0) {
@@ -249,7 +249,7 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
             $store = $this->merchantRepository->findByUserId($userId);
             $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
 
-            $rawData = $this->orderRepository->getRevenueChartData((string) $store->id, $period);
+            $rawData = $this->foodOrderRepository->getRevenueChartData((string) $store->id, $period);
 
             $formattedData = array_map(function ($item) use ($period) {
                 $date = new \DateTime($item['label']);

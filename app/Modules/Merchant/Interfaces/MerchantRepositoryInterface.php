@@ -6,40 +6,51 @@ namespace App\Modules\Merchant\Interfaces;
 
 use App\Core\Interfaces\BaseRepositoryInterface;
 use App\Modules\User\Model\MerchantProfile;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 interface MerchantRepositoryInterface extends BaseRepositoryInterface
 {
     /**
-     * Find merchant profile by user ID.
-     * UC-52 Register Merchant
+     * Find a merchant profile by User ID.
+     *
+     * @param string $userId
+     * @return MerchantProfile|null
      */
     public function findByUserId(string $userId): ?MerchantProfile;
 
     /**
-     * Check if CCCD (Citizen ID) is already used.
-     * UC-52 Register Merchant
-     */
-    public function isCitizenIdExists(string $citizenId, ?string $excludeUserId = null): bool;
-
-    /**
-     * Check if Store Name is already exists.
-     * UC-52 Register Merchant
+     * Check if store name already exists.
+     *
+     * @param string $storeName
+     * @param string|null $excludeUserId
+     * @return bool
      */
     public function isStoreNameExists(string $storeName, ?string $excludeUserId = null): bool;
 
     /**
-     * Update weekly opening hours schedule.
-     * UC-54 Set Opening Hours
+     * Update merchant opening hours.
+     *
+     * @param string $merchantProfileId
+     * @param array $schedule
+     * @return bool
      */
     public function updateOpeningHoursSchedule(string $merchantProfileId, array $schedule): bool;
-    /**
-     * Search and paginate merchants for Admin.
-     * UC-86 Manage Merchant
-     */
-    public function searchMerchants(\App\Modules\Merchant\DTO\MerchantFilterDTO $dto): \Illuminate\Pagination\LengthAwarePaginator;
 
     /**
-     * Update average rating and total orders based on ratings table.
+     * Search and paginate merchants.
+     *
+     * @param \App\Modules\Merchant\DTO\MerchantFilterDTO $dto
+     * @return LengthAwarePaginator
      */
-    public function updateRatingStats(string $merchantProfileId): bool;
+    public function searchMerchants(\App\Modules\Merchant\DTO\MerchantFilterDTO $dto): LengthAwarePaginator;
+
+    /**
+     * Update average rating and total orders for a merchant.
+     *
+     * @param string $merchantProfileId
+     * @param float $averageRating
+     * @param int $totalOrders
+     * @return bool
+     */
+    public function updateRatingStats(string $merchantProfileId, float $averageRating, int $totalOrders): bool;
 }

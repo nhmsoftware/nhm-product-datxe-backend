@@ -138,4 +138,9 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
      * Tìm chi tiết người dùng kèm profile (UC-77/UC-79).
      */
     public function findDetailById(string|int $userId): ?User;
+
+    /**
+     * Kiểm tra CCCD đã được sử dụng chưa (không tính bản thân).
+     */
+    public function isCitizenIdExists(string $citizenId, ?string $excludeUserId = null): bool;
 }

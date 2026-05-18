@@ -18,7 +18,7 @@ final class RefundRepository extends BaseRepository implements RefundRepositoryI
 
     public function search(array $filters, int $perPage = 20): LengthAwarePaginator
     {
-        $query = $this->model->newQuery();
+        $query = $this->getQuery();
 
         if (!empty($filters['status'])) {
             $query->where('status', $filters['status']);

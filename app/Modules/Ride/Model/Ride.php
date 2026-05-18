@@ -191,4 +191,13 @@ class Ride extends Model
     {
         return $this->morphMany(\App\Modules\Complaint\Model\Complaint::class, 'complaintable');
     }
+
+    /**
+     * Get all rejects for the ride.
+     */
+    public function rejects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(RideReject::class, 'ride_id', 'id');
+    }
 }
+

@@ -11,11 +11,15 @@ use App\Modules\Order\DTO\GetOrderHistoryFilterDTO;
 use App\Modules\Order\Interfaces\OrderRepositoryInterface;
 use App\Modules\Order\Interfaces\OrderServiceInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Interfaces\RideRepositoryInterface;
+use App\Modules\Food\Interfaces\FoodOrderRepositoryInterface;
 
 final class OrderService extends BaseService implements OrderServiceInterface
 {
     public function __construct(
         private readonly OrderRepositoryInterface $orderRepository,
+        private readonly RideRepositoryInterface $rideRepository,
+        private readonly FoodOrderRepositoryInterface $foodOrderRepository
     ) {}
 
     public function getHistory(GetOrderHistoryFilterDTO $dto): ServiceReturn
@@ -36,7 +40,18 @@ final class OrderService extends BaseService implements OrderServiceInterface
     public function getOrderDetail(string $orderId, string $serviceType, ?string $merchantId = null): ServiceReturn
     {
         return $this->execute(function () use ($orderId, $serviceType, $merchantId) {
-            $order = $this->orderRepository->getDetail($orderId, $serviceType, $merchantId);
+            $order = null;
+
+            if ($serviceType === 'ride') {
+                $ride = $this->rideRepository->find($orderId);
+                if ($ride) {
+                    $ride->load('customer.customerProfile');
+                    $order = $ride->toArray();
+                    $order['customer_name'] = $ride->customer?->customerProfile?->full_name ?? 'Khách hàng';
+                }
+            } elseif ($serviceType === 'food') {
+                $order = $this->foodOrderRepository->getDetail($orderId, $merchantId);
+            }
             
             $this->validate($order !== null, 'Không tìm thấy đơn hàng hoặc bạn không có quyền truy cập.', 404);
 
@@ -96,14 +111,14 @@ final class OrderService extends BaseService implements OrderServiceInterface
     public function cancelFoodOrder(string $orderId, string $merchantId, ?string $reason = null): ServiceReturn
     {
         return $this->execute(function () use ($orderId, $merchantId, $reason) {
-            $order = $this->orderRepository->getDetail($orderId, 'food');
+            $order = $this->foodOrderRepository->getDetail($orderId);
             $this->validate($order !== null, 'Không tìm thấy đơn hàng.', 404);
             $this->validate($order['merchant_id'] === $merchantId, 'Bạn không có quyền xử lý đơn hàng này.', 403);
             
             $currentStatus = FoodOrderStatus::tryFrom((int)$order['status']);
             $this->validate($currentStatus && !$currentStatus->isTerminal(), 'Không thể hủy đơn hàng đã hoàn thành hoặc đã hủy.', 400);
 
-            $this->orderRepository->updateFoodOrderStatus($orderId, FoodOrderStatus::CANCELLED->value);
+            $this->foodOrderRepository->updateFoodOrderStatus($orderId, FoodOrderStatus::CANCELLED->value);
             
             // Dispatch Event
             event(new \App\Modules\Order\Events\FoodOrderStatusUpdated($orderId, (string)$order['customer_id'], FoodOrderStatus::CANCELLED->value, (int)$order['status'], $reason));
@@ -118,7 +133,7 @@ final class OrderService extends BaseService implements OrderServiceInterface
     public function handleCancellation(string $orderId, string $merchantId, string $action): ServiceReturn
     {
         return $this->execute(function () use ($orderId, $merchantId, $action) {
-            $order = $this->orderRepository->getDetail($orderId, 'food');
+            $order = $this->foodOrderRepository->getDetail($orderId);
 
             $this->validate($order !== null, 'Không tìm thấy đơn hàng.', 404);
             $this->validate($order['merchant_id'] === $merchantId, 'Bạn không có quyền xử lý đơn hàng này.', 403);
@@ -136,7 +151,7 @@ final class OrderService extends BaseService implements OrderServiceInterface
             }
 
             // action === 'reject'
-            $this->orderRepository->resetCancellationRequest($orderId);
+            $this->foodOrderRepository->resetCancellationRequest($orderId);
 
             // Dispatch Event
             event(new \App\Modules\Order\Events\FoodCancellationRequestHandled($orderId, (string)$order['customer_id'], 'rejected'));
@@ -148,7 +163,7 @@ final class OrderService extends BaseService implements OrderServiceInterface
     private function updateStatus(string $orderId, string $merchantId, FoodOrderStatus|array $requiredStatus, FoodOrderStatus $nextStatus, ?string $reason = null): ServiceReturn
     {
         return $this->execute(function () use ($orderId, $merchantId, $requiredStatus, $nextStatus, $reason) {
-            $order = $this->orderRepository->getDetail($orderId, 'food');
+            $order = $this->foodOrderRepository->getDetail($orderId);
             
             $this->validate($order !== null, 'Không tìm thấy đơn hàng.', 404);
             $this->validate($order['merchant_id'] === $merchantId, 'Bạn không có quyền xử lý đơn hàng này.', 403);
@@ -160,7 +175,7 @@ final class OrderService extends BaseService implements OrderServiceInterface
 
             $this->validate(in_array($currentStatus, $allowed, true), "Trạng thái đơn hàng không hợp lệ để thực hiện hành động này.", 400);
 
-            $this->orderRepository->updateFoodOrderStatus($orderId, $nextStatus->value);
+            $this->foodOrderRepository->updateFoodOrderStatus($orderId, $nextStatus->value);
 
             // Dispatch Event
             event(new \App\Modules\Order\Events\FoodOrderStatusUpdated($orderId, (string)$order['customer_id'], $nextStatus->value, $currentStatus, $reason));

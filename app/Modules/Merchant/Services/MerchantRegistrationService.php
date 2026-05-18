@@ -47,7 +47,7 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
             $this->validate($existingApp === null, 'Bạn đã có hồ sơ đang chờ xét duyệt.', 409);
 
             // 3. Kiểm tra CCCD không trùng
-            $citizenIdExists = $this->merchantRepository->isCitizenIdExists($dto->citizenId, $dto->userId);
+            $citizenIdExists = $this->userRepository->isCitizenIdExists($dto->citizenId, $dto->userId);
             $this->validate(!$citizenIdExists, 'CCCD đã được sử dụng.', 400);
 
             // 4. Kiểm tra tên cửa hàng không trùng

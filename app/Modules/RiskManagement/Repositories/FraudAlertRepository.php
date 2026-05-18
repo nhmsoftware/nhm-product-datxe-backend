@@ -26,7 +26,7 @@ final class FraudAlertRepository extends BaseRepository implements FraudAlertRep
      */
     public function listAlerts(array $filters, int $perPage = 20): LengthAwarePaginator
     {
-        $query = $this->model->newQuery();
+        $query = $this->getQuery();
 
         if (!empty($filters['target_type'])) {
             $query->where('target_type', $filters['target_type']);

@@ -315,4 +315,16 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
             ->where('id', $userId)
             ->first();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function isCitizenIdExists(string $citizenId, ?string $excludeUserId = null): bool
+    {
+        $query = $this->getQuery()->where('citizen_id', $citizenId);
+        if ($excludeUserId) {
+            $query->where('id', '!=', $excludeUserId);
+        }
+        return $query->exists();
+    }
 }

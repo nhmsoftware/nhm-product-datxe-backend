@@ -13,7 +13,7 @@ use App\Modules\Food\Interfaces\FoodOrderRepositoryInterface;
 use App\Modules\Food\Interfaces\FoodOrderServiceInterface;
 use App\Modules\Food\Model\Enums\FoodOrderStatus;
 use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
-use App\Modules\Merchant\Interfaces\MenuRepositoryInterface;
+use App\Modules\Merchant\Interfaces\MenuItemRepositoryInterface;
 use App\Modules\Pricing\DTO\PricingRequestDTO;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Ride\Interfaces\MapServiceInterface;
@@ -25,7 +25,7 @@ final class FoodOrderService extends BaseService implements FoodOrderServiceInte
     public function __construct(
         private readonly FoodOrderRepositoryInterface $foodOrderRepository,
         private readonly MerchantRepositoryInterface $merchantRepository,
-        private readonly MenuRepositoryInterface $menuRepository,
+        private readonly MenuItemRepositoryInterface $menuItemRepository,
         private readonly UserRepositoryInterface $userRepository,
         private readonly MapServiceInterface $mapService,
         private readonly PricingServiceInterface $pricingService,
@@ -107,7 +107,7 @@ final class FoodOrderService extends BaseService implements FoodOrderServiceInte
         $itemsSnapshot = [];
 
         foreach ($dto->items as $itemDto) {
-            $menuItem = $this->menuRepository->findItem((string) $itemDto->menuItemId);
+            $menuItem = $this->menuItemRepository->findItem((string) $itemDto->menuItemId);
             if (!$menuItem || !$menuItem->is_available) {
                 return $this->error("Món ăn '{$itemDto->menuItemId}' không khả dụng.");
             }

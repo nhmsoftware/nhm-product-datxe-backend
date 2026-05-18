@@ -10,6 +10,7 @@ use App\Modules\Merchant\DTO\CreateMenuItemDTO;
 use App\Modules\Merchant\DTO\GetMenuDTO;
 use App\Modules\Merchant\Events\MenuItemCreated;
 use App\Modules\Merchant\Interfaces\MenuRepositoryInterface;
+use App\Modules\Merchant\Interfaces\MenuItemRepositoryInterface;
 use App\Modules\Merchant\Interfaces\MenuServiceInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -17,7 +18,8 @@ use Illuminate\Support\Facades\Storage;
 final class MenuService extends BaseService implements MenuServiceInterface
 {
     public function __construct(
-        private readonly MenuRepositoryInterface $menuRepository
+        private readonly MenuRepositoryInterface $menuRepository,
+        private readonly MenuItemRepositoryInterface $menuItemRepository
     ) {}
 
     public function getMerchantMenu(GetMenuDTO $dto): Collection
@@ -49,7 +51,7 @@ final class MenuService extends BaseService implements MenuServiceInterface
             ];
 
             // 4. Create Item with Sizes and Toppings
-            $item = $this->menuRepository->createItem($data, $dto->sizes, $dto->toppings);
+            $item = $this->menuItemRepository->createItem($data, $dto->sizes, $dto->toppings);
 
             // 5. Dispatch Event
             event(new MenuItemCreated(
@@ -67,7 +69,7 @@ final class MenuService extends BaseService implements MenuServiceInterface
         return $this->execute(function () use ($dto) {
             // 1. Find item and verify ownership
             /** @var \App\Modules\Merchant\Model\MenuItem $item */
-            $item = $this->menuRepository->findItem($dto->itemId);
+            $item = $this->menuItemRepository->findItem($dto->itemId);
             if (!$item || $item->merchant_profile_id !== $dto->merchantProfileId) {
                 $this->throw('Không tìm thấy món ăn.', 404);
             }
@@ -76,7 +78,7 @@ final class MenuService extends BaseService implements MenuServiceInterface
             $category = $this->resolveCategoryForUpdate($dto);
 
             // 3. Check duplicate name in category (A7)
-            if ($this->menuRepository->isNameExistsInCategory($dto->merchantProfileId, (string)$category->id, $dto->name, $dto->itemId)) {
+            if ($this->menuItemRepository->isNameExistsInCategory($dto->merchantProfileId, (string)$category->id, $dto->name, $dto->itemId)) {
                 $this->throw('Tên món ăn đã tồn tại trong danh mục này.', 422);
             }
 
@@ -100,7 +102,7 @@ final class MenuService extends BaseService implements MenuServiceInterface
             ];
 
             // 6. Update Item with Sizes and Toppings
-            $item = $this->menuRepository->updateItem($dto->itemId, $data, $dto->sizes, $dto->toppings);
+            $item = $this->menuItemRepository->updateItem($dto->itemId, $data, $dto->sizes, $dto->toppings);
 
             // 7. Dispatch Event
             event(new \App\Modules\Merchant\Events\MenuItemUpdated(
@@ -118,7 +120,7 @@ final class MenuService extends BaseService implements MenuServiceInterface
         return $this->execute(function () use ($dto) {
             // 1. Find item and verify ownership
             /** @var \App\Modules\Merchant\Model\MenuItem $item */
-            $item = $this->menuRepository->findItem($dto->itemId);
+            $item = $this->menuItemRepository->findItem($dto->itemId);
             if (!$item || $item->merchant_profile_id !== $dto->merchantProfileId) {
                 $this->throw('Không tìm thấy món ăn.', 404);
             }
@@ -129,7 +131,7 @@ final class MenuService extends BaseService implements MenuServiceInterface
             // }
 
             // 3. Delete Item
-            $this->menuRepository->deleteItem($dto->itemId);
+            $this->menuItemRepository->deleteItem($dto->itemId);
 
             // 4. Dispatch Event
             event(new \App\Modules\Merchant\Events\MenuItemDeleted(
@@ -169,13 +171,13 @@ final class MenuService extends BaseService implements MenuServiceInterface
     {
         return $this->execute(function () use ($itemId, $merchantProfileId, $isAvailable) {
             // 1. Find item and verify ownership
-            $item = $this->menuRepository->findItem($itemId);
+            $item = $this->menuItemRepository->findItem($itemId);
             if (!$item || $item->merchant_profile_id !== $merchantProfileId) {
                 $this->throw('Không tìm thấy món ăn.', 404);
             }
 
             // 2. Update Status
-            $this->menuRepository->updateItemStatus($itemId, $isAvailable);
+            $this->menuItemRepository->updateItemStatus($itemId, $isAvailable);
 
             // 3. Dispatch Event
             event(new \App\Modules\Merchant\Events\MenuItemUpdated(

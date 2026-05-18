@@ -7,7 +7,7 @@ namespace App\Modules\Merchant\Repositories;
 use App\Core\Repository\BaseRepository;
 use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
 use App\Modules\User\Model\MerchantProfile;
-use App\Modules\User\Model\User;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 final class MerchantRepository extends BaseRepository implements MerchantRepositoryInterface
 {
@@ -19,21 +19,12 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
     public function findByUserId(string $userId): ?MerchantProfile
     {
         /** @var MerchantProfile|null */
-        return $this->model->where('user_id', $userId)->first();
-    }
-
-    public function isCitizenIdExists(string $citizenId, ?string $excludeUserId = null): bool
-    {
-        $query = User::where('citizen_id', $citizenId);
-        if ($excludeUserId) {
-            $query->where('id', '!=', $excludeUserId);
-        }
-        return $query->exists();
+        return $this->getQuery()->where('user_id', $userId)->first();
     }
 
     public function isStoreNameExists(string $storeName, ?string $excludeUserId = null): bool
     {
-        $query = $this->model->where('store_name', $storeName);
+        $query = $this->getQuery()->where('store_name', $storeName);
         if ($excludeUserId) {
             $query->where('user_id', '!=', $excludeUserId);
         }
@@ -42,12 +33,17 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
 
     public function updateOpeningHoursSchedule(string $merchantProfileId, array $schedule): bool
     {
-        return \Illuminate\Support\Facades\DB::transaction(function () use ($merchantProfileId, $schedule) {
+        /** @var MerchantProfile|null $profile */
+        $profile = $this->getQuery()->find($merchantProfileId);
+        if (!$profile) {
+            return false;
+        }
+
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($profile, $schedule) {
             foreach ($schedule as $item) {
-                \App\Modules\User\Model\MerchantOpeningHour::updateOrCreate(
+                $profile->openingHours()->updateOrCreate(
                     [
-                        'merchant_profile_id' => $merchantProfileId,
-                        'day_of_week'         => $item['day_of_week'],
+                        'day_of_week' => $item['day_of_week'],
                     ],
                     [
                         'opening_time' => $item['opening_time'] ?? null,
@@ -60,9 +56,10 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
             return true;
         });
     }
-    public function searchMerchants(\App\Modules\Merchant\DTO\MerchantFilterDTO $dto): \Illuminate\Pagination\LengthAwarePaginator
+
+    public function searchMerchants(\App\Modules\Merchant\DTO\MerchantFilterDTO $dto): LengthAwarePaginator
     {
-        $query = $this->model->with(['user', 'user.customerProfile']);
+        $query = $this->getQuery()->with(['user', 'user.customerProfile']);
 
         if ($dto->keyword) {
             $query->where(function ($q) use ($dto) {
@@ -107,19 +104,11 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
         return $query->latest()->paginate($dto->limit, ['*'], 'page', $dto->page);
     }
 
-    public function updateRatingStats(string $merchantProfileId): bool
+    public function updateRatingStats(string $merchantProfileId, float $averageRating, int $totalOrders): bool
     {
-        $stats = DB::table('food_ratings')
-            ->where('merchant_id', $merchantProfileId)
-            ->select([
-                DB::raw('COUNT(*) as total_orders'),
-                DB::raw('AVG(rating) as average_rating')
-            ])
-            ->first();
-
-        return (bool) $this->model->where('id', $merchantProfileId)->update([
-            'average_rating' => $stats->average_rating ?? 0,
-            'total_orders'   => $stats->total_orders ?? 0,
+        return (bool) $this->getQuery()->where('id', $merchantProfileId)->update([
+            'average_rating' => $averageRating,
+            'total_orders'   => $totalOrders,
         ]);
     }
 }

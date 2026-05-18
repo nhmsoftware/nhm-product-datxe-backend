@@ -8,6 +8,7 @@ use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Ride;
+use App\Modules\Ride\Model\RideReject;
 use Carbon\CarbonInterface;
 
 use Illuminate\Support\Collection;
@@ -143,8 +144,13 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function rejectByDriver(string $rideId, string $driverId): bool
     {
-        return DB::table('ride_rejects')->updateOrInsert(
-            ['ride_id' => $rideId, 'driver_id' => $driverId],
+        $ride = $this->model->find($rideId);
+        if (!$ride) {
+            return false;
+        }
+
+        return (bool) $ride->rejects()->updateOrCreate(
+            ['driver_id' => $driverId],
             ['updated_at' => now(), 'created_at' => now()]
         );
     }
@@ -199,10 +205,12 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function isRejectedByDriver(string $rideId, string $driverId): bool
     {
-        return DB::table('ride_rejects')
-            ->where('ride_id', $rideId)
-            ->where('driver_id', $driverId)
-            ->exists();
+        $ride = $this->model->find($rideId);
+        if (!$ride) {
+            return false;
+        }
+
+        return $ride->rejects()->where('driver_id', $driverId)->exists();
     }
 
     /**
@@ -335,16 +343,13 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function findAvailableScheduledRides(int $vehicleType, array $filters): Collection
     {
-        $query = $this->model->newQuery()
+        $query = $this->getQuery()
             ->where('status', RideStatus::PENDING->value)
             ->where('is_pushed_to_pool', true)
             ->where('vehicle_type', $vehicleType)
             // Lọc ra các đơn mà tài xế đã từ chối trước đó (nếu có lưu vết)
-            ->whereNotExists(function ($q) use ($filters) {
-                $q->select(DB::raw(1))
-                    ->from('ride_rejects')
-                    ->whereRaw('ride_rejects.ride_id::text = rides.id::text')
-                    ->whereRaw('ride_rejects.driver_id::text = ?', [(string) ($filters['driverId'] ?? '')]);
+            ->whereDoesntHave('rejects', function ($q) use ($filters) {
+                $q->whereRaw('driver_id::text = ?', [(string) ($filters['driverId'] ?? '')]);
             });
         
         \Illuminate\Support\Facades\Log::debug('Driver Scheduled Rides Filter:', [
@@ -464,7 +469,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function listScheduledRidesForAdmin(array $filters)
     {
-        $query = $this->model->newQuery()
+        $query = $this->getQuery()
             ->with(['customer', 'driver'])
             ->whereNotNull('travel_date');
 
@@ -504,7 +509,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function listChauffeurRidesForAdmin(array $filters)
     {
-        $query = $this->model->newQuery()
+        $query = $this->getQuery()
             ->with(['customer', 'driver'])
             ->where('ride_type', \App\Modules\Ride\Model\Enums\RideType::CHAUFFEUR->value);
 
@@ -662,7 +667,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             default => "TO_CHAR(created_at, 'YYYY-MM-DD')"
         };
 
-        return $this->model->newQuery()
+        return $this->getQuery()
             ->whereBetween('created_at', [$start, $end])
             ->where('status', RideStatus::COMPLETED->value)
             ->select([
@@ -685,7 +690,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     {
         // Phân tích theo khu vực (Dựa trên pickup_address, giả định phần cuối là Tỉnh/Thành)
         // Trong thực tế nên có bảng khu vực riêng, ở đây demo bằng cách lấy text sau dấu phẩy cuối cùng
-        return $this->model->newQuery()
+        return $this->getQuery()
             ->whereBetween('created_at', [$start, $end])
             ->select([
                 DB::raw("TRIM(SUBSTRING(pickup_address FROM '([^,]+)$')) as area"),
@@ -758,7 +763,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     {
         // Thống kê hoa hồng bóc tách theo loại đội xe
         // driver_group_type: 1 = Xe nhà, 2 = Xe khách (Giả định)
-        return $this->model->newQuery()
+        return $this->getQuery()
             ->join('driver_profiles', 'rides.driver_id', '=', 'driver_profiles.user_id')
             ->whereBetween('rides.completed_at', [$start, $end])
             ->where('rides.status', RideStatus::COMPLETED->value)
@@ -782,7 +787,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function getCommissionDetails(CarbonInterface $start, CarbonInterface $end, int $limit = 50): array
     {
-        return $this->model->newQuery()
+        return $this->getQuery()
             ->join('driver_profiles', 'rides.driver_id', '=', 'driver_profiles.user_id')
             ->whereBetween('rides.completed_at', [$start, $end])
             ->where('rides.status', RideStatus::COMPLETED->value)
@@ -807,7 +812,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function getVehicleTypeAnalytics(CarbonInterface $start, CarbonInterface $end): array
     {
-        return $this->model->newQuery()
+        return $this->getQuery()
             ->whereBetween('created_at', [$start, $end])
             ->where('status', RideStatus::COMPLETED->value)
             ->select([
@@ -825,7 +830,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function getRideTypeAnalytics(CarbonInterface $start, CarbonInterface $end): array
     {
-        return $this->model->newQuery()
+        return $this->getQuery()
             ->whereBetween('created_at', [$start, $end])
             ->where('status', RideStatus::COMPLETED->value)
             ->select([
@@ -846,7 +851,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function getTopDriversAnalytics(CarbonInterface $start, CarbonInterface $end, int $limit = 10, ?int $driverGroupType = null): array
     {
-        $query = $this->model->newQuery()
+        $query = $this->getQuery()
             ->join('driver_profiles', 'rides.driver_id', '=', 'driver_profiles.user_id')
             ->whereBetween('rides.created_at', [$start, $end])
             ->where('rides.status', RideStatus::COMPLETED->value);

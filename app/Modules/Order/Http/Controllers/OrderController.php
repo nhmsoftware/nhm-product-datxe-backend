@@ -42,6 +42,10 @@ final class OrderController extends BaseController
             GetOrderHistoryFilterDTO::fromRequest($request)
         );
 
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
         return $this->sendSuccess($result->getData(), 'Lấy lịch sử đơn hàng thành công.');
     }
 

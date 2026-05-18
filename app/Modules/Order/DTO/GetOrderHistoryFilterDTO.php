@@ -21,11 +21,11 @@ final class GetOrderHistoryFilterDTO
     {
         return new self(
             customerId: (string) $request->user()->id,
-            serviceType: $request->query('service_type'),
-            status: $request->query('status'),
-            startDate: $request->query('start_date'),
-            endDate: $request->query('end_date'),
-            perPage: (int) $request->query('per_page', 15),
+            serviceType: $request->input('service_type'),
+            status: $request->input('status') !== null ? (string)$request->input('status') : null,
+            startDate: $request->input('start_date'),
+            endDate: $request->input('end_date'),
+            perPage: (int) $request->input('per_page', 15),
         );
     }
 }
