@@ -40,7 +40,7 @@ final class AdminCreditWalletConfigController extends BaseController
     public function show(): JsonResponse
     {
         $result = $this->configService->getConfig();
-        return $this->sendResponse($result->getData());
+        return $this->sendSuccess($result->getData());
     }
 
     #[OA\Post(
