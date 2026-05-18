@@ -28,9 +28,9 @@ final class OrderService extends BaseService implements OrderServiceInterface
             $paginator = $this->orderRepository->getHistory($dto);
 
             $paginator->getCollection()->transform(function ($item) {
-                $item = (array) $item;
-                $item['status_label'] = $this->getStatusLabel($item['service_type'], (int) $item['status']);
-                return $item;
+                $itemArray = $item->toArray();
+                $itemArray['status_label'] = $this->getStatusLabel($itemArray['service_type'], (int) $itemArray['status']);
+                return $itemArray;
             });
 
             return $paginator;
