@@ -20,6 +20,7 @@ use App\Modules\Pricing\Interfaces\PricingSurgeRuleRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Finance\Interfaces\CommissionRuleServiceInterface;
 use App\Modules\Finance\Model\Enums\CommissionServiceType;
+use App\Modules\Finance\Model\Enums\CommissionTargetType;
 
 final class PricingService extends BaseService implements PricingServiceInterface
 {
@@ -146,7 +147,10 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             $finalFare = round(max($surgeFare, $minFare) / 1000) * 1000;
 
             // Lấy tỷ lệ hoa hồng động từ module Finance (UC-97)
-            $commissionResult = $this->commissionRuleService->getApplicableCommission(CommissionServiceType::RIDE);
+            $commissionResult = $this->commissionRuleService->getApplicableCommission(
+                CommissionTargetType::DRIVER,
+                CommissionServiceType::RIDE
+            );
             
             if (!$commissionResult->isError()) {
                 $rule = $commissionResult->getData();
