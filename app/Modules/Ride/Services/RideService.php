@@ -1232,8 +1232,8 @@ final class RideService extends BaseService implements RideServiceInterface
             $driver = $this->userRepository->findDriverWithProfileById($dto->driverId);
             $this->validate($driver !== null, 'Không tìm thấy tài xế.', 404);
             $this->validate(
-                $driver->driverProfile->driver_group_type === DriverGroupType::INTERNAL->value,
-                'Tài xế này không thuộc đội xe nhà.'
+                $driver->driverProfile !== null && $driver->driverProfile->driver_group_type === DriverGroupType::INTERNAL->value,
+                'Tài xế này không có hồ sơ hoạt động hoặc không thuộc đội xe nhà.'
             );
 
             $success = $this->rideRepository->assignDriver($dto->rideId, $dto->driverId, now());
