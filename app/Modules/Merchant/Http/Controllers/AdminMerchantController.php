@@ -63,29 +63,53 @@ final class AdminMerchantController extends BaseController
         ],
         responses: [
             new OA\Response(
-                response: 200, 
+                response: 200,
                 description: 'Thành công',
                 content: new OA\JsonContent(
                     properties: [
-                        new OA\Property(property: 'merchant', type: 'object', properties: [
+                        new OA\Property(property: 'merchant', properties: [
                             new OA\Property(property: 'id', type: 'string'),
                             new OA\Property(property: 'store_name', type: 'string'),
                             new OA\Property(property: 'store_address', type: 'string'),
                             new OA\Property(property: 'business_type', type: 'string'),
-                            new OA\Property(property: 'status', type: 'integer', description: 'Trạng thái duyệt'),
+                            new OA\Property(property: 'status', description: 'Trạng thái duyệt', type: 'integer'),
                             new OA\Property(property: 'business_license', type: 'string'),
                             new OA\Property(property: 'business_license_image', type: 'string'),
-                            new OA\Property(property: 'user', type: 'object', properties: [
+                            new OA\Property(property: 'user', properties: [
                                 new OA\Property(property: 'id', type: 'string'),
                                 new OA\Property(property: 'phone', type: 'string'),
                                 new OA\Property(property: 'email', type: 'string'),
                                 new OA\Property(property: 'is_active', type: 'boolean'),
                                 new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
-                                new OA\Property(property: 'customer_profile', type: 'object', properties: [
+                                new OA\Property(property: 'customer_profile', properties: [
                                     new OA\Property(property: 'full_name', type: 'string'),
-                                ])
-                            ])
-                        ])
+                                ], type: 'object')
+                            ], type: 'object')
+                        ], type: 'object'),
+                        new OA\Property(property: 'menu', type: 'array', items: new OA\Items(
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string'),
+                                new OA\Property(property: 'merchant_profile_id', type: 'string'),
+                                new OA\Property(property: 'name', type: 'string'),
+                                new OA\Property(property: 'order', type: 'integer'),
+                                new OA\Property(property: 'is_active', type: 'boolean'),
+                                new OA\Property(property: 'items', type: 'array', items: new OA\Items(
+                                    properties: [
+                                        new OA\Property(property: 'id', type: 'string'),
+                                        new OA\Property(property: 'category_id', type: 'string'),
+                                        new OA\Property(property: 'name', type: 'string'),
+                                        new OA\Property(property: 'description', type: 'string'),
+                                        new OA\Property(property: 'price', type: 'number', format: 'float'),
+                                        new OA\Property(property: 'image_path', type: 'string'),
+                                        new OA\Property(property: 'is_available', type: 'boolean'),
+                                        new OA\Property(property: 'order', type: 'integer'),
+                                        new OA\Property(property: 'rating', type: 'number', format: 'float'),
+                                    ],
+                                    type: 'object'
+                                ))
+                            ],
+                            type: 'object'
+                        ))
                     ]
                 )
             ),
@@ -160,7 +184,7 @@ final class AdminMerchantController extends BaseController
             ['reason' => 'required|string'],
             ['reason.required' => 'Vui lòng nhập lý do từ chối.']
         );
-        
+
         $result = $this->merchantAdminService->rejectMerchant($id, $request->input('reason'));
 
         if ($result->isError()) {

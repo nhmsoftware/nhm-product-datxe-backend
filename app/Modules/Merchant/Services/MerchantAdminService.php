@@ -9,6 +9,7 @@ use App\Core\Services\ServiceReturn;
 use App\Modules\Merchant\DTO\MerchantFilterDTO;
 use App\Modules\Merchant\Interfaces\MerchantAdminServiceInterface;
 use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
+use App\Modules\Merchant\Interfaces\MenuRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\KycStatus;
 use App\Modules\User\Model\Enums\UserRole;
@@ -23,6 +24,7 @@ final class MerchantAdminService extends BaseService implements MerchantAdminSer
         private readonly MerchantRepositoryInterface           $merchantRepository,
         private readonly UserRepositoryInterface               $userRepository,
         private readonly DriverRegistrationRepositoryInterface $driverRegistrationRepository,
+        private readonly MenuRepositoryInterface               $menuRepository,
     ) {}
 
     public function getMerchants(MerchantFilterDTO $dto): ServiceReturn
@@ -43,9 +45,13 @@ final class MerchantAdminService extends BaseService implements MerchantAdminSer
             // Lấy thông tin hồ sơ xét duyệt nếu có
             $application = $this->driverRegistrationRepository->findActiveApplicationByUser($merchant->user_id, KycType::MERCHANTS);
 
+            // Lấy thực đơn (menu) của nhà hàng
+            $menu = $this->menuRepository->getFullMenu($id);
+
             return [
                 'merchant'    => $merchant,
                 'application' => $application,
+                'menu'        => $menu,
             ];
         });
     }
