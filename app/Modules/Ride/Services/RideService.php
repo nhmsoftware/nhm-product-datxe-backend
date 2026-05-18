@@ -1231,9 +1231,35 @@ final class RideService extends BaseService implements RideServiceInterface
 
             $driver = $this->userRepository->findDriverWithProfileById($dto->driverId);
             $this->validate($driver !== null, 'Không tìm thấy tài xế.', 404);
+            
+            // 1. Kiểm tra sự tồn tại của hồ sơ vận hành tài xế
             $this->validate(
-                $driver->driverProfile !== null && $driver->driverProfile->driver_group_type === DriverGroupType::INTERNAL->value,
-                'Tài xế này không có hồ sơ hoạt động hoặc không thuộc đội xe nhà.'
+                $driver->driverProfile !== null, 
+                'Tài xế chưa có hồ sơ vận hành hoặc thông tin xe.', 
+                400
+            );
+            
+            // 2. Kiểm tra đội xe nhà
+            $this->validate(
+                $driver->driverProfile->driver_group_type === DriverGroupType::INTERNAL->value,
+                'Tài xế này không thuộc đội xe nhà.',
+                400
+            );
+
+            // 3. Kiểm tra tính đầy đủ của hồ sơ (Tên xe, Biển số xe, Loại xe)
+            $this->validate(
+                $driver->driverProfile->vehicle_type !== null && 
+                !empty($driver->driverProfile->vehicle_number) && 
+                !empty($driver->driverProfile->vehicle_name),
+                'Hồ sơ tài xế chưa đầy đủ thông tin vận hành (thiếu loại xe, tên xe hoặc biển số xe).',
+                400
+            );
+
+            // 4. Kiểm tra loại xe có khớp với loại xe yêu cầu của chuyến đi không
+            $this->validate(
+                $ride->vehicle_type->value === $driver->driverProfile->vehicle_type->value,
+                "Loại xe của tài xế ({$driver->driverProfile->vehicle_type->getLabel()}) không khớp với loại xe yêu cầu của chuyến đi ({$ride->vehicle_type->getLabel()}).",
+                400
             );
 
             $success = $this->rideRepository->assignDriver($dto->rideId, $dto->driverId, now());
