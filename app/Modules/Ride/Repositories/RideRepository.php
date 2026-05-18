@@ -7,6 +7,7 @@ namespace App\Modules\Ride\Repositories;
 use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Model\Enums\RideType;
 use App\Modules\Ride\Model\Ride;
 use App\Modules\Ride\Model\RideReject;
 use Carbon\CarbonInterface;
@@ -351,7 +352,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->whereDoesntHave('rejects', function ($q) use ($filters) {
                 $q->whereRaw('driver_id::text = ?', [(string) ($filters['driverId'] ?? '')]);
             });
-        
+
         \Illuminate\Support\Facades\Log::debug('Driver Scheduled Rides Filter:', [
             'vehicleType' => $vehicleType,
             'filters' => $filters
@@ -471,7 +472,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     {
         $query = $this->getQuery()
             ->with(['customer', 'driver'])
-            ->whereNotNull('travel_date');
+            ->where('ride_type', '!=', RideType::CHAUFFEUR->value);
 
         if (!empty($filters['status'])) {
             $statusMap = [
