@@ -38,6 +38,7 @@ class AdminScheduledRideResource extends JsonResource
             'destination_address'    => $this->destination_address,
             'pickup_time_formatted'  => $this->travel_date ? $this->travel_date->format('d/m/Y') : '',
             'pickup_hour'            => $this->travel_time ? substr($this->travel_time, 0, 5) : '',
+            'vehicle_type'           => $this->vehicle_type?->value,
             'vehicle_type_name'      => $this->vehicle_type?->getLabel() ?? '',
             'final_fare'             => (float) $this->total_price,
             'base_price'             => (float) $this->base_price,
