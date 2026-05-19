@@ -14,13 +14,6 @@ use App\Modules\Ride\DTO\RequestRideCancellationDTO;
 
 interface RideServiceInterface
 {
-    /**
-     * Tạo bản nháp chuyến xe (UC-08).
-     *
-     * @param CreateDraftRideDTO $dto Thông tin chuyến xe nháp
-     * @return ServiceReturn
-     */
-    public function createDraft(CreateDraftRideDTO $dto): ServiceReturn;
 
     /**
      * Lấy danh sách loại xe khả dụng kèm giá ước tính (UC-09).

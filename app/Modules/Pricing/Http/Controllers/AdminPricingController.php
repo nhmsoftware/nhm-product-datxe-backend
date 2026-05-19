@@ -93,7 +93,7 @@ final class AdminPricingController extends BaseController
     }
 
     #[OA\Post(
-        path: '/api/v1/admin/pricing/configure', 
+        path: '/api/v1/admin/pricing/configs', 
         summary: 'Thiết lập cấu hình giá (UC-91, UC-125)', 
         description: 'Cho phép Admin cấu hình giá cho các loại dịch vụ, bao gồm dịch vụ Lái hộ (Chauffeur). Các trường bao gồm phí mở cửa, giá/km, giá/phút, giá tối thiểu và hệ số tăng giá.',
         security: [['bearerAuth' => []]],
@@ -117,7 +117,7 @@ final class AdminPricingController extends BaseController
             new OA\Response(response: 422, description: 'Dữ liệu không hợp lệ (A1)')
         ]
     )]
-    public function configure(ConfigurePricingRequest $request): JsonResponse
+    public function updateConfig(ConfigurePricingRequest $request): JsonResponse
     {
         $result = $this->pricingService->updateConfig(UpdatePricingConfigDTO::fromRequest($request));
         if ($result->isError()) {

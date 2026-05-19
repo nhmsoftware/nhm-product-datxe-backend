@@ -6808,16 +6808,14 @@
                         "description": "Thành công"
                     }
                 }
-            }
-        },
-        "/api/v1/admin/pricing/configure": {
+            },
             "post": {
                 "tags": [
                     "Admin Pricing"
                 ],
                 "summary": "Thiết lập cấu hình giá (UC-91, UC-125)",
                 "description": "Cho phép Admin cấu hình giá cho các loại dịch vụ, bao gồm dịch vụ Lái hộ (Chauffeur). Các trường bao gồm phí mở cửa, giá/km, giá/phút, giá tối thiểu và hệ số tăng giá.",
-                "operationId": "dd5873eebc50848e07955450addc2a7c",
+                "operationId": "252aa23b03e89f7381b48b3e070b0559",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -7463,88 +7461,6 @@
                 ]
             }
         },
-        "/api/v1/ride/draft": {
-            "post": {
-                "tags": [
-                    "Ride"
-                ],
-                "summary": "Tạo chuyến xe tạm thời (UC-08)",
-                "description": "Tạo một chuyến xe tạm thời (draft) sau khi người dùng nhập địa điểm và chọn loại xe. Hỗ trợ kiểm tra xác thực số điện thoại (A13 flow).",
-                "operationId": "062bc96934a9efc9c19324c891de71cb",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "pickup_address",
-                                    "pickup_lat",
-                                    "pickup_lng",
-                                    "destination_address",
-                                    "destination_lat",
-                                    "destination_lng",
-                                    "vehicle_type"
-                                ],
-                                "properties": {
-                                    "pickup_address": {
-                                        "type": "string",
-                                        "example": "Số 1 Đào Duy Anh, Đống Đa, Hà Nội"
-                                    },
-                                    "pickup_lat": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 21.0072
-                                    },
-                                    "pickup_lng": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 105.8428
-                                    },
-                                    "destination_address": {
-                                        "type": "string",
-                                        "example": "Vincom Mega Mall Ocean Park, Gia Lâm, Hà Nội"
-                                    },
-                                    "destination_lat": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 20.9944
-                                    },
-                                    "destination_lng": {
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 105.9458
-                                    },
-                                    "vehicle_type": {
-                                        "description": "Loại phương tiện hỗ trợ. 1: Xe Máy (Bike), 2: Ô Tô 4 Chỗ (Car 4 Seats), 3: Ô Tô 7 Chỗ (Car 7 Seats), 4: Ô Tô 9 Chỗ (Car 9 Seats)",
-                                        "type": "integer",
-                                        "example": 1
-                                    },
-                                    "voucher_code": {
-                                        "description": "Mã giảm giá (tùy chọn)",
-                                        "type": "string",
-                                        "example": "GIAM20K"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Chuyến xe tạm thời được tạo thành công"
-                    },
-                    "403": {
-                        "description": "Chưa xác thực số điện thoại (A13)"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
         "/api/v1/ride/{rideId}/vehicles": {
             "get": {
                 "tags": [
@@ -7708,45 +7624,73 @@
                 ]
             }
         },
-        "/api/v1/ride/{rideId}/confirm": {
+        "/api/v1/ride/confirm": {
             "post": {
                 "tags": [
                     "Ride"
                 ],
-                "summary": "Xác nhận đặt xe (UC-12)",
-                "description": "Xác nhận đặt xe. Hệ thống tính lại giá theo loại xe đã chọn và so sánh với expected_price từ FE.",
-                "operationId": "3381684cb7f81eb00e88814a18bd3230",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của ride draft",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
+                "summary": "Xác nhận đặt xe trực tiếp (UC-12)",
+                "description": "Xác nhận đặt xe trực tiếp bằng cách truyền thông tin chuyến đi. Hệ thống tính lại giá theo loại xe đã chọn và so sánh với expected_price từ FE.",
+                "operationId": "caa365027510123307fee40e851d24e2",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
+                                    "pickup_address",
+                                    "pickup_lat",
+                                    "pickup_lng",
+                                    "destination_address",
+                                    "destination_lat",
+                                    "destination_lng",
                                     "vehicle_type",
                                     "expected_price"
                                 ],
                                 "properties": {
+                                    "pickup_address": {
+                                        "type": "string",
+                                        "example": "Số 1 Đào Duy Anh, Đống Đa, Hà Nội"
+                                    },
+                                    "pickup_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 21.0072
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.8428
+                                    },
+                                    "destination_address": {
+                                        "type": "string",
+                                        "example": "Vincom Mega Mall Ocean Park, Gia Lâm, Hà Nội"
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20.9944
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.9458
+                                    },
                                     "vehicle_type": {
                                         "description": "1: Xe Máy, 2: 4 chỗ, 3: 7 chỗ, 4: 9 chỗ",
                                         "type": "integer",
                                         "example": 2
                                     },
                                     "expected_price": {
-                                        "description": "Giá kỳ vọ ng lấy từ UC-09 để kiểm tra chênh lệch",
+                                        "description": "Giá kỳ vọng lấy từ tính toán để kiểm tra chênh lệch",
                                         "type": "number",
                                         "format": "float",
                                         "example": 45000
+                                    },
+                                    "voucher_code": {
+                                        "description": "Mã giảm giá (tùy chọn)",
+                                        "type": "string",
+                                        "example": "DEMO10"
                                     }
                                 },
                                 "type": "object"

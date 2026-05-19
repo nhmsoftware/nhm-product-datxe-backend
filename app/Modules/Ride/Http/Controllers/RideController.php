@@ -11,7 +11,6 @@ use App\Modules\Ride\DTO\CreateIntercityRideDTO;
 use App\Modules\Ride\DTO\FilterScheduledRideDTO;
 use App\Modules\Ride\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\DTO\CreateAirportRideDTO;
-use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\DTO\CreateDeliveryOrderDTO;
 use App\Modules\Ride\DTO\CapturePickupProofDTO;
@@ -25,7 +24,6 @@ use App\Modules\Ride\Http\Requests\CreateIntercityRideRequest;
 use App\Modules\Ride\Http\Requests\GetScheduledRideListRequest;
 use App\Modules\Ride\Http\Requests\RespondRideCancellationRequest;
 use App\Modules\Ride\Http\Requests\CreateAirportRideRequest;
-use App\Modules\Ride\Http\Requests\CreateDraftRideRequest;
 use App\Modules\Ride\Http\Requests\CancelRideRequest;
 use App\Modules\Ride\Http\Requests\GetVehicleOptionsRequest;
 use App\Modules\Ride\Http\Requests\GetPriceEstimateRequest;
@@ -50,50 +48,6 @@ final class RideController extends BaseController
     public function __construct(
         private readonly RideServiceInterface $rideService
     ) {
-    }
-
-    #[OA\Post(
-        path: '/api/v1/ride/draft',
-        description: 'Tạo một chuyến xe tạm thời (draft) sau khi người dùng nhập địa điểm và chọn loại xe. Hỗ trợ kiểm tra xác thực số điện thoại (A13 flow).',
-        summary: 'Tạo chuyến xe tạm thời (UC-08)',
-        security: [['sanctum' => []]],
-        tags: ['Ride']
-    )]
-    #[OA\RequestBody(
-        required: true,
-        content: new OA\JsonContent(
-            required: ['pickup_address', 'pickup_lat', 'pickup_lng', 'destination_address', 'destination_lat', 'destination_lng', 'vehicle_type'],
-            properties: [
-                new OA\Property(property: 'pickup_address', type: 'string', example: 'Số 1 Đào Duy Anh, Đống Đa, Hà Nội'),
-                new OA\Property(property: 'pickup_lat', type: 'number', format: 'float', example: 21.0072),
-                new OA\Property(property: 'pickup_lng', type: 'number', format: 'float', example: 105.8428),
-                new OA\Property(property: 'destination_address', type: 'string', example: 'Vincom Mega Mall Ocean Park, Gia Lâm, Hà Nội'),
-                new OA\Property(property: 'destination_lat', type: 'number', format: 'float', example: 20.9944),
-                new OA\Property(property: 'destination_lng', type: 'number', format: 'float', example: 105.9458),
-                new OA\Property(
-                    property: 'vehicle_type',
-                    description: 'Loại phương tiện hỗ trợ. 1: Xe Máy (Bike), 2: Ô Tô 4 Chỗ (Car 4 Seats), 3: Ô Tô 7 Chỗ (Car 7 Seats), 4: Ô Tô 9 Chỗ (Car 9 Seats)',
-                    type: 'integer',
-                    example: 1
-                ),
-                new OA\Property(property: 'voucher_code', type: 'string', example: 'GIAM20K', description: 'Mã giảm giá (tùy chọn)'),
-            ]
-        )
-    )]
-    #[OA\Response(response: 200, description: 'Chuyến xe tạm thời được tạo thành công')]
-    #[OA\Response(response: 403, description: 'Chưa xác thực số điện thoại (A13)')]
-    public function createDraft(CreateDraftRideRequest $request): JsonResponse
-    {
-        // FormRequest đã validate, Controller chỉ map sang DTO và gọi Service
-        $result = $this->rideService->createDraft(
-            CreateDraftRideDTO::fromRequest($request)
-        );
-
-        if ($result->isError()) {
-            return $this->sendError($result->getMessage(), $result->getCode());
-        }
-
-        return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 
     #[OA\Get(
@@ -204,20 +158,26 @@ final class RideController extends BaseController
     }
 
     #[OA\Post(
-        path: '/api/v1/ride/{rideId}/confirm',
-        description: 'Xác nhận đặt xe. Hệ thống tính lại giá theo loại xe đã chọn và so sánh với expected_price từ FE.',
-        summary: 'Xác nhận đặt xe (UC-12)',
+        path: '/api/v1/ride/confirm',
+        description: 'Xác nhận đặt xe trực tiếp bằng cách truyền thông tin chuyến đi. Hệ thống tính lại giá theo loại xe đã chọn và so sánh với expected_price từ FE.',
+        summary: 'Xác nhận đặt xe trực tiếp (UC-12)',
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
-    #[OA\Parameter(name: 'rideId', description: 'ID của ride draft', in: 'path', required: true, schema: new OA\Schema(type: 'string'))]
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
-            required: ['vehicle_type', 'expected_price'],
+            required: ['pickup_address', 'pickup_lat', 'pickup_lng', 'destination_address', 'destination_lat', 'destination_lng', 'vehicle_type', 'expected_price'],
             properties: [
+                new OA\Property(property: 'pickup_address', type: 'string', example: 'Số 1 Đào Duy Anh, Đống Đa, Hà Nội'),
+                new OA\Property(property: 'pickup_lat', type: 'number', format: 'float', example: 21.0072),
+                new OA\Property(property: 'pickup_lng', type: 'number', format: 'float', example: 105.8428),
+                new OA\Property(property: 'destination_address', type: 'string', example: 'Vincom Mega Mall Ocean Park, Gia Lâm, Hà Nội'),
+                new OA\Property(property: 'destination_lat', type: 'number', format: 'float', example: 20.9944),
+                new OA\Property(property: 'destination_lng', type: 'number', format: 'float', example: 105.9458),
                 new OA\Property(property: 'vehicle_type', type: 'integer', example: 2, description: '1: Xe Máy, 2: 4 chỗ, 3: 7 chỗ, 4: 9 chỗ'),
-                new OA\Property(property: 'expected_price', type: 'number', format: 'float', example: 45000, description: 'Giá kỳ vọ ng lấy từ UC-09 để kiểm tra chênh lệch'),
+                new OA\Property(property: 'expected_price', type: 'number', format: 'float', example: 45000, description: 'Giá kỳ vọng lấy từ tính toán để kiểm tra chênh lệch'),
+                new OA\Property(property: 'voucher_code', type: 'string', example: 'DEMO10', description: 'Mã giảm giá (tùy chọn)'),
             ]
         )
     )]
