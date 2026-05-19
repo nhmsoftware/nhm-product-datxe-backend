@@ -45,6 +45,22 @@ interface MerchantRepositoryInterface extends BaseRepositoryInterface
     public function searchMerchants(\App\Modules\Merchant\DTO\MerchantFilterDTO $dto): LengthAwarePaginator;
 
     /**
+     * Get nearby merchants based on customer location.
+     *
+     * @param \App\Modules\Merchant\DTO\GetNearbyMerchantsDTO $dto
+     * @return LengthAwarePaginator
+     */
+    public function getNearbyMerchants(\App\Modules\Merchant\DTO\GetNearbyMerchantsDTO $dto): LengthAwarePaginator;
+
+    /**
+     * Get merchant details for customer app.
+     *
+     * @param string $id
+     * @return MerchantProfile|null
+     */
+    public function getByIdForCustomer(string $id): ?MerchantProfile;
+
+    /**
      * Update average rating and total orders for a merchant.
      *
      * @param string $merchantProfileId

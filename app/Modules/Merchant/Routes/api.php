@@ -58,6 +58,20 @@ Route::prefix('v1/merchant')->group(function () {
     });
 });
 
+// Customer Routes (Explore Nearby Merchants & Menus)
+Route::prefix('v1/customer/merchants')
+    ->middleware(['auth:sanctum'])
+    ->group(function () {
+        Route::get('/', [\App\Modules\Merchant\Http\Controllers\CustomerMerchantController::class, 'index'])
+            ->name('customer.merchants.index');
+            
+        Route::get('/{id}', [\App\Modules\Merchant\Http\Controllers\CustomerMerchantController::class, 'show'])
+            ->name('customer.merchants.show');
+            
+        Route::get('/{id}/menu', [\App\Modules\Merchant\Http\Controllers\CustomerMerchantController::class, 'menu'])
+            ->name('customer.merchants.menu');
+    });
+
 // Admin Routes
 Route::prefix('v1/admin/merchant')
     ->middleware(['auth:sanctum'])

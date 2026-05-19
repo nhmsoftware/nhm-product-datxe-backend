@@ -28,15 +28,22 @@ Module này quản lý toàn bộ nghiệp vụ liên quan đến Merchant (Quá
 - **UC-73 Mark Ready**: Đánh dấu món đã sẵn sàng để tài xế đến lấy.
 - **UC-75 Cancel Order**: Hủy đơn hàng (từ phía Merchant).
 - **UC-74 Handle Cancellation**: Xử lý yêu cầu hủy từ khách hàng/hệ thống.
+- **UC-76 Explore Nearby Merchants**: Tìm kiếm các quán ăn/nhà hàng lân cận dựa vào tọa độ GPS (vĩ độ, kinh độ) của khách hàng với công thức Haversine.
+- **UC-77 View Merchant Menu**: Khách hàng xem chi tiết thực đơn gồm các danh mục và món ăn đang được bán của quán ăn (eager load size và topping).
 
 ## Architecture
 Tuân thủ Modular DDD:
-- **DTO**: Chứa các đối tượng chuyển đổi dữ liệu.
-- **Services**: Chứa logic nghiệp vụ chính (`MerchantRegistrationService`, `MerchantStoreService`).
-- **Repositories**: Xử lý truy vấn database thông qua Model `MerchantProfile`.
+- **DTO**: Chứa các đối tượng chuyển đổi dữ liệu (`GetNearbyMerchantsDTO`, `MerchantFilterDTO`).
+- **Services**: Chứa logic nghiệp vụ chính (`MerchantRegistrationService`, `MerchantStoreService`, `CustomerMerchantService`).
+- **Repositories**: Xử lý truy vấn database thông qua Model `MerchantProfile` (`MerchantRepository`, `MenuRepository`).
 - **Events**: Phát các sự kiện domain khi có thay đổi trạng thái quan trọng.
 
 ## API Endpoints
+### Customer Endpoints (Explore)
+- `GET /api/v1/customer/merchants`: Lấy danh sách các cửa hàng lân cận dựa vào vị trí hiện tại (vĩ độ, kinh độ), hỗ trợ tìm kiếm theo tên và lọc theo bán kính.
+- `GET /api/v1/customer/merchants/{id}`: Xem chi tiết thông tin cửa hàng.
+- `GET /api/v1/customer/merchants/{id}/menu`: Lấy thực đơn (Menu) chi tiết của cửa hàng bao gồm món ăn, các kích thước (sizes) và các loại toppings đi kèm.
+
 ### Registration
 - `POST /api/v1/merchant/send-otp`: Gửi OTP xác thực số điện thoại để đăng ký.
 - `POST /api/v1/merchant/verify-otp`: Xác thực mã OTP.

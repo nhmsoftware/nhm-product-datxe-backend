@@ -27,6 +27,19 @@ namespace App\Modules\Merchant\Repositories;
              ->get();
      }
 
+     public function getFullMenuForCustomer(string $merchantProfileId): Collection
+     {
+          return $this->getQuery()
+              ->where('merchant_profile_id', $merchantProfileId)
+              ->with(['items' => function ($query) {
+                  $query->where('is_available', true)
+                      ->with(['sizes', 'toppings'])
+                      ->orderBy('order');
+              }])
+              ->orderBy('order')
+              ->get();
+     }
+
      public function findOrCreateCategory(string $merchantProfileId, string $name): MenuCategory
      {
          return $this->getQuery()->firstOrCreate([

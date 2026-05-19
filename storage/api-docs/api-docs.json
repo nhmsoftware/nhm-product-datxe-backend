@@ -4200,6 +4200,439 @@
                 ]
             }
         },
+        "/api/v1/customer/merchants": {
+            "get": {
+                "tags": [
+                    "Customer Merchant"
+                ],
+                "summary": "Lấy danh sách các cửa hàng/nhà hàng lân cận dựa vào vị trí khách hàng",
+                "operationId": "3c041bee814d24746eadf727c2ed49a2",
+                "parameters": [
+                    {
+                        "name": "latitude",
+                        "in": "query",
+                        "description": "Vĩ độ của khách hàng",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 10.762622
+                        }
+                    },
+                    {
+                        "name": "longitude",
+                        "in": "query",
+                        "description": "Kinh độ của khách hàng",
+                        "required": true,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 106.660172
+                        }
+                    },
+                    {
+                        "name": "radius_in_km",
+                        "in": "query",
+                        "description": "Bán kính tìm kiếm (km), mặc định là 10km",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 10
+                        }
+                    },
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Tìm kiếm cửa hàng theo tên",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Cơm Tấm"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Số thứ tự trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Số lượng phần tử trên trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Thành công"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "items": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "string",
+                                                                "example": "161351382691115916"
+                                                            },
+                                                            "store_name": {
+                                                                "type": "string",
+                                                                "example": "Cửa hàng Test"
+                                                            },
+                                                            "store_address": {
+                                                                "type": "string",
+                                                                "example": "123 Test Street"
+                                                            },
+                                                            "lat": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 10.762622
+                                                            },
+                                                            "lng": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 106.660172
+                                                            },
+                                                            "opening_time": {
+                                                                "type": "string",
+                                                                "example": "08:00:00"
+                                                            },
+                                                            "closing_time": {
+                                                                "type": "string",
+                                                                "example": "22:00:00"
+                                                            },
+                                                            "is_open": {
+                                                                "type": "boolean",
+                                                                "example": true
+                                                            },
+                                                            "store_image": {
+                                                                "type": "string",
+                                                                "nullable": true
+                                                            },
+                                                            "average_rating": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 4.5
+                                                            },
+                                                            "total_orders": {
+                                                                "type": "integer",
+                                                                "example": 100
+                                                            },
+                                                            "distance": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 1.25
+                                                            },
+                                                            "opening_hours": {
+                                                                "type": "array",
+                                                                "items": {}
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "pagination": {
+                                                    "properties": {
+                                                        "total": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "count": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "per_page": {
+                                                            "type": "integer",
+                                                            "example": 20
+                                                        },
+                                                        "current_page": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "total_pages": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "422": {
+                        "description": "Dữ liệu đầu vào không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/customer/merchants/{id}": {
+            "get": {
+                "tags": [
+                    "Customer Merchant"
+                ],
+                "summary": "Xem chi tiết thông tin một cửa hàng",
+                "operationId": "98ae7b8e4fbb7adde77b19f977a93f60",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của cửa hàng",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Thành công"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "string",
+                                                    "example": "161351382691115916"
+                                                },
+                                                "store_name": {
+                                                    "type": "string",
+                                                    "example": "Cửa hàng Test"
+                                                },
+                                                "store_address": {
+                                                    "type": "string",
+                                                    "example": "123 Test Street"
+                                                },
+                                                "lat": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 10.762622
+                                                },
+                                                "lng": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 106.660172
+                                                },
+                                                "opening_time": {
+                                                    "type": "string",
+                                                    "example": "08:00:00"
+                                                },
+                                                "closing_time": {
+                                                    "type": "string",
+                                                    "example": "22:00:00"
+                                                },
+                                                "is_open": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "store_image": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "average_rating": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 4.5
+                                                },
+                                                "total_orders": {
+                                                    "type": "integer",
+                                                    "example": 100
+                                                },
+                                                "opening_hours": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy cửa hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/customer/merchants/{id}/menu": {
+            "get": {
+                "tags": [
+                    "Customer Merchant"
+                ],
+                "summary": "Lấy danh sách thực đơn (Menu) chi tiết của cửa hàng",
+                "operationId": "621b2872830443534a2c571765848d1c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID của cửa hàng",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Thành công"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "example": "1"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Món chính"
+                                                    },
+                                                    "order": {
+                                                        "type": "integer",
+                                                        "example": 0
+                                                    },
+                                                    "items": {
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "string",
+                                                                    "example": "2"
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Cơm tấm sườn"
+                                                                },
+                                                                "description": {
+                                                                    "type": "string",
+                                                                    "example": "Cơm sườn ngon tuyệt"
+                                                                },
+                                                                "price": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 35000
+                                                                },
+                                                                "image_path": {
+                                                                    "type": "string",
+                                                                    "nullable": true
+                                                                },
+                                                                "is_available": {
+                                                                    "type": "boolean",
+                                                                    "example": true
+                                                                },
+                                                                "order": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "rating": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 5
+                                                                },
+                                                                "sizes": {
+                                                                    "type": "array",
+                                                                    "items": {}
+                                                                },
+                                                                "toppings": {
+                                                                    "type": "array",
+                                                                    "items": {}
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy cửa hàng hoặc cửa hàng chưa hoạt động"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/merchant/combos": {
             "get": {
                 "tags": [
@@ -11566,6 +11999,10 @@
         {
             "name": "Admin|Merchant",
             "description": "Admin|Merchant"
+        },
+        {
+            "name": "Customer Merchant",
+            "description": "Customer Merchant"
         },
         {
             "name": "Merchant Combo",

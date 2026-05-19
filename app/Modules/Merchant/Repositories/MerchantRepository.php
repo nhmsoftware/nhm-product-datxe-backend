@@ -104,6 +104,46 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
         return $query->latest()->paginate($dto->limit, ['*'], 'page', $dto->page);
     }
 
+    public function getNearbyMerchants(\App\Modules\Merchant\DTO\GetNearbyMerchantsDTO $dto): LengthAwarePaginator
+    {
+        $latitude = $dto->latitude;
+        $longitude = $dto->longitude;
+        $radius = $dto->radiusInKm;
+
+        // Sử dụng công thức Haversine an toàn với least/greatest tránh sai số dấu phẩy động vượt quá [-1, 1] cho acos
+        $haversineSql = "(6371 * acos(least(greatest(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)), -1.0), 1.0)))";
+
+        $query = $this->getQuery()
+            ->selectRaw("*, {$haversineSql} AS distance", [$latitude, $longitude, $latitude])
+            ->whereNotNull('lat')
+            ->whereNotNull('lng')
+            ->where('status', \App\Modules\User\Model\Enums\KycStatus::Approved)
+            ->whereHas('user', function ($q) {
+                $q->where('is_active', true);
+            })
+            ->whereRaw("{$haversineSql} <= ?", [$latitude, $longitude, $latitude, $radius])
+            ->with(['user', 'openingHours']);
+
+        if ($dto->keyword) {
+            $query->where('store_name', 'like', '%' . $dto->keyword . '%');
+        }
+
+        return $query->orderBy('distance')
+            ->paginate($dto->limit, ['*'], 'page', $dto->page);
+    }
+
+    public function getByIdForCustomer(string $id): ?\App\Modules\User\Model\MerchantProfile
+    {
+        return $this->getQuery()
+            ->with(['openingHours'])
+            ->where('id', $id)
+            ->where('status', \App\Modules\User\Model\Enums\KycStatus::Approved)
+            ->whereHas('user', function ($q) {
+                $q->where('is_active', true);
+            })
+            ->first();
+    }
+
     public function updateRatingStats(string $merchantProfileId, float $averageRating, int $totalOrders): bool
     {
         return (bool) $this->getQuery()->where('id', $merchantProfileId)->update([

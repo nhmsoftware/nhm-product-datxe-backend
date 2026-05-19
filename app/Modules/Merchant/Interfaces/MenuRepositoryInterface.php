@@ -19,6 +19,14 @@ interface MenuRepositoryInterface extends BaseRepositoryInterface
     public function getFullMenu(string $merchantProfileId): Collection;
 
     /**
+     * Get all categories with active items, sizes, and toppings for customer view.
+     *
+     * @param string $merchantProfileId
+     * @return Collection
+     */
+    public function getFullMenuForCustomer(string $merchantProfileId): Collection;
+
+    /**
      * Find a category by name or create it if it doesn't exist.
      *
      * @param string $merchantProfileId
