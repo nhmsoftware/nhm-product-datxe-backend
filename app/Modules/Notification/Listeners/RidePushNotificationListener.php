@@ -28,15 +28,20 @@ final class RidePushNotificationListener implements ShouldQueue
 
     private function handleRideAccepted(RideAcceptedByDriver $event): void
     {
-        /** @var Ride $ride */
-        $ride = $event->ride;
+        /** @var Ride|null $ride */
+        $ride = Ride::with(['customer', 'driver.driverProfile'])->find($event->rideId);
+        if (!$ride) {
+            Log::error("[RidePushNotificationListener] Ride not found for acceptance: {$event->rideId}");
+            return;
+        }
         $customer = $ride->customer;
         
         if ($customer) {
+            $driverName = $ride->driver->full_name ?? '';
             $this->pushNotificationService->sendToUser(
                 $customer,
                 'Tài xế đã nhận chuyến',
-                "Tài xế {$ride->driver->customerProfile->full_name} đang đến đón bạn.",
+                "Tài xế {$driverName} đang đến đón bạn.",
                 ['ride_id' => $ride->id, 'event' => 'ride.accepted']
             );
         }
@@ -44,8 +49,12 @@ final class RidePushNotificationListener implements ShouldQueue
 
     private function handleRideCanceled(RideCanceled $event): void
     {
-        /** @var Ride $ride */
-        $ride = $event->ride;
+        /** @var Ride|null $ride */
+        $ride = Ride::with(['customer', 'driver'])->find($event->rideId);
+        if (!$ride) {
+            Log::error("[RidePushNotificationListener] Ride not found for cancellation: {$event->rideId}");
+            return;
+        }
         
         // Notify Customer if Driver canceled
         if ($event->canceledBy === 'driver' && $ride->customer) {

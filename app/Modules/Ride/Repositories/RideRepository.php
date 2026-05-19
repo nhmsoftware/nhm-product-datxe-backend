@@ -349,8 +349,11 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->where('is_pushed_to_pool', true)
             ->where('vehicle_type', $vehicleType)
             // Lọc ra các đơn mà tài xế đã từ chối trước đó (nếu có lưu vết)
-            ->whereDoesntHave('rejects', function ($q) use ($filters) {
-                $q->whereRaw('driver_id::text = ?', [(string) ($filters['driverId'] ?? '')]);
+            ->whereNotExists(function ($q) use ($filters) {
+                $q->select(DB::raw(1))
+                    ->from('ride_rejects')
+                    ->whereRaw('ride_rejects.ride_id = rides.id::text')
+                    ->whereRaw('ride_rejects.driver_id::text = ?::text', [(string) ($filters['driverId'] ?? '')]);
             });
 
         \Illuminate\Support\Facades\Log::debug('Driver Scheduled Rides Filter:', [
