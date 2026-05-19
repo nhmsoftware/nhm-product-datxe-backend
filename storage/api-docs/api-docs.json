@@ -5657,8 +5657,8 @@
                                     "citizen_id",
                                     "store_name",
                                     "store_address",
-                                    "lat",
-                                    "lng",
+                                    "latitude",
+                                    "longitude",
                                     "business_type",
                                     "citizen_id_image",
                                     "store_image"
@@ -5689,13 +5689,13 @@
                                         "type": "string",
                                         "example": "123 Đường ABC, Quận 1"
                                     },
-                                    "lat": {
+                                    "latitude": {
                                         "description": "Vĩ độ của cửa hàng",
                                         "type": "number",
                                         "format": "float",
                                         "example": 21.07207
                                     },
-                                    "lng": {
+                                    "longitude": {
                                         "description": "Kinh độ của cửa hàng",
                                         "type": "number",
                                         "format": "float",

@@ -111,12 +111,12 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
         $radius = $dto->radiusInKm;
 
         // Sử dụng công thức Haversine an toàn với least/greatest tránh sai số dấu phẩy động vượt quá [-1, 1] cho acos
-        $haversineSql = "(6371 * acos(least(greatest(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat)), -1.0), 1.0)))";
+        $haversineSql = "(6371 * acos(least(greatest(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)), -1.0), 1.0)))";
 
         $query = $this->getQuery()
             ->selectRaw("*, {$haversineSql} AS distance", [$latitude, $longitude, $latitude])
-            ->whereNotNull('lat')
-            ->whereNotNull('lng')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
             ->where('status', \App\Modules\User\Model\Enums\KycStatus::Approved)
             ->whereHas('user', function ($q) {
                 $q->where('is_active', true);
