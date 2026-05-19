@@ -16,6 +16,8 @@ final class RegisterMerchantDTO
         public readonly string $citizenId,
         public readonly string $storeName,
         public readonly string $storeAddress,
+        public readonly float  $lat,
+        public readonly float  $lng,
         public readonly string $businessType,
         public readonly array  $files,
     ) {}
@@ -29,6 +31,8 @@ final class RegisterMerchantDTO
             citizenId: $request->string('citizen_id')->toString(),
             storeName: $request->string('store_name')->toString(),
             storeAddress: $request->string('store_address')->toString(),
+            lat: (float) $request->input('lat'),
+            lng: (float) $request->input('lng'),
             businessType: $request->string('business_type')->toString(),
             files: [
                 'citizen_id_image'       => $request->file('citizen_id_image'),

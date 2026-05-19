@@ -61,6 +61,8 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
                 'citizen_id'    => $dto->citizenId,
                 'store_name'    => $dto->storeName,
                 'store_address' => $dto->storeAddress,
+                'lat'           => $dto->lat,
+                'lng'           => $dto->lng,
                 'business_type' => $dto->businessType,
                 'submitted_at'  => now()->toISOString(),
             ];
@@ -80,6 +82,8 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
                 'user_id'                => $dto->userId,
                 'store_name'             => $dto->storeName,
                 'store_address'          => $dto->storeAddress,
+                'lat'                    => $dto->lat,
+                'lng'                    => $dto->lng,
                 'business_type'          => $dto->businessType,
                 'status'                 => \App\Modules\User\Model\Enums\KycStatus::Pending->value,
                 'is_open'                => false,
@@ -203,6 +207,11 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
             $merchantProfile = $this->merchantRepository->findByUserId($userId);
             if ($merchantProfile) {
                 $this->merchantRepository->updateById($merchantProfile->id, [
+                    'store_name'             => $snapshot['store_name'] ?? $merchantProfile->store_name,
+                    'store_address'          => $snapshot['store_address'] ?? $merchantProfile->store_address,
+                    'business_type'          => $snapshot['business_type'] ?? $merchantProfile->business_type,
+                    'lat'                    => $snapshot['lat'] ?? $merchantProfile->lat,
+                    'lng'                    => $snapshot['lng'] ?? $merchantProfile->lng,
                     'citizen_id_image'       => $citizenIdImage,
                     'business_license_image' => $licenseImage,
                     'store_image'            => $storeImage,
