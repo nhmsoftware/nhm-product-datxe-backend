@@ -27,7 +27,7 @@ class ApplyVoucherRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'rideId'      => ['bail', 'required', 'numeric', 'exists:rides,id'],
+            'rideId'      => ['bail', 'required', 'string'],
             'voucher_code' => ['required', 'string', 'max:50'],
         ];
     }
@@ -39,7 +39,6 @@ class ApplyVoucherRequest extends FormRequest
     {
         return [
             'rideId.required'       => 'ID chuyến xe là bắt buộc.',
-            'rideId.exists'         => 'Chuyến xe không tồn tại.',
             'voucher_code.required' => 'Vui lòng nhập mã giảm giá.',
             'voucher_code.string'   => 'Mã giảm giá không hợp lệ.',
             'voucher_code.max'      => 'Mã giảm giá không được vượt quá 50 ký tự.',
