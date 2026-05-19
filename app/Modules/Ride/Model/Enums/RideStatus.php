@@ -51,7 +51,7 @@ enum RideStatus: int
     public function getLabel(): string
     {
         return match ($this) {
-            self::DRAFT       => 'Đang chờ (Nháp)',
+            self::DRAFT       => 'Đang tạo chuyến xe',
             self::PENDING     => 'Đang chờ',
             self::ACCEPTED    => 'Đã tiếp nhận',
             self::IN_PROGRESS => 'Đang di chuyển',
