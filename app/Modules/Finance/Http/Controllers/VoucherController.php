@@ -115,10 +115,17 @@ final class VoucherController extends BaseController
 
     #[OA\Get(
         path: '/api/v1/vouchers/my-vouchers',
-        description: 'Lấy danh sách các voucher mà khách hàng đã lưu vào ví cá nhân.',
+        description: 'Lấy danh sách các voucher mà khách hàng đã lưu vào ví cá nhân. Có thể lọc theo loại dịch vụ để dùng ở màn hình chuẩn bị đặt xe.',
         summary: 'Danh sách voucher đã lưu',
         security: [['sanctum' => []]],
         tags: ['Finance']
+    )]
+    #[OA\Parameter(
+        name: 'service_type',
+        description: 'Lọc voucher đã lưu theo dịch vụ. Dùng "ride" cho màn chuẩn bị confirm đặt xe.',
+        in: 'query',
+        required: false,
+        schema: new OA\Schema(type: 'string', enum: ['ride', 'food', 'delivery'])
     )]
     #[OA\Response(
         response: 200, 
@@ -130,7 +137,10 @@ final class VoucherController extends BaseController
     )]
     public function myVouchers(Request $request): JsonResponse
     {
-        $result = $this->voucherService->getSavedVouchers((string) $request->user()->id);
+        $result = $this->voucherService->getSavedVouchers(
+            (string) $request->user()->id,
+            $request->query('service_type')
+        );
 
         return $this->sendSuccess($result->getData(), 'Lấy danh sách voucher đã lưu thành công.');
     }

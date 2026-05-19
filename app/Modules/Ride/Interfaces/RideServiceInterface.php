@@ -10,20 +10,16 @@ use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
+use App\Modules\Ride\DTO\EstimateRideOptionsDTO;
 use App\Modules\Ride\DTO\RequestRideCancellationDTO;
 
 interface RideServiceInterface
 {
 
     /**
-     * Lấy danh sách loại xe khả dụng kèm giá ước tính (UC-09).
-     * Dựa vào khoảng cách & thời gian từ draft ride đã tạo.
-     *
-     * @param string $rideId ID của ride draft
-     * @param string $customerId ID của khách hàng
-     * @return ServiceReturn Danh sách VehicleOptionDTO[]
+     * UC-09: Lấy danh sách loại xe kèm giá ước tính trước khi confirm.
      */
-    public function getVehicleOptions(string $rideId, string $customerId): ServiceReturn;
+    public function estimateRideOptions(EstimateRideOptionsDTO $dto): ServiceReturn;
 
     /**
      * Xem chi tiết giá ước tính cho chuyến đi (UC-10).

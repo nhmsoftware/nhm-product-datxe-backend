@@ -3245,8 +3245,24 @@
                     "Finance"
                 ],
                 "summary": "Danh sách voucher đã lưu",
-                "description": "Lấy danh sách các voucher mà khách hàng đã lưu vào ví cá nhân.",
+                "description": "Lấy danh sách các voucher mà khách hàng đã lưu vào ví cá nhân. Có thể lọc theo loại dịch vụ để dùng ở màn hình chuẩn bị đặt xe.",
                 "operationId": "d603e13cf33ebd5786252ff4ed61dbd3",
+                "parameters": [
+                    {
+                        "name": "service_type",
+                        "in": "query",
+                        "description": "Lọc voucher đã lưu theo dịch vụ. Dùng \"ride\" cho màn chuẩn bị confirm đặt xe.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "ride",
+                                "food",
+                                "delivery"
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Danh sách voucher đã lưu",
@@ -7461,109 +7477,45 @@
                 ]
             }
         },
-        "/api/v1/ride/{rideId}/vehicles": {
-            "get": {
-                "tags": [
-                    "Ride"
-                ],
-                "summary": "Lấy danh sách loại xe (UC-09)",
-                "description": "Lấy danh sách loại xe khả dụng kèm giá ước tính và thời gian chờ dựa trên tuyến đường của chuyến xe nháp.",
-                "operationId": "3307fa95b098850b22396b6738005131",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của ride draft",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Danh sách xe và giá ước tính"
-                    },
-                    "404": {
-                        "description": "Không tìm thấy chuyến xe"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/ride/{rideId}/price": {
-            "get": {
-                "tags": [
-                    "Ride"
-                ],
-                "summary": "Xem giá ước tính (UC-10)",
-                "description": "Xem chi tiết giá cước ước tính cho chuyến đi bao gồm cấu thành giá, khoảng cách, thời gian và mã giảm giá (nếu có).",
-                "operationId": "1c031d3a6c6698d85386f212ff05fbdd",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của ride draft",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Chi tiết giá cước",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/PriceEstimateResponse"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/v1/ride/{rideId}/voucher": {
+        "/api/v1/ride/vehicle-options": {
             "post": {
                 "tags": [
                     "Ride"
                 ],
-                "summary": "Áp dụng voucher (UC-11)",
-                "description": "Áp dụng mã giảm giá vào chuyến đi.",
-                "operationId": "484b632d8301b1b740635c6327985d20",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của ride draft",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
+                "summary": "Lấy danh sách loại xe kèm giá ước tính (UC-09)",
+                "description": "Lấy danh sách loại xe khả dụng kèm giá ước tính và thời gian chờ dựa trên tọa độ điểm đón và điểm đến. API này không tạo draft ride.",
+                "operationId": "9112649c6b0c567c07b4fe91416f4784",
                 "requestBody": {
                     "required": true,
                     "content": {
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "voucher_code"
+                                    "pickup_lat",
+                                    "pickup_lng",
+                                    "destination_lat",
+                                    "destination_lng"
                                 ],
                                 "properties": {
-                                    "voucher_code": {
-                                        "type": "string",
-                                        "example": "DEMO10"
+                                    "pickup_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 21.0072
+                                    },
+                                    "pickup_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.8428
+                                    },
+                                    "destination_lat": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20.9944
+                                    },
+                                    "destination_lng": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 105.9458
                                     }
                                 },
                                 "type": "object"
@@ -7573,48 +7525,55 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Voucher được áp dụng thành công"
-                    },
-                    "422": {
-                        "description": "Voucher không hợp lệ"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            },
-            "delete": {
-                "tags": [
-                    "Ride"
-                ],
-                "summary": "Xóa voucher (UC-11 A4)",
-                "description": "Hủy áp dụng voucher đã chọn, giá cước sẽ được khôi phục về giá gốc.",
-                "operationId": "2dfd26931a4469f86697a1ae0283e55e",
-                "parameters": [
-                    {
-                        "name": "rideId",
-                        "in": "path",
-                        "description": "ID của ride draft",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+                        "description": "Danh sách xe và giá ước tính",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "distance_km": {
+                                            "type": "number",
+                                            "example": 12.4
+                                        },
+                                        "duration_minutes": {
+                                            "type": "integer",
+                                            "example": 24
+                                        },
+                                        "vehicle_options": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "vehicle_type": {
+                                                        "type": "integer",
+                                                        "example": 2
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Ô Tô 4 Chỗ"
+                                                    },
+                                                    "estimated_fare": {
+                                                        "type": "number",
+                                                        "example": 85000
+                                                    },
+                                                    "estimated_wait_time": {
+                                                        "type": "string",
+                                                        "example": "3-7 phút"
+                                                    },
+                                                    "is_available": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
                         }
                     },
-                    {
-                        "name": "voucher_code",
-                        "in": "query",
-                        "description": "Mã voucher",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Voucher đã được xóa, trả về giá gốc"
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ"
                     }
                 },
                 "security": [

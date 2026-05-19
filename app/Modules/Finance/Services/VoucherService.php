@@ -117,10 +117,21 @@ final class VoucherService extends BaseService implements VoucherServiceInterfac
     /**
      * @inheritDoc
      */
-    public function getSavedVouchers(string $customerId): ServiceReturn
+    public function getSavedVouchers(string $customerId, ?string $serviceType = null): ServiceReturn
     {
-        return $this->execute(function () use ($customerId): array {
+        return $this->execute(function () use ($customerId, $serviceType): array {
             $vouchers = $this->voucherWalletRepository->findVouchersByCustomer($customerId);
+
+            if ($serviceType !== null) {
+                $type = match (strtolower($serviceType)) {
+                    'ride' => [VoucherServiceType::RIDE, VoucherServiceType::BOTH, VoucherServiceType::ALL],
+                    'food' => [VoucherServiceType::FOOD, VoucherServiceType::BOTH, VoucherServiceType::ALL],
+                    'delivery' => [VoucherServiceType::DELIVERY, VoucherServiceType::ALL],
+                    default => [VoucherServiceType::ALL],
+                };
+
+                $vouchers = $vouchers->filter(fn(Voucher $v) => in_array($v->service_type, $type, true));
+            }
 
             return $vouchers->map(function (Voucher $v) {
                 // Đối với voucher trong ví thì isSaved luôn là true

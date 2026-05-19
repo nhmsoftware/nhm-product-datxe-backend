@@ -18,6 +18,7 @@ use App\Modules\Ride\DTO\CreateIntercityRideDTO;
 use App\Modules\Ride\DTO\CreateAirportRideDTO;
 use App\Modules\Ride\DTO\FilterScheduledRideDTO;
 use App\Modules\Ride\DTO\DriverCancelRideDTO;
+use App\Modules\Ride\DTO\EstimateRideOptionsDTO;
 use App\Modules\Ride\DTO\MarkDriverArrivedDTO;
 use App\Modules\Ride\DTO\PriceEstimateDTO;
 use App\Modules\Ride\DTO\ShowRideTrackingDTO;
@@ -82,32 +83,23 @@ final class RideService extends BaseService implements RideServiceInterface
 
 
     /**
-     * UC-09: Lấy danh sách loại xe kèm giá ước tính.
-     * Dựa vào khoảng cách & thời gian đã tính từ draft.
+     * UC-09: Lấy danh sách loại xe kèm giá ước tính trước khi confirm.
      */
-    public function getVehicleOptions(string $rideId, string $customerId): ServiceReturn
+    public function estimateRideOptions(EstimateRideOptionsDTO $dto): ServiceReturn
     {
-        return $this->execute(function () use ($rideId, $customerId): array {
-            if (str_starts_with($rideId, 'draft_')) {
-                $draftData = Cache::get('ride_draft:' . $rideId);
-                $this->validate($draftData !== null, 'Phiên đặt xe đã hết hạn hoặc không tồn tại.', 404);
-                $this->validate((string)$draftData['customer_id'] === (string)$customerId, 'Không tìm thấy chuyến xe.', 404);
-                $ride = new Ride($draftData);
-            } else {
-                $ride = $this->rideRepository->findByIdAndCustomer($rideId, $customerId);
-                $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+        return $this->execute(function () use ($dto): array {
+            $matrix = $this->mapService->getDistanceMatrix(
+                $dto->pickupLat,
+                $dto->pickupLng,
+                $dto->destinationLat,
+                $dto->destinationLng
+            );
 
-                $this->validate(
-                    $ride->status === RideStatus::DRAFT,
-                    'Chuyến xe này không thể chọn xe nữa.'
-                );
-            }
-
-            return array_values(array_filter(array_map(
-                function (VehicleType $vehicleType) use ($ride): ?array {
+            $vehicleOptions = array_values(array_filter(array_map(
+                function (VehicleType $vehicleType) use ($matrix): ?array {
                     $pricingResult = $this->calculatePriceFor(
-                        distanceMeters: $ride->distance,
-                        durationSeconds: $ride->duration,
+                        distanceMeters: $matrix->distance,
+                        durationSeconds: $matrix->duration,
                         vehicleType: $vehicleType
                     );
 
@@ -120,8 +112,14 @@ final class RideService extends BaseService implements RideServiceInterface
 
                     return VehicleOptionDTO::fromVehicleType($vehicleType, $pricingData->finalFare)->toArray();
                 },
-                VehicleType::cases()
+                [VehicleType::BIKE, VehicleType::CAR_4_SEATS, VehicleType::CAR_7_SEATS, VehicleType::CAR_9_SEATS]
             )));
+
+            return [
+                'distance_km' => round($matrix->distance / 1000, 2),
+                'duration_minutes' => (int) max(1, round($matrix->duration / 60)),
+                'vehicle_options' => $vehicleOptions,
+            ];
         });
     }
 

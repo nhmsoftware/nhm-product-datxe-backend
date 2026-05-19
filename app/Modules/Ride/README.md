@@ -23,8 +23,8 @@ Module này chịu trách nhiệm xử lý toàn bộ vòng đời của một c
 ### 1. Lấy danh sách loại xe & giá ước tính (UC-09)
 Dùng để hiển thị các lựa chọn xe (Bike, Car 4, Car 7...) kèm giá tiền tương ứng dựa trên tọa độ.
 
-- **Endpoint:** `GET /vehicles`
-- **Query Params:**
+- **Endpoint:** `POST /vehicle-options`
+- **Body:**
     - `pickup_lat` (float, required): Vĩ độ điểm đón.
     - `pickup_lng` (float, required): Kinh độ điểm đón.
     - `destination_lat` (float, required): Vĩ độ điểm đến.
@@ -33,27 +33,43 @@ Dùng để hiển thị các lựa chọn xe (Bike, Car 4, Car 7...) kèm giá 
 ```json
 {
     "success": true,
-    "data": [
-        {
-            "type": 1,
-            "name": "Xe máy (Bike)",
-            "estimated_price": 15000,
-            "icon": "bike-icon-url"
-        },
-        {
-            "type": 2,
-            "name": "Ô tô 4 chỗ (Car)",
-            "estimated_price": 45000,
-            "icon": "car-icon-url"
-        }
-    ]
+    "data": {
+        "distance_km": 12.4,
+        "duration_minutes": 24,
+        "vehicle_options": [
+            {
+                "vehicle_type": 1,
+                "name": "Xe Máy",
+                "description": "Nhanh, tiết kiệm — phù hợp đường ngắn",
+                "capacity": 1,
+                "estimated_fare": 15000,
+                "estimated_wait_time": "2–5 phút",
+                "is_available": true
+            },
+            {
+                "vehicle_type": 2,
+                "name": "Ô Tô 4 Chỗ",
+                "description": "Thoải mái cho 1–3 hành khách",
+                "capacity": 3,
+                "estimated_fare": 45000,
+                "estimated_wait_time": "3–7 phút",
+                "is_available": true
+            }
+        ]
+    }
 }
 ```
 
-### 2. Xác nhận đặt xe (UC-12)
+### 2. Lấy voucher đã lưu để dùng khi confirm
+Không tạo API duplicate trong Ride. Dùng API của module Finance:
+
+- **Endpoint:** `GET /api/v1/vouchers/my-vouchers?service_type=ride`
+- **Response (200):** Danh sách voucher khách hàng đang sở hữu và áp dụng được cho chuyến xe.
+
+### 3. Xác nhận đặt xe (UC-12)
 Tạo chuyến xe chính thức và bắt đầu tìm kiếm tài xế.
 
-- **Endpoint:** `POST /book`
+- **Endpoint:** `POST /confirm`
 - **Body:**
 ```json
 {
@@ -65,23 +81,13 @@ Tạo chuyến xe chính thức và bắt đầu tìm kiếm tài xế.
     "destination_lng": 105.9458,
     "vehicle_type": 2,
     "expected_price": 45000,
-    "voucher_codes": ["GIAM20K"],
+    "voucher_code": "GIAM20K",
     "note": "Đón ở sảnh A"
 }
 ```
 - **Response (200):** Trả về chi tiết chuyến xe và trạng thái `PENDING`.
 
-### 3. Xem chi tiết giá ước tính (UC-10)
-Dùng để xem breakdown giá (giá gốc, phí cầu đường, giảm giá...) sau khi đã chọn xe (dùng `rideId` từ bước /book nếu cần xem lại).
-
-- **Endpoint:** `GET /{rideId}/price`
-- **Response (200):** Trả về `fare_breakdown` chi tiết.
-
-### 4. Áp dụng/Xóa Voucher (UC-11)
-- **Áp dụng:** `POST /{rideId}/voucher` (Body: `voucher_code`)
-- **Xóa:** `DELETE /{rideId}/voucher`
-
-### 5. Hủy chuyến xe (UC-15)
+### 4. Hủy chuyến xe (UC-15)
 - **Endpoint:** `POST /{rideId}/cancel`
 - **Body:** `{"reason": "Thay đổi kế hoạch"}`
 

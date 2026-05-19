@@ -53,7 +53,7 @@ interface VoucherServiceInterface
      * @param string $customerId
      * @return ServiceReturn
      */
-    public function getSavedVouchers(string $customerId): ServiceReturn;
+    public function getSavedVouchers(string $customerId, ?string $serviceType = null): ServiceReturn;
 
     /**
      * Kiểm tra tính hợp lệ và tính toán mức giảm giá của voucher.
