@@ -17,7 +17,7 @@ final readonly class RespondRideCancellationDTO
         return new self(
             rideId: (string) $request->route('rideId'),
             driverId: (string) $request->user()->id,
-            isApproved: (bool) $request->input('agreement')
+            isApproved: (bool) $request->input('is_approved', $request->input('agreement'))
         );
     }
 }

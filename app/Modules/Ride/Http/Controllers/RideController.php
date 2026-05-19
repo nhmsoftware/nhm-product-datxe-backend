@@ -9,12 +9,12 @@ use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateIntercityRideDTO;
 use App\Modules\Ride\DTO\FilterScheduledRideDTO;
-use App\Modules\Ride\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\DTO\CreateAirportRideDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\DTO\CreateDeliveryOrderDTO;
 use App\Modules\Ride\DTO\CapturePickupProofDTO;
 use App\Modules\Ride\DTO\CaptureDeliveryProofDTO;
+use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\Http\Requests\CreateDeliveryOrderRequest;
 use App\Modules\Ride\Http\Requests\CapturePickupProofRequest;
 use App\Modules\Ride\Http\Requests\CaptureDeliveryProofRequest;
@@ -29,15 +29,9 @@ use App\Modules\Ride\Http\Requests\GetVehicleOptionsRequest;
 use App\Modules\Ride\Http\Requests\GetPriceEstimateRequest;
 use App\Modules\Ride\Http\Requests\RequestRideCancellationRequest;
 use App\Modules\Ride\DTO\RequestRideCancellationDTO;
-use App\Modules\Ride\DTO\AcceptRideTrackingDTO;
 use App\Modules\Ride\DTO\DriverCancelRideDTO;
-use App\Modules\Ride\DTO\MarkDriverArrivedDTO;
 use App\Modules\Ride\DTO\ShowRideTrackingDTO;
-use App\Modules\Ride\DTO\UpdateDriverLocationDTO;
-use App\Modules\Ride\Http\Requests\AcceptRideTrackingRequest;
 use App\Modules\Ride\Http\Requests\DriverCancelRideRequest;
-use App\Modules\Ride\Http\Requests\MarkDriverArrivedRequest;
-use App\Modules\Ride\Http\Requests\UpdateDriverLocationRequest;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -804,4 +798,3 @@ final class RideController extends BaseController
         return $this->sendSuccess($result->getData(), $result->getData()['message'] ?? 'Xác nhận giao hàng thành công.');
     }
 }
-
