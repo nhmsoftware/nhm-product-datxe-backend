@@ -339,7 +339,7 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                 }
             }
 
-            // Collect data rows and validate duplicates
+            // Collect data rows and validate duplicates & types
             $importRows = [];
             $seenInFile = [];
 
@@ -360,11 +360,22 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                 if ($name === '') {
                     $this->throw("Dòng số " . ($idx + 1) . " thiếu 'Tên Món Ăn'.", 400);
                 }
+                if (mb_strlen($name) > 255) {
+                    $this->throw("Dòng số " . ($idx + 1) . ": 'Tên Món Ăn' không được vượt quá 255 ký tự.", 400);
+                }
+
                 if ($categoryName === '') {
                     $this->throw("Dòng số " . ($idx + 1) . " thiếu 'Danh Mục'.", 400);
                 }
+                if (mb_strlen($categoryName) > 255) {
+                    $this->throw("Dòng số " . ($idx + 1) . ": 'Danh Mục' không được vượt quá 255 ký tự.", 400);
+                }
+
                 if ($priceVal === '') {
                     $this->throw("Dòng số " . ($idx + 1) . " thiếu 'Giá Bán'.", 400);
+                }
+                if (!is_numeric($priceVal) || (float)$priceVal < 0) {
+                    $this->throw("Dòng số " . ($idx + 1) . ": 'Giá Bán' phải là số không âm (lớn hơn hoặc bằng 0).", 400);
                 }
 
                 // Check duplicate within the uploaded file
@@ -390,13 +401,80 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                     }
                 }
 
+                // 2. Parse and Validate Sizes
+                $sizes = [];
+                $sizesRaw = trim($row[4] ?? '');
+                if ($sizesRaw !== '') {
+                    $parts = explode(';', $sizesRaw);
+                    foreach ($parts as $part) {
+                        $part = trim($part);
+                        if ($part === '') {
+                            continue;
+                        }
+                        $subParts = explode(':', $part);
+                        if (count($subParts) < 2) {
+                            $this->throw("Dòng số " . ($idx + 1) . ": Kích thước '{$part}' sai định dạng. Vui lòng nhập theo định dạng 'Tên:Giá'.", 400);
+                        }
+                        $sizeName = trim($subParts[0]);
+                        $sizePriceVal = trim($subParts[1]);
+                        if ($sizeName === '') {
+                            $this->throw("Dòng số " . ($idx + 1) . ": Tên kích thước không được để trống.", 400);
+                        }
+                        if (mb_strlen($sizeName) > 255) {
+                            $this->throw("Dòng số " . ($idx + 1) . ": Tên kích thước '{$sizeName}' không được vượt quá 255 ký tự.", 400);
+                        }
+                        if (!is_numeric($sizePriceVal) || (float)$sizePriceVal < 0) {
+                            $this->throw("Dòng số " . ($idx + 1) . ": Giá bán của kích thước '{$sizeName}' phải là số không âm (lớn hơn hoặc bằng 0).", 400);
+                        }
+                        $sizes[] = [
+                            'name' => $sizeName,
+                            'price' => (float)$sizePriceVal,
+                            'is_default' => false,
+                        ];
+                    }
+                }
+
+                // 3. Parse and Validate Toppings
+                $toppings = [];
+                $toppingsRaw = trim($row[5] ?? '');
+                if ($toppingsRaw !== '') {
+                    $parts = explode(';', $toppingsRaw);
+                    foreach ($parts as $part) {
+                        $part = trim($part);
+                        if ($part === '') {
+                            continue;
+                        }
+                        $subParts = explode(':', $part);
+                        if (count($subParts) < 2) {
+                            $this->throw("Dòng số " . ($idx + 1) . ": Topping '{$part}' sai định dạng. Vui lòng nhập theo định dạng 'Tên:Giá'.", 400);
+                        }
+                        $toppingName = trim($subParts[0]);
+                        $toppingPriceVal = trim($subParts[1]);
+                        if ($toppingName === '') {
+                            $this->throw("Dòng số " . ($idx + 1) . ": Tên topping không được để trống.", 400);
+                        }
+                        if (mb_strlen($toppingName) > 255) {
+                            $this->throw("Dòng số " . ($idx + 1) . ": Tên topping '{$toppingName}' không được vượt quá 255 ký tự.", 400);
+                        }
+                        if (!is_numeric($toppingPriceVal) || (float)$toppingPriceVal < 0) {
+                            $this->throw("Dòng số " . ($idx + 1) . ": Giá bán của topping '{$toppingName}' phải là số không âm (lớn hơn hoặc bằng 0).", 400);
+                        }
+                        $toppings[] = [
+                            'name' => $toppingName,
+                            'price' => (float)$toppingPriceVal,
+                            'max_quantity' => 1,
+                            'is_required' => false,
+                        ];
+                    }
+                }
+
                 $importRows[] = [
                     'name' => $name,
                     'categoryName' => $categoryName,
                     'price' => (float)$priceVal,
                     'description' => trim($row[3] ?? ''),
-                    'sizesRaw' => trim($row[4] ?? ''),
-                    'toppingsRaw' => trim($row[5] ?? ''),
+                    'sizes' => $sizes,
+                    'toppings' => $toppings,
                 ];
             }
 
@@ -410,40 +488,7 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                 // 1. Resolve Category
                 $category = $this->resolveCategory($merchantProfileId, null, $rowData['categoryName']);
 
-                // 2. Parse Sizes
-                $sizes = [];
-                if ($rowData['sizesRaw'] !== '') {
-                    $parts = explode(';', $rowData['sizesRaw']);
-                    foreach ($parts as $part) {
-                        $subParts = explode(':', $part);
-                        if (count($subParts) >= 2) {
-                            $sizes[] = [
-                                'name' => trim($subParts[0]),
-                                'price' => (float)trim($subParts[1]),
-                                'is_default' => false,
-                            ];
-                        }
-                    }
-                }
-
-                // 3. Parse Toppings
-                $toppings = [];
-                if ($rowData['toppingsRaw'] !== '') {
-                    $parts = explode(';', $rowData['toppingsRaw']);
-                    foreach ($parts as $part) {
-                        $subParts = explode(':', $part);
-                        if (count($subParts) >= 2) {
-                            $toppings[] = [
-                                'name' => trim($subParts[0]),
-                                'price' => (float)trim($subParts[1]),
-                                'max_quantity' => 1,
-                                'is_required' => false,
-                            ];
-                        }
-                    }
-                }
-
-                // 4. Create Item
+                // 2. Create Item
                 $itemData = [
                     'merchant_profile_id' => $merchantProfileId,
                     'category_id' => $category->id,
@@ -453,7 +498,7 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                     'is_available' => true,
                 ];
 
-                $this->menuItemRepository->createItem($itemData, $sizes, $toppings);
+                $this->menuItemRepository->createItem($itemData, $rowData['sizes'], $rowData['toppings']);
                 $importCount++;
             }
 
