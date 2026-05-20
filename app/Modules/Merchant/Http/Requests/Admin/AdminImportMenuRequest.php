@@ -19,16 +19,26 @@ final class AdminImportMenuRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'file' => ['required', 'file', 'mimes:csv,txt', 'max:5120'],
+            'file' => [
+                'required',
+                'file',
+                'max:5120',
+                function ($attribute, $value, $fail) {
+                    $extension = strtolower($value->getClientOriginalExtension());
+                    $allowedExtensions = ['csv', 'txt', 'xls', 'xlsx', 'xlse'];
+                    if (!in_array($extension, $allowedExtensions)) {
+                        $fail('File phải thuộc định dạng csv, txt, xls, xlsx hoặc xlse.');
+                    }
+                }
+            ],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'file.required' => 'Vui lòng chọn file CSV để nhập.',
+            'file.required' => 'Vui lòng chọn file mẫu để nhập.',
             'file.file'     => 'File không hợp lệ.',
-            'file.mimes'    => 'File phải thuộc định dạng csv hoặc txt.',
             'file.max'      => 'File vượt quá dung lượng cho phép (tối đa 5MB).',
         ];
     }

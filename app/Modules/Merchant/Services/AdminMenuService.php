@@ -248,68 +248,100 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
     public function importMenu(string $merchantProfileId, UploadedFile $file, string $actorId): ServiceReturn
     {
         return $this->execute(function () use ($merchantProfileId, $file, $actorId) {
-            $handle = fopen($file->getRealPath(), 'r');
-            if ($handle === false) {
-                $this->throw('Không thể đọc file upload.', 400);
+            $fileRows = $this->parseFileToArray($file);
+            if (empty($fileRows) || count($fileRows) < 2) {
+                $this->throw('Không tìm thấy dòng dữ liệu nào hợp lệ để nhập.', 400);
             }
 
-            // Remove UTF-8 BOM if present
-            $bom = fread($handle, 3);
-            if ($bom !== "\xEF\xBB\xBF") {
-                rewind($handle);
+            // Check headers
+            $headers = array_map(function($h) {
+                return trim(str_replace(['"', "'"], '', (string)$h));
+            }, $fileRows[0]);
+
+            $requiredHeaders = ['Tên Món Ăn', 'Danh Mục', 'Giá Bán'];
+            for ($i = 0; $i < 3; $i++) {
+                $expected = $requiredHeaders[$i];
+                $actual = $headers[$i] ?? '';
+                if ($actual !== $expected) {
+                    $this->throw("File mẫu không đúng định dạng. Cột thứ " . ($i + 1) . " bắt buộc phải là '{$expected}' (nhận được: '{$actual}').", 400);
+                }
             }
 
-            // Read headers
-            $headers = fgetcsv($handle);
-            if (!$headers || count($headers) < 3) {
-                fclose($handle);
-                $this->throw('File mẫu không đúng định dạng. Cần ít nhất 3 cột (Tên Món Ăn, Danh Mục, Giá Bán).', 400);
-            }
+            // Collect data rows and validate duplicates
+            $importRows = [];
+            $seenInFile = [];
 
-            $importCount = 0;
-            $rowNum = 1;
-
-            while (($row = fgetcsv($handle)) !== false) {
-                $rowNum++;
-                // Skip empty rows
+            for ($idx = 1; $idx < count($fileRows); $idx++) {
+                $row = $fileRows[$idx];
                 if (empty(array_filter($row))) {
-                    continue;
+                    continue; // Skip empty rows
                 }
 
                 $name = trim($row[0] ?? '');
                 $categoryName = trim($row[1] ?? '');
                 $priceVal = trim($row[2] ?? '');
-                $description = trim($row[3] ?? '');
-                $sizesRaw = trim($row[4] ?? '');
-                $toppingsRaw = trim($row[5] ?? '');
 
-                if ($name === '' || $categoryName === '' || $priceVal === '') {
-                    continue; // Skip invalid rows
+                if ($name === '' && $categoryName === '' && $priceVal === '') {
+                    continue;
                 }
 
-                $price = (float) $priceVal;
-                if ($price < 0) {
-                    $price = 0.0;
+                if ($name === '') {
+                    $this->throw("Dòng số " . ($idx + 1) . " thiếu 'Tên Món Ăn'.", 400);
+                }
+                if ($categoryName === '') {
+                    $this->throw("Dòng số " . ($idx + 1) . " thiếu 'Danh Mục'.", 400);
+                }
+                if ($priceVal === '') {
+                    $this->throw("Dòng số " . ($idx + 1) . " thiếu 'Giá Bán'.", 400);
                 }
 
-                // 1. Resolve Category
-                $category = $this->resolveCategory($merchantProfileId, null, $categoryName);
+                // Check duplicate within the uploaded file
+                $fileKey = strtolower($categoryName . '||' . $name);
+                if (isset($seenInFile[$fileKey])) {
+                    $this->throw("Tên món ăn '{$name}' bị trùng lặp trong danh mục '{$categoryName}' ngay trong file import (Dòng " . ($seenInFile[$fileKey] + 1) . " và Dòng " . ($idx + 1) . ").", 400);
+                }
+                $seenInFile[$fileKey] = $idx;
 
-                // 2. Check if item already exists in this category
-                // If it does, we delete the old one or skip. Let's delete the old one to overwrite, or just create as duplicate. Overwrite name in same category is clean!
-                $existingItem = \App\Modules\Merchant\Model\MenuItem::where('merchant_profile_id', $merchantProfileId)
-                    ->where('category_id', $category->id)
-                    ->where('name', $name)
+                // Check duplicate in database
+                $category = \App\Modules\Merchant\Model\MenuCategory::where('merchant_profile_id', $merchantProfileId)
+                    ->where('name', $categoryName)
                     ->first();
 
-                if ($existingItem) {
-                    $this->menuItemRepository->deleteItem((string)$existingItem->id);
+                if ($category) {
+                    $existingItem = \App\Modules\Merchant\Model\MenuItem::where('merchant_profile_id', $merchantProfileId)
+                        ->where('category_id', $category->id)
+                        ->where('name', $name)
+                        ->first();
+
+                    if ($existingItem) {
+                        $this->throw("Món ăn '{$name}' đã tồn tại trong danh mục '{$categoryName}' của cửa hàng.", 400);
+                    }
                 }
 
-                // 3. Parse Sizes
+                $importRows[] = [
+                    'name' => $name,
+                    'categoryName' => $categoryName,
+                    'price' => (float)$priceVal,
+                    'description' => trim($row[3] ?? ''),
+                    'sizesRaw' => trim($row[4] ?? ''),
+                    'toppingsRaw' => trim($row[5] ?? ''),
+                ];
+            }
+
+            if (empty($importRows)) {
+                $this->throw('Không tìm thấy dòng dữ liệu nào hợp lệ để nhập.', 400);
+            }
+
+            // Now perform import
+            $importCount = 0;
+            foreach ($importRows as $rowData) {
+                // 1. Resolve Category
+                $category = $this->resolveCategory($merchantProfileId, null, $rowData['categoryName']);
+
+                // 2. Parse Sizes
                 $sizes = [];
-                if ($sizesRaw !== '') {
-                    $parts = explode(';', $sizesRaw);
+                if ($rowData['sizesRaw'] !== '') {
+                    $parts = explode(';', $rowData['sizesRaw']);
                     foreach ($parts as $part) {
                         $subParts = explode(':', $part);
                         if (count($subParts) >= 2) {
@@ -322,10 +354,10 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                     }
                 }
 
-                // 4. Parse Toppings
+                // 3. Parse Toppings
                 $toppings = [];
-                if ($toppingsRaw !== '') {
-                    $parts = explode(';', $toppingsRaw);
+                if ($rowData['toppingsRaw'] !== '') {
+                    $parts = explode(';', $rowData['toppingsRaw']);
                     foreach ($parts as $part) {
                         $subParts = explode(':', $part);
                         if (count($subParts) >= 2) {
@@ -339,24 +371,18 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                     }
                 }
 
-                // 5. Create Item
+                // 4. Create Item
                 $itemData = [
                     'merchant_profile_id' => $merchantProfileId,
                     'category_id'         => $category->id,
-                    'name'                => $name,
-                    'price'               => $price,
-                    'description'         => $description,
+                    'name'                => $rowData['name'],
+                    'price'               => $rowData['price'],
+                    'description'         => $rowData['description'],
                     'is_available'        => true,
                 ];
 
                 $this->menuItemRepository->createItem($itemData, $sizes, $toppings);
                 $importCount++;
-            }
-
-            fclose($handle);
-
-            if ($importCount === 0) {
-                $this->throw('Không tìm thấy dòng dữ liệu nào hợp lệ để nhập.', 400);
             }
 
             // Audit Log
@@ -372,6 +398,174 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
 
             return $this->success(['imported_count' => $importCount], "Đã nhập thành công {$importCount} món ăn vào thực đơn.");
         }, useTransaction: true);
+    }
+
+    /**
+     * Parse uploaded file (CSV, TXT, XLSX, XLSE) to an array of rows.
+     */
+    private function parseFileToArray(UploadedFile $file): array
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+
+        if (in_array($extension, ['csv', 'txt'])) {
+            $handle = fopen($file->getRealPath(), 'r');
+            if ($handle === false) {
+                $this->throw('Không thể đọc file upload.', 400);
+            }
+
+            // Detect delimiter (comma or semicolon)
+            $firstLine = fgets($handle);
+            $delimiter = ',';
+            if ($firstLine !== false) {
+                $commaCount = substr_count($firstLine, ',');
+                $semiCount = substr_count($firstLine, ';');
+                if ($semiCount > $commaCount) {
+                    $delimiter = ';';
+                }
+            }
+            rewind($handle);
+
+            // Remove UTF-8 BOM if present
+            $bom = fread($handle, 3);
+            if ($bom !== "\xEF\xBB\xBF") {
+                rewind($handle);
+            }
+
+            $rows = [];
+            while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+                $rows[] = $row;
+            }
+            fclose($handle);
+            return $rows;
+        }
+
+        if (in_array($extension, ['xlsx', 'xlse'])) {
+            return $this->parseXlsxFile($file->getRealPath());
+        }
+
+        if ($extension === 'xls') {
+            $this->throw('Định dạng file .xls (Excel cũ) không được hỗ trợ. Vui lòng chuyển đổi sang .xlsx hoặc .csv.', 400);
+        }
+
+        $this->throw('Định dạng file không được hỗ trợ.', 400);
+    }
+
+    /**
+     * Parse XLSX file structure using standard ZipArchive and SimpleXMLElement.
+     */
+    private function parseXlsxFile(string $filePath): array
+    {
+        if (!class_exists('ZipArchive')) {
+            $this->throw('Hệ thống thiếu thư viện ZipArchive để đọc file Excel.', 500);
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($filePath) !== true) {
+            $this->throw('Không thể mở file Excel. Tệp tin có thể bị hỏng.', 400);
+        }
+
+        // 1. Read shared strings
+        $sharedStrings = [];
+        $sharedStringsEntry = $zip->getFromName('xl/sharedStrings.xml');
+        if ($sharedStringsEntry !== false) {
+            try {
+                $xml = simplexml_load_string($sharedStringsEntry);
+                if ($xml && isset($xml->si)) {
+                    foreach ($xml->si as $si) {
+                        if (isset($si->t)) {
+                            $sharedStrings[] = (string)$si->t;
+                        } elseif (isset($si->r)) {
+                            $text = '';
+                            foreach ($si->r as $r) {
+                                $text .= (string)$r->t;
+                            }
+                            $sharedStrings[] = $text;
+                        } else {
+                            $sharedStrings[] = '';
+                        }
+                    }
+                }
+            } catch (\Exception $e) {
+                // Ignore XML parsing errors for shared strings
+            }
+        }
+
+        // 2. Read sheet1.xml
+        $sheetData = $zip->getFromName('xl/worksheets/sheet1.xml');
+        if ($sheetData === false) {
+            $zip->close();
+            $this->throw('Không tìm thấy sheet dữ liệu trong file Excel.', 400);
+        }
+
+        try {
+            $xml = simplexml_load_string($sheetData);
+        } catch (\Exception $e) {
+            $zip->close();
+            $this->throw('File Excel không đúng định dạng XML.', 400);
+        }
+        $zip->close();
+
+        if (!$xml || !isset($xml->sheetData)) {
+            $this->throw('File Excel không có dữ liệu.', 400);
+        }
+
+        $rows = [];
+        foreach ($xml->sheetData->row as $row) {
+            $rowIndex = (int)$row['r'];
+            $rowData = [];
+            
+            if (isset($row->c)) {
+                foreach ($row->c as $cell) {
+                    $rAttr = (string)$cell['r']; // e.g. "A1", "B1"
+                    preg_match('/([A-Z]+)/', $rAttr, $matches);
+                    $colName = $matches[1] ?? '';
+                    $colIndex = $this->columnLetterToIndex($colName);
+                    
+                    $type = (string)$cell['t'];
+                    $val = '';
+                    if (isset($cell->v)) {
+                        $val = (string)$cell->v;
+                        if ($type === 's') {
+                            $val = $sharedStrings[(int)$val] ?? '';
+                        }
+                    }
+                    $rowData[$colIndex] = $val;
+                }
+            }
+            
+            if (!empty($rowData)) {
+                $maxCol = max(array_keys($rowData));
+                for ($i = 0; $i <= $maxCol; $i++) {
+                    if (!isset($rowData[$i])) {
+                        $rowData[$i] = '';
+                    }
+                }
+                ksort($rowData);
+                $rows[$rowIndex] = $rowData;
+            }
+        }
+
+        if (empty($rows)) {
+            return [];
+        }
+
+        // Fill missing row indices and sort
+        $maxRow = max(array_keys($rows));
+        $result = [];
+        for ($i = 1; $i <= $maxRow; $i++) {
+            $result[] = $rows[$i] ?? [];
+        }
+        return $result;
+    }
+
+    private function columnLetterToIndex(string $col): int
+    {
+        $index = 0;
+        $len = strlen($col);
+        for ($i = 0; $i < $len; $i++) {
+            $index = $index * 26 + (ord($col[$i]) - 64);
+        }
+        return $index - 1;
     }
 
     private function resolveCategory(string $merchantProfileId, ?string $categoryId, string $categoryName): MenuCategory
