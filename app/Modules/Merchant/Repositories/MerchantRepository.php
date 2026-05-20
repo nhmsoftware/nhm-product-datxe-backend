@@ -111,7 +111,8 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
         $radius = $dto->radiusInKm;
 
         // Sử dụng công thức Haversine an toàn với least/greatest tránh sai số dấu phẩy động vượt quá [-1, 1] cho acos
-        $haversineSql = "(6371 * acos(least(greatest(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)), -1.0), 1.0)))";
+        // Đồng thời CAST sang REAL để gán kiểu số (affinity) cho SQLite/MySQL/PostgreSQL, tránh lỗi so sánh với chuỗi tham số
+        $haversineSql = "CAST((6371 * acos(least(greatest(cos(radians(?)) * cos(radians(latitude)) * cos(radians(longitude) - radians(?)) + sin(radians(?)) * sin(radians(latitude)), -1.0), 1.0))) AS REAL)";
 
         $query = $this->getQuery()
             ->selectRaw("*, {$haversineSql} AS distance", [$latitude, $longitude, $latitude])

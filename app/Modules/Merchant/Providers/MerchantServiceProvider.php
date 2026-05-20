@@ -59,6 +59,14 @@ final class MerchantServiceProvider extends BaseModuleServiceProvider
             \App\Modules\Merchant\Interfaces\MenuServiceInterface::class,
             \App\Modules\Merchant\Services\MenuService::class
         );
+        $this->app->singleton(
+            \App\Modules\Merchant\Interfaces\MerchantMenuEditLogRepositoryInterface::class,
+            \App\Modules\Merchant\Repositories\MerchantMenuEditLogRepository::class
+        );
+        $this->app->singleton(
+            \App\Modules\Merchant\Interfaces\AdminMenuServiceInterface::class,
+            \App\Modules\Merchant\Services\AdminMenuService::class
+        );
 
         // Combo Management
         $this->app->singleton(

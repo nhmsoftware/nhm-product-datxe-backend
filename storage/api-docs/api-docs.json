@@ -4216,6 +4216,407 @@
                 ]
             }
         },
+        "/api/v1/admin/merchant/{merchantId}/menu": {
+            "get": {
+                "tags": [
+                    "Admin Merchant Menu"
+                ],
+                "summary": "Lấy thực đơn của cửa hàng dành cho Admin",
+                "operationId": "e2da4be57ad266171befcf54e8a781ca",
+                "parameters": [
+                    {
+                        "name": "merchantId",
+                        "in": "path",
+                        "description": "ID của Merchant Profile",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/{merchantId}/menu/items": {
+            "post": {
+                "tags": [
+                    "Admin Merchant Menu"
+                ],
+                "summary": "Admin thêm món ăn mới",
+                "operationId": "623ce998f033883e415b92542debccda",
+                "parameters": [
+                    {
+                        "name": "merchantId",
+                        "in": "path",
+                        "description": "ID của Merchant Profile",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price",
+                                    "category_name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Cơm sườn đặc biệt"
+                                    },
+                                    "price": {
+                                        "type": "number",
+                                        "example": 50000
+                                    },
+                                    "category_name": {
+                                        "type": "string",
+                                        "example": "Món chính"
+                                    },
+                                    "category_id": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Tạo thành công"
+                    },
+                    "422": {
+                        "description": "Dữ liệu không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/{merchantId}/menu/items/{itemId}": {
+            "post": {
+                "tags": [
+                    "Admin Merchant Menu"
+                ],
+                "summary": "Admin cập nhật món ăn",
+                "description": "Sử dụng POST với tham số _method=PUT nếu cần giả lập PUT khi gửi kèm file.",
+                "operationId": "42fd1422f87aac38c4ad802891dfd314",
+                "parameters": [
+                    {
+                        "name": "merchantId",
+                        "in": "path",
+                        "description": "ID của Merchant Profile",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "name",
+                                    "price",
+                                    "category_name"
+                                ],
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "price": {
+                                        "type": "number"
+                                    },
+                                    "category_name": {
+                                        "type": "string"
+                                    },
+                                    "category_id": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy món ăn"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Merchant Menu"
+                ],
+                "summary": "Admin xóa món ăn",
+                "operationId": "6dd641341274ec3105c197e6bb7f1c4e",
+                "parameters": [
+                    {
+                        "name": "merchantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/{merchantId}/menu/items/{itemId}/status": {
+            "patch": {
+                "tags": [
+                    "Admin Merchant Menu"
+                ],
+                "summary": "Admin thay đổi trạng thái bán của món ăn",
+                "operationId": "c5f9ff1eccb176eef2f3a0fbb6e06151",
+                "parameters": [
+                    {
+                        "name": "merchantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "itemId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_available"
+                                ],
+                                "properties": {
+                                    "is_available": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/{merchantId}/menu/logs": {
+            "get": {
+                "tags": [
+                    "Admin Merchant Menu"
+                ],
+                "summary": "Lấy nhật ký chỉnh sửa thực đơn",
+                "operationId": "08bc4a8464c7f6478359b3a8f52635f5",
+                "parameters": [
+                    {
+                        "name": "merchantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/menu/export-template": {
+            "get": {
+                "tags": [
+                    "Admin Merchant Menu"
+                ],
+                "summary": "Xuất file Excel/CSV mẫu để nhập thực đơn",
+                "operationId": "f2bf1497feb32593ff2061284f9c6642",
+                "responses": {
+                    "200": {
+                        "description": "Thành công - tải file CSV mẫu"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/{merchantId}/menu/import": {
+            "post": {
+                "tags": [
+                    "Admin Merchant Menu"
+                ],
+                "summary": "Admin nhập thực đơn từ file CSV mẫu",
+                "operationId": "919ee2b68d4aced713d8d667b51f3243",
+                "parameters": [
+                    {
+                        "name": "merchantId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "file"
+                                ],
+                                "properties": {
+                                    "file": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Nhập thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi định dạng file"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/customer/merchants": {
             "get": {
                 "tags": [
@@ -11916,6 +12317,10 @@
         {
             "name": "Admin|Merchant",
             "description": "Admin|Merchant"
+        },
+        {
+            "name": "Admin Merchant Menu",
+            "description": "Admin Merchant Menu"
         },
         {
             "name": "Customer Merchant",

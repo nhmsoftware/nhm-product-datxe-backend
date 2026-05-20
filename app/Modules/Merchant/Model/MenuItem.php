@@ -59,4 +59,17 @@ class MenuItem extends Model
     {
         return $this->hasMany(MenuItemTopping::class, 'menu_item_id');
     }
+
+    public function getImagePathAttribute(?string $value): ?string
+    {
+        if (!$value) {
+            return null;
+        }
+
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
+    }
 }

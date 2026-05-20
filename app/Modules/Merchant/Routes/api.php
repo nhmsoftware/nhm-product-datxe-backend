@@ -72,6 +72,10 @@ Route::prefix('v1/customer/merchants')
             ->name('customer.merchants.menu');
     });
 
+// Public Admin Routes
+Route::get('v1/admin/merchant/menu/export-template', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'exportTemplate'])
+    ->name('admin.merchant.menu.export_template');
+
 // Admin Routes
 Route::prefix('v1/admin/merchant')
     ->middleware(['auth:sanctum'])
@@ -91,4 +95,26 @@ Route::prefix('v1/admin/merchant')
 
         Route::post('/{id}/toggle-lock', [\App\Modules\Merchant\Http\Controllers\AdminMerchantController::class, 'toggleLock'])
             ->name('admin.merchant.toggle_lock');
+
+        // Admin Merchant Menu Operations
+        Route::get('/{merchantId}/menu', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'index'])
+            ->name('admin.merchant.menu.index');
+
+        Route::post('/{merchantId}/menu/items', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'store'])
+            ->name('admin.merchant.menu.items.store');
+
+        Route::match(['POST', 'PUT'], '/{merchantId}/menu/items/{itemId}', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'update'])
+            ->name('admin.merchant.menu.items.update');
+
+        Route::delete('/{merchantId}/menu/items/{itemId}', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'delete'])
+            ->name('admin.merchant.menu.items.delete');
+
+        Route::patch('/{merchantId}/menu/items/{itemId}/status', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'updateStatus'])
+            ->name('admin.merchant.menu.items.update_status');
+
+        Route::get('/{merchantId}/menu/logs', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'logs'])
+            ->name('admin.merchant.menu.logs');
+
+        Route::post('/{merchantId}/menu/import', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'import'])
+            ->name('admin.merchant.menu.import');
     });

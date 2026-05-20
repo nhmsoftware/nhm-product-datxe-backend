@@ -33,6 +33,11 @@ final class MenuService extends BaseService implements MenuServiceInterface
             // 1. Resolve Category (A5)
             $category = $this->resolveCategory($dto);
 
+            // Check duplicate name in category
+            if ($this->menuItemRepository->isNameExistsInCategory($dto->merchantProfileId, (string)$category->id, $dto->name)) {
+                $this->throw('Tên món ăn đã tồn tại trong danh mục này.', 422);
+            }
+
             // 2. Handle Image Upload
             $imagePath = null;
             if ($dto->image) {
