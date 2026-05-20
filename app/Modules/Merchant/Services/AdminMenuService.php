@@ -20,10 +20,12 @@ use Illuminate\Http\UploadedFile;
 final class AdminMenuService extends BaseService implements AdminMenuServiceInterface
 {
     public function __construct(
-        private readonly MenuRepositoryInterface                   $menuRepository,
-        private readonly MenuItemRepositoryInterface               $menuItemRepository,
-        private readonly MerchantMenuEditLogRepositoryInterface    $editLogRepository,
-    ) {}
+        private readonly MenuRepositoryInterface                $menuRepository,
+        private readonly MenuItemRepositoryInterface            $menuItemRepository,
+        private readonly MerchantMenuEditLogRepositoryInterface $editLogRepository,
+    )
+    {
+    }
 
     public function getMerchantMenu(string $merchantProfileId): Collection
     {
@@ -47,12 +49,12 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
 
             $data = [
                 'merchant_profile_id' => $dto->merchantProfileId,
-                'category_id'         => $category->id,
-                'name'                => $dto->name,
-                'price'               => $dto->price,
-                'description'         => $dto->description,
-                'image_path'          => $imagePath,
-                'is_available'        => true,
+                'category_id' => $category->id,
+                'name' => $dto->name,
+                'price' => $dto->price,
+                'description' => $dto->description,
+                'image_path' => $imagePath,
+                'is_available' => true,
             ];
 
             $item = $this->menuItemRepository->createItem($data, $dto->sizes, $dto->toppings);
@@ -60,15 +62,15 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
             // Audit Log
             $this->editLogRepository->logAction([
                 'merchant_profile_id' => $dto->merchantProfileId,
-                'actor_id'            => $dto->actorId,
-                'action'              => 'create_item',
-                'description'         => "Admin đã thêm món ăn mới: '{$item->name}' vào danh mục '{$category->name}'",
-                'new_values'          => [
-                    'name'        => $item->name,
-                    'price'       => $item->price,
-                    'category'    => $category->name,
-                    'sizes'       => $dto->sizes,
-                    'toppings'    => $dto->toppings,
+                'actor_id' => $dto->actorId,
+                'action' => 'create_item',
+                'description' => "Admin đã thêm món ăn mới: '{$item->name}' vào danh mục '{$category->name}'",
+                'new_values' => [
+                    'name' => $item->name,
+                    'price' => $item->price,
+                    'category' => $category->name,
+                    'sizes' => $dto->sizes,
+                    'toppings' => $dto->toppings,
                     'description' => $item->description,
                 ]
             ]);
@@ -94,11 +96,11 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
             // Capture old state for audit
             $item->load(['sizes', 'toppings', 'category']);
             $oldValues = [
-                'name'        => $item->name,
-                'price'       => $item->price,
-                'category'    => $item->category?->name ?? 'Chưa phân loại',
-                'sizes'       => $item->sizes->toArray(),
-                'toppings'    => $item->toppings->toArray(),
+                'name' => $item->name,
+                'price' => $item->price,
+                'category' => $item->category?->name ?? 'Chưa phân loại',
+                'sizes' => $item->sizes->toArray(),
+                'toppings' => $item->toppings->toArray(),
                 'description' => $item->description,
             ];
 
@@ -111,11 +113,11 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
             }
 
             $data = [
-                'category_id'  => $category->id,
-                'name'         => $dto->name,
-                'price'        => $dto->price,
-                'description'  => $dto->description,
-                'image_path'   => $imagePath,
+                'category_id' => $category->id,
+                'name' => $dto->name,
+                'price' => $dto->price,
+                'description' => $dto->description,
+                'image_path' => $imagePath,
             ];
 
             $updatedItem = $this->menuItemRepository->updateItem($dto->itemId, $data, $dto->sizes, $dto->toppings);
@@ -123,16 +125,16 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
             // Audit Log
             $this->editLogRepository->logAction([
                 'merchant_profile_id' => $dto->merchantProfileId,
-                'actor_id'            => $dto->actorId,
-                'action'              => 'update_item',
-                'description'         => "Admin đã cập nhật thông tin món ăn: '{$updatedItem->name}'",
-                'old_values'          => $oldValues,
-                'new_values'          => [
-                    'name'        => $updatedItem->name,
-                    'price'       => $updatedItem->price,
-                    'category'    => $category->name,
-                    'sizes'       => $dto->sizes,
-                    'toppings'    => $dto->toppings,
+                'actor_id' => $dto->actorId,
+                'action' => 'update_item',
+                'description' => "Admin đã cập nhật thông tin món ăn: '{$updatedItem->name}'",
+                'old_values' => $oldValues,
+                'new_values' => [
+                    'name' => $updatedItem->name,
+                    'price' => $updatedItem->price,
+                    'category' => $category->name,
+                    'sizes' => $dto->sizes,
+                    'toppings' => $dto->toppings,
                     'description' => $updatedItem->description,
                 ]
             ]);
@@ -154,12 +156,12 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
             // Audit Log
             $this->editLogRepository->logAction([
                 'merchant_profile_id' => $merchantProfileId,
-                'actor_id'            => $actorId,
-                'action'              => 'delete_item',
-                'description'         => "Admin đã xóa món ăn: '{$item->name}'",
-                'old_values'          => [
-                    'name'        => $item->name,
-                    'price'       => $item->price,
+                'actor_id' => $actorId,
+                'action' => 'delete_item',
+                'description' => "Admin đã xóa món ăn: '{$item->name}'",
+                'old_values' => [
+                    'name' => $item->name,
+                    'price' => $item->price,
                     'description' => $item->description,
                 ]
             ]);
@@ -182,11 +184,11 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
             // Audit Log
             $this->editLogRepository->logAction([
                 'merchant_profile_id' => $merchantProfileId,
-                'actor_id'            => $actorId,
-                'action'              => 'update_status',
-                'description'         => "Admin đã cập nhật trạng thái bán của món '{$item->name}' thành: '{$statusLabel}'",
-                'old_values'          => ['is_available' => $item->is_available],
-                'new_values'          => ['is_available' => $isAvailable]
+                'actor_id' => $actorId,
+                'action' => 'update_status',
+                'description' => "Admin đã cập nhật trạng thái bán của món '{$item->name}' thành: '{$statusLabel}'",
+                'old_values' => ['is_available' => $item->is_available],
+                'new_values' => ['is_available' => $isAvailable]
             ]);
 
             return $this->success(null, 'Cập nhật trạng thái món ăn thành công.');
@@ -202,47 +204,117 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
 
     public function exportTemplate(): string
     {
-        $headers = [
-            'Tên Món Ăn',
-            'Danh Mục',
-            'Giá Bán',
-            'Mô Tả',
-            'Kích Thước (Tên:Giá;Tên:Giá)',
-            'Topping (Tên:Giá;Tên:Giá)'
-        ];
+        if (!class_exists('ZipArchive')) {
+            $this->throw('Hệ thống thiếu thư viện ZipArchive để xuất file Excel.', 500);
+        }
 
-        $exampleRow1 = [
-            'Cơm tấm sườn bì chả',
-            'Món chính',
-            '45000',
-            'Cơm tấm sườn nướng mật ong thơm ngon',
-            'Lớn:10000;Đặc biệt:15000',
-            'Thêm sườn:15000;Trứng ốp la:5000'
-        ];
+        $tempFile = tempnam(sys_get_temp_dir(), 'xlsx');
+        $zip = new \ZipArchive();
+        if ($zip->open($tempFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) !== true) {
+            $this->throw('Không thể tạo file tạm Excel.', 500);
+        }
 
-        $exampleRow2 = [
-            'Trà sữa trân châu',
-            'Đồ uống',
-            '30000',
-            'Trà sữa truyền thống trân châu đen',
-            'Lớn:5000',
-            'Trân châu đen:5000;Thạch dừa:5000'
-        ];
+        $rels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>';
 
-        $output = fopen('php://temp', 'r+');
-        
-        // Add UTF-8 BOM
-        fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
-        
-        fputcsv($output, $headers);
-        fputcsv($output, $exampleRow1);
-        fputcsv($output, $exampleRow2);
-        
-        rewind($output);
-        $csvContent = stream_get_contents($output);
-        fclose($output);
+        $contentTypes = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>';
 
-        return $csvContent;
+        $workbook = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    <sheet name="Menu Template" sheetId="1" r:id="rId1"/>
+  </sheets>
+</workbook>';
+
+        $workbookRels = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>';
+
+        $styles = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="1"><font><sz val="11"/><name val="Calibri"/></font></fonts>
+  <fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+  <borders count="1"><border><left/><right/><top/><bottom/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>
+</styleSheet>';
+
+        $sharedStrings = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="16" uniqueCount="16">
+  <si><t>Tên Món Ăn</t></si>
+  <si><t>Danh Mục</t></si>
+  <si><t>Giá Bán</t></si>
+  <si><t>Mô Tả</t></si>
+  <si><t>Kích Thước (Tên:Giá;Tên:Giá)</t></si>
+  <si><t>Topping (Tên:Giá;Tên:Giá)</t></si>
+  <si><t>Cơm tấm sườn bì chả</t></si>
+  <si><t>Món chính</t></si>
+  <si><t>Cơm tấm sườn nướng mật ong thơm ngon</t></si>
+  <si><t>Lớn:10000;Đặc biệt:15000</t></si>
+  <si><t>Thêm sườn:15000;Trứng ốp la:5000</t></si>
+  <si><t>Trà sữa trân châu</t></si>
+  <si><t>Đồ uống</t></si>
+  <si><t>Trà sữa truyền thống trân châu đen</t></si>
+  <si><t>Lớn:5000</t></si>
+  <si><t>Trân châu đen:5000;Thạch dừa:5000</t></si>
+</sst>';
+
+        $sheet1 = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>
+    <row r="1">
+      <c r="A1" t="s"><v>0</v></c>
+      <c r="B1" t="s"><v>1</v></c>
+      <c r="C1" t="s"><v>2</v></c>
+      <c r="D1" t="s"><v>3</v></c>
+      <c r="E1" t="s"><v>4</v></c>
+      <c r="F1" t="s"><v>5</v></c>
+    </row>
+    <row r="2">
+      <c r="A2" t="s"><v>6</v></c>
+      <c r="B2" t="s"><v>7</v></c>
+      <c r="C2"><v>45000</v></c>
+      <c r="D2" t="s"><v>8</v></c>
+      <c r="E2" t="s"><v>9</v></c>
+      <c r="F2" t="s"><v>10</v></c>
+    </row>
+    <row r="3">
+      <c r="A3" t="s"><v>11</v></c>
+      <c r="B3" t="s"><v>12</v></c>
+      <c r="C3"><v>30000</v></c>
+      <c r="D3" t="s"><v>13</v></c>
+      <c r="E3" t="s"><v>14</v></c>
+      <c r="F3" t="s"><v>15</v></c>
+    </row>
+  </sheetData>
+</worksheet>';
+
+        $zip->addFromString('_rels/.rels', $rels);
+        $zip->addFromString('[Content_Types].xml', $contentTypes);
+        $zip->addFromString('xl/workbook.xml', $workbook);
+        $zip->addFromString('xl/_rels/workbook.xml.rels', $workbookRels);
+        $zip->addFromString('xl/styles.xml', $styles);
+        $zip->addFromString('xl/sharedStrings.xml', $sharedStrings);
+        $zip->addFromString('xl/worksheets/sheet1.xml', $sheet1);
+        $zip->close();
+
+        $content = file_get_contents($tempFile);
+        unlink($tempFile);
+
+        return $content;
     }
 
     public function importMenu(string $merchantProfileId, UploadedFile $file, string $actorId): ServiceReturn
@@ -254,7 +326,7 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
             }
 
             // Check headers
-            $headers = array_map(function($h) {
+            $headers = array_map(function ($h) {
                 return trim(str_replace(['"', "'"], '', (string)$h));
             }, $fileRows[0]);
 
@@ -346,8 +418,8 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                         $subParts = explode(':', $part);
                         if (count($subParts) >= 2) {
                             $sizes[] = [
-                                'name'       => trim($subParts[0]),
-                                'price'      => (float)trim($subParts[1]),
+                                'name' => trim($subParts[0]),
+                                'price' => (float)trim($subParts[1]),
                                 'is_default' => false,
                             ];
                         }
@@ -362,10 +434,10 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                         $subParts = explode(':', $part);
                         if (count($subParts) >= 2) {
                             $toppings[] = [
-                                'name'         => trim($subParts[0]),
-                                'price'        => (float)trim($subParts[1]),
+                                'name' => trim($subParts[0]),
+                                'price' => (float)trim($subParts[1]),
                                 'max_quantity' => 1,
-                                'is_required'  => false,
+                                'is_required' => false,
                             ];
                         }
                     }
@@ -374,11 +446,11 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                 // 4. Create Item
                 $itemData = [
                     'merchant_profile_id' => $merchantProfileId,
-                    'category_id'         => $category->id,
-                    'name'                => $rowData['name'],
-                    'price'               => $rowData['price'],
-                    'description'         => $rowData['description'],
-                    'is_available'        => true,
+                    'category_id' => $category->id,
+                    'name' => $rowData['name'],
+                    'price' => $rowData['price'],
+                    'description' => $rowData['description'],
+                    'is_available' => true,
                 ];
 
                 $this->menuItemRepository->createItem($itemData, $sizes, $toppings);
@@ -388,10 +460,10 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
             // Audit Log
             $this->editLogRepository->logAction([
                 'merchant_profile_id' => $merchantProfileId,
-                'actor_id'            => $actorId,
-                'action'              => 'import_excel',
-                'description'         => "Admin đã nhập thực đơn từ file Excel (Thêm/Cập nhật thành công {$importCount} món ăn)",
-                'new_values'          => [
+                'actor_id' => $actorId,
+                'action' => 'import_excel',
+                'description' => "Admin đã nhập thực đơn từ file Excel (Thêm/Cập nhật thành công {$importCount} món ăn)",
+                'new_values' => [
                     'imported_count' => $importCount
                 ]
             ]);
@@ -513,14 +585,14 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
         foreach ($xml->sheetData->row as $row) {
             $rowIndex = (int)$row['r'];
             $rowData = [];
-            
+
             if (isset($row->c)) {
                 foreach ($row->c as $cell) {
                     $rAttr = (string)$cell['r']; // e.g. "A1", "B1"
                     preg_match('/([A-Z]+)/', $rAttr, $matches);
                     $colName = $matches[1] ?? '';
                     $colIndex = $this->columnLetterToIndex($colName);
-                    
+
                     $type = (string)$cell['t'];
                     $val = '';
                     if (isset($cell->v)) {
@@ -532,7 +604,7 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                     $rowData[$colIndex] = $val;
                 }
             }
-            
+
             if (!empty($rowData)) {
                 $maxCol = max(array_keys($rowData));
                 for ($i = 0; $i <= $maxCol; $i++) {

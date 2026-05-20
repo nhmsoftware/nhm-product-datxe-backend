@@ -275,20 +275,20 @@ final class AdminMerchantMenuController extends BaseController
 
     #[OA\Get(
         path: '/api/v1/admin/merchant/menu/export-template',
-        summary: 'Xuất file Excel/CSV mẫu để nhập thực đơn',
+        summary: 'Xuất file Excel mẫu để nhập thực đơn',
         tags: ['Admin Merchant Menu'],
         security: [['sanctum' => []]],
         responses: [
-            new OA\Response(response: 200, description: 'Thành công - tải file CSV mẫu'),
+            new OA\Response(response: 200, description: 'Thành công - tải file Excel mẫu (.xlsx)'),
         ]
     )]
     public function exportTemplate(): Response
     {
-        $csvContent = $this->adminMenuService->exportTemplate();
+        $xlsxContent = $this->adminMenuService->exportTemplate();
         
-        return response($csvContent, 200, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="menu_template.csv"',
+        return response($xlsxContent, 200, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="menu_template.xlsx"',
         ]);
     }
 
