@@ -1179,6 +1179,7 @@ final class RideService extends BaseService implements RideServiceInterface
                     'destination_address' => $ride->destination_address,
                     'travel_date'         => $ride->travel_date ? $ride->travel_date->format('Y-m-d') : null,
                     'travel_time'         => $ride->travel_time,
+                    'ride_type'           => $ride->ride_type,
                     'ride_type_label'     => $ride->ride_type->getLabel(),
                     'total_price'         => (float) $ride->total_price,
                     'expected_earnings'   => (float) ($ride->total_price * 0.8),
