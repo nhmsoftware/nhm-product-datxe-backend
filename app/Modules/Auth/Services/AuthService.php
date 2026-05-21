@@ -54,7 +54,7 @@ final class AuthService extends BaseService implements AuthServiceInterface
                 'expires_at'          => $otpRecord->expired_at,
             ];
 
-            if (config('services.otp_expose') === true) {
+            if (config('services.otp_expose') === true && !app()->isProduction()) {
                 $response['otp_code'] = $otpRecord->plain_code;
             }
 
