@@ -28,7 +28,7 @@ use Illuminate\Support\Facades\Http;
 
 final class AuthService extends BaseService implements AuthServiceInterface
 {
-    protected const RETRY_AFTER_SECONDS = 180; // 3 phút
+    protected const RETRY_AFTER_SECONDS = 5; // 3 phút
     protected const MAX_SEND_PER_DAY    = 5;
     protected const MAX_OTP_ATTEMPTS    = 5;
 
