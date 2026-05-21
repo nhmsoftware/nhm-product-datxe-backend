@@ -253,39 +253,30 @@ class User extends Authenticatable
 
     /**
      * Lấy trạng thái phê duyệt hồ sơ của user.
-     * Trả về: 'approved', 'pending', 'rejected', 'not_submitted'
      */
-    public function getProfileStatus(): string
+    public function getProfileStatus(): ?KycStatus
     {
         if ($this->role === UserRole::Driver) {
             if ($this->driverProfile !== null) {
-                return 'approved';
+                return KycStatus::Approved;
             }
             $latestApp = $this->userReviewApplications()
                 ->where('kyc_type', KycType::Driver->value)
                 ->latest()
                 ->first();
             if ($latestApp) {
-                return match ($latestApp->kyc_status) {
-                    KycStatus::Pending  => 'pending',
-                    KycStatus::Approved => 'approved',
-                    KycStatus::Rejected => 'rejected',
-                };
+                return $latestApp->kyc_status;
             }
-            return 'not_submitted';
+            return null;
         }
 
         if ($this->role === UserRole::Merchants) {
             if ($this->merchantProfile === null) {
-                return 'not_submitted';
+                return null;
             }
-            return match ($this->merchantProfile->status) {
-                KycStatus::Pending  => 'pending',
-                KycStatus::Approved => 'approved',
-                KycStatus::Rejected => 'rejected',
-            };
+            return $this->merchantProfile->status;
         }
 
-        return 'approved';
+        return KycStatus::Approved;
     }
 }
