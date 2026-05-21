@@ -13,6 +13,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1/merchant')->group(function () {
     Route::middleware('auth:sanctum')->group(function () {
+        // UC-52 Register Merchant — Business type options
+        Route::get('/business-types', [MerchantRegistrationController::class, 'businessTypes'])->name('merchant.business_types');
+
         // UC-52 Register Merchant
         Route::post('/register', [MerchantRegistrationController::class, 'register'])->name('merchant.register');
 

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Modules\Merchant\Http\Requests;
 
+use App\Modules\Merchant\Model\Enums\MerchantBusinessType;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use App\Core\Traits\HandleApi;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RegisterMerchantRequest extends FormRequest
 {
@@ -28,7 +30,7 @@ class RegisterMerchantRequest extends FormRequest
             'store_address'           => ['required', 'string', 'max:500'],
             'latitude'                => ['required', 'numeric', 'between:-90,90'],
             'longitude'               => ['required', 'numeric', 'between:-180,180'],
-            'business_type'           => ['required', 'string', 'max:100'],
+            'business_type'           => ['required', 'integer', Rule::in(MerchantBusinessType::values())],
             'citizen_id_image'        => ['required', 'file', 'image', 'max:5120'],
             'business_license_image'  => ['nullable', 'file', 'image', 'max:5120'],
             'store_image'             => ['required', 'file', 'image', 'max:5120'],
@@ -50,6 +52,8 @@ class RegisterMerchantRequest extends FormRequest
             'longitude.numeric'         => 'Kinh độ phải là số hợp lệ.',
             'longitude.between'         => 'Kinh độ phải nằm trong khoảng từ -180 đến 180.',
             'business_type.required'    => 'Vui lòng nhập loại hình kinh doanh.',
+            'business_type.integer'     => 'Loại hình kinh doanh phải là số nguyên.',
+            'business_type.in'          => 'Loại hình kinh doanh không hợp lệ.',
             'citizen_id_image.required' => 'Vui lòng tải lên ảnh CCCD.',
             'store_image.required'      => 'Vui lòng tải lên ảnh cửa hàng.',
         ];

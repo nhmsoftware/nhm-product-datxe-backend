@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Merchant\DTO;
 
 use App\Modules\Merchant\Http\Requests\RegisterMerchantRequest;
+use App\Modules\Merchant\Model\Enums\MerchantBusinessType;
 use Illuminate\Http\UploadedFile;
 
 final class RegisterMerchantDTO
@@ -18,7 +19,7 @@ final class RegisterMerchantDTO
         public readonly string $storeAddress,
         public readonly float  $latitude,
         public readonly float  $longitude,
-        public readonly string $businessType,
+        public readonly MerchantBusinessType $businessType,
         public readonly array  $files,
     ) {}
 
@@ -33,7 +34,7 @@ final class RegisterMerchantDTO
             storeAddress: $request->string('store_address')->toString(),
             latitude: (float) $request->input('latitude'),
             longitude: (float) $request->input('longitude'),
-            businessType: $request->string('business_type')->toString(),
+            businessType: MerchantBusinessType::from($request->integer('business_type')),
             files: [
                 'citizen_id_image'       => $request->file('citizen_id_image'),
                 'business_license_image' => $request->file('business_license_image'),

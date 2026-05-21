@@ -12,6 +12,7 @@ use App\Modules\Merchant\DTO\RegisterMerchantDTO;
 use App\Modules\Merchant\Events\MerchantRegistrationSubmitted;
 use App\Modules\Merchant\Interfaces\MerchantRegistrationServiceInterface;
 use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
+use App\Modules\Merchant\Model\Enums\MerchantBusinessType;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\Driver\Interfaces\DriverRegistrationRepositoryInterface;
 use App\Modules\Driver\Interfaces\FileRecordRepositoryInterface;
@@ -33,6 +34,11 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
         private readonly DriverRegistrationRepositoryInterface $driverRegistrationRepository,
         private readonly FileRecordRepositoryInterface         $fileRecordRepository,
     ) {}
+
+    public function getBusinessTypes(): ServiceReturn
+    {
+        return $this->execute(fn (): array => MerchantBusinessType::options());
+    }
 
     public function submitRegistration(RegisterMerchantDTO $dto): ServiceReturn
     {
@@ -63,7 +69,7 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
                 'store_address' => $dto->storeAddress,
                 'latitude'      => $dto->latitude,
                 'longitude'     => $dto->longitude,
-                'business_type' => $dto->businessType,
+                'business_type' => $dto->businessType->value,
                 'submitted_at'  => now()->toISOString(),
             ];
 
@@ -84,7 +90,7 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
                 'store_address'          => $dto->storeAddress,
                 'latitude'               => $dto->latitude,
                 'longitude'              => $dto->longitude,
-                'business_type'          => $dto->businessType,
+                'business_type'          => $dto->businessType->value,
                 'status'                 => \App\Modules\User\Model\Enums\KycStatus::Pending->value,
                 'is_open'                => false,
             ]);

@@ -71,7 +71,7 @@ final class AdminMerchantController extends BaseController
                             new OA\Property(property: 'id', type: 'string'),
                             new OA\Property(property: 'store_name', type: 'string'),
                             new OA\Property(property: 'store_address', type: 'string'),
-                            new OA\Property(property: 'business_type', type: 'string'),
+                            new OA\Property(property: 'business_type', type: 'integer', enum: [1, 2, 3, 4, 5, 6, 7, 8]),
                             new OA\Property(property: 'status', description: 'Trạng thái duyệt', type: 'integer'),
                             new OA\Property(property: 'business_license', type: 'string'),
                             new OA\Property(property: 'business_license_image', type: 'string'),

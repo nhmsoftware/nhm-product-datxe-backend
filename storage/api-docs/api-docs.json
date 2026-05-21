@@ -3950,7 +3950,17 @@
                                                     "type": "string"
                                                 },
                                                 "business_type": {
-                                                    "type": "string"
+                                                    "type": "integer",
+                                                    "enum": [
+                                                        1,
+                                                        2,
+                                                        3,
+                                                        4,
+                                                        5,
+                                                        6,
+                                                        7,
+                                                        8
+                                                    ]
                                                 },
                                                 "status": {
                                                     "description": "Trạng thái duyệt",
@@ -6056,6 +6066,68 @@
                 ]
             }
         },
+        "/api/v1/merchant/business-types": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "UC-52: Lấy danh sách loại hình kinh doanh Merchant",
+                "operationId": "dc4b5a467584c216428567009deb0b09",
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách loại hình kinh doanh thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Lấy danh sách loại hình kinh doanh thành công."
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "integer",
+                                                        "example": 1,
+                                                        "enum": [
+                                                            1,
+                                                            2,
+                                                            3,
+                                                            4,
+                                                            5,
+                                                            6,
+                                                            7,
+                                                            8
+                                                        ]
+                                                    },
+                                                    "label": {
+                                                        "type": "string",
+                                                        "example": "Nhà hàng"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/merchant/register": {
             "post": {
                 "tags": [
@@ -6119,9 +6191,19 @@
                                         "example": 105.7739283
                                     },
                                     "business_type": {
-                                        "description": "Loại hình kinh doanh",
-                                        "type": "string",
-                                        "example": "Ăn uống"
+                                        "description": "Loại hình kinh doanh. Chỉ chọn 1 giá trị số nguyên từ API /api/v1/merchant/business-types.",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "enum": [
+                                            1,
+                                            2,
+                                            3,
+                                            4,
+                                            5,
+                                            6,
+                                            7,
+                                            8
+                                        ]
                                     },
                                     "citizen_id_image": {
                                         "description": "Ảnh CCCD",

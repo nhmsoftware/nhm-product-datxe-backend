@@ -47,6 +47,7 @@ Tuân thủ Modular DDD:
 ### Registration
 - `POST /api/v1/merchant/send-otp`: Gửi OTP xác thực số điện thoại để đăng ký.
 - `POST /api/v1/merchant/verify-otp`: Xác thực mã OTP.
+- `GET /api/v1/merchant/business-types`: Lấy danh sách loại hình kinh doanh để chọn 1 loại khi đăng ký Merchant.
 - `POST /api/v1/merchant/register`: Gửi hồ sơ đăng ký Merchant (sau khi verify OTP).
 
 ### Store Management

@@ -10,6 +10,11 @@ use App\Modules\Merchant\DTO\RegisterMerchantDTO;
 interface MerchantRegistrationServiceInterface
 {
     /**
+     * Get merchant business types for UC-52 registration form.
+     */
+    public function getBusinessTypes(): ServiceReturn;
+
+    /**
      * Submit merchant registration application.
      * UC-52 Register Merchant
      * UC-52 Register Merchant
