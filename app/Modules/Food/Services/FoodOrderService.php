@@ -137,8 +137,8 @@ final class FoodOrderService extends BaseService implements FoodOrderServiceInte
 
         // Calculate Delivery Fee
         $matrix = $this->mapService->getDistanceMatrix(
-            (float) $merchant->lat,
-            (float) $merchant->lng,
+            (float) $merchant->latitude,
+            (float) $merchant->longitude,
             $dto->deliveryLat,
             $dto->deliveryLng
         );
