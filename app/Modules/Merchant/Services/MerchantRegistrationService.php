@@ -46,7 +46,19 @@ final class MerchantRegistrationService extends BaseService implements MerchantR
             // 1. Kiểm tra User tồn tại
             $user = $this->userRepository->findById($dto->userId);
             $this->validate($user !== null, 'Không tìm thấy thông tin người dùng.', 404);
-            $this->validate(!$user->isMerchant(), 'Bạn đã là Merchant.', 400);
+
+            $merchantProfile = $this->merchantRepository->findByUserId($dto->userId);
+            if (
+                $user->isMerchant()
+                && $merchantProfile !== null
+                && $merchantProfile->status === \App\Modules\User\Model\Enums\KycStatus::Approved
+            ) {
+                return [
+                    'merchant_profile_id' => (string) $merchantProfile->id,
+                    'status'              => $merchantProfile->status->label(),
+                    'message'             => 'Bạn đã là Merchant.',
+                ];
+            }
 
             // 2. Kiểm tra hồ sơ đang chờ duyệt
             $existingApp = $this->driverRegistrationRepository->findActiveApplicationByUser($dto->userId, KycType::MERCHANTS);
