@@ -408,8 +408,8 @@ final class AuthService extends BaseService implements AuthServiceInterface
             UserOtpType::VERIFY_REGISTER,
             UserOtpType::VERIFY_DRIVER_REGISTER => $exists ? $this->throw('Số điện thoại đã đăng ký.', 409) : null,
             UserOtpType::VERIFY_LOGIN,
-            UserOtpType::VERIFY_FORGOT_PASSWORD,
-            UserOtpType::VERIFY_MERCHANT_REGISTER => !$exists ? $this->throw('Số điện thoại chưa đăng ký.', 404) : null,
+            UserOtpType::VERIFY_FORGOT_PASSWORD => !$exists ? $this->throw('Số điện thoại chưa đăng ký.', 404) : null,
+            UserOtpType::VERIFY_MERCHANT_REGISTER => null, // Dùng cho cả đăng ký user merchant mới và customer nâng cấp merchant
             UserOtpType::CHANGE_PROFILE => null, // Cho phép cả số chưa và đã đăng ký
             default => $this->throw('Loại OTP không hợp lệ.', 400),
         };
@@ -428,7 +428,7 @@ final class AuthService extends BaseService implements AuthServiceInterface
      */
     private function upsertDeviceIfPresent(User $user, ?string $deviceId, ?string $deviceToken, ?string $deviceType): void
     {
-        // Chỉ lưu thiết bị nếu có đủ ID và Token. 
+        // Chỉ lưu thiết bị nếu có đủ ID và Token.
         // Token ở đây là FCM Token/Device Token để gửi Notify, không phải Auth Token.
         if (!$deviceId || !$deviceToken) {
             return;
