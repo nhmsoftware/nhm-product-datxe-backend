@@ -4552,11 +4552,11 @@
                 "tags": [
                     "Admin Merchant Menu"
                 ],
-                "summary": "Xuất file Excel/CSV mẫu để nhập thực đơn",
+                "summary": "Xuất file Excel mẫu để nhập thực đơn",
                 "operationId": "f2bf1497feb32593ff2061284f9c6642",
                 "responses": {
                     "200": {
-                        "description": "Thành công - tải file CSV mẫu"
+                        "description": "Thành công - tải file Excel mẫu (.xlsx)"
                     }
                 },
                 "security": [
@@ -6982,6 +6982,124 @@
                     },
                     "404": {
                         "description": "Không tìm thấy chuyến xe"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/services/orders": {
+            "get": {
+                "tags": [
+                    "Admin Service Management"
+                ],
+                "summary": "Lấy danh sách đơn hàng dịch vụ (Admin)",
+                "description": "Lấy danh sách các đơn hàng đồ ăn và giao hàng cho quản trị viên.",
+                "operationId": "ecec20520bd0793a09eb40ca0d50bdf1",
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không có quyền Admin"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/services/orders/assign": {
+            "post": {
+                "tags": [
+                    "Admin Service Management"
+                ],
+                "summary": "Chỉ định tài xế cho đơn hàng dịch vụ (Admin)",
+                "description": "Gán trực tiếp một tài xế cho đơn hàng đồ ăn hoặc giao hàng.",
+                "operationId": "80101e2dcaf721dfef7a77076c1ae855",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "order_id",
+                                    "driver_id"
+                                ],
+                                "properties": {
+                                    "order_id": {
+                                        "type": "string",
+                                        "example": "123"
+                                    },
+                                    "driver_id": {
+                                        "type": "string",
+                                        "example": "456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "400": {
+                        "description": "Lỗi nghiệp vụ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/services/orders/push-to-pool": {
+            "post": {
+                "tags": [
+                    "Admin Service Management"
+                ],
+                "summary": "Đẩy đơn hàng dịch vụ ra pool (Admin)",
+                "description": "Đẩy một hoặc nhiều đơn hàng dịch vụ vào pool tìm tài xế.",
+                "operationId": "ff62d2d88389aeb4d33a664675afb03f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "order_ids"
+                                ],
+                                "properties": {
+                                    "order_ids": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "example": [
+                                            "123",
+                                            "456"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
                     }
                 },
                 "security": [
@@ -12345,6 +12463,10 @@
         {
             "name": "Operation",
             "description": "Operation"
+        },
+        {
+            "name": "Admin Service Management",
+            "description": "Admin Service Management"
         },
         {
             "name": "Order History",
