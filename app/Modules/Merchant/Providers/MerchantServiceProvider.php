@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Modules\Merchant\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
+use App\Modules\Merchant\Events\MerchantApproved;
 use App\Modules\Merchant\Interfaces\MerchantRegistrationServiceInterface;
 use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
+use App\Modules\Merchant\Listeners\NotifyRealtimeOnMerchantApproved;
 use App\Modules\Merchant\Repositories\MerchantRepository;
 use App\Modules\Merchant\Services\MerchantRegistrationService;
+use Illuminate\Support\Facades\Event;
 
 final class MerchantServiceProvider extends BaseModuleServiceProvider
 {
@@ -86,5 +89,10 @@ final class MerchantServiceProvider extends BaseModuleServiceProvider
     public function boot(): void
     {
         parent::boot();
+
+        Event::listen(
+            MerchantApproved::class,
+            NotifyRealtimeOnMerchantApproved::class
+        );
     }
 }

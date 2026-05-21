@@ -12,6 +12,578 @@
         }
     ],
     "paths": {
+        "/socket/ride.new_offer": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Có cuốc xe mới (Gửi cho tài xế)",
+                "description": "Lắng nghe sự kiện qua Redis (ride.communication.events) hoặc Socket.io (room user:{userId})",
+                "operationId": "b7e9f8032bf14514335732d592f7a31a",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideNewOffer"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.accepted": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Tài xế đã nhận cuốc (Gửi cho khách hàng)",
+                "description": "Lắng nghe sự kiện qua Socket.io room ride:{rideId}",
+                "operationId": "503023868fa1ab0631d43857000eff25",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideAccepted"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.arrived": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Tài xế đã đến điểm đón (Gửi cho khách hàng)",
+                "description": "Lắng nghe sự kiện qua Socket.io room ride:{rideId}",
+                "operationId": "071a170fcccb7fb76ffec8bae567e1b9",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideArrived"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.picked_up": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Tài xế đã đón khách (Gửi cho khách hàng)",
+                "description": "Lắng nghe sự kiện qua Socket.io room ride:{rideId}",
+                "operationId": "e2a0f387aa1657190e3b9bcab199d1de",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RidePickedUp"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.started": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Chuyến xe bắt đầu di chuyển (Gửi cho khách hàng)",
+                "description": "Lắng nghe sự kiện qua Socket.io room ride:{rideId}",
+                "operationId": "7a9bdc908cb11dce15146e5afc335b69",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideStarted"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.completed": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Chuyến xe hoàn thành (Gửi cho khách hàng)",
+                "description": "Lắng nghe sự kiện qua Socket.io room ride:{rideId}",
+                "operationId": "28173d6c500deba83b7e95e494926a08",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideCompleted"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.cancelled": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Chuyến xe bị hủy (Gửi cho tài xế/khách hàng)",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "566d8c6c90cb9aa48d1860e936822c9e",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideCancelled"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/tracking.location.updated": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Cập nhật vị trí GPS",
+                "description": "Tài xế gửi lên Socket.io thông qua event `driver:location`. Khách hàng nghe ở room `ride:{rideId}` event `tracking.location.updated`.",
+                "operationId": "6f605fed3650a10b5c27c49bb1a35bcb",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_LocationUpdated"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/notification.created": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Có thông báo hệ thống mới",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "09cfc4ece4f460991b47cd7688e44e3d",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_NotificationCreated"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/driver.application_rejected": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Hồ sơ tài xế bị từ chối",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "5edd4758bf331ec6ed7d2b3401f400c3",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_DriverApplicationRejected"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/driver.application_approved": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Hồ sơ tài xế được duyệt",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "6357d4fc645dabb2ae8c8ecc66d751c4",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_DriverApplicationApproved"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/user.status_updated": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Trạng thái người dùng thay đổi",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "105600417111ea7a8128e1bee3ede8c6",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_UserStatusUpdated"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/user.warned": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Người dùng bị cảnh cáo",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "5a90df3c51bc79f31ecef28034ca299b",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_UserWarned"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.scheduled_pushed_to_pool": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Chuyến xe đặt trước được đẩy vào pool",
+                "description": "Lắng nghe sự kiện qua Socket.io",
+                "operationId": "5d0861abc9bdccaecc80e290921537b8",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideScheduledPushedToPool"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.cancellation_responded": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Yêu cầu hủy chuyến được phản hồi",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "7561b04d3783d246b72cf42d437f23e9",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideCancellationResponded"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.cancellation_requested": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Có yêu cầu hủy chuyến",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "cdd244b65b2335f595ae77495c73c482",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideCancellationRequested"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.assigned_by_admin": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Chuyến xe được gán bởi admin",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "32a3871a2e092f7fc65cb655be77e977",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideAssignedByAdmin"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.pickup_proof_captured": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Tài xế chụp ảnh nhận hàng",
+                "description": "Lắng nghe sự kiện qua Socket.io room ride:{rideId}",
+                "operationId": "976442f96d6e3ae2353ba190230eb6ed",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RidePickupProofCaptured"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/ride.delivery_proof_captured": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Tài xế chụp ảnh giao hàng",
+                "description": "Lắng nghe sự kiện qua Socket.io room ride:{rideId}",
+                "operationId": "b14fa1520811e0de12aec0e4022f42b0",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_RideDeliveryProofCaptured"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/food_order.updated": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Trạng thái đơn hàng thay đổi",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "fcb228ab54da46323f9509a41a902955",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_FoodOrderUpdated"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/food_order.cancellation_handled": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Yêu cầu hủy đơn hàng được xử lý",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "d59515e374c8996e0ac50ff0ca4eabd9",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_FoodCancellationHandled"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/merchant.approved": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Hồ sơ nhà hàng được duyệt",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "02f9a7333c39a85382102ed0fe16f55f",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_MerchantApproved"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/notification.unread_count_updated": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Số lượng thông báo chưa đọc thay đổi",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "77566704ddafd4ec47001ec6261500b8",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_NotificationUnreadCountUpdated"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/food.order_created": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Có đơn hàng mới",
+                "description": "Lắng nghe sự kiện qua Socket.io room merchant:{merchantId}",
+                "operationId": "ab509c0040f7ce2d0342a93d3dfb62d3",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_FoodOrderCreated"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/finance.refund.processed": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Hoàn tiền được xử lý",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "83aeffd4e42427aad702e96428c78590",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_FinanceRefundProcessed"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/socket/complaint.handled": {
+            "get": {
+                "tags": [
+                    "Z - Realtime Events"
+                ],
+                "summary": "[Realtime] Khiếu nại được xử lý",
+                "description": "Lắng nghe sự kiện qua Socket.io room user:{userId}",
+                "operationId": "8e904870bfbf2c04dedd60ddcc832316",
+                "responses": {
+                    "200": {
+                        "description": "Event Payload",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Realtime_ComplaintHandled"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/authenticate-otp": {
             "post": {
                 "tags": [
@@ -11430,6 +12002,937 @@
     },
     "components": {
         "schemas": {
+            "Realtime_RideNewOffer": {
+                "description": "Payload nhận được khi có cuốc xe mới (ride.new_offer)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.new_offer"
+                    },
+                    "user_id": {
+                        "description": "ID tài xế nhận cuốc",
+                        "type": "string"
+                    },
+                    "ride_id": {
+                        "description": "ID chuyến xe",
+                        "type": "string"
+                    },
+                    "ride_type": {
+                        "type": "string",
+                        "example": "Đi ngay"
+                    },
+                    "travel_date": {
+                        "type": "string",
+                        "example": "2026-05-21",
+                        "nullable": true
+                    },
+                    "travel_time": {
+                        "type": "string",
+                        "example": "15:30:00",
+                        "nullable": true
+                    },
+                    "pickup_address": {
+                        "type": "string",
+                        "example": "123 Đường ABC"
+                    },
+                    "destination_address": {
+                        "type": "string",
+                        "example": "456 Đường XYZ"
+                    },
+                    "distance_km": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 12.5
+                    },
+                    "total_price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 85000
+                    },
+                    "vehicle_type": {
+                        "type": "string",
+                        "example": "Xe Máy"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideAccepted": {
+                "description": "Payload nhận được khi tài xế nhận chuyến (ride.accepted)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.accepted"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "driver": {
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "full_name": {
+                                "type": "string"
+                            },
+                            "vehicle_name": {
+                                "type": "string"
+                            },
+                            "vehicle_number": {
+                                "type": "string"
+                            },
+                            "vehicle_type": {
+                                "type": "string"
+                            },
+                            "current_lat": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 10.762622
+                            },
+                            "current_lng": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 106.660172
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideRejected": {
+                "description": "Payload nhận được khi tài xế từ chối chuyến (ride.rejected)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.rejected"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "driver": {
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "full_name": {
+                                "type": "string"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideArrived": {
+                "description": "Payload nhận được khi tài xế đã đến điểm đón (ride.arrived)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.arrived"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "driver": {
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "current_lat": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 10.762622
+                            },
+                            "current_lng": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 106.660172
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Tài xế đã đến điểm đón."
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RidePickedUp": {
+                "description": "Payload nhận được khi tài xế xác nhận đã đón khách (ride.picked_up)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.picked_up"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "driver": {
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "full_name": {
+                                "type": "string"
+                            },
+                            "current_lat": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 10.762622
+                            },
+                            "current_lng": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 106.660172
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideStarted": {
+                "description": "Payload nhận được khi chuyến xe bắt đầu di chuyển (ride.started)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.started"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "driver_id": {
+                        "type": "string"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideCompleted": {
+                "description": "Payload nhận được khi chuyến xe hoàn thành (ride.completed)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.completed"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "driver_id": {
+                        "type": "string"
+                    },
+                    "total_fare": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 85000
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideCancelled": {
+                "description": "Payload nhận được khi chuyến xe bị hủy (ride.cancelled)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.cancelled"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "description": "ID của user nhận event",
+                        "type": "string"
+                    },
+                    "customer_id": {
+                        "type": "string"
+                    },
+                    "driver_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_DriverStatusUpdated": {
+                "description": "Payload nhận được khi trạng thái tài xế thay đổi (driver.status.updated)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "driver.status.updated"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_LocationUpdated": {
+                "description": "Payload vị trí GPS (qua Redis Tracking / Socket.io trực tiếp) (tracking.location.updated)",
+                "properties": {
+                    "ride_id": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "user_id": {
+                        "description": "Dành cho redis pubsub",
+                        "type": "string"
+                    },
+                    "role": {
+                        "description": "Dành cho redis pubsub",
+                        "type": "integer"
+                    },
+                    "location": {
+                        "properties": {
+                            "lat": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 10.762622
+                            },
+                            "lng": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 106.660172
+                            },
+                            "tracked_at": {
+                                "type": "string",
+                                "format": "date-time"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "heading": {
+                        "description": "Góc quay của xe (chỉ có trong socket.io direct)",
+                        "type": "number",
+                        "example": 90
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_NotificationCreated": {
+                "description": "Payload khi có thông báo mới (notification.created)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "notification.created"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "notification": {
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string"
+                            },
+                            "title": {
+                                "type": "string"
+                            },
+                            "content": {
+                                "type": "string"
+                            },
+                            "icon": {
+                                "type": "string"
+                            },
+                            "category": {
+                                "type": "string",
+                                "example": "system"
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "format": "date-time"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "unread_count": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_DriverApplicationRejected": {
+                "description": "Payload nhận được khi hồ sơ tài xế bị từ chối (driver.application_rejected)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "driver.application_rejected"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Thiếu giấy tờ"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Rất tiếc! Hồ sơ tài xế của bạn đã bị từ chối."
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_DriverApplicationApproved": {
+                "description": "Payload nhận được khi hồ sơ tài xế được duyệt (driver.application_approved)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "driver.application_approved"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "application_id": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Chúc mừng! Hồ sơ tài xế của bạn đã được duyệt."
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_UserStatusUpdated": {
+                "description": "Payload nhận được khi trạng thái người dùng thay đổi (user.status_updated)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "user.status_updated"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "lock_reason": {
+                        "type": "string",
+                        "example": "Vi phạm chính sách",
+                        "nullable": true
+                    },
+                    "lock_expired_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_UserWarned": {
+                "description": "Payload nhận được khi người dùng bị cảnh cáo (user.warned)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "user.warned"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "violation_id": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string"
+                    },
+                    "violation_count": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideScheduledPushedToPool": {
+                "description": "Payload nhận được khi chuyến xe đặt trước được đẩy vào pool (ride.scheduled_pushed_to_pool)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.scheduled_pushed_to_pool"
+                    },
+                    "ride_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "user_id": {
+                        "type": "string",
+                        "example": "all_drivers"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideCancellationResponded": {
+                "description": "Payload nhận được khi yêu cầu hủy chuyến được phản hồi (ride.cancellation_responded)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.cancellation_responded"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "driver_id": {
+                        "type": "string"
+                    },
+                    "customer_id": {
+                        "type": "string"
+                    },
+                    "is_approved": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideCancellationRequested": {
+                "description": "Payload nhận được khi có yêu cầu hủy chuyến (ride.cancellation_requested)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.cancellation_requested"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "driver_id": {
+                        "type": "string"
+                    },
+                    "customer_id": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Đợi quá lâu"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideAssignedByAdmin": {
+                "description": "Payload nhận được khi chuyến xe được gán bởi admin (ride.assigned_by_admin)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.assigned_by_admin"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "customer_id": {
+                        "type": "string"
+                    },
+                    "driver_id": {
+                        "type": "string"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RidePickupProofCaptured": {
+                "description": "Payload nhận được khi tài xế chụp ảnh nhận hàng (ride.pickup_proof_captured)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.pickup_proof_captured"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "driver_id": {
+                        "type": "string"
+                    },
+                    "customer_id": {
+                        "type": "string"
+                    },
+                    "photo_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_skipped": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "skip_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "location": {
+                        "properties": {
+                            "lat": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 10.762622
+                            },
+                            "lng": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 106.660172
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_RideDeliveryProofCaptured": {
+                "description": "Payload nhận được khi tài xế chụp ảnh giao hàng (ride.delivery_proof_captured)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "ride.delivery_proof_captured"
+                    },
+                    "ride_id": {
+                        "type": "string"
+                    },
+                    "driver_id": {
+                        "type": "string"
+                    },
+                    "customer_id": {
+                        "type": "string"
+                    },
+                    "photo_url": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "is_skipped": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "skip_reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "location": {
+                        "properties": {
+                            "lat": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 10.762622
+                            },
+                            "lng": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 106.660172
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_FoodOrderUpdated": {
+                "description": "Payload nhận được khi trạng thái đơn hàng thay đổi (food_order.updated)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "food_order.updated"
+                    },
+                    "order_id": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "reason": {
+                        "type": "string",
+                        "nullable": true
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_FoodCancellationHandled": {
+                "description": "Payload nhận được khi yêu cầu hủy đơn hàng được xử lý (food_order.cancellation_handled)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "food_order.cancellation_handled"
+                    },
+                    "order_id": {
+                        "type": "string"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "type": "string",
+                        "example": "accepted"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_MerchantApproved": {
+                "description": "Payload nhận được khi hồ sơ nhà hàng được duyệt (merchant.approved)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "merchant.approved"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "merchant_id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "status_label": {
+                        "type": "string",
+                        "example": "Đã duyệt"
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Chúc mừng! Hồ sơ Merchant của bạn đã được duyệt."
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_NotificationUnreadCountUpdated": {
+                "description": "Payload nhận được khi số lượng thông báo chưa đọc thay đổi (notification.unread_count_updated)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "notification.unread_count_updated"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "unread_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_FoodOrderCreated": {
+                "description": "Payload nhận được khi có đơn hàng mới (food.order_created)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "food.order_created"
+                    },
+                    "order_id": {
+                        "type": "string"
+                    },
+                    "customer_id": {
+                        "type": "string"
+                    },
+                    "merchant_id": {
+                        "type": "string"
+                    },
+                    "total_price": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 120000
+                    },
+                    "message": {
+                        "type": "string",
+                        "example": "Bạn có đơn hàng mới!"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_FinanceRefundProcessed": {
+                "description": "Payload nhận được khi hoàn tiền được xử lý (finance.refund.processed)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "finance.refund.processed"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "refund_id": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "APPROVED"
+                    },
+                    "amount": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 85000
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
+            "Realtime_ComplaintHandled": {
+                "description": "Payload nhận được khi khiếu nại được xử lý (complaint.handled)",
+                "properties": {
+                    "event": {
+                        "type": "string",
+                        "example": "complaint.handled"
+                    },
+                    "user_id": {
+                        "type": "string"
+                    },
+                    "complaint_id": {
+                        "type": "string"
+                    },
+                    "action": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "occurred_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "type": "object"
+            },
             "ProfileResponse": {
                 "description": "Thông tin hồ sơ người dùng",
                 "required": [
@@ -12458,6 +13961,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Z - Realtime Events",
+            "description": "Z - Realtime Events"
+        },
         {
             "name": "Auth",
             "description": "Auth"
