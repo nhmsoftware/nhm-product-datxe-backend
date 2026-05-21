@@ -6,6 +6,8 @@ namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
 use App\Modules\User\Model\Enums\Gender;
+use App\Modules\User\Model\Enums\KycStatus;
+use App\Modules\User\Model\Enums\KycType;
 use App\Modules\User\Model\Enums\UserRole;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -230,5 +232,60 @@ class User extends Authenticatable
     public function isActive(): bool
     {
         return $this->is_active && $this->deleted_at === null;
+    }
+
+    /**
+     * Kiểm tra hồ sơ của tài xế hoặc nhà hàng đã được duyệt hay chưa.
+     */
+    public function isProfileApproved(): bool
+    {
+        if ($this->role === UserRole::Driver) {
+            return $this->driverProfile !== null;
+        }
+
+        if ($this->role === UserRole::Merchants) {
+            return $this->merchantProfile !== null
+                && $this->merchantProfile->status === KycStatus::Approved;
+        }
+
+        return true;
+    }
+
+    /**
+     * Lấy trạng thái phê duyệt hồ sơ của user.
+     * Trả về: 'approved', 'pending', 'rejected', 'not_submitted'
+     */
+    public function getProfileStatus(): string
+    {
+        if ($this->role === UserRole::Driver) {
+            if ($this->driverProfile !== null) {
+                return 'approved';
+            }
+            $latestApp = $this->userReviewApplications()
+                ->where('kyc_type', KycType::Driver->value)
+                ->latest()
+                ->first();
+            if ($latestApp) {
+                return match ($latestApp->kyc_status) {
+                    KycStatus::Pending  => 'pending',
+                    KycStatus::Approved => 'approved',
+                    KycStatus::Rejected => 'rejected',
+                };
+            }
+            return 'not_submitted';
+        }
+
+        if ($this->role === UserRole::Merchants) {
+            if ($this->merchantProfile === null) {
+                return 'not_submitted';
+            }
+            return match ($this->merchantProfile->status) {
+                KycStatus::Pending  => 'pending',
+                KycStatus::Approved => 'approved',
+                KycStatus::Rejected => 'rejected',
+            };
+        }
+
+        return 'approved';
     }
 }
