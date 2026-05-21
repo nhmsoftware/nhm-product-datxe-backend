@@ -28,8 +28,8 @@ class AuthResource extends JsonResource
             'is_phone_verified' => $this->is_phone_verified,
             'is_active'         => $this->is_active,
             'profile_approved'  => $this->isProfileApproved(),
-            'profile_status'    => $profileStatus?->value,
-            'profile_status_label' => $profileStatus?->label(),
+            'profile_status'    => $profileStatus->value,
+            'profile_status_label' => $profileStatus->label(),
             'created_at'        => $this->created_at,
         ];
     }

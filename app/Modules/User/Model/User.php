@@ -254,7 +254,7 @@ class User extends Authenticatable
     /**
      * Lấy trạng thái phê duyệt hồ sơ của user.
      */
-    public function getProfileStatus(): ?KycStatus
+    public function getProfileStatus(): KycStatus
     {
         if ($this->role === UserRole::Driver) {
             if ($this->driverProfile !== null) {
@@ -267,12 +267,12 @@ class User extends Authenticatable
             if ($latestApp) {
                 return $latestApp->kyc_status;
             }
-            return null;
+            return KycStatus::NotSubmitted;
         }
 
         if ($this->role === UserRole::Merchants) {
             if ($this->merchantProfile === null) {
-                return null;
+                return KycStatus::NotSubmitted;
             }
             return $this->merchantProfile->status;
         }
