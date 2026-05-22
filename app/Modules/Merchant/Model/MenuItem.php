@@ -66,10 +66,12 @@ class MenuItem extends Model
             return null;
         }
 
+        // Đã là URL đầy đủ (dữ liệu cũ trước khi chuyển sang private) — giữ nguyên
         if (filter_var($value, FILTER_VALIDATE_URL)) {
             return $value;
         }
 
-        return asset('storage/' . $value);
+        // Path mới: sinh URL qua API endpoint có xác thực
+        return \App\Core\Helpers\FileHelper::serveUrl($value);
     }
 }

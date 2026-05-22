@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Marketing\Services;
 
+use App\Core\Helpers\FileHelper;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Marketing\DTO\CreateBannerDTO;
@@ -49,16 +50,16 @@ class BannerService extends BaseService implements BannerServiceInterface
     public function create(CreateBannerDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {
-            $path = $dto->image->store('banners', 'public');
-            $imageUrl = Storage::disk('public')->url($path);
+            // Lưu vào private disk — không dùng public disk
+            $path = FileHelper::uploadToPrivate($dto->image, 'banners');
 
             $banner = $this->bannerRepository->create([
-                'title' => $dto->title,
+                'title'       => $dto->title,
                 'description' => $dto->description,
-                'image_url' => $imageUrl,
-                'action_url' => $dto->action_url,
-                'order' => $dto->order,
-                'status' => $dto->status,
+                'image_url'   => $path, // Lưu path, URL sinh động qua FileHelper::serveUrl()
+                'action_url'  => $dto->action_url,
+                'order'       => $dto->order,
+                'status'      => $dto->status,
             ]);
 
             return $banner->toArray();
@@ -79,10 +80,11 @@ class BannerService extends BaseService implements BannerServiceInterface
             if ($dto->status !== null) $data['status'] = $dto->status;
 
             if ($dto->image !== null) {
-                $path = $dto->image->store('banners', 'public');
-                $data['image_url'] = Storage::disk('public')->url($path);
-                
-                // Note: Can delete old image if needed, but not strictly required for this simple CRUD
+                // Xóa file cũ nếu có
+                if ($banner->image_url && !filter_var($banner->image_url, FILTER_VALIDATE_URL)) {
+                    FileHelper::deleteFromPrivate($banner->image_url);
+                }
+                $data['image_url'] = FileHelper::uploadToPrivate($dto->image, 'banners');
             }
 
             $this->bannerRepository->updateById($id, $data);

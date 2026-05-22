@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Merchant\Services;
 
+use App\Core\Helpers\FileHelper;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Merchant\DTO\AdminCreateMenuItemDTO;
@@ -46,10 +47,10 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                 $this->throw('Tên món ăn đã tồn tại trong danh mục này.', 422);
             }
 
-            // Handle Image Upload
+            // Handle Image Upload — lưu vào private disk
             $imagePath = null;
             if ($dto->image) {
-                $imagePath = $dto->image->store('merchant/menu-items', 'public');
+                $imagePath = FileHelper::uploadToPrivate($dto->image, 'merchant/menu-items');
             }
 
             $data = [
@@ -112,9 +113,9 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
             $imagePath = $item->image_path;
             if ($dto->image) {
                 if ($imagePath) {
-                    Storage::disk('public')->delete($imagePath);
+                    FileHelper::deleteFromPrivate($imagePath);
                 }
-                $imagePath = $dto->image->store('merchant/menu-items', 'public');
+                $imagePath = FileHelper::uploadToPrivate($dto->image, 'merchant/menu-items');
             }
 
             $data = [

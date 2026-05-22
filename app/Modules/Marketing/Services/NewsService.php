@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Modules\Marketing\Services;
 
+use App\Core\Helpers\FileHelper;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Marketing\DTO\CreateNewsDTO;
 use App\Modules\Marketing\DTO\UpdateNewsDTO;
 use App\Modules\Marketing\Interfaces\NewsRepositoryInterface;
 use App\Modules\Marketing\Interfaces\NewsServiceInterface;
-use Illuminate\Support\Facades\Storage;
 
 class NewsService extends BaseService implements NewsServiceInterface
 {
@@ -49,17 +49,16 @@ class NewsService extends BaseService implements NewsServiceInterface
     public function create(CreateNewsDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {
-            $path = $dto->image->store('news', 'public');
-            $imageUrl = Storage::disk('public')->url($path);
+            $path = FileHelper::uploadToPrivate($dto->image, 'news');
 
             $news = $this->newsRepository->create([
-                'title' => $dto->title,
+                'title'       => $dto->title,
                 'description' => $dto->description,
-                'content' => $dto->content,
-                'image_url' => $imageUrl,
-                'tag' => $dto->tag,
-                'order' => $dto->order,
-                'status' => $dto->status,
+                'content'     => $dto->content,
+                'image_url'   => $path,
+                'tag'         => $dto->tag,
+                'order'       => $dto->order,
+                'status'      => $dto->status,
             ]);
 
             return $news->toArray();
@@ -81,8 +80,10 @@ class NewsService extends BaseService implements NewsServiceInterface
             if ($dto->status !== null) $data['status'] = $dto->status;
 
             if ($dto->image !== null) {
-                $path = $dto->image->store('news', 'public');
-                $data['image_url'] = Storage::disk('public')->url($path);
+                if ($news->image_url && !filter_var($news->image_url, FILTER_VALIDATE_URL)) {
+                    FileHelper::deleteFromPrivate($news->image_url);
+                }
+                $data['image_url'] = FileHelper::uploadToPrivate($dto->image, 'news');
             }
 
             $this->newsRepository->updateById($id, $data);

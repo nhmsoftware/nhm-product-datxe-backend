@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\Services;
 
+use App\Core\Helpers\FileHelper;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Pricing\DTO\PricingRequestDTO;
@@ -1364,15 +1365,15 @@ final class RideService extends BaseService implements RideServiceInterface
                     422
                 );
 
-                // Upload ảnh vào disk storage theo đường dẫn: pickup-proofs/{ride_id}/{timestamp}.jpg
-                $path = $dto->photo->store(
-                    sprintf('pickup-proofs/%s', $dto->rideId),
-                    'public'
+                // Upload ảnh vào private disk: pickup-proofs/{ride_id}/
+                $path = FileHelper::uploadToPrivate(
+                    $dto->photo,
+                    sprintf('pickup-proofs/%s', $dto->rideId)
                 );
 
                 $this->validate($path !== false, 'Không thể tải ảnh lên. Vui lòng thử lại.', 500);
 
-                $photoUrl = Storage::disk('public')->url((string) $path);
+                $photoUrl = FileHelper::serveUrl($path);
             } else {
                 // A3/A6: Không có ảnh — bắt buộc phải có skip_reason và note
                 $this->validate(
@@ -1469,12 +1470,12 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // 4. Xử lý ảnh / A3
             if ($dto->photo instanceof UploadedFile) {
-                $path = $dto->photo->store(
-                    sprintf('delivery-proofs/%s', $dto->rideId),
-                    'public'
+                $path = FileHelper::uploadToPrivate(
+                    $dto->photo,
+                    sprintf('delivery-proofs/%s', $dto->rideId)
                 );
                 $this->validate($path !== false, 'Không thể tải ảnh lên.', 500);
-                $photoUrl = Storage::disk('public')->url((string) $path);
+                $photoUrl = FileHelper::serveUrl($path);
             } else {
                 $this->validate(!empty($dto->skipReason), 'Vui lòng chọn lý do không thể chụp ảnh giao hàng.', 422);
                 $this->validate(!empty($dto->note), 'Vui lòng nhập ghi chú khi bỏ qua chụp ảnh.', 422);

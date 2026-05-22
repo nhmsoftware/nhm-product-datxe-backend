@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Services;
 
+use App\Core\Helpers\FileHelper;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\User\DTO\Admin\ListDriversDTO;
@@ -169,22 +170,22 @@ final class AdminDriverService extends BaseService implements AdminDriverService
 
             // Fix avatar URL
             $avatar = $user->avatar;
-            if ($avatar && !str_starts_with($avatar, 'http')) {
-                $avatar = rtrim(config('app.url'), '/') . '/storage/' . ltrim($avatar, '/');
+            if ($avatar && !filter_var($avatar, FILTER_VALIDATE_URL)) {
+                $avatar = FileHelper::serveUrl($avatar);
             }
             if (!$avatar && isset($kycPhotos['portrait_url'])) {
                 $avatar = $kycPhotos['portrait_url'];
             }
 
-            // Fix license images
+            // Fix license images — dùng FileHelper thay vì ghép thủ công
             $licenseFront = $kycPhotos['driver_license_url'] ?? null;
             if (!$licenseFront && $driverProfile?->license_front_image) {
-                $licenseFront = rtrim(config('app.url'), '/') . '/storage/' . ltrim($driverProfile->license_front_image, '/');
+                $licenseFront = FileHelper::serveUrl($driverProfile->license_front_image);
             }
-            
+
             $licenseBack = $kycPhotos['cccd_front_url'] ?? null;
             if (!$licenseBack && $driverProfile?->license_back_image) {
-                $licenseBack = rtrim(config('app.url'), '/') . '/storage/' . ltrim($driverProfile->license_back_image, '/');
+                $licenseBack = FileHelper::serveUrl($driverProfile->license_back_image);
             }
 
             return [
