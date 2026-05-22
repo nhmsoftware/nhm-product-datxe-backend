@@ -90,3 +90,21 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 ENTRYPOINT ["docker-entrypoint.sh"]
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+
+
+// docker-entrypoint.sh
+
+#!/bin/sh
+set -e
+
+# Tạo storage symlink nếu chưa tồn tại (tránh lỗi 403 khi truy cập file storage)
+if [ ! -L /var/www/public/storage ]; then
+    echo "[entrypoint] Creating storage symlink..."
+    php artisan storage:link
+    echo "[entrypoint] Storage symlink created."
+else
+    echo "[entrypoint] Storage symlink already exists."
+fi
+
+# Chạy lệnh chính (php artisan serve)
+exec "$@"
