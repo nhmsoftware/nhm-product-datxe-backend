@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Model;
 
+use App\Core\Helpers\FileHelper;
 use App\Core\Traits\HasBigIntId;
 use App\Modules\User\Model\Enums\DriverStatus;
 use App\Modules\User\Model\Enums\VehicleType;
@@ -134,5 +135,22 @@ class DriverProfile extends Model
     public function driverGroup(): BelongsTo
     {
         return $this->belongsTo(DriverGroup::class, 'driver_group_id');
+    }
+
+    /**
+     * Accessor: chuyển path bằng lái mặt trước thành URL serve.
+     * Nhạy cảm — chỉ admin mới thấy (route /admin/driver/*).
+     */
+    public function getLicenseFrontImageAttribute(?string $value): ?string
+    {
+        return FileHelper::serveUrl($value);
+    }
+
+    /**
+     * Accessor: chuyển path bằng lái mặt sau thành URL serve.
+     */
+    public function getLicenseBackImageAttribute(?string $value): ?string
+    {
+        return FileHelper::serveUrl($value);
     }
 }

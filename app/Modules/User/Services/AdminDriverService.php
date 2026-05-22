@@ -178,14 +178,16 @@ final class AdminDriverService extends BaseService implements AdminDriverService
             }
 
             // Fix license images — dùng FileHelper thay vì ghép thủ công
+            // Lưu ý: DriverProfile đã có accessor getLicenseFrontImageAttribute
+            // nên cần lấy raw path từ DB để tránh double-convert
             $licenseFront = $kycPhotos['driver_license_url'] ?? null;
-            if (!$licenseFront && $driverProfile?->license_front_image) {
-                $licenseFront = FileHelper::serveUrl($driverProfile->license_front_image);
+            if (!$licenseFront && $driverProfile?->getRawOriginal('license_front_image')) {
+                $licenseFront = FileHelper::serveUrl($driverProfile->getRawOriginal('license_front_image'));
             }
 
             $licenseBack = $kycPhotos['cccd_front_url'] ?? null;
-            if (!$licenseBack && $driverProfile?->license_back_image) {
-                $licenseBack = FileHelper::serveUrl($driverProfile->license_back_image);
+            if (!$licenseBack && $driverProfile?->getRawOriginal('license_back_image')) {
+                $licenseBack = FileHelper::serveUrl($driverProfile->getRawOriginal('license_back_image'));
             }
 
             return [

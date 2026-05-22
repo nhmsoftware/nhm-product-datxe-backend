@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Merchant\Model;
 
+use App\Core\Helpers\FileHelper;
 use App\Core\Traits\HasBigIntId;
 use App\Modules\User\Model\MerchantProfile;
 use Illuminate\Database\Eloquent\Model;
@@ -43,5 +44,14 @@ class Combo extends Model
     public function items(): HasMany
     {
         return $this->hasMany(ComboItem::class, 'combo_id');
+    }
+
+    /**
+     * Accessor: chuyển path thành URL serve qua /api/v1/files/serve.
+     * Tương thích ngược với dữ liệu cũ (http URL được trả nguyên).
+     */
+    public function getImagePathAttribute(?string $value): ?string
+    {
+        return FileHelper::serveUrl($value);
     }
 }

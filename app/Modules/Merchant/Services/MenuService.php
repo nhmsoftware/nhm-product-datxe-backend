@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Merchant\Services;
 
+use App\Core\Helpers\FileHelper;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Merchant\DTO\CreateMenuItemDTO;
@@ -13,7 +14,6 @@ use App\Modules\Merchant\Interfaces\MenuRepositoryInterface;
 use App\Modules\Merchant\Interfaces\MenuItemRepositoryInterface;
 use App\Modules\Merchant\Interfaces\MenuServiceInterface;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Storage;
 
 final class MenuService extends BaseService implements MenuServiceInterface
 {
@@ -43,10 +43,10 @@ final class MenuService extends BaseService implements MenuServiceInterface
                 $this->throw('Tên món ăn đã tồn tại trong danh mục này.', 422);
             }
 
-            // 2. Handle Image Upload
+            // 2. Handle Image Upload — lưu vào private disk, URL qua FileHelper
             $imagePath = null;
             if ($dto->image) {
-                $imagePath = $dto->image->store('merchant/menu-items', 'public');
+                $imagePath = FileHelper::uploadToPrivate($dto->image, 'merchant/menu-items');
             }
 
             // 3. Prepare Data
@@ -92,14 +92,16 @@ final class MenuService extends BaseService implements MenuServiceInterface
                 $this->throw('Tên món ăn đã tồn tại trong danh mục này.', 422);
             }
 
-            // 4. Handle Image Update
-            $imagePath = $item->image_path;
+            // 4. Handle Image Update — dùng FileHelper để đồng bộ với private disk
+            // Lưu ý: image_path qua accessor đã được chuyển thành URL đầy đủ,
+            // cần lấy raw value từ DB để xóa file
+            $imagePath = $item->getRawOriginal('image_path');
             if ($dto->image) {
-                // Delete old image if exists
-                if ($imagePath) {
-                    Storage::disk('public')->delete($imagePath);
+                // Xóa file cũ nếu có và không phải URL cũ (http/https)
+                if ($imagePath && !filter_var($imagePath, FILTER_VALIDATE_URL)) {
+                    FileHelper::deleteFromPrivate($imagePath);
                 }
-                $imagePath = $dto->image->store('merchant/menu-items', 'public');
+                $imagePath = FileHelper::uploadToPrivate($dto->image, 'merchant/menu-items');
             }
 
             // 5. Prepare Data
