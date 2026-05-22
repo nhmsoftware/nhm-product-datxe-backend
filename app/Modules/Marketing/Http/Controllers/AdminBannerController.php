@@ -38,6 +38,10 @@ class AdminBannerController extends BaseController
         $perPage = (int) $request->query('per_page', 20);
         $result = $this->bannerService->getList($perPage);
 
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
         return $this->sendSuccess($result->getData(), 'Lấy danh sách Banner thành công');
     }
 

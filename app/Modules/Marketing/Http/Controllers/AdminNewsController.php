@@ -38,6 +38,10 @@ class AdminNewsController extends BaseController
         $perPage = (int) $request->query('per_page', 20);
         $result = $this->newsService->getList($perPage);
 
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
         return $this->sendSuccess($result->getData(), 'Lấy danh sách Tin tức thành công');
     }
 
