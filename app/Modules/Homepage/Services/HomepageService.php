@@ -10,14 +10,23 @@ use App\Core\Services\ServiceReturn;
 use App\Modules\Homepage\Interfaces\HomepageServiceInterface;
 use App\Modules\User\Interfaces\SavedAddressRepositoryInterface;
 use App\Modules\User\Model\User;
+use App\Modules\Marketing\Interfaces\BannerRepositoryInterface;
+use App\Modules\Marketing\Interfaces\NewsRepositoryInterface;
 
 class HomepageService extends BaseService implements HomepageServiceInterface
 {
     protected SavedAddressRepositoryInterface $savedAddressRepo;
+    protected BannerRepositoryInterface $bannerRepo;
+    protected NewsRepositoryInterface $newsRepo;
 
-    public function __construct(SavedAddressRepositoryInterface $savedAddressRepo)
-    {
+    public function __construct(
+        SavedAddressRepositoryInterface $savedAddressRepo,
+        BannerRepositoryInterface $bannerRepo,
+        NewsRepositoryInterface $newsRepo
+    ) {
         $this->savedAddressRepo = $savedAddressRepo;
+        $this->bannerRepo = $bannerRepo;
+        $this->newsRepo = $newsRepo;
     }
 
     /**
@@ -110,37 +119,35 @@ class HomepageService extends BaseService implements HomepageServiceInterface
     }
 
     /**
-     * Lấy danh sách banner khuyến mãi (Mockup).
+     * Lấy danh sách banner khuyến mãi.
      */
     private function getBanners(): array
     {
-        return [
-            ['id' => 1, 'image' => 'banner_1_url', 'action_url' => '/promo/1'],
-            ['id' => 2, 'image' => 'banner_2_url', 'action_url' => '/promo/2'],
-        ];
+        $banners = $this->bannerRepo->getActiveBanners();
+        return $banners->map(function ($banner) {
+            return [
+                'id' => $banner->id,
+                'image' => $banner->image_url,
+                'action_url' => $banner->action_url,
+            ];
+        })->toArray();
     }
 
     /**
-     * Lấy danh sách tin tức & khuyến mãi (Mockup).
+     * Lấy danh sách tin tức & khuyến mãi.
      */
     private function getNewsPromotions(): array
     {
-        return [
-            [
-                'id' => 1,
-                'title' => 'Giảm 50% cho Đồ ăn',
-                'description' => 'Áp dụng cho đơn hàng từ 100k',
-                'image' => 'news_1_url',
-                'tag' => 'Khuyến mãi'
-            ],
-            [
-                'id' => 2,
-                'title' => 'Mã giảm giá đặc biệt',
-                'description' => 'Nhập mã NHM50 giảm ngay 50k',
-                'image' => 'news_2_url',
-                'tag' => 'Tin mới'
-            ],
-        ];
+        $news = $this->newsRepo->getActiveNews();
+        return $news->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'title' => $item->title,
+                'description' => $item->description,
+                'image' => $item->image_url,
+                'tag' => $item->tag,
+            ];
+        })->toArray();
     }
 
     /**

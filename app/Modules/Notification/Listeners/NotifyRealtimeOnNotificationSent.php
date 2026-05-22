@@ -16,10 +16,10 @@ final class NotifyRealtimeOnNotificationSent implements ShouldQueue
         try {
             $user = $event->notifiable;
             $notification = $event->notification;
-            
+
             // Standard Database Notification data
-            $data = $notification->toDatabase($user);
-            
+            $data = $notification->toArray($user);
+
             $payload = [
                 'event' => 'notification.created',
                 'user_id' => (string) $user->id,
@@ -38,7 +38,7 @@ final class NotifyRealtimeOnNotificationSent implements ShouldQueue
 
             $channel = env('REDIS_COMMUNICATION_CHANNEL', 'ride.communication.events');
             Redis::publish($channel, json_encode($payload));
-            
+
             Log::info('Published notification.created to Redis', ['user_id' => $user->id]);
         } catch (\Exception $e) {
             Log::error('NotifyRealtimeOnNotificationSent failed', ['error' => $e->getMessage()]);
