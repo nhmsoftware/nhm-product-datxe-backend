@@ -27,6 +27,11 @@ final class MenuService extends BaseService implements MenuServiceInterface
         return $this->menuRepository->getFullMenu($dto->merchantProfileId);
     }
 
+    public function getMerchantCategories(\App\Modules\Merchant\DTO\GetMenuCategoriesDTO $dto): Collection
+    {
+        return $this->menuRepository->getCategories($dto->merchantProfileId);
+    }
+
     public function createMenuItem(CreateMenuItemDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {

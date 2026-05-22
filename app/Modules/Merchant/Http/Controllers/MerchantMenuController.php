@@ -77,7 +77,7 @@ final class MerchantMenuController extends BaseController
     public function index(\App\Modules\Merchant\Http\Requests\GetMenuRequest $request): JsonResponse
     {
         $dto = GetMenuDTO::fromRequest($request);
-        
+
         if (!$dto->merchantProfileId) {
             return $this->sendError('Tài khoản không phải là Merchant hoặc chưa có cửa hàng', 403);
         }
@@ -85,6 +85,45 @@ final class MerchantMenuController extends BaseController
         $menu = $this->menuService->getMerchantMenu($dto);
 
         return $this->sendSuccess($menu);
+    }
+
+    #[OA\Get(
+        path: '/api/v1/merchant/menu/categories',
+        summary: 'Lấy danh sách danh mục của cửa hàng (chỉ categories)',
+        tags: ['Merchant'],
+        security: [['sanctum' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Thành công',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'status', type: 'string', example: 'success'),
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(
+                            properties: [
+                                new OA\Property(property: 'id', type: 'string'),
+                                new OA\Property(property: 'name', type: 'string'),
+                                new OA\Property(property: 'order', type: 'integer'),
+                                new OA\Property(property: 'is_active', type: 'boolean'),
+                            ]
+                        ))
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'Chưa đăng nhập'),
+        ]
+    )]
+    public function categories(\App\Modules\Merchant\Http\Requests\GetMenuCategoriesRequest $request): JsonResponse
+    {
+        $dto = \App\Modules\Merchant\DTO\GetMenuCategoriesDTO::fromRequest($request);
+
+        if (!$dto->merchantProfileId) {
+            return $this->sendError('Tài khoản không phải là Merchant hoặc chưa có cửa hàng', 403);
+        }
+
+        $categories = $this->menuService->getMerchantCategories($dto);
+
+        return $this->sendSuccess($categories);
     }
 
     #[OA\Post(
@@ -340,7 +379,7 @@ final class MerchantMenuController extends BaseController
     public function updateStatus(Request $request, string $id): JsonResponse
     {
         $request->validate(['is_available' => 'required|boolean']);
-        
+
         $merchantProfileId = (string) $request->user()->merchantProfile->id;
         $isAvailable = (bool) $request->input('is_available');
 

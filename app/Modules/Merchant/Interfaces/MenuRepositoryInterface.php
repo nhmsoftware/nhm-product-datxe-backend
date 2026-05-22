@@ -34,4 +34,12 @@ interface MenuRepositoryInterface extends BaseRepositoryInterface
      * @return MenuCategory
      */
     public function findOrCreateCategory(string $merchantProfileId, string $name): MenuCategory;
+
+    /**
+     * Get categories list for a merchant (without items).
+     *
+     * @param string $merchantProfileId
+     * @return Collection
+     */
+    public function getCategories(string $merchantProfileId): Collection;
 }

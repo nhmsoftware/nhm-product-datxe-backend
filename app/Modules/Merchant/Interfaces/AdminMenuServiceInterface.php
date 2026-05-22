@@ -18,6 +18,14 @@ interface AdminMenuServiceInterface
     public function getMerchantMenu(string $merchantProfileId): Collection;
 
     /**
+     * Get categories only for a merchant (admin use).
+     *
+     * @param string $merchantProfileId
+     * @return Collection
+     */
+    public function getMerchantCategories(string $merchantProfileId): Collection;
+
+    /**
      * Create a menu item as an admin, logging the action.
      */
     public function createMenuItem(AdminCreateMenuItemDTO $dto): ServiceReturn;

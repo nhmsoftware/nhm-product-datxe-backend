@@ -21,6 +21,7 @@ Route::prefix('v1/merchant')->group(function () {
 
         // Menu Management (UC-57, UC-58, UC-59)
         Route::get('/menu', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'index'])->name('merchant.menu.index');
+        Route::get('/menu/categories', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'categories'])->name('merchant.menu.categories');
         Route::post('/menu/items', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'store'])->name('merchant.menu.items.store');
         Route::post('/menu/items/{id}', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'update'])->name('merchant.menu.items.update');
         Route::patch('/menu/items/{id}/status', [\App\Modules\Merchant\Http\Controllers\MerchantMenuController::class, 'updateStatus'])->name('merchant.menu.items.update_status');
@@ -67,10 +68,10 @@ Route::prefix('v1/customer/merchants')
     ->group(function () {
         Route::get('/', [\App\Modules\Merchant\Http\Controllers\CustomerMerchantController::class, 'index'])
             ->name('customer.merchants.index');
-            
+
         Route::get('/{id}', [\App\Modules\Merchant\Http\Controllers\CustomerMerchantController::class, 'show'])
             ->name('customer.merchants.show');
-            
+
         Route::get('/{id}/menu', [\App\Modules\Merchant\Http\Controllers\CustomerMerchantController::class, 'menu'])
             ->name('customer.merchants.menu');
     });
@@ -102,6 +103,8 @@ Route::prefix('v1/admin/merchant')
         // Admin Merchant Menu Operations
         Route::get('/{merchantId}/menu', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'index'])
             ->name('admin.merchant.menu.index');
+        Route::get('/{merchantId}/menu/categories', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'categories'])
+            ->name('admin.merchant.menu.categories');
 
         Route::post('/{merchantId}/menu/items', [\App\Modules\Merchant\Http\Controllers\AdminMerchantMenuController::class, 'store'])
             ->name('admin.merchant.menu.items.store');

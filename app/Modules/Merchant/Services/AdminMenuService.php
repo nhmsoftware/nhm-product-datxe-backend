@@ -32,6 +32,11 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
         return $this->menuRepository->getFullMenu($merchantProfileId);
     }
 
+    public function getMerchantCategories(string $merchantProfileId): Collection
+    {
+        return $this->menuRepository->getCategories($merchantProfileId);
+    }
+
     public function createMenuItem(AdminCreateMenuItemDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {

@@ -47,4 +47,13 @@ namespace App\Modules\Merchant\Repositories;
              'name'                => $name,
          ]);
      }
+
+    public function getCategories(string $merchantProfileId): Collection
+    {
+        return $this->getQuery()
+            ->where('merchant_profile_id', $merchantProfileId)
+            ->select(['id', 'merchant_profile_id', 'name', 'order', 'is_active'])
+            ->orderBy('order')
+            ->get();
+    }
  }

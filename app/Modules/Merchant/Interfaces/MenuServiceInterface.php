@@ -18,6 +18,14 @@ interface MenuServiceInterface
     public function getMerchantMenu(GetMenuDTO $dto): Collection;
 
     /**
+     * Get list of categories for the authenticated merchant.
+     *
+     * @param \App\Modules\Merchant\DTO\GetMenuCategoriesDTO $dto
+     * @return Collection
+     */
+    public function getMerchantCategories(\App\Modules\Merchant\DTO\GetMenuCategoriesDTO $dto): Collection;
+
+    /**
      * Create a new menu item.
      *
      * @param \App\Modules\Merchant\DTO\CreateMenuItemDTO $dto

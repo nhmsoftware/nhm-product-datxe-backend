@@ -57,6 +57,32 @@ final class AdminMerchantMenuController extends BaseController
         return $this->sendSuccess($menu);
     }
 
+    #[OA\Get(
+        path: '/api/v1/admin/merchant/{merchantId}/menu/categories',
+        summary: 'Lấy danh sách danh mục của cửa hàng (chỉ categories) - Admin',
+        tags: ['Admin Merchant Menu'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(
+                name: 'merchantId',
+                in: 'path',
+                required: true,
+                description: 'ID của Merchant Profile',
+                schema: new OA\Schema(type: 'string')
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+            new OA\Response(response: 401, description: 'Chưa đăng nhập'),
+            new OA\Response(response: 403, description: 'Không có quyền'),
+        ]
+    )]
+    public function categories(string $merchantId): JsonResponse
+    {
+        $categories = $this->adminMenuService->getMerchantCategories($merchantId);
+        return $this->sendSuccess($categories);
+    }
+
     #[OA\Post(
         path: '/api/v1/admin/merchant/{merchantId}/menu/items',
         summary: 'Admin thêm món ăn mới',
@@ -232,7 +258,7 @@ final class AdminMerchantMenuController extends BaseController
     public function updateStatus(Request $request, string $merchantId, string $itemId): JsonResponse
     {
         $request->validate(['is_available' => 'required|boolean']);
-        
+
         $actorId = (string) $request->user()->id;
         $isAvailable = (bool) $request->input('is_available');
 
@@ -265,7 +291,7 @@ final class AdminMerchantMenuController extends BaseController
     public function logs(string $merchantId): JsonResponse
     {
         $result = $this->adminMenuService->getEditLogs($merchantId);
-        
+
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
         }
@@ -285,7 +311,7 @@ final class AdminMerchantMenuController extends BaseController
     public function exportTemplate(): Response
     {
         $xlsxContent = $this->adminMenuService->exportTemplate();
-        
+
         return response($xlsxContent, 200, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="menu_template.xlsx"',
