@@ -4396,6 +4396,473 @@
                 ]
             }
         },
+        "/api/v1/admin/marketing/banners": {
+            "get": {
+                "tags": [
+                    "Admin Marketing Banners"
+                ],
+                "summary": "Lấy danh sách Banner",
+                "operationId": "05c9766a172c05e4d64fa9d6e416fded",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketing Banners"
+                ],
+                "summary": "Tạo mới Banner",
+                "operationId": "6511f300a6612f50c6003c8c2f21b776",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "image"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "description": "Hình ảnh Banner (Max 5MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "title": {
+                                        "description": "Tiêu đề Banner",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Mô tả Banner",
+                                        "type": "string"
+                                    },
+                                    "action_url": {
+                                        "description": "Đường dẫn khi click",
+                                        "type": "string"
+                                    },
+                                    "order": {
+                                        "description": "Thứ tự hiển thị",
+                                        "type": "integer",
+                                        "default": 0
+                                    },
+                                    "status": {
+                                        "description": "Trạng thái (1: Active, 2: Inactive)",
+                                        "type": "integer",
+                                        "default": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tạo thành công"
+                    },
+                    "422": {
+                        "description": "Lỗi validate dữ liệu"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/marketing/banners/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Marketing Banners"
+                ],
+                "summary": "Lấy chi tiết Banner",
+                "operationId": "5c046e9cefa7fa2e4f94b7ed4c152cce",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy Banner"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketing Banners"
+                ],
+                "summary": "Cập nhật Banner (Hỗ trợ multipart/form-data via POST)",
+                "operationId": "1823844f0bf21697699b7174db08f2a1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "_method": {
+                                        "description": "Gửi _method=PUT khi form-data",
+                                        "type": "string",
+                                        "example": "PUT"
+                                    },
+                                    "image": {
+                                        "description": "Hình ảnh Banner mới",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "title": {
+                                        "description": "Tiêu đề Banner",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Mô tả Banner",
+                                        "type": "string"
+                                    },
+                                    "action_url": {
+                                        "description": "Đường dẫn khi click",
+                                        "type": "string"
+                                    },
+                                    "order": {
+                                        "description": "Thứ tự hiển thị",
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "description": "Trạng thái (1: Active, 2: Inactive)",
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy Banner"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Marketing Banners"
+                ],
+                "summary": "Xóa Banner",
+                "operationId": "fa3b076a760c7f56228a2d41c35c1fe2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy Banner"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/marketing/news": {
+            "get": {
+                "tags": [
+                    "Admin Marketing News"
+                ],
+                "summary": "Lấy danh sách Tin tức",
+                "operationId": "24b581dfd3552bf0f87268995c47833e",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketing News"
+                ],
+                "summary": "Tạo mới Tin tức",
+                "operationId": "3bd14c79a9cffa26054fb53e238cac0a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "image",
+                                    "title"
+                                ],
+                                "properties": {
+                                    "image": {
+                                        "description": "Hình ảnh Tin tức (Max 5MB)",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "title": {
+                                        "description": "Tiêu đề Tin tức",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Mô tả ngắn",
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "description": "Nội dung chi tiết (HTML/Text)",
+                                        "type": "string"
+                                    },
+                                    "tag": {
+                                        "description": "Thẻ phân loại (vd: Khuyến mãi, Tin mới)",
+                                        "type": "string"
+                                    },
+                                    "order": {
+                                        "description": "Thứ tự hiển thị",
+                                        "type": "integer",
+                                        "default": 0
+                                    },
+                                    "status": {
+                                        "description": "Trạng thái (1: Active, 2: Inactive)",
+                                        "type": "integer",
+                                        "default": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tạo thành công"
+                    },
+                    "422": {
+                        "description": "Lỗi validate dữ liệu"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/marketing/news/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Marketing News"
+                ],
+                "summary": "Lấy chi tiết Tin tức",
+                "operationId": "dedc469a8a6574a44ef25a4757256231",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy Tin tức"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin Marketing News"
+                ],
+                "summary": "Cập nhật Tin tức (Hỗ trợ multipart/form-data via POST)",
+                "operationId": "f7a3babb623794e4e1751226a473dd3a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "properties": {
+                                    "_method": {
+                                        "description": "Gửi _method=PUT khi form-data",
+                                        "type": "string",
+                                        "example": "PUT"
+                                    },
+                                    "image": {
+                                        "description": "Hình ảnh Tin tức mới",
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "title": {
+                                        "description": "Tiêu đề Tin tức",
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "description": "Mô tả ngắn",
+                                        "type": "string"
+                                    },
+                                    "content": {
+                                        "description": "Nội dung chi tiết (HTML/Text)",
+                                        "type": "string"
+                                    },
+                                    "tag": {
+                                        "description": "Thẻ phân loại",
+                                        "type": "string"
+                                    },
+                                    "order": {
+                                        "description": "Thứ tự hiển thị",
+                                        "type": "integer"
+                                    },
+                                    "status": {
+                                        "description": "Trạng thái (1: Active, 2: Inactive)",
+                                        "type": "integer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy Tin tức"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Admin Marketing News"
+                ],
+                "summary": "Xóa Tin tức",
+                "operationId": "2df070e3e4eec253730162b34210a26d",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Xóa thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy Tin tức"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/merchant": {
             "get": {
                 "tags": [
@@ -4838,6 +5305,42 @@
                                 }
                             }
                         }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không có quyền"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/merchant/{merchantId}/menu/categories": {
+            "get": {
+                "tags": [
+                    "Admin Merchant Menu"
+                ],
+                "summary": "Lấy danh sách danh mục của cửa hàng (chỉ categories) - Admin",
+                "operationId": "faa99c51458e58fc619424d606d339ba",
+                "parameters": [
+                    {
+                        "name": "merchantId",
+                        "in": "path",
+                        "description": "ID của Merchant Profile",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
                     },
                     "401": {
                         "description": "Chưa đăng nhập"
@@ -5979,6 +6482,61 @@
                         "description": "Chưa đăng nhập"
                     }
                 }
+            }
+        },
+        "/api/v1/merchant/menu/categories": {
+            "get": {
+                "tags": [
+                    "Merchant"
+                ],
+                "summary": "Lấy danh sách danh mục của cửa hàng (chỉ categories)",
+                "operationId": "1ea298fae7da31870ded6398dcbf3ea4",
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string"
+                                                    },
+                                                    "name": {
+                                                        "type": "string"
+                                                    },
+                                                    "order": {
+                                                        "type": "integer"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
             }
         },
         "/api/v1/merchant/menu/items": {
@@ -14020,6 +14578,14 @@
         {
             "name": "Homepage",
             "description": "Homepage"
+        },
+        {
+            "name": "Admin Marketing Banners",
+            "description": "Admin Marketing Banners"
+        },
+        {
+            "name": "Admin Marketing News",
+            "description": "Admin Marketing News"
         },
         {
             "name": "Admin|Merchant",
