@@ -392,15 +392,10 @@ final class AdminMenuService extends BaseService implements AdminMenuServiceInte
                 $seenInFile[$fileKey] = $idx;
 
                 // Check duplicate in database
-                $category = \App\Modules\Merchant\Model\MenuCategory::where('merchant_profile_id', $merchantProfileId)
-                    ->where('name', $categoryName)
-                    ->first();
+                $category = $this->menuRepository->findCategoryByName($merchantProfileId, $categoryName);
 
                 if ($category) {
-                    $existingItem = \App\Modules\Merchant\Model\MenuItem::where('merchant_profile_id', $merchantProfileId)
-                        ->where('category_id', $category->id)
-                        ->where('name', $name)
-                        ->first();
+                    $existingItem = $this->menuItemRepository->findItemByName($merchantProfileId, (string)$category->id, $name);
 
                     if ($existingItem) {
                         $this->throw("Món ăn '{$name}' đã tồn tại trong danh mục '{$categoryName}' của cửa hàng.", 400);

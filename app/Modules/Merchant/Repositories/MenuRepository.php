@@ -56,4 +56,15 @@ namespace App\Modules\Merchant\Repositories;
             ->orderBy('order')
             ->get();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function findCategoryByName(string $merchantProfileId, string $name): ?MenuCategory
+    {
+        return $this->getQuery()
+            ->where('merchant_profile_id', $merchantProfileId)
+            ->where('name', $name)
+            ->first();
+    }
  }

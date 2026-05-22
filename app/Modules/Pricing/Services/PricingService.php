@@ -15,6 +15,7 @@ use App\Modules\Pricing\DTO\SurgeRuleDTO;
 use App\Modules\Pricing\Events\FreeModeToggled;
 use App\Modules\Pricing\Events\PricingConfigUpdated;
 use App\Modules\Pricing\Interfaces\PricingConfigRepositoryInterface;
+use App\Modules\Pricing\Interfaces\PricingConfigHistoryRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingSurgeRuleRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
@@ -26,6 +27,7 @@ final class PricingService extends BaseService implements PricingServiceInterfac
 {
     public function __construct(
         private readonly PricingConfigRepositoryInterface $pricingConfigRepository,
+        private readonly PricingConfigHistoryRepositoryInterface $pricingConfigHistoryRepository,
         private readonly PricingGlobalSettingRepositoryInterface $pricingGlobalSettingRepository,
         private readonly PricingSurgeRuleRepositoryInterface $pricingSurgeRuleRepository,
         private readonly CommissionRuleServiceInterface $commissionRuleService,
@@ -326,9 +328,7 @@ final class PricingService extends BaseService implements PricingServiceInterfac
     public function getPricingHistory(int $vehicleType): ServiceReturn
     {
         return $this->execute(function () use ($vehicleType) {
-            return \App\Modules\Pricing\Model\PricingConfigHistory::where('vehicle_type', $vehicleType)
-                ->orderByDesc('created_at')
-                ->get();
+            return $this->pricingConfigHistoryRepository->getByVehicleType($vehicleType);
         });
     }
 

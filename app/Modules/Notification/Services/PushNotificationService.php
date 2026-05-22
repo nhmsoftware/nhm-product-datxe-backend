@@ -7,10 +7,14 @@ namespace App\Modules\Notification\Services;
 use App\Core\Services\BaseService;
 use App\Modules\Notification\Interfaces\PushNotificationServiceInterface;
 use App\Modules\User\Model\User;
+use App\Modules\User\Interfaces\UserRepositoryInterface;
 use Illuminate\Support\Facades\Log;
 
 final class PushNotificationService extends BaseService implements PushNotificationServiceInterface
 {
+    public function __construct(
+        private readonly UserRepositoryInterface $userRepository
+    ) {}
     /**
      * Gửi push notification đến một user cụ thể (UC-127)
      */
@@ -39,7 +43,7 @@ final class PushNotificationService extends BaseService implements PushNotificat
     {
         $count = 0;
         foreach ($userIds as $userId) {
-            $user = User::find($userId);
+            $user = $this->userRepository->findById($userId);
             if ($user && $this->sendToUser($user, $title, $content, $data)) {
                 $count++;
             }
@@ -53,8 +57,8 @@ final class PushNotificationService extends BaseService implements PushNotificat
     public function broadcast(string $title, string $content, array $data = []): bool
     {
         // Trong thực tế sẽ dùng Topic Messaging của FCM hoặc OneSignal
-        // Ở đây giả lập bằng cách chunk toàn bộ user
-        User::where('is_active', true)->chunk(100, function ($users) use ($title, $content, $data) {
+        // Ở đây giả lập bằng cách chunk toàn bộ user qua repository
+        $this->userRepository->chunkActiveUsers(100, function ($users) use ($title, $content, $data) {
             foreach ($users as $user) {
                 $this->sendToUser($user, $title, $content, $data);
             }

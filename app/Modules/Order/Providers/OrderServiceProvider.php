@@ -23,6 +23,7 @@ final class OrderServiceProvider extends BaseModuleServiceProvider
 
         $this->app->singleton(OrderRepositoryInterface::class, OrderRepository::class);
         $this->app->singleton(OrderServiceInterface::class, OrderService::class);
+        $this->app->singleton(\App\Modules\Order\Interfaces\AdminOrderServiceInterface::class, \App\Modules\Order\Services\AdminOrderService::class);
     }
 
     protected array $listen = [

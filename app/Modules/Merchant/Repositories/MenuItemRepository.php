@@ -102,4 +102,16 @@ final class MenuItemRepository extends BaseRepository implements MenuItemReposit
             'total_reviews' => $totalReviews,
         ]);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function findItemByName(string $merchantProfileId, string $categoryId, string $name): ?MenuItem
+    {
+        return $this->getQuery()
+            ->where('merchant_profile_id', $merchantProfileId)
+            ->where('category_id', $categoryId)
+            ->where('name', $name)
+            ->first();
+    }
 }

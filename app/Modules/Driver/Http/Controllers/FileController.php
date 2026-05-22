@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Driver\Http\Controllers;
 
 use App\Core\Controller\BaseController;
+use App\Modules\Driver\Interfaces\FileRecordRepositoryInterface;
 use App\Modules\Driver\Model\FileRecord;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Storage;
@@ -17,6 +18,9 @@ use OpenApi\Attributes as OA;
  */
 final class FileController extends BaseController
 {
+    public function __construct(
+        private readonly FileRecordRepositoryInterface $fileRecordRepository
+    ) {}
     /**
      * Trả về nội dung file ảnh/pdf từ storage.
      */
@@ -35,7 +39,7 @@ final class FileController extends BaseController
     public function show(string $id): BinaryFileResponse
     {
         /** @var FileRecord|null $file */
-        $file = FileRecord::find($id);
+        $file = $this->fileRecordRepository->findById($id);
 
         if (!$file) {
             abort(404, 'Không tìm thấy tài liệu.');

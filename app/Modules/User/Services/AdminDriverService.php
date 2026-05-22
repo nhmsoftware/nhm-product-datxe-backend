@@ -20,6 +20,7 @@ use App\Modules\User\Model\Enums\KycType;
 use App\Modules\User\Interfaces\AdminDriverServiceInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\Driver\Interfaces\DriverRegistrationServiceInterface;
+use App\Modules\Driver\Interfaces\FileRecordRepositoryInterface;
 use App\Modules\Driver\DTO\ApproveRegistrationDTO;
 
 final class AdminDriverService extends BaseService implements AdminDriverServiceInterface
@@ -27,6 +28,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
     public function __construct(
         private readonly UserRepositoryInterface $userRepository,
         private readonly DriverRegistrationServiceInterface $driverRegistrationService,
+        private readonly FileRecordRepositoryInterface $fileRecordRepository,
     ) {}
 
     /**
@@ -156,9 +158,8 @@ final class AdminDriverService extends BaseService implements AdminDriverService
             $kycPhotos = [];
             if ($latestKyc) {
                 // Load files liên quan
-                $files = \App\Modules\Driver\Model\FileRecord::where('fileable_id', $latestKyc->id)
-                    ->where('fileable_type', '>=', 2) // Các loại ảnh driver kyc
-                    ->get();
+                $files = $this->fileRecordRepository->findByApplicationId((int) $latestKyc->id)
+                    ->filter(fn($file) => $file->fileable_type->value >= 2);
                 
                 foreach ($files as $file) {
                     $key = $file->fileable_type->getRegisterKey();

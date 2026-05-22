@@ -9,9 +9,11 @@ use App\Modules\Pricing\Interfaces\PricingConfigRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Pricing\Interfaces\PricingSurgeRuleRepositoryInterface;
+use App\Modules\Pricing\Interfaces\PricingConfigHistoryRepositoryInterface;
 use App\Modules\Pricing\Repositories\PricingConfigRepository;
 use App\Modules\Pricing\Repositories\PricingGlobalSettingRepository;
 use App\Modules\Pricing\Repositories\PricingSurgeRuleRepository;
+use App\Modules\Pricing\Repositories\PricingConfigHistoryRepository;
 use App\Modules\Pricing\Repositories\ScheduledPricingRepository;
 use App\Modules\Pricing\Services\PricingService;
 use App\Modules\Pricing\Services\ScheduledPricingService;
@@ -34,6 +36,7 @@ final class PricingServiceProvider extends BaseModuleServiceProvider
     {
         $this->app->singleton(PricingServiceInterface::class, PricingService::class);
         $this->app->singleton(PricingConfigRepositoryInterface::class, PricingConfigRepository::class);
+        $this->app->singleton(PricingConfigHistoryRepositoryInterface::class, PricingConfigHistoryRepository::class);
         $this->app->singleton(PricingGlobalSettingRepositoryInterface::class, PricingGlobalSettingRepository::class);
         $this->app->singleton(PricingSurgeRuleRepositoryInterface::class, PricingSurgeRuleRepository::class);
         $this->app->singleton(ScheduledPricingRepositoryInterface::class, ScheduledPricingRepository::class);

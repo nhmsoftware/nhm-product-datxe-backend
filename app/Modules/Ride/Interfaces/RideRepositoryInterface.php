@@ -377,4 +377,12 @@ interface RideRepositoryInterface
      * Lấy danh sách Top tài xế theo doanh thu (UC-Dashboard).
      */
     public function getTopDriversAnalytics(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end, int $limit = 10, ?int $driverGroupType = null): array;
+
+    /**
+     * Lấy danh sách các cuốc xe Delivery loại trừ các ID chỉ định (Admin)
+     *
+     * @param array $excludeRideIds
+     * @return \Illuminate\Support\Collection
+     */
+    public function listDeliveryRidesForAdmin(array $excludeRideIds): \Illuminate\Support\Collection;
 }

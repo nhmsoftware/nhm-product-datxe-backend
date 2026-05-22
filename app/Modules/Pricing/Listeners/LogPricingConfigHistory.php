@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Pricing\Listeners;
 
 use App\Modules\Pricing\Events\PricingConfigUpdated;
-use App\Modules\Pricing\Model\PricingConfigHistory;
+use App\Modules\Pricing\Interfaces\PricingConfigHistoryRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 
 /**
@@ -13,12 +13,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
  */
 final class LogPricingConfigHistory implements ShouldQueue
 {
+    public function __construct(
+        private readonly PricingConfigHistoryRepositoryInterface $pricingConfigHistoryRepository
+    ) {}
+
     /**
      * Handle the event.
      */
     public function handle(PricingConfigUpdated $event): void
     {
-        PricingConfigHistory::create([
+        $this->pricingConfigHistoryRepository->create([
             'vehicle_type' => $event->vehicleType,
             'old_config'   => $event->oldConfig,
             'new_config'   => $event->newConfig,

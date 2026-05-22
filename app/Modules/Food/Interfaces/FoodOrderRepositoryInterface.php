@@ -79,4 +79,11 @@ interface FoodOrderRepositoryInterface extends BaseRepositoryInterface
      * @return bool
      */
     public function resetCancellationRequest(string $orderId): bool;
+
+    /**
+     * Lấy danh sách tất cả FoodOrder kèm thông tin khách hàng, cửa hàng và chuyến xe (Admin)
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function listAllFoodOrdersForAdmin(): \Illuminate\Support\Collection;
 }

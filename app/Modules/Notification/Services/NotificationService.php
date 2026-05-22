@@ -7,6 +7,7 @@ namespace App\Modules\Notification\Services;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Notification\DTO\GetNotificationsDTO;
+use App\Modules\Notification\DTO\UpdateDeviceTokenDTO;
 use App\Modules\Notification\Events\NotificationReadStatusUpdated;
 use App\Modules\Notification\Interfaces\NotificationRepositoryInterface;
 use App\Modules\Notification\Interfaces\NotificationServiceInterface;
@@ -65,7 +66,7 @@ final class NotificationService extends BaseService implements NotificationServi
     {
         return $this->execute(function () use ($userId) {
             $this->notificationRepository->markAllAsRead($userId);
-            
+
             $unreadCount = 0;
             event(new NotificationReadStatusUpdated($userId, $unreadCount));
 
@@ -86,10 +87,10 @@ final class NotificationService extends BaseService implements NotificationServi
         }, useTransaction: true);
     }
 
-    public function updateDeviceToken(\App\Modules\Notification\DTO\UpdateDeviceTokenDTO $dto): ServiceReturn
+    public function updateDeviceToken(UpdateDeviceTokenDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {
-            $user = \App\Modules\User\Model\User::find($dto->userId);
+            $user = $this->userRepository->findById($dto->userId);
             $this->validate($user !== null, 'Không tìm thấy người dùng.', 404);
 
             $this->userRepository->upsertDevice($user, [

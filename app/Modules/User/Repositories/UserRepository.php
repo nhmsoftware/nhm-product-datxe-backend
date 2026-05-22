@@ -327,4 +327,12 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
         }
         return $query->exists();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function chunkActiveUsers(int $chunkSize, callable $callback): void
+    {
+        $this->model->where('is_active', true)->chunk($chunkSize, $callback);
+    }
 }

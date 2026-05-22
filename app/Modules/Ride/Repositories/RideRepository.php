@@ -475,7 +475,10 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     {
         $query = $this->getQuery()
             ->with(['customer', 'driver'])
-            ->where('ride_type', '!=', RideType::CHAUFFEUR->value);
+            ->whereNotIn('ride_type', [
+                RideType::CHAUFFEUR->value,
+                RideType::DELIVERY->value
+            ]);
 
         if (!empty($filters['status'])) {
             $statusMap = [
@@ -876,6 +879,22 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         ->limit($limit)
         ->get()
         ->toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function listDeliveryRidesForAdmin(array $excludeRideIds): \Illuminate\Support\Collection
+    {
+        $query = $this->getQuery()
+            ->where('ride_type', \App\Modules\Ride\Model\Enums\RideType::DELIVERY->value)
+            ->with(['customer.customerProfile', 'driver.driverProfile']);
+
+        if (!empty($excludeRideIds)) {
+            $query->whereNotIn('id', $excludeRideIds);
+        }
+
+        return $query->latest()->get();
     }
 }
 

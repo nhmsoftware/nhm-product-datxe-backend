@@ -84,4 +84,9 @@ interface MenuItemRepositoryInterface extends BaseRepositoryInterface
      * @return bool
      */
     public function updateRatingStats(string $itemId, float $rating, int $totalReviews): bool;
+
+    /**
+     * Find item by category and name.
+     */
+    public function findItemByName(string $merchantProfileId, string $categoryId, string $name): ?MenuItem;
 }

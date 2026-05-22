@@ -152,4 +152,15 @@ final class FoodOrderRepository extends BaseRepository implements FoodOrderRepos
                 'updated_at' => now(),
             ]);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function listAllFoodOrdersForAdmin(): \Illuminate\Support\Collection
+    {
+        return $this->getQuery()
+            ->with(['customer.customerProfile', 'merchant', 'ride.driver.driverProfile'])
+            ->latest()
+            ->get();
+    }
 }

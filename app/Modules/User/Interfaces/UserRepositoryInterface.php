@@ -143,4 +143,9 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
      * Kiểm tra CCCD đã được sử dụng chưa (không tính bản thân).
      */
     public function isCitizenIdExists(string $citizenId, ?string $excludeUserId = null): bool;
+
+    /**
+     * Chunk active users.
+     */
+    public function chunkActiveUsers(int $chunkSize, callable $callback): void;
 }
