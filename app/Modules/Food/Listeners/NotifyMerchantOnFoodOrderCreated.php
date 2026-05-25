@@ -22,40 +22,42 @@ final class NotifyMerchantOnFoodOrderCreated implements ShouldQueue
     }
 
     /**
-     * Handle the event.
+     * Xử lý sự kiện khi có đơn hàng mới được tạo.
      */
     public function handle(FoodOrderCreated $event): void
     {
         try {
-            $merchant = $this->merchantRepository->findById($event->merchantId);
-            if (!$merchant) {
-                Log::warning('NotifyMerchantOnFoodOrderCreated skipped: Merchant not found', [
+            // Lấy thông tin cửa hàng để tìm ra user_id (ID của chủ cửa hàng)
+            $merchantProfile = $this->merchantRepository->findById($event->merchantId);
+            if (!$merchantProfile) {
+                Log::warning('Bỏ qua gửi thông báo socket: Không tìm thấy hồ sơ cửa hàng', [
                     'merchant_id' => $event->merchantId,
                 ]);
                 return;
             }
 
+            // Node.js server yêu cầu key 'user_id' để có thể phát event vào đúng room của chủ cửa hàng (user:{user_id})
             $payload = [
                 'event' => 'food.order_created',
                 'order_id' => $event->orderId,
                 'customer_id' => $event->customerId,
                 'merchant_id' => $event->merchantId,
-                'user_id' => (string) $merchant->user_id, // Get the actual user_id of the merchant owner
+                'user_id' => (string) $merchantProfile->user_id, // Lấy đúng ID của chủ cửa hàng
                 'total_price' => $event->totalPrice,
-                'message' => 'Bạn có đơn hàng mới!',
+                'message' => 'Bạn có đơn đặt món mới, vui lòng kiểm tra!',
                 'occurred_at' => now()->toIso8601String(),
             ];
 
             $channel = env('REDIS_COMMUNICATION_CHANNEL', 'ride.communication.events');
             Redis::publish($channel, json_encode($payload));
 
-            Log::info('Realtime notification sent: food.order_created', [
+            Log::info('Đã gửi thông báo socket đơn hàng mới cho nhà hàng', [
                 'order_id' => $event->orderId,
                 'merchant_id' => $event->merchantId,
-                'user_id' => $merchant->user_id,
+                'user_id' => $merchantProfile->user_id,
             ]);
         } catch (\Exception $e) {
-            Log::error('NotifyMerchantOnFoodOrderCreated failed', [
+            Log::error('Lỗi khi gửi thông báo socket cho nhà hàng', [
                 'error' => $e->getMessage(),
                 'order_id' => $event->orderId,
             ]);
