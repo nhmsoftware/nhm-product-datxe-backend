@@ -41,6 +41,9 @@ final class FoodOrder extends Model
 
     protected $casts = [
         'id' => 'string',
+        'customer_id' => 'string',
+        'merchant_id' => 'string',
+        'ride_id' => 'string',
         'status' => FoodOrderStatus::class,
         'subtotal_price' => 'float',
         'delivery_fee' => 'float',
