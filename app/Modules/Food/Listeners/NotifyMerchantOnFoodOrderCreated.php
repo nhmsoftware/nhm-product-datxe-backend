@@ -25,6 +25,7 @@ final class NotifyMerchantOnFoodOrderCreated implements ShouldQueue
                 'order_id' => $event->orderId,
                 'customer_id' => $event->customerId,
                 'merchant_id' => $event->merchantId,
+                'user_id' => $event->merchantId, // Node.js realtime server requires 'user_id' to route the event
                 'total_price' => $event->totalPrice,
                 'message' => 'Bạn có đơn hàng mới!',
                 'occurred_at' => now()->toIso8601String(),
