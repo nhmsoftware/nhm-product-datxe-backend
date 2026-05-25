@@ -35,6 +35,26 @@ final class NotifyRealtimeOnRideAssignedByAdmin implements ShouldQueue
                 'driver_id' => $event->driverId
             ]);
 
+            // Notify merchant if this ride belongs to a FoodOrder
+            $foodOrder = \App\Modules\Food\Model\FoodOrder::with('merchant')->where('ride_id', $event->rideId)->first();
+            if ($foodOrder && $foodOrder->merchant) {
+                $merchantPayload = [
+                    'event'       => 'food_order.driver_assigned',
+                    'order_id'    => (string) $foodOrder->id,
+                    'ride_id'     => (string) $event->rideId,
+                    'user_id'     => (string) $foodOrder->merchant->user_id, // Gửi cho chủ nhà hàng
+                    'driver_id'   => (string) $event->driverId,
+                    'message'     => 'Quản trị viên đã điều phối tài xế lấy đơn hàng này.',
+                    'occurred_at' => now()->toIso8601String(),
+                ];
+                Redis::publish($channel, json_encode($merchantPayload));
+
+                Log::info('Realtime notification sent to merchant: food_order.driver_assigned', [
+                    'order_id' => $foodOrder->id,
+                    'merchant_user_id' => $foodOrder->merchant->user_id
+                ]);
+            }
+
         } catch (\Exception $e) {
             Log::error('NotifyRealtimeOnRideAssignedByAdmin failed', [
                 'error'   => $e->getMessage(),

@@ -45,7 +45,6 @@ final class NotifyRealtimeOnRideAccepted implements ShouldQueue
             ];
 
             // Publish to Redis channel expected by nhm-realtime service
-            // Publish to Redis channel expected by nhm-realtime service
             $channel = env('REDIS_COMMUNICATION_CHANNEL', 'ride.communication.events');
             Redis::publish($channel, json_encode($payload));
 
@@ -53,6 +52,26 @@ final class NotifyRealtimeOnRideAccepted implements ShouldQueue
                 'ride_id'   => $event->rideId,
                 'driver_id' => $event->driverId
             ]);
+
+            // Notify merchant if this ride belongs to a FoodOrder
+            $foodOrder = \App\Modules\Food\Model\FoodOrder::with('merchant')->where('ride_id', $event->rideId)->first();
+            if ($foodOrder && $foodOrder->merchant) {
+                $merchantPayload = [
+                    'event'       => 'food_order.driver_assigned',
+                    'order_id'    => (string) $foodOrder->id,
+                    'ride_id'     => (string) $event->rideId,
+                    'user_id'     => (string) $foodOrder->merchant->user_id, // Gửi cho chủ nhà hàng
+                    'driver_id'   => (string) $event->driverId,
+                    'message'     => 'Tài xế đã nhận đơn và đang trên đường tới.',
+                    'occurred_at' => now()->toIso8601String(),
+                ];
+                Redis::publish($channel, json_encode($merchantPayload));
+
+                Log::info('Realtime notification sent to merchant: food_order.driver_assigned', [
+                    'order_id' => $foodOrder->id,
+                    'merchant_user_id' => $foodOrder->merchant->user_id
+                ]);
+            }
 
         } catch (\Exception $e) {
             Log::error('NotifyRealtimeOnRideAccepted failed', [
