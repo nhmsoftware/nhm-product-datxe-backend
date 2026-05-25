@@ -7,6 +7,7 @@ namespace App\Modules\Order\Services;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Food\Model\Enums\FoodOrderStatus;
+use App\Modules\Food\Model\FoodOrder;
 use App\Modules\Order\DTO\GetMerchantOrdersFilterDTO;
 use App\Modules\Order\DTO\GetOrderHistoryFilterDTO;
 use App\Modules\Order\Interfaces\OrderRepositoryInterface;
@@ -86,11 +87,12 @@ final class OrderService extends BaseService implements OrderServiceInterface
     }
 
     /**
-     * UC-72: Reject Food Order
+     * UC-72: Reject Food Order (Nhà hàng từ chối đơn PENDING — thường chưa có tài xế)
+     * Nếu đã có ride được gán, cũng cancel ride và notify tài xế (không tính lỗi cho tài xế).
      */
     public function rejectFoodOrder(string $orderId, string $merchantId, ?string $reason = null): ServiceReturn
     {
-        return $this->updateStatus($orderId, $merchantId, FoodOrderStatus::PENDING, FoodOrderStatus::CANCELLED, $reason);
+        return $this->cancelOrderByMerchant($orderId, $merchantId, FoodOrderStatus::PENDING, $reason);
     }
 
     public function markPreparing(string $orderId, string $merchantId): ServiceReturn
@@ -107,22 +109,79 @@ final class OrderService extends BaseService implements OrderServiceInterface
     }
 
     /**
-     * UC-75: Cancel Food Order
+     * UC-75: Cancel Food Order (Nhà hàng hủy đơn đang xử lý).
+     * Nếu đã có tài xế nhận đơn, hệ thống sẽ:
+     *   1. Cancel ride tương ứng.
+     *   2. Notify tài xế qua realtime.
+     *   3. KHÔNG tính lỗi hủy cho tài xế vì đây là lỗi phía nhà hàng.
      */
     public function cancelFoodOrder(string $orderId, string $merchantId, ?string $reason = null): ServiceReturn
     {
-        return $this->execute(function () use ($orderId, $merchantId, $reason) {
-            $order = $this->foodOrderRepository->getDetail($orderId);
+        return $this->cancelOrderByMerchant($orderId, $merchantId, null, $reason);
+    }
+
+    /**
+     * Hàm nội bộ: Hủy đơn hàng bởi nhà hàng.
+     * Xử lý đồng thời: hủy ride (nếu có) và notify tài xế (không tính lỗi cho tài xế).
+     *
+     * @param string $orderId
+     * @param string $merchantId
+     * @param FoodOrderStatus|null $requiredStatus Nếu null, bỏ qua kiểm tra trạng thái (chỉ check isTerminal).
+     * @param string|null $reason
+     */
+    private function cancelOrderByMerchant(string $orderId, string $merchantId, ?FoodOrderStatus $requiredStatus, ?string $reason): ServiceReturn
+    {
+        return $this->execute(function () use ($orderId, $merchantId, $requiredStatus, $reason) {
+            // 1. Load đơn hàng kèm thông tin ride để lấy driver_id
+            $order = FoodOrder::with('ride')
+                ->where('id', $orderId)
+                ->first();
+
             $this->validate($order !== null, 'Không tìm thấy đơn hàng.', 404);
-            $this->validate($order['merchant_id'] === $merchantId, 'Bạn không có quyền xử lý đơn hàng này.', 403);
+            $this->validate((string)$order->merchant_id === $merchantId, 'Bạn không có quyền xử lý đơn hàng này.', 403);
 
-            $currentStatus = FoodOrderStatus::tryFrom((int)$order['status']);
-            $this->validate($currentStatus && !$currentStatus->isTerminal(), 'Không thể hủy đơn hàng đã hoàn thành hoặc đã hủy.', 400);
+            $currentStatus = $order->status; // Enum vì cast
+            if ($requiredStatus !== null) {
+                $this->validate(
+                    $currentStatus === $requiredStatus,
+                    'Trạng thái đơn hàng không hợp lệ để thực hiện hành động này.',
+                    400
+                );
+            } else {
+                $this->validate(
+                    $currentStatus && !$currentStatus->isTerminal(),
+                    'Không thể hủy đơn hàng đã hoàn thành hoặc đã hủy.',
+                    400
+                );
+            }
 
+            // 2. Lấy driver_id từ ride (nếu có)
+            $driverId = null;
+            $ride = $order->ride;
+            if ($ride && $ride->driver_id) {
+                $driverId = (string) $ride->driver_id;
+
+                // Cancel ride — KHÔNG tăng cancel_count của tài xế
+                // Dùng updateStatus trực tiếp thay vì cancelByDriver để tránh logic phạt tài xế
+                $this->rideRepository->updateStatus(
+                    (string) $ride->id,
+                    RideStatus::CANCELLED,
+                    $reason ?? 'Nhà hàng hủy đơn'
+                );
+            }
+
+            // 3. Cập nhật trạng thái đơn hàng
             $this->foodOrderRepository->updateFoodOrderStatus($orderId, FoodOrderStatus::CANCELLED->value);
 
-            // Dispatch Event
-            event(new \App\Modules\Order\Events\FoodOrderStatusUpdated($orderId, (string)$order['customer_id'], FoodOrderStatus::CANCELLED->value, (int)$order['status'], $reason));
+            // 4. Dispatch event — truyền driverId để listener gửi notify cho tài xế
+            event(new \App\Modules\Order\Events\FoodOrderStatusUpdated(
+                $orderId,
+                (string) $order->customer_id,
+                FoodOrderStatus::CANCELLED->value,
+                $currentStatus->value,
+                $reason,
+                $driverId  // Tài xế cần được notify (nullable)
+            ));
 
             return true;
         }, useTransaction: true);

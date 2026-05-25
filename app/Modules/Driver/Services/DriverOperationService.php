@@ -480,11 +480,14 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 422
             );
 
-            // 2. Thực hiện hủy đơn và lưu lý do
-            $this->rideRepository->cancelByDriver($ride->id, (string) $dto->reason->value);
+            // 2. Giải phóng tài xế khỏi chuyến xe (chuyển trạng thái Ride về PENDING và driver_id về null để tìm tài xế khác)
+            $this->rideRepository->releaseDriverFromRide($ride->id, $dto->reason->getLabel());
 
             // Ghi nhận vào danh sách từ chối để không hiển thị lại cho tài xế này (Anti-re-acceptance)
             $this->rideRepository->rejectByDriver($ride->id, $driverProfile->user_id);
+
+            // Kích hoạt tìm lại tài xế lân cận
+            app(\App\Modules\Operation\Interfaces\DispatchServiceInterface::class)->initiateDispatch((string) $ride->id);
 
             // 3. Tính toán hình phạt (Penalty System)
             $penaltyMinutes = 0;
@@ -502,9 +505,8 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 }
             }
 
-            // Kiểm tra số lần hủy trong ngày
-            $cancellationsToday = $this->rideRepository->countCancellationsToday($driverProfile->user_id);
-            $newCancelCount = $cancellationsToday + 1;
+            // Kiểm tra số lần hủy trong ngày (lấy từ cancel_count_today trên profile tài xế và cộng thêm 1)
+            $newCancelCount = ($driverProfile->cancel_count_today ?? 0) + 1;
             $this->driverProfileRepository->updateCancelCount($driverProfile->id, $newCancelCount);
 
             if ($newCancelCount >= 3) {
