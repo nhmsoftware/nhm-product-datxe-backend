@@ -7,6 +7,7 @@ namespace App\Modules\Order\Services;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Food\Model\Enums\FoodOrderStatus;
+use App\Modules\Order\DTO\GetMerchantOrdersFilterDTO;
 use App\Modules\Order\DTO\GetOrderHistoryFilterDTO;
 use App\Modules\Order\Interfaces\OrderRepositoryInterface;
 use App\Modules\Order\Interfaces\OrderServiceInterface;
@@ -52,11 +53,11 @@ final class OrderService extends BaseService implements OrderServiceInterface
             } elseif ($serviceType === 'food') {
                 $order = $this->foodOrderRepository->getDetail($orderId, $merchantId);
             }
-            
+
             $this->validate($order !== null, 'Không tìm thấy đơn hàng hoặc bạn không có quyền truy cập.', 404);
 
             $order['status_label'] = $this->getStatusLabel($serviceType, (int) $order['status']);
-            
+
             return $order;
         });
     }
@@ -114,12 +115,12 @@ final class OrderService extends BaseService implements OrderServiceInterface
             $order = $this->foodOrderRepository->getDetail($orderId);
             $this->validate($order !== null, 'Không tìm thấy đơn hàng.', 404);
             $this->validate($order['merchant_id'] === $merchantId, 'Bạn không có quyền xử lý đơn hàng này.', 403);
-            
+
             $currentStatus = FoodOrderStatus::tryFrom((int)$order['status']);
             $this->validate($currentStatus && !$currentStatus->isTerminal(), 'Không thể hủy đơn hàng đã hoàn thành hoặc đã hủy.', 400);
 
             $this->foodOrderRepository->updateFoodOrderStatus($orderId, FoodOrderStatus::CANCELLED->value);
-            
+
             // Dispatch Event
             event(new \App\Modules\Order\Events\FoodOrderStatusUpdated($orderId, (string)$order['customer_id'], FoodOrderStatus::CANCELLED->value, (int)$order['status'], $reason));
 
@@ -164,13 +165,13 @@ final class OrderService extends BaseService implements OrderServiceInterface
     {
         return $this->execute(function () use ($orderId, $merchantId, $requiredStatus, $nextStatus, $reason) {
             $order = $this->foodOrderRepository->getDetail($orderId);
-            
+
             $this->validate($order !== null, 'Không tìm thấy đơn hàng.', 404);
             $this->validate($order['merchant_id'] === $merchantId, 'Bạn không có quyền xử lý đơn hàng này.', 403);
-            
+
             $currentStatus = (int)$order['status'];
-            $allowed = is_array($requiredStatus) 
-                ? array_map(fn($s) => $s->value, $requiredStatus) 
+            $allowed = is_array($requiredStatus)
+                ? array_map(fn($s) => $s->value, $requiredStatus)
                 : [$requiredStatus->value];
 
             $this->validate(in_array($currentStatus, $allowed, true), "Trạng thái đơn hàng không hợp lệ để thực hiện hành động này.", 400);
@@ -183,4 +184,65 @@ final class OrderService extends BaseService implements OrderServiceInterface
             return true;
         }, useTransaction: true);
     }
+
+    /**
+     * UC-69.1: View all Order (Merchant)
+     */
+    public function getMerchantOrders(GetMerchantOrdersFilterDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $statuses = null;
+            if ($dto->statusGroup) {
+                $statuses = match ($dto->statusGroup) {
+                    'new' => [FoodOrderStatus::PENDING->value],
+                    'preparing' => [
+                        FoodOrderStatus::CONFIRMED->value,
+                        FoodOrderStatus::PREPARING->value,
+                        FoodOrderStatus::READY->value,
+                    ],
+                    'processed' => [
+                        FoodOrderStatus::PICKED_UP->value,
+                        FoodOrderStatus::DELIVERED->value,
+                        FoodOrderStatus::CANCELLED->value,
+                    ],
+                    default => $this->throw('Nhóm trạng thái không hợp lệ.', 400),
+                };
+            }
+
+            // Get paginated orders
+            $paginator = $this->foodOrderRepository->getMerchantOrders(
+                $dto->merchantId,
+                $statuses,
+                $dto->perPage,
+                $dto->page
+            );
+
+            // Fetch overview stats (for today)
+            $totalOrdersToday = $this->foodOrderRepository->countOrdersByMerchant($dto->merchantId, 'today');
+            $revenueToday = $this->foodOrderRepository->sumRevenueByMerchant($dto->merchantId, 'today');
+            $completedOrdersToday = $this->foodOrderRepository->countCompletedOrdersByMerchant($dto->merchantId, 'today');
+
+            $performance = $totalOrdersToday > 0
+                ? round(($completedOrdersToday / $totalOrdersToday) * 100, 2)
+                : 100.0;
+
+            // Transform collection to array with status labels and customer name
+            $paginator->getCollection()->transform(function ($item) {
+                $itemArray = $item->toArray();
+                $itemArray['status_label'] = $item->status ? $item->status->getLabel() : 'Không xác định';
+                $itemArray['customer_name'] = $item->customer?->customerProfile?->full_name ?? 'Khách hàng';
+                return $itemArray;
+            });
+
+            return [
+                'overview' => [
+                    'total_orders_today' => $totalOrdersToday,
+                    'revenue_today' => $revenueToday,
+                    'performance_today' => $performance,
+                ],
+                'orders' => $paginator,
+            ];
+        });
+    }
 }
+

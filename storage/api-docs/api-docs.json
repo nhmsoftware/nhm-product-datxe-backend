@@ -6938,6 +6938,121 @@
                 ]
             }
         },
+        "/api/v1/merchant/orders": {
+            "get": {
+                "tags": [
+                    "Merchant Order"
+                ],
+                "summary": "Xem danh sách đơn hàng của cửa hàng (UC-69.1)",
+                "operationId": "1a7bbc6ac7f67cb3a05122330a1f8ad4",
+                "parameters": [
+                    {
+                        "name": "status_group",
+                        "in": "query",
+                        "description": "Nhóm trạng thái đơn hàng muốn xem (new: Đơn mới, preparing: Đang chuẩn bị, processed: Đã xử lý)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "new",
+                                "preparing",
+                                "processed"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số lượng đơn hàng trên mỗi trang (mặc định 20)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 20
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Số trang cần lấy (mặc định 1)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "overview": {
+                                            "properties": {
+                                                "total_orders_today": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "revenue_today": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 500000
+                                                },
+                                                "performance_today": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 90
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "orders": {
+                                            "description": "Thông tin phân trang và danh sách đơn hàng",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "data": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Lỗi tham số đầu vào"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không có quyền truy cập"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy cửa hàng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/merchant/orders/{id}/accept": {
             "post": {
                 "tags": [

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Order\Interfaces;
 
 use App\Core\Services\ServiceReturn;
+use App\Modules\Order\DTO\GetMerchantOrdersFilterDTO;
 use App\Modules\Order\DTO\GetOrderHistoryFilterDTO;
 
 interface OrderServiceInterface
@@ -48,4 +49,10 @@ interface OrderServiceInterface
      * UC-74: Handle Cancellation Request
      */
     public function handleCancellation(string $orderId, string $merchantId, string $action): ServiceReturn;
+
+    /**
+     * UC-69.1: View all Order (Merchant)
+     */
+    public function getMerchantOrders(GetMerchantOrdersFilterDTO $dto): ServiceReturn;
 }
+

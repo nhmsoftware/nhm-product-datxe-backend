@@ -163,4 +163,21 @@ final class FoodOrderRepository extends BaseRepository implements FoodOrderRepos
             ->latest()
             ->get();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getMerchantOrders(string $merchantId, ?array $statuses = null, int $perPage = 20, int $page = 1): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $query = $this->getQuery()
+            ->with(['items.options', 'customer.customerProfile'])
+            ->where('merchant_id', $merchantId);
+
+        if ($statuses !== null) {
+            $query->whereIn('status', $statuses);
+        }
+
+        return $query->latest()->paginate($perPage, ['*'], 'page', $page);
+    }
 }
+

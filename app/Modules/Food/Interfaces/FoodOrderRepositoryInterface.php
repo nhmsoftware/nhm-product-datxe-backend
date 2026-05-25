@@ -86,4 +86,16 @@ interface FoodOrderRepositoryInterface extends BaseRepositoryInterface
      * @return \Illuminate\Support\Collection
      */
     public function listAllFoodOrdersForAdmin(): \Illuminate\Support\Collection;
+
+    /**
+     * Get paginated food orders for a merchant with optional status filtering.
+     *
+     * @param string $merchantId
+     * @param array|null $statuses
+     * @param int $perPage
+     * @param int $page
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     */
+    public function getMerchantOrders(string $merchantId, ?array $statuses = null, int $perPage = 20, int $page = 1): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
 }
+
