@@ -30,6 +30,8 @@ use App\Modules\Finance\Interfaces\VoucherServiceInterface;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\DriverStatus;
+use App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface;
+use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -52,6 +54,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
         private readonly RideServiceInterface $rideService,
         private readonly LocationRepositoryInterface $locationRepository,
         private readonly VoucherServiceInterface $voucherService,
+        private readonly RideTrackingRealtimeInterface $rideTrackingRealtime,
     ) {}
 
     /**
@@ -238,7 +241,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 $this->voucherService->markAsUsed((string) $ride->customer_id, $ride->voucher_code);
             }
 
-            // [UC-41] Driver KHÔNG tự động chuyển sang ACTIVE. 
+            // [UC-41] Driver KHÔNG tự động chuyển sang ACTIVE.
             // Họ sẽ xem màn hình Trip Summary và nhấn "Confirm & Ready" sau.
 
             event(new RideCompleted($dto->rideId, $dto->userId, $finalFare));
@@ -321,7 +324,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                     $timeString = $until->setTimezone('Asia/Ho_Chi_Minh')->format('H:i d/m/Y');
                     $this->throw("Tài khoản của bạn đang bị khóa đến {$timeString} (còn khoảng {$minutesLeft} phút).", 403);
                 }
-                
+
                 // Nếu đã hết thời gian cooldown, tự động đưa về trạng thái ACTIVE
                 $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
             }
@@ -520,6 +523,17 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 // Nếu không bị phạt, đưa tài xế trở lại trạng thái sẵn sàng (ACTIVE)
                 $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
             }
+
+            // Phát hành bản cập nhật theo dõi để cho Khách hàng biết rằng tài xế đã hủy và tìm kiếm mới đã bắt đầu
+            $this->rideTrackingRealtime->publish([
+                'event' => 'tracking.driver.cancelled',
+                'ride_id' => (string) $ride->id,
+                'customer_id' => (string) $ride->customer_id,
+                'tracking_status' => RideTrackingStatus::DRIVER_CANCELLED->value,
+                'tracking_status_label' => RideTrackingStatus::DRIVER_CANCELLED->getLabel(),
+                'occurred_at' => now()->toIso8601String(),
+                'message' => 'Tài xế đã hủy chuyến. Hệ thống đang tìm tài xế khác.',
+            ]);
 
             // 4. Thông báo cho các bên liên quan qua Realtime
             event(new RideCancelled($ride->id, $driverProfile->id, $dto->reason->getLabel()));

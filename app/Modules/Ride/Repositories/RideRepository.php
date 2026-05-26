@@ -896,5 +896,21 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
         return $query->latest()->get();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getDriverRides(string $driverId, ?array $statuses = null, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        $query = $this->getQuery()
+            ->with(['customer'])
+            ->whereRaw('driver_id = ?::bigint', [(string) $driverId]);
+
+        if ($statuses !== null) {
+            $query->whereIn('status', $statuses);
+        }
+
+        return $query->orderByDesc('created_at')->paginate($perPage);
+    }
 }
 

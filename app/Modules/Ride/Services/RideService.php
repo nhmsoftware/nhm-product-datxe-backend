@@ -7,6 +7,7 @@ namespace App\Modules\Ride\Services;
 use App\Core\Helpers\FileHelper;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
+use App\Modules\Driver\Events\RideCancelled;
 use App\Modules\Pricing\DTO\PricingRequestDTO;
 use App\Modules\Pricing\DTO\PricingResultDTO;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
@@ -18,6 +19,7 @@ use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CreateIntercityRideDTO;
 use App\Modules\Ride\DTO\CreateAirportRideDTO;
 use App\Modules\Ride\DTO\FilterScheduledRideDTO;
+use App\Modules\Ride\DTO\GetDriverRidesFilterDTO;
 use App\Modules\Ride\DTO\DriverCancelRideDTO;
 use App\Modules\Ride\DTO\EstimateRideOptionsDTO;
 use App\Modules\Ride\DTO\MarkDriverArrivedDTO;
@@ -1145,23 +1147,56 @@ final class RideService extends BaseService implements RideServiceInterface
                 }
             }
 
-            // 4. Thực hiện hủy
-            $success = $this->rideRepository->cancel($dto->rideId, $dto->reason, 0);
-            $this->validate($success, 'Không thể hủy chuyến. Vui lòng thử lại.', 400);
+            // 4. Thực hiện giải phóng tài xế khỏi chuyến xe đặt trước
+            $success = $this->rideRepository->releaseDriverFromRide($ride->id, $dto->reason);
+            $this->validate($success, 'Không thể giải phóng tài xế. Vui lòng thử lại.', 400);
 
-            // 5. Phát sự kiện để Notify Realtime cho Khách hàng
-            event(new RideCanceled(
+            // Ghi nhận vào danh sách từ chối để không hiển thị lại cho tài xế này (Anti-re-acceptance)
+            $this->rideRepository->rejectByDriver($ride->id, $dto->driverId);
+
+            // Tính toán hình phạt (Penalty System)
+            $driverProfile = $this->driverProfileRepository->findByUserId($dto->driverId);
+            $this->validate($driverProfile !== null, 'Hồ sơ tài xế không tồn tại.', 404);
+
+            $penaltyMinutes = 0;
+            // Kiểm tra số lần hủy trong ngày (lấy từ cancel_count_today trên profile tài xế và cộng thêm 1)
+            $newCancelCount = ($driverProfile->cancel_count_today ?? 0) + 1;
+            $this->driverProfileRepository->updateCancelCount($driverProfile->id, $newCancelCount);
+
+            if ($newCancelCount >= 3) {
+                $penaltyMinutes = 60; // Hình phạt 60 phút do hủy quá nhiều
+            }
+
+            // Áp dụng trạng thái nghỉ (Cooldown) nếu có phạt
+            if ($penaltyMinutes > 0) {
+                $this->driverProfileRepository->setCooldown($driverProfile->id, $penaltyMinutes);
+            } else {
+                // Đưa tài xế trở lại trạng thái sẵn sàng (ACTIVE)
+                $this->driverProfileRepository->updateStatus($driverProfile->id, DriverStatus::ACTIVE);
+            }
+
+            // 5. Phát sự kiện để Notify Realtime cho Khách hàng (Sử dụng sự kiện RideCancelled của Driver để biểu diễn tài xế hủy)
+            event(new RideCancelled(
                 rideId: $dto->rideId,
-                customerId: (string) $ride->customer_id,
-                driverId: (string) $ride->driver_id,
-                reason: $dto->reason,
-                canceledBy: 'driver'
+                driverId: (string) $dto->driverId,
+                reason: $dto->reason
             ));
+
+            // Publish tracking update để báo cho Client
+            $this->rideTrackingRealtime->publish([
+                'event' => 'tracking.driver.cancelled',
+                'ride_id' => (string) $ride->id,
+                'customer_id' => (string) $ride->customer_id,
+                'tracking_status' => RideTrackingStatus::DRIVER_CANCELLED->value,
+                'tracking_status_label' => RideTrackingStatus::DRIVER_CANCELLED->getLabel(),
+                'occurred_at' => now()->toIso8601String(),
+                'message' => 'Tài xế đã hủy chuyến. Hệ thống đang tìm tài xế khác.',
+            ]);
 
             return [
                 'ride_id' => $dto->rideId,
-                'status'  => RideStatus::CANCELLED->value,
-                'message' => 'Hủy chuyến thành công.'
+                'status'  => RideStatus::PENDING->value,
+                'message' => 'Hủy chuyến thành công. Đơn hàng đang tìm tài xế khác.'
             ];
         }, useTransaction: true);
     }
@@ -1513,5 +1548,56 @@ final class RideService extends BaseService implements RideServiceInterface
                 'message'      => 'Đã lưu bằng chứng giao hàng. Vui lòng bấm hoàn tất chuyến xe để kết thúc.',
             ];
         }, useTransaction: true);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getDriverRides(GetDriverRidesFilterDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $statuses = null;
+            if ($dto->status) {
+                $statuses = match ($dto->status) {
+                    'processing' => [
+                        RideStatus::ACCEPTED->value,
+                        RideStatus::PICKED_UP->value,
+                        RideStatus::IN_PROGRESS->value,
+                        RideStatus::CANCELLATION_REQUESTED->value,
+                    ],
+                    'completed' => [RideStatus::COMPLETED->value],
+                    'cancelled' => [RideStatus::CANCELLED->value],
+                    default => $this->throw('Trạng thái lọc không hợp lệ.', 400),
+                };
+            }
+
+            $paginator = $this->rideRepository->getDriverRides(
+                driverId: $dto->driverId,
+                statuses: $statuses,
+                perPage: $dto->perPage
+            );
+
+            // Transform collection to standard response structure
+            $paginator->getCollection()->transform(function ($ride) {
+                return [
+                    'ride_id'             => $ride->id,
+                    'customer_name'       => $ride->customer ? $ride->customer->name : 'Khách hàng',
+                    'customer_phone'      => $ride->customer ? $ride->customer->phone : null,
+                    'pickup_address'      => $ride->pickup_address,
+                    'destination_address' => $ride->destination_address,
+                    'travel_date'         => $ride->travel_date ? $ride->travel_date->format('Y-m-d') : null,
+                    'travel_time'         => $ride->travel_time,
+                    'ride_type'           => $ride->ride_type->value,
+                    'ride_type_label'     => $ride->ride_type->getLabel(),
+                    'total_price'         => (float) $ride->total_price,
+                    'expected_earnings'   => (float) ($ride->total_price * 0.8),
+                    'status'              => $ride->status->value,
+                    'status_label'        => $ride->status->getLabel(),
+                    'created_at'          => $ride->created_at ? $ride->created_at->toIso8601String() : null,
+                ];
+            });
+
+            return $this->success($paginator, 'Lấy danh sách chuyến xe thành công.');
+        });
     }
 }

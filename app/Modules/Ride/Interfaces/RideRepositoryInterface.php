@@ -385,4 +385,9 @@ interface RideRepositoryInterface
      * @return \Illuminate\Support\Collection
      */
     public function listDeliveryRidesForAdmin(array $excludeRideIds): \Illuminate\Support\Collection;
+
+    /**
+     * Lấy danh sách các chuyến xe của tài xế theo trạng thái và phân trang.
+     */
+    public function getDriverRides(string $driverId, ?array $statuses = null, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
 }

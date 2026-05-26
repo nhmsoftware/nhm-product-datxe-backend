@@ -171,4 +171,9 @@ interface RideServiceInterface
      * @return ServiceReturn
      */
     public function captureDeliveryProof(\App\Modules\Ride\DTO\CaptureDeliveryProofDTO $dto): ServiceReturn;
+
+    /**
+     * Tài xế lấy danh sách chuyến xe (lịch sử/đang xử lý) (UC-51.1).
+     */
+    public function getDriverRides(\App\Modules\Ride\DTO\GetDriverRidesFilterDTO $dto): ServiceReturn;
 }

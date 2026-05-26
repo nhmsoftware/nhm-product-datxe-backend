@@ -15,7 +15,7 @@ final class NotifyRealtimeOnRideCancelled implements ShouldQueue
     {
         try {
             $payload = [
-                'event'   => 'ride.cancelled',
+                'event'   => 'ride.driver_cancelled',
                 'ride_id' => (string) $event->rideId,
                 'driver_id' => (string) $event->driverId,
                 'reason'  => $event->reason,

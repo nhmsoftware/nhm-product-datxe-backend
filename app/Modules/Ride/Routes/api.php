@@ -67,6 +67,9 @@ Route::prefix('v1/driver')->middleware(['auth:sanctum', 'check.account.status'])
     // UC-51: Quản lý danh sách chuyến xe đã nhận
     Route::get('managed-rides', [RideController::class, 'getDriverManagedRides'])->name('driver.managed.index');
 
+    // UC-51.1: Lấy danh sách chuyến xe (lịch sử/đang xử lý) của tài xế
+    Route::get('rides', [RideController::class, 'getDriverRides'])->name('driver.rides.index');
+
     // UC-37: Chụp/tải ảnh xác nhận lấy hàng (Capture Pickup Proof)
     Route::post('ride/{rideId}/pickup-proof', [RideController::class, 'capturePickupProof'])->name('driver.ride.pickup_proof');
 

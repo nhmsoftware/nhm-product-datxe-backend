@@ -29,6 +29,8 @@ use App\Modules\Ride\Http\Requests\GetPriceEstimateRequest;
 use App\Modules\Ride\Http\Requests\RequestRideCancellationRequest;
 use App\Modules\Ride\DTO\RequestRideCancellationDTO;
 use App\Modules\Ride\DTO\DriverCancelRideDTO;
+use App\Modules\Ride\DTO\GetDriverRidesFilterDTO;
+use App\Modules\Ride\Http\Requests\GetDriverRidesRequest;
 use App\Modules\Ride\DTO\ShowRideTrackingDTO;
 use App\Modules\Ride\Http\Requests\DriverCancelRideRequest;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
@@ -744,5 +746,29 @@ final class RideController extends BaseController
         }
 
         return $this->sendSuccess($result->getData(), $result->getData()['message'] ?? 'Xác nhận giao hàng thành công.');
+    }
+
+    #[OA\Get(
+        path: '/api/v1/driver/rides',
+        description: 'Tài xế xem danh sách tất cả các chuyến xe đã nhận theo bộ lọc trạng thái (processing, completed, cancelled) và phân trang.',
+        summary: 'Danh sách chuyến xe (Lịch sử/Đang xử lý) của tài xế (UC-51.1)',
+        security: [['sanctum' => []]],
+        tags: ['Ride']
+    )]
+    #[OA\Parameter(name: 'status', description: 'Trạng thái lọc (processing, completed, cancelled)', in: 'query', required: false, schema: new OA\Schema(type: 'string'))]
+    #[OA\Parameter(name: 'per_page', description: 'Số bản ghi trên mỗi trang', in: 'query', required: false, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'page', description: 'Số trang', in: 'query', required: false, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Response(response: 200, description: 'Lấy danh sách thành công')]
+    public function getDriverRides(GetDriverRidesRequest $request): JsonResponse
+    {
+        $result = $this->rideService->getDriverRides(
+            GetDriverRidesFilterDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), 'Lấy danh sách chuyến xe thành công.');
     }
 }
