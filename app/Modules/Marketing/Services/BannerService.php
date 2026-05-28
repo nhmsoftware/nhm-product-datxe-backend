@@ -56,6 +56,8 @@ class BannerService extends BaseService implements BannerServiceInterface
             $banner = $this->bannerRepository->create([
                 'title'       => $dto->title,
                 'description' => $dto->description,
+                'label'       => $dto->label,
+                'tag'         => $dto->tag,
                 'image_url'   => $path, // Lưu path, URL sinh động qua FileHelper::serveUrl()
                 'action_url'  => $dto->action_url,
                 'order'       => $dto->order,
@@ -75,6 +77,8 @@ class BannerService extends BaseService implements BannerServiceInterface
             $data = [];
             if ($dto->title !== null) $data['title'] = $dto->title;
             if ($dto->description !== null) $data['description'] = $dto->description;
+            if ($dto->label !== null) $data['label'] = $dto->label;
+            if ($dto->tag !== null) $data['tag'] = $dto->tag;
             if ($dto->action_url !== null) $data['action_url'] = $dto->action_url;
             if ($dto->order !== null) $data['order'] = $dto->order;
             if ($dto->status !== null) $data['status'] = $dto->status;

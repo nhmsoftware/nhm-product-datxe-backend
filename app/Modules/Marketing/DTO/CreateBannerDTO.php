@@ -11,6 +11,8 @@ final class CreateBannerDTO
     public function __construct(
         public readonly ?string $title,
         public readonly ?string $description,
+        public readonly ?string $label,
+        public readonly ?string $tag,
         public readonly \Illuminate\Http\UploadedFile $image,
         public readonly ?string $action_url,
         public readonly int $order,
@@ -22,6 +24,8 @@ final class CreateBannerDTO
         return new self(
             title: $request->input('title'),
             description: $request->input('description'),
+            label: $request->input('label'),
+            tag: $request->input('tag'),
             image: $request->file('image'),
             action_url: $request->input('action_url'),
             order: (int) $request->input('order', 0),

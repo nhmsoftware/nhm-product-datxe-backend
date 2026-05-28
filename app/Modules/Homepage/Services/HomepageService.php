@@ -127,6 +127,10 @@ class HomepageService extends BaseService implements HomepageServiceInterface
         return $banners->map(function ($banner) {
             return [
                 'id' => $banner->id,
+                'title' => $banner->title,
+                'description' => $banner->description,
+                'label' => $banner->label,
+                'tag' => $banner->tag,
                 'image' => $banner->image_url,
                 'action_url' => $banner->action_url,
             ];

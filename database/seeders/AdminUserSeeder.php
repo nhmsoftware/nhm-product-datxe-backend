@@ -18,7 +18,7 @@ class AdminUserSeeder extends Seeder
             ['phone' => '0900000001'],
             [
                 'email'             => 'admin@nhm-datxe.com',
-                'password'          => Hash::make('Password@123'),
+                'password'          => Hash::make('123'),
                 'role'              => UserRole::Admin->value,
                 'is_active'         => true,
                 'is_verified'       => true,
