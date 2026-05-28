@@ -22,8 +22,11 @@ use App\Modules\Driver\Events\RideCompleted;
 use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
 use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
+use App\Modules\Food\Interfaces\FoodOrderRepositoryInterface;
+use App\Modules\Food\Model\Enums\FoodOrderStatus;
 use App\Modules\Operation\Interfaces\LocationRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Model\Enums\RideType;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Finance\Interfaces\VoucherServiceInterface;
@@ -55,6 +58,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
         private readonly LocationRepositoryInterface $locationRepository,
         private readonly VoucherServiceInterface $voucherService,
         private readonly RideTrackingRealtimeInterface $rideTrackingRealtime,
+        private readonly FoodOrderRepositoryInterface $foodOrderRepository,
     ) {}
 
     /**
@@ -235,6 +239,14 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 $driverEarnings
             );
             $this->validate($updated, 'Không thể hoàn thành chuyến xe. Vui lòng thử lại.', 500);
+
+            // [Đồng bộ FoodOrder] Nếu đây là chuyến giao đồ ăn, tự động cập nhật trạng thái FoodOrder → DELIVERED
+            if ($ride->ride_type === RideType::FOOD_DELIVERY) {
+                $this->foodOrderRepository->updateFoodOrderStatusByRideId(
+                    (string) $ride->id,
+                    FoodOrderStatus::DELIVERED->value
+                );
+            }
 
             // [Voucher] Đánh dấu voucher đã sử dụng nếu có
             if (!empty($ride->voucher_code)) {

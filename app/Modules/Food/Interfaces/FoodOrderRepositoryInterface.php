@@ -97,5 +97,15 @@ interface FoodOrderRepositoryInterface extends BaseRepositoryInterface
      * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
     public function getMerchantOrders(string $merchantId, ?array $statuses = null, int $perPage = 20, int $page = 1): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+    /**
+     * Cập nhật trạng thái FoodOrder dựa trên ride_id liên kết.
+     * Được gọi khi Ride (FOOD_DELIVERY) hoàn thành để đồng bộ trạng thái về DELIVERED.
+     *
+     * @param string $rideId
+     * @param int $status
+     * @return bool
+     */
+    public function updateFoodOrderStatusByRideId(string $rideId, int $status): bool;
 }
 

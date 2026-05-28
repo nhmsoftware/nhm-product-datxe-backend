@@ -179,5 +179,18 @@ final class FoodOrderRepository extends BaseRepository implements FoodOrderRepos
 
         return $query->latest()->paginate($perPage, ['*'], 'page', $page);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function updateFoodOrderStatusByRideId(string $rideId, int $status): bool
+    {
+        return (bool) $this->getQuery()
+            ->where('ride_id', $rideId)
+            ->update([
+                'status'     => $status,
+                'updated_at' => now(),
+            ]);
+    }
 }
 

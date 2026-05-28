@@ -44,20 +44,28 @@ final class AdminOrderService extends BaseService implements AdminOrderServiceIn
 
             // Map FoodOrders
             foreach ($foodOrders as $fo) {
-                $status = 'waiting';
-                if ($fo->status === FoodOrderStatus::CANCELLED) {
-                    $status = 'canceled';
-                } elseif ($fo->status === FoodOrderStatus::DELIVERED) {
+                // Ưu tiên kiểm tra trạng thái của chính FoodOrder trước
+                // (tránh bị ghi đè bởi trạng thái Ride khi driver_id vẫn còn)
+                if ($fo->status === FoodOrderStatus::DELIVERED) {
                     $status = 'completed';
+                } elseif ($fo->status === FoodOrderStatus::CANCELLED) {
+                    $status = 'canceled';
                 } elseif ($fo->ride_id !== null && $fo->ride) {
                     $ride = $fo->ride;
-                    if ($ride->driver_id !== null) {
+                    // Ride đã gán tài xế và chưa terminal (COMPLETED/CANCELLED)
+                    if ($ride->driver_id !== null
+                        && !in_array($ride->status, [RideStatus::COMPLETED, RideStatus::CANCELLED], true)
+                    ) {
                         $status = 'assigned';
                     } elseif ($ride->status === RideStatus::COMPLETED) {
                         $status = 'completed';
                     } elseif ($ride->status === RideStatus::CANCELLED) {
                         $status = 'canceled';
+                    } else {
+                        $status = 'waiting';
                     }
+                } else {
+                    $status = 'waiting';
                 }
 
                 $driverName = null;
@@ -66,17 +74,18 @@ final class AdminOrderService extends BaseService implements AdminOrderServiceIn
                 }
 
                 $mappedOrders[] = [
-                    'id' => (string) $fo->id,
-                    'order_code' => strtoupper(substr((string) $fo->id, -8)),
-                    'customer_name' => $fo->customer?->customerProfile?->full_name ?? $fo->customer?->name ?? 'Khách hàng',
-                    'merchant_name' => $fo->merchant?->store_name ?? 'Cửa hàng',
-                    'pickup_address' => $fo->merchant?->store_address ?? 'Cửa hàng',
-                    'destination_address' => $fo->delivery_address,
-                    'created_at' => $fo->created_at ? $fo->created_at->toIso8601String() : null,
-                    'type' => 'Food',
-                    'total_amount' => (float) $fo->total_price,
-                    'status' => $status,
-                    'driver_name' => $driverName,
+                    'id'                   => (string) $fo->id,
+                    'order_code'           => strtoupper(substr((string) $fo->id, -8)),
+                    'customer_name'        => $fo->customer?->customerProfile?->full_name ?? $fo->customer?->name ?? 'Khách hàng',
+                    'merchant_name'        => $fo->merchant?->store_name ?? 'Cửa hàng',
+                    'pickup_address'       => $fo->merchant?->store_address ?? 'Cửa hàng',
+                    'destination_address'  => $fo->delivery_address,
+                    'created_at'           => $fo->created_at ? $fo->created_at->toIso8601String() : null,
+                    'type'                 => 'Food',
+                    'total_amount'         => (float) $fo->total_price,
+                    'status'               => $status,
+                    'driver_name'          => $driverName,
+                    'ride_id'              => $fo->ride_id ? (string) $fo->ride_id : null,
                 ];
             }
 
