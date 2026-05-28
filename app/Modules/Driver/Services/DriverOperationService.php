@@ -21,6 +21,7 @@ use App\Modules\Driver\Events\RideStarted;
 use App\Modules\Driver\Events\RideCompleted;
 use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
+use App\Modules\Order\Events\FoodOrderStatusUpdated;
 use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
 use App\Modules\Food\Interfaces\FoodOrderRepositoryInterface;
 use App\Modules\Food\Model\Enums\FoodOrderStatus;
@@ -155,7 +156,26 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             $updated = $this->rideRepository->pickup($ride->id);
             $this->validate($updated, 'Không thể cập nhật trạng thái. Vui lòng thử lại.', 500);
 
-            // 5. Phát Domain Event gởi sang Redis Communication
+            // 5. [Đồng bộ FoodOrder] Nếu đây là chuyến giao đồ ăn, tự động cập nhật trạng thái FoodOrder → PICKED_UP
+            if ($ride->ride_type === RideType::FOOD_DELIVERY) {
+                $foodOrder = $this->foodOrderRepository->findByRideId((string) $ride->id);
+                if ($foodOrder && $foodOrder->status !== FoodOrderStatus::PICKED_UP->value) {
+                    $oldStatus = $foodOrder->status;
+                    $this->foodOrderRepository->updateFoodOrderStatusByRideId(
+                        (string) $ride->id,
+                        FoodOrderStatus::PICKED_UP->value
+                    );
+                    
+                    event(new FoodOrderStatusUpdated(
+                        (string) $foodOrder->id,
+                        (string) $foodOrder->customer_id,
+                        FoodOrderStatus::PICKED_UP->value,
+                        $oldStatus
+                    ));
+                }
+            }
+
+            // 6. Phát Domain Event gởi sang Redis Communication
             event(new RidePickedUp($ride->id, $driverProfile->id));
 
             return $this->success(

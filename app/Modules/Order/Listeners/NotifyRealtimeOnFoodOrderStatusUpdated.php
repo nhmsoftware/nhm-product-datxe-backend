@@ -18,6 +18,11 @@ use Illuminate\Support\Facades\Log;
  */
 final class NotifyRealtimeOnFoodOrderStatusUpdated implements ShouldQueue
 {
+    public function __construct(
+        private readonly \App\Modules\Food\Interfaces\FoodOrderRepositoryInterface $foodOrderRepository,
+        private readonly \App\Modules\Merchant\Interfaces\MerchantRepositoryInterface $merchantRepository
+    ) {}
+
     public function handle(FoodOrderStatusUpdated $event): void
     {
         $channel = env('REDIS_COMMUNICATION_CHANNEL', 'ride.communication.events');
@@ -43,6 +48,32 @@ final class NotifyRealtimeOnFoodOrderStatusUpdated implements ShouldQueue
                 'status'   => $event->newStatus,
                 'customer_id' => $event->customerId,
             ]);
+
+            // --- Thông báo cho Merchant ---
+            $order = $this->foodOrderRepository->getDetail($event->orderId);
+            if ($order && !empty($order['merchant_id'])) {
+                $merchantProfile = $this->merchantRepository->findById((string) $order['merchant_id']);
+                if ($merchantProfile) {
+                    $merchantPayload = [
+                        'event'    => 'food_order.updated',
+                        'order_id' => $event->orderId,
+                        'user_id'  => (string) $merchantProfile->user_id,
+                        'merchant_id' => (string) $order['merchant_id'],
+                        'status'   => $event->newStatus,
+                        'message'  => "Đơn hàng {$event->orderId} đã thay đổi trạng thái sang: {$statusLabel}.",
+                        'reason'   => $event->reason,
+                        'occurred_at' => now()->toIso8601String(),
+                    ];
+                    Redis::publish($channel, json_encode($merchantPayload));
+
+                    Log::info('Realtime notification sent to merchant: food_order.updated', [
+                        'order_id' => $event->orderId,
+                        'status'   => $event->newStatus,
+                        'merchant_id' => $order['merchant_id'],
+                        'user_id'  => $merchantProfile->user_id,
+                    ]);
+                }
+            }
 
             // --- Thông báo cho Tài xế (nếu nhà hàng hủy đơn khi đã có tài xế nhận) ---
             if ($event->newStatus === FoodOrderStatus::CANCELLED->value && $event->driverId !== null) {

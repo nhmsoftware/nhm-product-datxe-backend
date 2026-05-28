@@ -107,5 +107,13 @@ interface FoodOrderRepositoryInterface extends BaseRepositoryInterface
      * @return bool
      */
     public function updateFoodOrderStatusByRideId(string $rideId, int $status): bool;
+
+    /**
+     * Lấy thông tin FoodOrder theo ride_id
+     *
+     * @param string $rideId
+     * @return FoodOrder|null
+     */
+    public function findByRideId(string $rideId): ?FoodOrder;
 }
 

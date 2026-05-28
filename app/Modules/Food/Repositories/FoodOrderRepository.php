@@ -192,5 +192,14 @@ final class FoodOrderRepository extends BaseRepository implements FoodOrderRepos
                 'updated_at' => now(),
             ]);
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function findByRideId(string $rideId): ?FoodOrder
+    {
+        /** @var FoodOrder|null */
+        return $this->getQuery()->where('ride_id', $rideId)->first();
+    }
 }
 
