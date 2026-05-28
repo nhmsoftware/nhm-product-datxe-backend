@@ -16,6 +16,7 @@ use App\Modules\Ride\Model\Enums\RideType;
 use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\Ride\DTO\AssignInternalDriverDTO;
 use App\Modules\Ride\DTO\BulkPushToPoolDTO;
+use App\Modules\Order\Model\Enums\OrderType;
 
 final class AdminOrderService extends BaseService implements AdminOrderServiceInterface
 {
@@ -81,7 +82,7 @@ final class AdminOrderService extends BaseService implements AdminOrderServiceIn
                     'pickup_address'       => $fo->merchant?->store_address ?? 'Cửa hàng',
                     'destination_address'  => $fo->delivery_address,
                     'created_at'           => $fo->created_at ? $fo->created_at->toIso8601String() : null,
-                    'type'                 => 'Food',
+                    'type'                 => OrderType::FOOD->value,
                     'total_amount'         => (float) $fo->total_price,
                     'status'               => $status,
                     'driver_name'          => $driverName,
@@ -114,7 +115,7 @@ final class AdminOrderService extends BaseService implements AdminOrderServiceIn
                     'pickup_address' => $ride->pickup_address,
                     'destination_address' => $ride->destination_address,
                     'created_at' => $ride->created_at ? $ride->created_at->toIso8601String() : null,
-                    'type' => 'Delivery',
+                    'type' => OrderType::DELIVERY->value,
                     'total_amount' => (float) $ride->total_price,
                     'status' => $status,
                     'driver_name' => $driverName,

@@ -9,6 +9,7 @@ use App\Core\Services\ServiceReturn;
 use App\Modules\Finance\DTO\ViewSpendingSummaryDTO;
 use App\Modules\Finance\Interfaces\SpendingServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
+use App\Modules\Order\Model\Enums\OrderType;
 
 final class SpendingService extends BaseService implements SpendingServiceInterface
 {
@@ -40,17 +41,17 @@ final class SpendingService extends BaseService implements SpendingServiceInterf
                 'total_count'   => $totalCount,
                 'breakdown'     => [
                     [
-                        'service' => 'Ride',
+                        'service' => OrderType::RIDE->value,
                         'amount'  => (float)$rideSummary['total_amount'],
                         'count'   => (int)$rideSummary['total_count'],
                     ],
                     [
-                        'service' => 'Food',
+                        'service' => OrderType::FOOD->value,
                         'amount'  => (float)$foodSummary['total_amount'],
                         'count'   => (int)$foodSummary['total_count'],
                     ],
                     [
-                        'service' => 'Delivery',
+                        'service' => OrderType::DELIVERY->value,
                         'amount'  => (float)$deliverySummary['total_amount'],
                         'count'   => (int)$deliverySummary['total_count'],
                     ],
