@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\RideCompleted;
+use App\Modules\Ride\Model\Enums\RideStatus;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
@@ -23,6 +24,7 @@ final class NotifyRealtimeOnRideCompleted implements ShouldQueue
             $payload = [
                 'event'      => 'ride.completed',
                 'ride_id'    => (string) $event->rideId,
+                'status'     => RideStatus::COMPLETED->value,
                 'driver_id'  => (string) $event->driverId,
                 'total_fare' => (float) $event->totalFare,
                 'occurred_at' => now()->toIso8601String(),

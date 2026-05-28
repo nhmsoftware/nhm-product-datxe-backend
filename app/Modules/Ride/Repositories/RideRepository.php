@@ -7,6 +7,7 @@ namespace App\Modules\Ride\Repositories;
 use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\RideType;
 use App\Modules\Ride\Model\Ride;
 use App\Modules\Ride\Model\RideReject;
@@ -135,8 +136,9 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function acceptByDriver(string $rideId, string $driverId): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
-            'status'    => RideStatus::ACCEPTED->value,
-            'driver_id' => $driverId,
+            'status'          => RideStatus::ACCEPTED->value,
+            'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED->value,
+            'driver_id'       => $driverId,
         ]);
     }
 
@@ -162,8 +164,9 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function cancelByDriver(string $rideId, string $reasonId): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
-            'status'        => RideStatus::CANCELLED->value,
-            'cancel_reason' => (string) $reasonId, // Lưu ID lý do hoặc map sang label
+            'status'          => RideStatus::CANCELLED->value,
+            'tracking_status' => RideTrackingStatus::DRIVER_CANCELLED->value,
+            'cancel_reason'   => (string) $reasonId, // Lưu ID lý do hoặc map sang label
         ]);
     }
     /**
@@ -283,8 +286,9 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->where('status', RideStatus::PENDING->value)
             ->whereNull('driver_id')
             ->update([
-                'status' => RideStatus::ACCEPTED->value,
-                'driver_id' => $driverId,
+                'status'             => RideStatus::ACCEPTED->value,
+                'tracking_status'    => RideTrackingStatus::DRIVER_ACCEPTED->value,
+                'driver_id'          => $driverId,
                 'driver_assigned_at' => $acceptedAt,
             ]);
     }
@@ -309,17 +313,19 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     {
         return (bool) $this->model->where('id', $rideId)->update([
             'driver_arrived_at' => $arrivedAt,
+            'tracking_status'   => RideTrackingStatus::DRIVER_ARRIVED->value,
         ]);
     }
 
     public function releaseDriverFromRide(string $rideId, ?string $reason): bool
     {
         return (bool) $this->model->where('id', $rideId)->update([
-            'status' => RideStatus::PENDING->value,
-            'driver_id' => null,
+            'status'             => RideStatus::PENDING->value,
+            'tracking_status'    => RideTrackingStatus::WAITING_DRIVER->value,
+            'driver_id'          => null,
             'driver_assigned_at' => null,
-            'driver_arrived_at' => null,
-            'cancel_reason' => $reason,
+            'driver_arrived_at'  => null,
+            'cancel_reason'      => $reason,
         ]);
     }
 

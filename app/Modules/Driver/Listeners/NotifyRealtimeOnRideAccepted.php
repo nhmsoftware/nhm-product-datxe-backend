@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\RideAccepted;
+use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
@@ -32,6 +34,8 @@ final class NotifyRealtimeOnRideAccepted implements ShouldQueue
             $payload = [
                 'event'   => 'ride.accepted',
                 'ride_id' => (string) $event->rideId,
+                'status'  => RideStatus::ACCEPTED->value,
+                'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED->value,
                 'driver'  => [
                     'id'             => (string) $driverProfile->id,
                     'full_name'      => $driverProfile->full_name,

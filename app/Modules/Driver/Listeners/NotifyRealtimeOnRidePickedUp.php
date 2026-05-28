@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\RidePickedUp;
+use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
@@ -36,6 +37,7 @@ final class NotifyRealtimeOnRidePickedUp implements ShouldQueue
             $payload = [
                 'event'   => 'ride.picked_up',
                 'ride_id' => (string) $event->rideId,
+                'status'  => RideStatus::PICKED_UP->value,
                 'driver'  => [
                     'id'             => (string) $driverProfile->id,
                     'full_name'      => $driverProfile->full_name,

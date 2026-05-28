@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Driver\Listeners;
 
 use App\Modules\Driver\Events\DriverArrivedAtPickup;
+use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
@@ -36,6 +38,8 @@ final class NotifyRealtimeOnDriverArrived implements ShouldQueue
             $payload = [
                 'event'   => 'ride.arrived',
                 'ride_id' => (string) $event->rideId,
+                'status'  => RideStatus::ACCEPTED->value,
+                'tracking_status' => RideTrackingStatus::DRIVER_ARRIVED->value,
                 'driver'  => [
                     'id'          => (string) $driverProfile->id,
                     'current_lat' => (float) $driverProfile->current_lat,
