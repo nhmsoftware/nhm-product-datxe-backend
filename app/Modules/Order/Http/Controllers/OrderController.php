@@ -25,7 +25,7 @@ final class OrderController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Order History'],
         parameters: [
-            new OA\Parameter(name: 'service_type', in: 'query', description: 'Loại dịch vụ (ride/food)', schema: new OA\Schema(type: 'string', enum: ['ride', 'food'])),
+            new OA\Parameter(name: 'service_type', in: 'query', description: 'Loại dịch vụ (ride/food/delivery/intercity/airport/chauffeur)', schema: new OA\Schema(type: 'string', enum: ['ride', 'food', 'delivery', 'intercity', 'airport', 'chauffeur'])),
             new OA\Parameter(name: 'status', in: 'query', description: 'Trạng thái đơn', schema: new OA\Schema(type: 'string')),
             new OA\Parameter(name: 'start_date', in: 'query', description: 'Từ ngày (Y-m-d)', schema: new OA\Schema(type: 'string', format: 'date')),
             new OA\Parameter(name: 'end_date', in: 'query', description: 'Đến ngày (Y-m-d)', schema: new OA\Schema(type: 'string', format: 'date')),
@@ -57,7 +57,7 @@ final class OrderController extends BaseController
         tags: ['Order History'],
         parameters: [
             new OA\Parameter(name: 'orderId', in: 'path', description: 'ID đơn hàng', required: true, schema: new OA\Schema(type: 'string')),
-            new OA\Parameter(name: 'service_type', in: 'query', description: 'Loại dịch vụ (ride/food)', required: true, schema: new OA\Schema(type: 'string', enum: ['ride', 'food'])),
+            new OA\Parameter(name: 'service_type', in: 'query', description: 'Loại dịch vụ (ride/food/delivery/intercity/airport/chauffeur)', required: true, schema: new OA\Schema(type: 'string', enum: ['ride', 'food', 'delivery', 'intercity', 'airport', 'chauffeur'])),
         ],
         responses: [
             new OA\Response(response: 200, description: 'Chi tiết đơn hàng'),

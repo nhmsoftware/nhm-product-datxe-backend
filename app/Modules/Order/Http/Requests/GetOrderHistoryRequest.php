@@ -11,7 +11,7 @@ use OpenApi\Attributes as OA;
 #[OA\Schema(
     schema: 'GetOrderHistoryRequest',
     properties: [
-        new OA\Property(property: 'service_type', type: 'string', enum: ['ride', 'food'], nullable: true),
+        new OA\Property(property: 'service_type', type: 'string', enum: ['ride', 'food', 'delivery', 'intercity', 'airport', 'chauffeur'], nullable: true),
         new OA\Property(property: 'status', type: 'string', nullable: true),
         new OA\Property(property: 'start_date', type: 'string', format: 'date', nullable: true),
         new OA\Property(property: 'end_date', type: 'string', format: 'date', nullable: true),
@@ -30,7 +30,7 @@ final class GetOrderHistoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'service_type' => ['nullable', 'string', 'in:ride,food'],
+            'service_type' => ['nullable', 'string', 'in:ride,food,delivery,intercity,airport,chauffeur'],
             'status' => ['nullable', 'string'],
             'start_date' => ['nullable', 'date'],
             'end_date' => ['nullable', 'date', 'after_or_equal:start_date'],

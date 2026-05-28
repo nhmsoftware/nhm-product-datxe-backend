@@ -32,6 +32,15 @@ final class OrderService extends BaseService implements OrderServiceInterface
             $paginator->getCollection()->transform(function ($item) {
                 $itemArray = $item->toArray();
                 $itemArray['status_label'] = $this->getStatusLabel($itemArray['service_type'], (int) $itemArray['status']);
+                $itemArray['service_name'] = match ($itemArray['service_type']) {
+                    'ride' => 'Nội thành',
+                    'intercity' => 'Đi tỉnh',
+                    'airport' => 'Sân bay',
+                    'delivery' => 'Giao hàng',
+                    'chauffeur' => 'Lái hộ',
+                    'food' => 'Giao đồ ăn',
+                    default => 'Không xác định'
+                };
                 return $itemArray;
             });
 
@@ -44,7 +53,7 @@ final class OrderService extends BaseService implements OrderServiceInterface
         return $this->execute(function () use ($orderId, $serviceType, $merchantId) {
             $order = null;
 
-            if ($serviceType === 'ride') {
+            if (in_array($serviceType, ['ride', 'delivery', 'intercity', 'airport', 'chauffeur'])) {
                 $ride = $this->rideRepository->find($orderId);
                 if ($ride) {
                     $ride->load('customer.customerProfile');
@@ -58,6 +67,15 @@ final class OrderService extends BaseService implements OrderServiceInterface
             $this->validate($order !== null, 'Không tìm thấy đơn hàng hoặc bạn không có quyền truy cập.', 404);
 
             $order['status_label'] = $this->getStatusLabel($serviceType, (int) $order['status']);
+            $order['service_name'] = match ($serviceType) {
+                'ride' => 'Nội thành',
+                'intercity' => 'Đi tỉnh',
+                'airport' => 'Sân bay',
+                'delivery' => 'Giao hàng',
+                'chauffeur' => 'Lái hộ',
+                'food' => 'Giao đồ ăn',
+                default => 'Không xác định'
+            };
 
             return $order;
         });
@@ -65,7 +83,7 @@ final class OrderService extends BaseService implements OrderServiceInterface
 
     private function getStatusLabel(string $type, int $status): string
     {
-        if ($type === 'ride') {
+        if (in_array($type, ['ride', 'delivery', 'intercity', 'airport', 'chauffeur'])) {
             $enum = RideStatus::tryFrom($status);
             return $enum ? $enum->getLabel() : 'Không xác định';
         }

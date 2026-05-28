@@ -8448,12 +8448,16 @@
                     {
                         "name": "service_type",
                         "in": "query",
-                        "description": "Loại dịch vụ (ride/food)",
+                        "description": "Loại dịch vụ (ride/food/delivery/intercity/airport/chauffeur)",
                         "schema": {
                             "type": "string",
                             "enum": [
                                 "ride",
-                                "food"
+                                "food",
+                                "delivery",
+                                "intercity",
+                                "airport",
+                                "chauffeur"
                             ]
                         }
                     },
@@ -8529,13 +8533,17 @@
                     {
                         "name": "service_type",
                         "in": "query",
-                        "description": "Loại dịch vụ (ride/food)",
+                        "description": "Loại dịch vụ (ride/food/delivery/intercity/airport/chauffeur)",
                         "required": true,
                         "schema": {
                             "type": "string",
                             "enum": [
                                 "ride",
-                                "food"
+                                "food",
+                                "delivery",
+                                "intercity",
+                                "airport",
+                                "chauffeur"
                             ]
                         }
                     }
@@ -10515,6 +10523,55 @@
                     },
                     "422": {
                         "description": "Chưa đến đúng vị trí (A6) hoặc điều kiện không thỏa mãn"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/driver/rides": {
+            "get": {
+                "tags": [
+                    "Ride"
+                ],
+                "summary": "Danh sách chuyến xe (Lịch sử/Đang xử lý) của tài xế (UC-51.1)",
+                "description": "Tài xế xem danh sách tất cả các chuyến xe đã nhận theo bộ lọc trạng thái (processing, completed, cancelled) và phân trang.",
+                "operationId": "2b071407eec1f900884184650be87ae2",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái lọc (processing, completed, cancelled)",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Số bản ghi trên mỗi trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Số trang",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lấy danh sách thành công"
                     }
                 },
                 "security": [
@@ -14599,7 +14656,11 @@
                         "nullable": true,
                         "enum": [
                             "ride",
-                            "food"
+                            "food",
+                            "delivery",
+                            "intercity",
+                            "airport",
+                            "chauffeur"
                         ]
                     },
                     "status": {
