@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Log;
 final class PushNotificationService extends BaseService implements PushNotificationServiceInterface
 {
     public function __construct(
-        private readonly UserRepositoryInterface $userRepository
+        private readonly UserRepositoryInterface $userRepository,
+        private readonly FirebaseCloudMessagingService $fcmService
     ) {}
     /**
      * Gửi push notification đến một user cụ thể (UC-127)
@@ -72,16 +73,13 @@ final class PushNotificationService extends BaseService implements PushNotificat
      */
     private function sendToDevice(string $token, string $title, string $content, array $data = [], ?string $icon = null): void
     {
-        // GIẢ LẬP GỬI PUSH QUA FIREBASE/ONESIGNAL
-        Log::info("PUSH NOTIFICATION SENT", [
-            'token'   => $token,
-            'title'   => $title,
-            'content' => $content,
-            'data'    => $data,
-            'icon'    => $icon
-        ]);
-
-        // Thực tế code sẽ gọi Firebase SDK hoặc HTTP API
-        // if (app()->isProduction()) { ... }
+        $success = $this->fcmService->send($token, $title, $content, $data);
+        
+        if ($success) {
+            Log::info("PUSH NOTIFICATION SENT", [
+                'token'   => $token,
+                'title'   => $title
+            ]);
+        }
     }
 }

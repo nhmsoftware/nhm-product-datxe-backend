@@ -37,6 +37,9 @@ use App\Modules\Ride\Listeners\NotifyRealtimeOnRideAssignedByAdmin;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnScheduledRidesPushed;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnPickupProofCaptured;
 use App\Modules\Ride\Listeners\NotifyRealtimeOnDeliveryProofCaptured;
+use App\Modules\Ride\Events\RideAcceptedByDriver;
+use App\Modules\Ride\Listeners\NotifyRealtimeOnRideAccepted;
+use App\Modules\Ride\Listeners\SendFCMPushNotificationOnRideAccepted;
 use App\Modules\User\Http\Middleware\CheckAccountStatus;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Routing\Router;
@@ -106,6 +109,16 @@ class RideServiceProvider extends BaseModuleServiceProvider
         Event::listen(
             DeliveryProofCaptured::class,
             NotifyRealtimeOnDeliveryProofCaptured::class
+        );
+
+        Event::listen(
+            RideAcceptedByDriver::class,
+            NotifyRealtimeOnRideAccepted::class
+        );
+
+        Event::listen(
+            RideAcceptedByDriver::class,
+            SendFCMPushNotificationOnRideAccepted::class
         );
 
         parent::boot();
