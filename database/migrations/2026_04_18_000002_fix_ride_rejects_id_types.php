@@ -30,10 +30,19 @@ return new class extends Migration
     {
         Schema::table('ride_rejects', function (Blueprint $table) {
             $table->dropUnique(['ride_id', 'driver_id']);
-            
-            $table->unsignedBigInteger('ride_id')->change();
-            $table->unsignedBigInteger('driver_id')->change();
-            
+        });
+
+        if (config('database.default') === 'pgsql' || \Illuminate\Support\Facades\DB::connection()->getDriverName() === 'pgsql') {
+            \Illuminate\Support\Facades\DB::statement('ALTER TABLE ride_rejects ALTER COLUMN ride_id TYPE bigint USING ride_id::bigint');
+            \Illuminate\Support\Facades\DB::statement('ALTER TABLE ride_rejects ALTER COLUMN driver_id TYPE bigint USING driver_id::bigint');
+        } else {
+            Schema::table('ride_rejects', function (Blueprint $table) {
+                $table->unsignedBigInteger('ride_id')->change();
+                $table->unsignedBigInteger('driver_id')->change();
+            });
+        }
+
+        Schema::table('ride_rejects', function (Blueprint $table) {
             $table->unique(['ride_id', 'driver_id']);
         });
     }

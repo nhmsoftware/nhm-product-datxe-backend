@@ -53,6 +53,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('system_shared_modules');
+        Schema::dropIfExists('files');
+        Schema::dropIfExists('user_review_applications');
+        Schema::dropIfExists('user_devices');
     }
 };

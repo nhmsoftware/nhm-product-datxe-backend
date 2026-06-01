@@ -48,6 +48,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('driver_modules');
+        Schema::dropIfExists('driver_profiles');
+        Schema::dropIfExists('driver_groups');
     }
 };
