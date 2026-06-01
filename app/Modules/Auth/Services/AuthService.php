@@ -15,6 +15,7 @@ use App\Modules\Auth\DTO\RegisterDTO;
 use App\Modules\Auth\DTO\SendOtpDTO;
 use App\Modules\Auth\Interfaces\AuthOtpRepositoryInterface;
 use App\Modules\Auth\Interfaces\AuthServiceInterface;
+use App\Modules\Auth\Jobs\SendOtpZaloJob;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\Gender;
 use App\Modules\User\Model\Enums\UserOtpType;
@@ -49,7 +50,7 @@ final class AuthService extends BaseService implements AuthServiceInterface
 
             $otpRecord = $this->dispatchOtp($dto->phone, $dto->type);
 
-            dispatch(new \App\Modules\Auth\Jobs\SendOtpZaloJob($dto->phone, $otpRecord->plain_code));
+            dispatch(new SendOtpZaloJob($dto->phone, $otpRecord->plain_code));
 
             $response = [
                 'retry_after_seconds' => self::RETRY_AFTER_SECONDS,
