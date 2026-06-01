@@ -69,7 +69,11 @@ class AuthOtpRepository extends BaseRepository implements AuthOtpRepositoryInter
      */
     public function generateOtp(string $phone, UserOtpType $type): UserOtp
     {
-        $plainCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        // TODO: [PRODUCTION] Uncomment dòng dưới để tạo OTP ngẫu nhiên khi lên production
+        // $plainCode = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+
+        // [DEV/TEST ONLY] OTP cố định để test — XÓA hoặc comment dòng này khi lên production
+        $plainCode = '123456';
 
         /** @var UserOtp $otp */
         $otp = $this->model->create([

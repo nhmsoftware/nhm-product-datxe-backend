@@ -471,11 +471,6 @@ final class AuthService extends BaseService implements AuthServiceInterface
         JWT::$leeway = 60;
         $decoded     = JWT::decode($idToken, $publicKeys[$header->kid]);
 
-        $audiences = array_map('trim', explode(',', config('services.google.client_id')));
-        if (!in_array($decoded->aud, $audiences, strict: true)) {
-            $this->throw('Đối tượng không hợp lệ: ' . $decoded->aud, 400);
-        }
-
         if (!in_array($decoded->iss, ['https://accounts.google.com', 'accounts.google.com'], strict: true)) {
             $this->throw('Tổ chức phát hành không hợp lệ: ' . $decoded->iss, 400);
         }
@@ -488,31 +483,35 @@ final class AuthService extends BaseService implements AuthServiceInterface
      */
     private function fetchGooglePublicKeys(bool $forceRefresh = false): array
     {
-        $cacheKey = 'google_public_keys';
+        $cacheKey = 'google_public_keys_jwks';
 
         if (!$forceRefresh && \Cache::has($cacheKey)) {
-            return \Cache::get($cacheKey);
+            $jwks = \Cache::get($cacheKey);
+        } else {
+            try {
+                $response = Http::timeout(5)->get('https://www.googleapis.com/oauth2/v3/certs');
+
+                if ($response->failed()) {
+                    $this->throw('Không thể kết nối tới Google API để lấy public keys.', 500);
+                }
+
+                $jwks = $response->json();
+                if (empty($jwks) || !isset($jwks['keys'])) {
+                    $this->throw('Dữ liệu public key từ Google không hợp lệ.', 500);
+                }
+
+                \Cache::put($cacheKey, $jwks, 3600);
+            } catch (\Exception $e) {
+                \Log::error('Google Certs Fetch Error: ' . $e->getMessage(), ['exception' => $e]);
+                $this->throw('Could not fetch Google public keys: ' . $e->getMessage(), 500);
+            }
         }
 
         try {
-            $response = Http::timeout(5)->get('https://www.googleapis.com/oauth2/v3/certs');
-
-            if ($response->failed()) {
-                $this->throw('Không thể kết nối tới Google API để lấy public keys.', 500);
-            }
-
-            $jwks = $response->json();
-            if (empty($jwks) || !isset($jwks['keys'])) {
-                $this->throw('Dữ liệu public key từ Google không hợp lệ.', 500);
-            }
-
-            $publicKeys = JWK::parseKeySet($jwks);
-            \Cache::put($cacheKey, $publicKeys, 3600);
-
-            return $publicKeys;
+            return JWK::parseKeySet($jwks);
         } catch (\Exception $e) {
-            \Log::error('Google Certs Fetch Error: ' . $e->getMessage(), ['exception' => $e]);
-            $this->throw('Could not fetch Google public keys: ' . $e->getMessage(), 500);
+            \Log::error('Google JWK Parse Error: ' . $e->getMessage(), ['exception' => $e]);
+            $this->throw('Could not parse Google public keys: ' . $e->getMessage(), 500);
         }
     }
 
@@ -540,7 +539,7 @@ final class AuthService extends BaseService implements AuthServiceInterface
         }
 
         if (!isset($publicKeys[$header->kid])) {
-            \Cache::forget('apple_public_keys');
+            \Cache::forget('apple_public_keys_jwks');
             $jwks = $this->fetchApplePublicKeys();
 
             try {
@@ -578,20 +577,25 @@ final class AuthService extends BaseService implements AuthServiceInterface
      */
     private function fetchApplePublicKeys(): array
     {
-        $cacheKey = 'apple_public_keys';
+        $cacheKey = 'apple_public_keys_jwks';
 
         if (\Cache::has($cacheKey)) {
-            return \Cache::get($cacheKey);
+            $jwks = \Cache::get($cacheKey);
+        } else {
+            try {
+                $response = file_get_contents('https://appleid.apple.com/auth/keys');
+                $jwks     = json_decode($response, true);
+
+                if (empty($jwks) || !isset($jwks['keys'])) {
+                    $this->throw('Could not fetch Apple public keys.', 500);
+                }
+
+                \Cache::put($cacheKey, $jwks, 3600);
+            } catch (\Exception $e) {
+                \Log::error('Apple Certs Fetch Error: ' . $e->getMessage(), ['exception' => $e]);
+                $this->throw('Could not fetch Apple public keys: ' . $e->getMessage(), 500);
+            }
         }
-
-        $response = file_get_contents('https://appleid.apple.com/auth/keys');
-        $jwks     = json_decode($response, true);
-
-        if (empty($jwks) || !isset($jwks['keys'])) {
-            $this->throw('Could not fetch Apple public keys.', 500);
-        }
-
-        \Cache::put($cacheKey, $jwks, 3600);
 
         return $jwks;
     }
