@@ -56,4 +56,9 @@ return [
     'goong' => [
         'api_key' => env('GOONG_API_KEY'),
     ],
+
+    'speedsms' => [
+        'access_token' => env('SPEEDSMS_ACCESS_TOKEN'),
+        'sender' => env('SPEEDSMS_SENDER', 'SPEEDSMS'),
+    ],
 ];
