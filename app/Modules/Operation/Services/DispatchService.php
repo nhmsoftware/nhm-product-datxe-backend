@@ -8,6 +8,8 @@ use App\Core\Services\BaseService;
 use App\Modules\Operation\Interfaces\DispatchServiceInterface;
 use App\Modules\Operation\Interfaces\LocationRepositoryInterface;
 use App\Modules\Operation\Jobs\PriorityDispatchFallbackJob;
+use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
+use App\Modules\Pricing\Model\Enums\ScheduledDispatchMode;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
@@ -28,7 +30,8 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
         private readonly LocationRepositoryInterface $locationRepository,
         private readonly DriverProfileRepositoryInterface $driverProfileRepository,
         private readonly CreditWalletConfigRepositoryInterface $walletConfigRepository,
-        private readonly WalletRepositoryInterface $walletRepository
+        private readonly WalletRepositoryInterface $walletRepository,
+        private readonly PricingGlobalSettingRepositoryInterface $pricingGlobalSettingRepository,
     ) {
     }
 
@@ -43,21 +46,28 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
                 return;
             }
 
-            // 1. Tìm các driver trong bán kính 2km
+            $isOpenMode = $this->isOpenPoolMode();
+            $modeLabel  = $isOpenMode ? 'CONG KHAI (Tat ca tai xe)' : 'UU TIEN NOI BO (Doi xe nha)';
+
+            // 1. Tim cac driver trong ban kinh 2km
             $nearbyDriverIds = $this->locationRepository->findNearbyDriverIds(
                 (float) $ride->pickup_lat,
                 (float) $ride->pickup_lng,
                 self::ROUND_1_RADIUS_KM
             );
 
-            // 2. Lọc nhóm "Đội xe nhà" (INTERNAL)
+            // 2. Loc tai xe theo che do phat song
+            //    - OPEN_POOL  : groupType = null → bat len tat ca tai xe du dieu kien (ca noi bo + doi tac)
+            //    - INTERNAL_PRIORITY: groupType = INTERNAL → chi bat len doi xe nha
+            $groupType = $isOpenMode ? null : DriverGroupType::INTERNAL->value;
+
             $eligibleDrivers = $this->driverProfileRepository->findEligibleDrivers(
                 userIds: $nearbyDriverIds,
                 vehicleType: (int) $ride->vehicle_type->value,
-                groupType: DriverGroupType::INTERNAL->value
+                groupType: $groupType
             );
 
-            // 3. Thông báo cho các tài xế (loại trừ những người đã từ chối đơn này)
+            // 3. Thong bao cho cac tai xe (loai tru nhung nguoi da tu choi don nay)
             $notifiedCount = 0;
             foreach ($eligibleDrivers as $driver) {
                 if (!$this->rideRepository->isRejectedByDriver($rideId, $driver->user_id)) {
@@ -66,14 +76,17 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
                 }
             }
 
-            // 4. Lên lịch vòng 2 (Fallback) sau 60s
+            // 4. Len lich vong 2 (Fallback) sau 60s
             PriorityDispatchFallbackJob::dispatch($rideId)
                 ->delay(now()->addSeconds(self::FALLBACK_DELAY_SECONDS));
 
-            Log::info("PriorityDispatch: Round 1 initiated for Ride {$rideId}", [
-                'nearby_count' => count($nearbyDriverIds),
-                'eligible_count' => $eligibleDrivers->count(),
-                'notified_count' => $notifiedCount
+            Log::info("PriorityDispatch [Vong 1]: Bat dau phat song cho chuyen {$rideId}", [
+                'che_do'           => $modeLabel,
+                'loai_xe'          => $ride->vehicle_type->name,
+                'ban_kinh_km'      => self::ROUND_1_RADIUS_KM,
+                'tai_xe_gan_do'    => count($nearbyDriverIds),
+                'tai_xe_du_dieu_kien' => $eligibleDrivers->count(),
+                'da_gui_thong_bao' => $notifiedCount,
             ]);
         });
     }
@@ -85,37 +98,55 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
     {
         $this->execute(function () use ($rideId) {
             $ride = $this->rideRepository->find($rideId);
-            
-            // Check status: Nếu đã có người nhận hoặc bị hủy thì thôi
+
+            // Kiem tra trang thai: Neu da co nguoi nhan hoac bi huy thi thoi
             if (!$ride || $ride->status !== RideStatus::PENDING) {
-                Log::info("PriorityDispatch: Fallback skipped for Ride {$rideId} (Status: " . ($ride->status->name ?? 'Deleted') . ")");
+                Log::info("PriorityDispatch [Vong 2 - Bo qua]: Chuyen {$rideId} khong con o trang thai cho tai xe", [
+                    'trang_thai' => $ride->status->name ?? 'Da xoa',
+                ]);
                 return;
             }
 
-            // 1. Mở rộng bán kính quét (3km) cho toàn bộ "Tài xế đối tác" (PARTNER)
-            // Lưu ý: Có thể thông báo cho cả Internal nếu muốn, nhưng yêu cầu ghi "Phát sóng cho toàn bộ Tài xế đối tác"
+            $isOpenMode = $this->isOpenPoolMode();
+            $modeLabel  = $isOpenMode ? 'CONG KHAI (Tat ca tai xe)' : 'UU TIEN NOI BO (Chi doi tac)';
+
+            // 1. Mo rong ban kinh quet (3km)
+            //    - OPEN_POOL  : groupType = null → bat len tat ca tai xe (ca noi bo + doi tac)
+            //    - INTERNAL_PRIORITY: groupType = PARTNER → chi bat len tai xe doi tac
             $nearbyDriverIds = $this->locationRepository->findNearbyDriverIds(
                 (float) $ride->pickup_lat,
                 (float) $ride->pickup_lng,
                 self::ROUND_2_RADIUS_KM
             );
 
+            $groupType = $isOpenMode ? null : DriverGroupType::PARTNER->value;
+
             $eligibleDrivers = $this->driverProfileRepository->findEligibleDrivers(
                 userIds: $nearbyDriverIds,
                 vehicleType: (int) $ride->vehicle_type->value,
-                groupType: DriverGroupType::PARTNER->value // Chỉ lấy đối tác ở vòng 2
+                groupType: $groupType
             );
 
-            // UC-117: Kiểm tra Credit Wallet cho Partner drivers
+            // UC-117: Kiem tra Credit Wallet cho Partner drivers
             $config = $this->walletConfigRepository->getLatestConfig();
             if ($config->auto_lock) {
-                $blockedUserIds = $this->walletRepository->getLowBalanceUserIds($config->min_balance);
+                $blockedUserIds  = $this->walletRepository->getLowBalanceUserIds($config->min_balance);
+                $beforeFilter    = $eligibleDrivers->count();
                 $eligibleDrivers = $eligibleDrivers->filter(function ($driver) use ($blockedUserIds) {
                     return !in_array($driver->user_id, $blockedUserIds);
                 });
+                $blockedCount = $beforeFilter - $eligibleDrivers->count();
+
+                if ($blockedCount > 0) {
+                    Log::info("PriorityDispatch [Vong 2]: Khoa {$blockedCount} tai xe do so du Credit Wallet thap", [
+                        'chuyen_id'      => $rideId,
+                        'so_bi_khoa'     => $blockedCount,
+                        'nguong_toi_thieu' => $config->min_balance,
+                    ]);
+                }
             }
 
-            // 2. Thông báo (loại trừ những người đã từ chối đơn này)
+            // 2. Thong bao (loai tru nhung nguoi da tu choi don nay)
             $notifiedCount = 0;
             foreach ($eligibleDrivers as $driver) {
                 if (!$this->rideRepository->isRejectedByDriver($rideId, $driver->user_id)) {
@@ -124,32 +155,64 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
                 }
             }
 
-            Log::info("PriorityDispatch: Round 2 (Fallback) executed for Ride {$rideId}", [
-                'nearby_count' => count($nearbyDriverIds),
-                'eligible_count' => $eligibleDrivers->count(),
-                'notified_count' => $notifiedCount
+            Log::info("PriorityDispatch [Vong 2 - Du phong]: Hoan tat phat song cho chuyen {$rideId}", [
+                'che_do'              => $modeLabel,
+                'loai_xe'             => $ride->vehicle_type->name,
+                'ban_kinh_km'         => self::ROUND_2_RADIUS_KM,
+                'tai_xe_gan_do'       => count($nearbyDriverIds),
+                'tai_xe_du_dieu_kien' => $eligibleDrivers->count(),
+                'da_gui_thong_bao'    => $notifiedCount,
             ]);
+
+            if ($notifiedCount === 0) {
+                Log::warning("PriorityDispatch [Vong 2]: Khong co tai xe nao nhan duoc thong bao cho chuyen {$rideId}", [
+                    'che_do'           => $modeLabel,
+                    'tai_xe_gan_do'    => count($nearbyDriverIds),
+                    'tai_xe_du_dieu_kien' => $eligibleDrivers->count(),
+                    'goi_y'            => count($nearbyDriverIds) > 0 && $eligibleDrivers->count() === 0
+                        ? 'Tai xe o gan nhung khong du dieu kien: kiem tra trang thai online, loai xe, hoac trang thai ACTIVE/COOLDOWN'
+                        : 'Khong co tai xe nao trong ban kinh ' . self::ROUND_2_RADIUS_KM . 'km',
+                ]);
+            }
         });
     }
 
     /**
-     * Gửi event New Ride Offer tới Driver qua Redis Pub/Sub
+     * Kiem tra xem he thong dang o che do OPEN_POOL (cong khai) hay khong.
+     *
+     * - OPEN_POOL         : Tat ca tai xe du dieu kien deu nhan duoc thong bao (khong loc theo nhom).
+     * - INTERNAL_PRIORITY : Vong 1 chi bat len Doi xe nha, Vong 2 chi bat len Tai xe doi tac.
+     * - Khong co cau hinh : Mac dinh OPEN_POOL.
+     */
+    private function isOpenPoolMode(): bool
+    {
+        $settings = $this->pricingGlobalSettingRepository->getSettings();
+
+        if (!$settings || $settings->scheduled_dispatch_mode === null) {
+            return true; // Mac dinh: Cong khai
+        }
+
+        return $settings->scheduled_dispatch_mode === ScheduledDispatchMode::OPEN_POOL;
+    }
+
+    /**
+     * Gui event New Ride Offer toi Driver qua Redis Pub/Sub
      */
     private function notifyDriverOfNewRide(string $userId, $ride): void
     {
         $payload = [
-            'user_id' => (string) $userId,
-            'event' => 'ride.new_offer',
-            'ride_id' => (string) $ride->id,
-            'ride_type' => $ride->ride_type->name,
-            'travel_date' => $ride->travel_date,
-            'travel_time' => $ride->travel_time,
-            'pickup_address' => $ride->pickup_address,
-            'destination_address' => $ride->destination_address,
-            'distance_km' => round($ride->distance / 1000, 2),
-            'total_price' => (float) $ride->total_price,
-            'vehicle_type' => $ride->vehicle_type->name,
-            'occurred_at' => now()->toIso8601String(),
+            'user_id'              => (string) $userId,
+            'event'                => 'ride.new_offer',
+            'ride_id'              => (string) $ride->id,
+            'ride_type'            => $ride->ride_type->name,
+            'travel_date'          => $ride->travel_date,
+            'travel_time'          => $ride->travel_time,
+            'pickup_address'       => $ride->pickup_address,
+            'destination_address'  => $ride->destination_address,
+            'distance_km'          => round($ride->distance / 1000, 2),
+            'total_price'          => (float) $ride->total_price,
+            'vehicle_type'         => $ride->vehicle_type->name,
+            'occurred_at'          => now()->toIso8601String(),
         ];
 
         // Channel name matching realtime/.env REDIS_COMMUNICATION_CHANNEL
