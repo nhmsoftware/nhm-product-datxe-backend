@@ -49,7 +49,7 @@ final class AuthService extends BaseService implements AuthServiceInterface
 
             $otpRecord = $this->dispatchOtp($dto->phone, $dto->type);
 
-            dispatch(new \App\Modules\Auth\Jobs\SendOtpSmsJob($dto->phone, $otpRecord->plain_code));
+            dispatch(new \App\Modules\Auth\Jobs\SendOtpZaloJob($dto->phone, $otpRecord->plain_code));
 
             $response = [
                 'retry_after_seconds' => self::RETRY_AFTER_SECONDS,

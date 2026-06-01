@@ -57,8 +57,8 @@ return [
         'api_key' => env('GOONG_API_KEY'),
     ],
 
-    'speedsms' => [
-        'access_token' => env('SPEEDSMS_ACCESS_TOKEN'),
-        'sender' => env('SPEEDSMS_SENDER', 'SPEEDSMS'),
+    'zalo' => [
+        'access_token' => env('ZALO_ZNS_ACCESS_TOKEN'),
+        'template_id' => env('ZALO_ZNS_TEMPLATE_ID'),
     ],
 ];
