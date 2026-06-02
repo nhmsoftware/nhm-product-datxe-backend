@@ -23,6 +23,8 @@ use App\Modules\Finance\Interfaces\FinanceRealtimeInterface;
 use App\Modules\Finance\Interfaces\AdminVoucherServiceInterface;
 use App\Modules\Finance\Interfaces\CommissionRuleRepositoryInterface;
 use App\Modules\Finance\Interfaces\CommissionRuleServiceInterface;
+use App\Modules\Finance\Interfaces\PaymentMethodRepositoryInterface;
+use App\Modules\Finance\Interfaces\AdminPaymentMethodServiceInterface;
 use App\Modules\Finance\Repositories\RewardRepository;
 use App\Modules\Finance\Repositories\RewardWalletRepository;
 use App\Modules\Finance\Repositories\VoucherRepository;
@@ -32,6 +34,7 @@ use App\Modules\Finance\Repositories\SubscriptionPackageRepository;
 use App\Modules\Finance\Repositories\DriverSubscriptionRepository;
 use App\Modules\Finance\Repositories\WalletRepository;
 use App\Modules\Finance\Repositories\WalletTransactionRepository;
+use App\Modules\Finance\Repositories\PaymentMethodRepository;
 use App\Modules\Finance\Services\RewardService;
 use App\Modules\Finance\Services\SpendingService;
 use App\Modules\Finance\Services\VoucherService;
@@ -40,6 +43,7 @@ use App\Modules\Finance\Services\WalletService;
 use App\Modules\Finance\Services\SubscriptionService;
 use App\Modules\Finance\Services\AdminVoucherService;
 use App\Modules\Finance\Services\CommissionRuleService;
+use App\Modules\Finance\Services\AdminPaymentMethodService;
 use App\Modules\Finance\Repositories\CommissionRuleRepository;
 use App\Modules\Finance\Interfaces\RefundRepositoryInterface;
 use App\Modules\Finance\Interfaces\RefundServiceInterface;
@@ -82,6 +86,7 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(CommissionRuleRepositoryInterface::class, CommissionRuleRepository::class);
         $this->app->singleton(RefundRepositoryInterface::class, RefundRepository::class);
         $this->app->singleton(CreditWalletConfigRepositoryInterface::class, CreditWalletConfigRepository::class);
+        $this->app->singleton(PaymentMethodRepositoryInterface::class, PaymentMethodRepository::class);
 
 
         // ── Services ──────
@@ -97,6 +102,7 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(AdminDriverFinanceServiceInterface::class, AdminDriverFinanceService::class);
         $this->app->singleton(CreditWalletConfigServiceInterface::class, CreditWalletConfigService::class);
         $this->app->singleton(AdminSubscriptionServiceInterface::class, AdminSubscriptionService::class);
+        $this->app->singleton(AdminPaymentMethodServiceInterface::class, AdminPaymentMethodService::class);
 
 
     }
@@ -116,7 +122,11 @@ final class FinanceServiceProvider extends BaseModuleServiceProvider
             \App\Modules\Finance\Listeners\NotifyRealtimeOnRefundProcessed::class
         );
 
-        parent::boot();
+        \Illuminate\Support\Facades\Event::listen(
+            \App\Modules\Finance\Events\TopUpCompleted::class,
+            \App\Modules\Finance\Listeners\NotifyRealtimeOnTopUpCompleted::class
+        );
 
+        parent::boot();
     }
 }

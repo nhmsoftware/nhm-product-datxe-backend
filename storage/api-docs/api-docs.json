@@ -2791,6 +2791,345 @@
                 ]
             }
         },
+        "/api/v1/admin/finance/payment-methods": {
+            "get": {
+                "tags": [
+                    "Admin / Finance / Payment Methods"
+                ],
+                "summary": "Danh sách phương thức nạp tiền (Admin)",
+                "description": "Lấy danh sách tất cả phương thức nạp tiền (kể cả inactive). Admin quản lý.",
+                "operationId": "1b9de60ac1a6c43e07ef4d3c18200583",
+                "responses": {
+                    "200": {
+                        "description": "Danh sách phương thức nạp tiền",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "string",
+                                                        "example": "1"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "e_wallet"
+                                                    },
+                                                    "type_label": {
+                                                        "type": "string",
+                                                        "example": "Ví điện tử"
+                                                    },
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "momo"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Ví MoMo"
+                                                    },
+                                                    "is_active": {
+                                                        "type": "boolean",
+                                                        "example": true
+                                                    },
+                                                    "min_amount": {
+                                                        "type": "number",
+                                                        "example": 10000
+                                                    },
+                                                    "max_amount": {
+                                                        "type": "number",
+                                                        "example": 10000000
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Admin / Finance / Payment Methods"
+                ],
+                "summary": "Tạo phương thức nạp tiền (Admin)",
+                "description": "Tạo phương thức nạp tiền mới. Loại: e_wallet | bank_card | bank_transfer.",
+                "operationId": "875d481f458e5ad5d4e5133218533eed",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type",
+                                    "code",
+                                    "name"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "example": "e_wallet",
+                                        "enum": [
+                                            "e_wallet",
+                                            "bank_card",
+                                            "bank_transfer"
+                                        ]
+                                    },
+                                    "code": {
+                                        "type": "string",
+                                        "example": "momo"
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Ví MoMo"
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "min_amount": {
+                                        "type": "number",
+                                        "example": 10000
+                                    },
+                                    "max_amount": {
+                                        "type": "number",
+                                        "example": 10000000
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "transfer_info": {
+                                        "description": "Bắt buộc nếu type = bank_transfer",
+                                        "properties": {
+                                            "bank_name": {
+                                                "type": "string",
+                                                "example": "Vietcombank"
+                                            },
+                                            "account_number": {
+                                                "type": "string",
+                                                "example": "1234567890"
+                                            },
+                                            "account_name": {
+                                                "type": "string",
+                                                "example": "CONG TY NHM"
+                                            },
+                                            "bank_code": {
+                                                "type": "string",
+                                                "example": "VCB"
+                                            },
+                                            "qr_url": {
+                                                "type": "string",
+                                                "nullable": true
+                                            }
+                                        },
+                                        "type": "object",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Tạo phương thức nạp tiền thành công"
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/payment-methods/{id}": {
+            "put": {
+                "tags": [
+                    "Admin / Finance / Payment Methods"
+                ],
+                "summary": "Cập nhật phương thức nạp tiền (Admin) (UC-132)",
+                "description": "Cập nhật thông tin phương thức nạp tiền.",
+                "operationId": "9aa172235f569b74bd5fc7c0c3a75a7c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Ví MoMo"
+                                    },
+                                    "min_amount": {
+                                        "type": "number",
+                                        "example": 10000
+                                    },
+                                    "max_amount": {
+                                        "type": "number",
+                                        "example": 5000000
+                                    },
+                                    "is_active": {
+                                        "type": "boolean",
+                                        "example": true
+                                    },
+                                    "sort_order": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "confirm": {
+                                        "description": "Xác nhận vô hiệu hóa kể cả khi có giao dịch pending",
+                                        "type": "boolean",
+                                        "example": false
+                                    },
+                                    "transfer_info": {
+                                        "type": "object",
+                                        "nullable": true
+                                    },
+                                    "metadata": {
+                                        "properties": {
+                                            "merchant_id": {
+                                                "type": "string",
+                                                "example": "MOMO123"
+                                            },
+                                            "api_key": {
+                                                "type": "string",
+                                                "example": "key_abc"
+                                            },
+                                            "secret_key": {
+                                                "type": "string",
+                                                "example": "sec_xyz"
+                                            },
+                                            "endpoint": {
+                                                "type": "string",
+                                                "example": "https://payment.momo.vn"
+                                            },
+                                            "transaction_fee": {
+                                                "type": "number",
+                                                "example": 1.5
+                                            },
+                                            "internal_note": {
+                                                "type": "string",
+                                                "example": "Internal notes"
+                                            },
+                                            "require_otp": {
+                                                "type": "boolean",
+                                                "example": true
+                                            }
+                                        },
+                                        "type": "object",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Cập nhật thành công"
+                    },
+                    "400": {
+                        "description": "Dữ liệu không hợp lệ"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy phương thức"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/finance/payment-methods/{id}/toggle": {
+            "patch": {
+                "tags": [
+                    "Admin / Finance / Payment Methods"
+                ],
+                "summary": "Bật/tắt phương thức nạp tiền (Admin) (UC-132)",
+                "description": "Bật/tắt phương thức nạp tiền. Driver chỉ thấy phương thức đang Active.",
+                "operationId": "e32d3f570c310b02066b3bb86134a99a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "confirm",
+                        "in": "query",
+                        "description": "Xác nhận vô hiệu hóa kể cả khi có giao dịch pending",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "default": false
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Toggle thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "is_active": {
+                                            "type": "boolean"
+                                        },
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy phương thức"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/finance/subscriptions/packages": {
             "get": {
                 "tags": [
@@ -4052,13 +4391,95 @@
                 ]
             }
         },
+        "/api/v1/finance/wallet/top-up/options": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Màn hình nạp tiền — phương thức & mệnh giá (UC-45)",
+                "description": "Lấy màn hình nạp tiền: số dư ví hiện tại, danh sách phương thức thanh toán Active, mệnh giá gợi ý.",
+                "operationId": "487b65c4e45f24e20ca454dc58c4d646",
+                "responses": {
+                    "200": {
+                        "description": "Tải màn hình nạp tiền thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "balance": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 150000
+                                        },
+                                        "suggested_amounts": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "integer"
+                                            },
+                                            "example": [
+                                                50000,
+                                                100000,
+                                                200000,
+                                                500000
+                                            ]
+                                        },
+                                        "payment_methods": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "code": {
+                                                        "type": "string",
+                                                        "example": "momo"
+                                                    },
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Ví MoMo"
+                                                    },
+                                                    "type": {
+                                                        "type": "string",
+                                                        "example": "e_wallet"
+                                                    },
+                                                    "type_label": {
+                                                        "type": "string",
+                                                        "example": "Ví điện tử"
+                                                    },
+                                                    "min_amount": {
+                                                        "type": "number",
+                                                        "example": 10000
+                                                    },
+                                                    "max_amount": {
+                                                        "type": "number",
+                                                        "example": 10000000
+                                                    },
+                                                    "icon_url": {
+                                                        "type": "string",
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/finance/wallet/top-up": {
             "post": {
                 "tags": [
                     "Finance"
                 ],
-                "summary": "Nạp tiền (UC-45)",
-                "description": "Khởi tạo yêu cầu nạp tiền vào ví tín dụng qua cổng thanh toán.",
+                "summary": "Tạo yêu cầu nạp tiền (UC-45)",
+                "description": "Tạo yêu cầu nạp tiền. Hệ thống validate phương thức theo cấu hình Admin và trả về redirect_url (e_wallet/bank_card) hoặc transfer_info (bank_transfer).",
                 "operationId": "fb7198f3efe954be3c7bd1303d23d047",
                 "requestBody": {
                     "required": true,
@@ -4067,14 +4488,16 @@
                             "schema": {
                                 "required": [
                                     "amount",
-                                    "payment_method"
+                                    "payment_method_code"
                                 ],
                                 "properties": {
                                     "amount": {
+                                        "description": "Số tiền nạp (đơn vị VND)",
                                         "type": "number",
-                                        "example": 50000
+                                        "example": 100000
                                     },
-                                    "payment_method": {
+                                    "payment_method_code": {
+                                        "description": "Code phương thức từ API /top-up/options",
                                         "type": "string",
                                         "example": "momo"
                                     }
@@ -4090,10 +4513,205 @@
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "$ref": "#/components/schemas/TopUpResponse"
+                                    "properties": {
+                                        "top_up_id": {
+                                            "type": "string",
+                                            "example": "123456789"
+                                        },
+                                        "external_id": {
+                                            "type": "string",
+                                            "example": "TX-MOM-68461AB2C8A12"
+                                        },
+                                        "amount": {
+                                            "type": "number",
+                                            "example": 100000
+                                        },
+                                        "payment_method": {
+                                            "type": "string",
+                                            "example": "momo"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "pending"
+                                        },
+                                        "status_label": {
+                                            "type": "string",
+                                            "example": "Đang xử lý"
+                                        },
+                                        "redirect_url": {
+                                            "description": "URL redirect cho e_wallet/bank_card",
+                                            "type": "string",
+                                            "nullable": true
+                                        },
+                                        "transfer_info": {
+                                            "description": "Thông tin chuyển khoản (bank_transfer)",
+                                            "properties": {
+                                                "bank_name": {
+                                                    "type": "string",
+                                                    "example": "Vietcombank"
+                                                },
+                                                "account_number": {
+                                                    "type": "string",
+                                                    "example": "1234567890"
+                                                },
+                                                "account_name": {
+                                                    "type": "string",
+                                                    "example": "CONG TY NHM"
+                                                },
+                                                "bank_code": {
+                                                    "type": "string",
+                                                    "example": "VCB"
+                                                },
+                                                "qr_url": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "transfer_content": {
+                                                    "type": "string",
+                                                    "example": "NAPTIEN TX-BAN-ABC123"
+                                                },
+                                                "amount": {
+                                                    "type": "number",
+                                                    "example": 100000
+                                                }
+                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
+                    },
+                    "400": {
+                        "description": "Số tiền không hợp lệ hoặc phương thức không khả dụng"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/finance/wallet/top-up/{topUpId}": {
+            "get": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Chi tiết giao dịch nạp tiền (UC-45)",
+                "description": "Xem chi tiết một giao dịch nạp tiền của Driver.",
+                "operationId": "86db30f7442a54c8a92e7e816d419de8",
+                "parameters": [
+                    {
+                        "name": "topUpId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Chi tiết giao dịch nạp tiền",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "string"
+                                        },
+                                        "amount": {
+                                            "type": "number",
+                                            "example": 100000
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "success"
+                                        },
+                                        "status_label": {
+                                            "type": "string",
+                                            "example": "Thành công"
+                                        },
+                                        "payment_method": {
+                                            "type": "string",
+                                            "example": "momo"
+                                        },
+                                        "external_id": {
+                                            "type": "string"
+                                        },
+                                        "created_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "updated_at": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Không tìm thấy giao dịch"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Hủy giao dịch nạp tiền (UC-45 A4)",
+                "description": "Driver hủy giao dịch nạp tiền đang ở trạng thái Pending (UC-45 A4).",
+                "operationId": "0ce930119015b03d46576c73a7d65ba0",
+                "parameters": [
+                    {
+                        "name": "topUpId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hủy giao dịch thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "top_up_id": {
+                                            "type": "string"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "cancelled"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Giao dịch nạp tiền đã được hủy."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Giao dịch không thể hủy (đã xử lý xong)"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy giao dịch"
                     }
                 },
                 "security": [
@@ -4108,8 +4726,8 @@
                 "tags": [
                     "Finance"
                 ],
-                "summary": "Callback nạp tiền (UC-45 Callback)",
-                "description": "Nhận phản hồi từ cổng thanh toán để cập nhật trạng thái nạp tiền (Dùng cho Gateway callback hoặc Mock).",
+                "summary": "Callback nạp tiền (UC-45)",
+                "description": "Nhận phản hồi từ cổng thanh toán để cập nhật trạng thái nạp tiền. Idempotent — an toàn khi gọi nhiều lần.",
                 "operationId": "3a944811ed10bda01c7cd17c70dfc828",
                 "requestBody": {
                     "required": true,
@@ -4122,11 +4740,16 @@
                                 "properties": {
                                     "external_id": {
                                         "type": "string",
-                                        "example": "TX-123456"
+                                        "example": "TX-MOM-68461AB2C8A12"
                                     },
                                     "status": {
                                         "type": "string",
-                                        "example": "success"
+                                        "example": "success",
+                                        "enum": [
+                                            "success",
+                                            "failed",
+                                            "cancelled"
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -4137,6 +4760,9 @@
                 "responses": {
                     "200": {
                         "description": "Xử lý kết quả nạp tiền thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy giao dịch"
                     }
                 }
             }
@@ -14711,6 +15337,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Admin / Finance / Payment Methods",
+            "description": "Quản lý phương thức nạp tiền (Admin)"
+        },
         {
             "name": "Z - Realtime Events",
             "description": "Z - Realtime Events"

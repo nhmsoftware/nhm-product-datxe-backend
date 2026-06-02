@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Finance\Routes;
 
+use App\Modules\Finance\Http\Controllers\AdminPaymentMethodController;
 use App\Modules\Finance\Http\Controllers\RewardController;
 use App\Modules\Finance\Http\Controllers\SpendingController;
 use App\Modules\Finance\Http\Controllers\VoucherController;
@@ -30,15 +31,18 @@ Route::prefix('v1/finance')->middleware(['auth:sanctum', 'check.account.status']
     Route::get('rewards/history/{transactionId}', [RewardController::class, 'showDetail'])->name('finance.rewards.detail');
 
     // UC-43: Manage Wallet (Driver Dashboard)
-    Route::get('wallet/manage', [\App\Modules\Finance\Http\Controllers\WalletController::class, 'manage'])->name('finance.wallet.manage');
+    Route::get('wallet/manage', [WalletController::class, 'manage'])->name('finance.wallet.manage');
 
     // UC-44: View Credit Wallet
-    Route::get('wallet/credit', [\App\Modules\Finance\Http\Controllers\WalletController::class, 'viewCreditWallet'])->name('finance.wallet.credit');
-    Route::get('wallet/transactions/{transactionId}', [\App\Modules\Finance\Http\Controllers\WalletController::class, 'getTransactionDetail'])->name('finance.wallet.transaction-detail');
+    Route::get('wallet/credit', [WalletController::class, 'viewCreditWallet'])->name('finance.wallet.credit');
+    Route::get('wallet/transactions/{transactionId}', [WalletController::class, 'getTransactionDetail'])->name('finance.wallet.transaction-detail');
 
     // UC-45: Top Up
-    Route::post('wallet/top-up', [\App\Modules\Finance\Http\Controllers\WalletController::class, 'initiateTopUp'])->name('finance.wallet.top-up.initiate');
-    Route::post('wallet/top-up/callback', [\App\Modules\Finance\Http\Controllers\WalletController::class, 'callback'])->name('finance.wallet.top-up.callback');
+    Route::get('wallet/top-up/options', [WalletController::class, 'getTopUpOptions'])->name('finance.wallet.top-up.options');      // B1: Màn hình nạp tiền
+    Route::post('wallet/top-up', [WalletController::class, 'initiateTopUp'])->name('finance.wallet.top-up.initiate');               // B5: Xác nhận nạp tiền
+    Route::post('wallet/top-up/callback', [WalletController::class, 'callback'])->name('finance.wallet.top-up.callback');           // Callback từ gateway
+    Route::get('wallet/top-up/{topUpId}', [WalletController::class, 'getTopUpDetail'])->name('finance.wallet.top-up.detail');       // Chi tiết giao dịch
+    Route::delete('wallet/top-up/{topUpId}', [WalletController::class, 'cancelTopUp'])->name('finance.wallet.top-up.cancel');       // A4: Hủy giao dịch
 
     // UC-46: Subscription Packages
     Route::get('subscriptions/packages', [\App\Modules\Finance\Http\Controllers\SubscriptionController::class, 'packages'])->name('finance.subscriptions.packages');
@@ -78,4 +82,10 @@ Route::prefix('v1/admin/finance')->middleware(['auth:sanctum'])->group(function 
     Route::post('subscriptions/packages', [\App\Modules\Finance\Http\Controllers\AdminSubscriptionController::class, 'store'])->name('admin.finance.subscriptions.packages.store');
     Route::put('subscriptions/packages/{id}', [\App\Modules\Finance\Http\Controllers\AdminSubscriptionController::class, 'update'])->name('admin.finance.subscriptions.packages.update');
     Route::patch('subscriptions/packages/{id}/disable', [\App\Modules\Finance\Http\Controllers\AdminSubscriptionController::class, 'disable'])->name('admin.finance.subscriptions.packages.disable');
+
+    // UC-132: Configure Top-up Payment Methods (Admin cấu hình phương thức nạp tiền)
+    Route::get('payment-methods', [AdminPaymentMethodController::class, 'index'])->name('admin.finance.payment-methods.index');
+    Route::post('payment-methods', [AdminPaymentMethodController::class, 'store'])->name('admin.finance.payment-methods.store');
+    Route::put('payment-methods/{id}', [AdminPaymentMethodController::class, 'update'])->name('admin.finance.payment-methods.update');
+    Route::patch('payment-methods/{id}/toggle', [AdminPaymentMethodController::class, 'toggle'])->name('admin.finance.payment-methods.toggle');
 });

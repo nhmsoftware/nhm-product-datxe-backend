@@ -20,4 +20,45 @@ final class TopUpRepository extends BaseRepository implements TopUpRepositoryInt
         /** @var TopUp|null */
         return $this->model->where('external_id', $externalId)->first();
     }
+
+    /**
+     * Tìm top-up theo ID và user_id (đảm bảo ownership).
+     */
+    public function findByIdAndUser(string $id, string $userId): ?TopUp
+    {
+        /** @var TopUp|null */
+        return $this->model->where('id', $id)->where('user_id', $userId)->first();
+    }
+
+    /**
+     * Lấy lịch sử nạp tiền của user có phân trang.
+     */
+    public function getPaginatedByUser(string $userId, int $page, int $limit): array
+    {
+        $paginator = $this->model
+            ->where('user_id', $userId)
+            ->orderByDesc('created_at')
+            ->paginate($limit, ['*'], 'page', $page);
+
+        return [
+            'data' => $paginator->items(),
+            'meta' => [
+                'current_page' => $paginator->currentPage(),
+                'last_page'    => $paginator->lastPage(),
+                'per_page'     => $paginator->perPage(),
+                'total'        => $paginator->total(),
+            ],
+        ];
+    }
+
+    /**
+     * Kiểm tra xem có giao dịch pending nào đối với phương thức thanh toán này không.
+     */
+    public function hasPendingTopUps(string $paymentMethodCode): bool
+    {
+        return $this->model->where('payment_method', $paymentMethodCode)
+            ->where('status', \App\Modules\Finance\Model\Enums\TopUpStatus::PENDING->value)
+            ->exists();
+    }
 }
+
