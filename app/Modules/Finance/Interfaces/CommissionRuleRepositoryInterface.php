@@ -36,6 +36,13 @@ interface CommissionRuleRepositoryInterface extends BaseRepositoryInterface
     public function getAllRules(): Collection;
 
     /**
+     * Lấy danh sách tất cả quy tắc đang hoạt động.
+     * 
+     * @return Collection
+     */
+    public function getAllActiveRules(): Collection;
+
+    /**
      * Kiểm tra xem có quy tắc nào bị trùng khoảng thời gian không.
      * 
      * @param CommissionServiceType $serviceType

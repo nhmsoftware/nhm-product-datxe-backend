@@ -56,6 +56,11 @@ final class CommissionRuleRepository extends BaseRepository implements Commissio
         return $this->getQuery()->orderBy('created_at', 'desc')->get();
     }
 
+    public function getAllActiveRules(): Collection
+    {
+        return $this->getQuery()->where('is_active', true)->orderBy('created_at', 'desc')->get();
+    }
+
     public function hasOverlappingRule(
         \App\Modules\Finance\Model\Enums\CommissionTargetType $targetType,
         CommissionServiceType $serviceType,

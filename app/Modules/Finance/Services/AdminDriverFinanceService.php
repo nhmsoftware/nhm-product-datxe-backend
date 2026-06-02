@@ -125,7 +125,7 @@ final class AdminDriverFinanceService extends BaseService implements AdminDriver
                 : 0;
 
             // ── 4. Hoa hồng theo loại dịch vụ (từ commission_rules) ──────────
-            $activeRules    = $this->commissionRuleRepository->where('is_active', true)->get();
+            $activeRules    = $this->commissionRuleRepository->getAllActiveRules();
             $ruleColors     = [1 => '#0049ac', 2 => '#f72585', 3 => '#00906a', 4 => '#b78300'];
             $serviceLabels  = [1 => 'Chuyến xe', 2 => 'Ăn uống', 3 => 'Giao hàng', 4 => 'Khác'];
 
