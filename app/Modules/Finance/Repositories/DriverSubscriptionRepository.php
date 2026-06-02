@@ -39,7 +39,7 @@ final class DriverSubscriptionRepository extends BaseRepository implements Drive
      */
     public function countTotalSubscriptionsByYear(int $year): int
     {
-        return $this->getQuery()->whereYear('created_at', $year)->count();
+        return $this->getQuery()->whereYear('driver_subscriptions.created_at', $year)->count();
     }
 
     /**
@@ -47,7 +47,7 @@ final class DriverSubscriptionRepository extends BaseRepository implements Drive
      */
     public function getSubscriptionsGroupedByPackage(int $year): \Illuminate\Support\Collection
     {
-        return $this->getQuery()->whereYear('created_at', $year)
+        return $this->getQuery()->whereYear('driver_subscriptions.created_at', $year)
             ->join('subscription_packages', 'driver_subscriptions.package_id', '=', 'subscription_packages.id')
             ->select([
                 'subscription_packages.name',
@@ -64,8 +64,8 @@ final class DriverSubscriptionRepository extends BaseRepository implements Drive
      */
     public function countSubscriptionsByMonth(int $year, int $month): int
     {
-        return $this->getQuery()->whereYear('created_at', $year)
-            ->whereMonth('created_at', $month)
+        return $this->getQuery()->whereYear('driver_subscriptions.created_at', $year)
+            ->whereMonth('driver_subscriptions.created_at', $month)
             ->count();
     }
 }
