@@ -32,7 +32,7 @@ final class FileRecordRepository extends BaseRepository implements FileRecordRep
         string       $mimeType,
     ): FileRecord {
         /** @var FileRecord */
-        return $this->model->create([
+        return $this->getQuery()->create([
             'name'          => $name,
             'real_name'     => $realName,
             'path'          => $path,
@@ -49,6 +49,6 @@ final class FileRecordRepository extends BaseRepository implements FileRecordRep
      */
     public function findByApplicationId(int $applicationId): Collection
     {
-        return $this->model->where('fileable_id', $applicationId)->get();
+        return $this->getQuery()->where('fileable_id', $applicationId)->get();
     }
 }

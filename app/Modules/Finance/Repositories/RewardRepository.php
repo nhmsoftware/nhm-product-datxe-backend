@@ -22,7 +22,7 @@ final class RewardRepository extends BaseRepository implements RewardRepositoryI
      */
     public function getTransactionsPaginated(RewardHistoryDTO $dto): LengthAwarePaginator
     {
-        $query = $this->model->where('customer_id', $dto->customerId);
+        $query = $this->getQuery()->where('customer_id', $dto->customerId);
 
         if ($dto->type !== null) {
             $query->where('type', $dto->type->value);
@@ -45,7 +45,7 @@ final class RewardRepository extends BaseRepository implements RewardRepositoryI
     public function getTransactionDetail(string $transactionId, string $customerId): ?RewardTransaction
     {
         /** @var RewardTransaction|null */
-        return $this->model
+        return $this->getQuery()
             ->where('id', $transactionId)
             ->where('customer_id', $customerId)
             ->first();

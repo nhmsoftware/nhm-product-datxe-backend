@@ -21,7 +21,7 @@ final class AirportRepository extends BaseRepository implements AirportRepositor
      */
     public function getActiveAirports(): Collection
     {
-        return $this->model
+        return $this->getQuery()
             ->where('is_active', true)
             ->orderBy('name')
             ->get();

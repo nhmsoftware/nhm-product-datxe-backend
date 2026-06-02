@@ -18,7 +18,7 @@ final class CreditWalletConfigRepository extends BaseRepository implements Credi
     public function getLatestConfig(): CreditWalletConfig
     {
         /** @var CreditWalletConfig */
-        return $this->model->first() ?? $this->model->create([
+        return $this->getQuery()->first() ?? $this->getQuery()->create([
             'min_balance' => 50000,
             'auto_lock' => true,
             'commission_rule' => 'Default rule'

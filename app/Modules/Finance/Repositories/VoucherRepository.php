@@ -21,7 +21,7 @@ final class VoucherRepository extends BaseRepository implements VoucherRepositor
      */
     public function findAllActive(): Collection
     {
-        return $this->model
+        return $this->getQuery()
             ->where('is_active', true)
             ->where('valid_until', '>=', now())
             ->orderBy('valid_until', 'asc')
@@ -34,7 +34,7 @@ final class VoucherRepository extends BaseRepository implements VoucherRepositor
     public function findByCode(string $code): ?Voucher
     {
         /** @var Voucher|null */
-        return $this->model->where('code', $code)->first();
+        return $this->getQuery()->where('code', $code)->first();
     }
 
     /**
@@ -42,7 +42,7 @@ final class VoucherRepository extends BaseRepository implements VoucherRepositor
      */
     public function search(array $filters): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $query = $this->model->query();
+        $query = $this->getQuery()->query();
 
         if (!empty($filters['code'])) {
             $query->where('code', 'ilike', '%' . $filters['code'] . '%');

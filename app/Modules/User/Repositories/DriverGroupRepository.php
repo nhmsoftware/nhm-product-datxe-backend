@@ -21,6 +21,6 @@ final class DriverGroupRepository extends BaseRepository implements DriverGroupR
      */
     public function getAllGroups(): Collection
     {
-        return $this->model->all();
+        return $this->getQuery()->all();
     }
 }

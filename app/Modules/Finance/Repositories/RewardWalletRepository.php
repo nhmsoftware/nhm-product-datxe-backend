@@ -18,13 +18,13 @@ final class RewardWalletRepository extends BaseRepository implements RewardWalle
     public function findByCustomerId(string $customerId): ?RewardWallet
     {
         /** @var RewardWallet|null */
-        return $this->model->where('customer_id', $customerId)->first();
+        return $this->getQuery()->where('customer_id', $customerId)->first();
     }
 
     public function firstOrCreateWallet(string $customerId): RewardWallet
     {
         /** @var RewardWallet */
-        return $this->model->firstOrCreate(
+        return $this->getQuery()->firstOrCreate(
             ['customer_id' => $customerId],
             ['balance' => 0, 'total_earned' => 0, 'total_used' => 0]
         );

@@ -24,7 +24,7 @@ final class CommissionRuleRepository extends BaseRepository implements Commissio
         ?string               $areaId = null
     ): ?CommissionRule {
         $now = now();
-        $query = $this->model->where('target_type', $targetType->value)
+        $query = $this->getQuery()->where('target_type', $targetType->value)
             ->where('service_type', $serviceType->value)
             ->where('is_active', true)
             ->where('effective_from', '<=', $now)
@@ -53,7 +53,7 @@ final class CommissionRuleRepository extends BaseRepository implements Commissio
 
     public function getAllRules(): Collection
     {
-        return $this->model->orderBy('created_at', 'desc')->get();
+        return $this->getQuery()->orderBy('created_at', 'desc')->get();
     }
 
     public function hasOverlappingRule(
@@ -65,7 +65,7 @@ final class CommissionRuleRepository extends BaseRepository implements Commissio
         ?string               $to = null,
         ?string               $excludeId = null
     ): bool {
-        $query = $this->model->where('target_type', $targetType->value)
+        $query = $this->getQuery()->where('target_type', $targetType->value)
             ->where('service_type', $serviceType->value)
             ->where('scope', $scope)
             ->where('is_active', true);

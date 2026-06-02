@@ -20,7 +20,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
     public function findByUserId(string $userId): ?DriverProfile
     {
         /** @var DriverProfile|null */
-        return $this->model->where('user_id', $userId)->first();
+        return $this->getQuery()->where('user_id', $userId)->first();
     }
 
     /**
@@ -39,7 +39,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
             $data['current_lng'] = $currentLng;
         }
 
-        return (bool) $this->model->where('id', $driverId)->update($data);
+        return (bool) $this->getQuery()->where('id', $driverId)->update($data);
     }
 
     /**
@@ -47,7 +47,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
      */
     public function updateStatus(string $driverId, DriverStatus $status): bool
     {
-        return (bool) $this->model->where('id', $driverId)->update([
+        return (bool) $this->getQuery()->where('id', $driverId)->update([
             'status' => $status->value,
         ]);
     }
@@ -57,7 +57,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
      */
     public function updateCancelCount(string $driverId, int $count): bool
     {
-        return (bool) $this->model->where('id', $driverId)->update([
+        return (bool) $this->getQuery()->where('id', $driverId)->update([
             'cancel_count_today' => $count,
         ]);
     }
@@ -67,7 +67,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
      */
     public function setCooldown(string $driverId, int $minutes): bool
     {
-        return (bool) $this->model->where('id', $driverId)->update([
+        return (bool) $this->getQuery()->where('id', $driverId)->update([
             'status'         => DriverStatus::COOLDOWN->value,
             'cooldown_until' => now()->addMinutes($minutes),
         ]);
@@ -82,7 +82,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
             return collect();
         }
 
-        $query = $this->model
+        $query = $this->getQuery()
             ->whereIn('user_id', $userIds)
             ->where('is_online', true)
             ->where(function ($q) {
@@ -106,7 +106,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
      */
     public function countActiveDrivers(): int
     {
-        return $this->model
+        return $this->getQuery()
             ->where('is_online', true)
             ->where(function ($q) {
                 $q->where('status', DriverStatus::ACTIVE->value)
@@ -123,7 +123,7 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
      */
     public function updateLocation(string $driverId, float $lat, float $lng): bool
     {
-        return (bool) $this->model->where('id', $driverId)->update([
+        return (bool) $this->getQuery()->where('id', $driverId)->update([
             'current_lat' => $lat,
             'current_lng' => $lng,
         ]);
@@ -131,16 +131,16 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
 
     public function countTotalDrivers(): int
     {
-        return $this->model->count();
+        return $this->getQuery()->count();
     }
 
     public function countByGroupType(\App\Modules\User\Model\Enums\DriverGroupType $type): int
     {
-        return $this->model->where('driver_group_type', $type->value)->count();
+        return $this->getQuery()->where('driver_group_type', $type->value)->count();
     }
 
     public function countByStatus(DriverStatus $status): int
     {
-        return $this->model->where('status', $status->value)->count();
+        return $this->getQuery()->where('status', $status->value)->count();
     }
 }

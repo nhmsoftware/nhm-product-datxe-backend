@@ -18,7 +18,7 @@ final class TopUpRepository extends BaseRepository implements TopUpRepositoryInt
     public function findByExternalId(string $externalId): ?TopUp
     {
         /** @var TopUp|null */
-        return $this->model->where('external_id', $externalId)->first();
+        return $this->getQuery()->where('external_id', $externalId)->first();
     }
 
     /**
@@ -27,7 +27,7 @@ final class TopUpRepository extends BaseRepository implements TopUpRepositoryInt
     public function findByIdAndUser(string $id, string $userId): ?TopUp
     {
         /** @var TopUp|null */
-        return $this->model->where('id', $id)->where('user_id', $userId)->first();
+        return $this->getQuery()->where('id', $id)->where('user_id', $userId)->first();
     }
 
     /**
@@ -35,7 +35,7 @@ final class TopUpRepository extends BaseRepository implements TopUpRepositoryInt
      */
     public function getPaginatedByUser(string $userId, int $page, int $limit): array
     {
-        $paginator = $this->model
+        $paginator = $this->getQuery()
             ->where('user_id', $userId)
             ->orderByDesc('created_at')
             ->paginate($limit, ['*'], 'page', $page);
@@ -56,7 +56,7 @@ final class TopUpRepository extends BaseRepository implements TopUpRepositoryInt
      */
     public function hasPendingTopUps(string $paymentMethodCode): bool
     {
-        return $this->model->where('payment_method', $paymentMethodCode)
+        return $this->getQuery()->where('payment_method', $paymentMethodCode)
             ->where('status', \App\Modules\Finance\Model\Enums\TopUpStatus::PENDING->value)
             ->exists();
     }

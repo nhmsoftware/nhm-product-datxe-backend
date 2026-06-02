@@ -21,6 +21,6 @@ final class ScheduledPricingRepository extends BaseRepository implements Schedul
     public function getCurrentConfig(): ?ScheduledPricingConfig
     {
         /** @var ScheduledPricingConfig|null */
-        return $this->model->where('is_active', true)->first();
+        return $this->getQuery()->where('is_active', true)->first();
     }
 }

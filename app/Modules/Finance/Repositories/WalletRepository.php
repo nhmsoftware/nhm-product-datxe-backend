@@ -18,13 +18,13 @@ final class WalletRepository extends BaseRepository implements WalletRepositoryI
     public function findByUserId(string $userId): ?Wallet
     {
         /** @var Wallet|null */
-        return $this->model->where('user_id', $userId)->first();
+        return $this->getQuery()->where('user_id', $userId)->first();
     }
 
     public function firstOrCreateForUser(string $userId): Wallet
     {
         /** @var Wallet */
-        return $this->model->firstOrCreate(['user_id' => $userId], [
+        return $this->getQuery()->firstOrCreate(['user_id' => $userId], [
             'balance'         => 0,
             'total_earned'    => 0,
             'total_withdrawn' => 0,
@@ -33,7 +33,7 @@ final class WalletRepository extends BaseRepository implements WalletRepositoryI
 
     public function getLowBalanceUserIds(float $minBalance): array
     {
-        return $this->model->where('balance', '<', $minBalance)
+        return $this->getQuery()->where('balance', '<', $minBalance)
             ->pluck('user_id')
             ->toArray();
     }

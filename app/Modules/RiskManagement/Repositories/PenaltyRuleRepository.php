@@ -21,7 +21,7 @@ final class PenaltyRuleRepository extends BaseRepository implements PenaltyRuleR
      */
     public function search(array $filters): LengthAwarePaginator
     {
-        $query = $this->model->query();
+        $query = $this->getQuery()->query();
 
         if (!empty($filters['keyword'])) {
             $query->where('name', 'ilike', '%' . $filters['keyword'] . '%');
@@ -49,7 +49,7 @@ final class PenaltyRuleRepository extends BaseRepository implements PenaltyRuleR
     public function findActiveRule(int $violationType, int $role): ?PenaltyRule
     {
         /** @var PenaltyRule|null */
-        return $this->model->query()
+        return $this->getQuery()->query()
             ->where('violation_type', $violationType)
             ->where('applicable_role', $role)
             ->where('is_active', true)

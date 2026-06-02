@@ -17,11 +17,11 @@ final class UserViolationRepository extends BaseRepository implements UserViolat
 
     public function getByUserId(string $userId)
     {
-        return $this->model->where('user_id', $userId)->latest()->get();
+        return $this->getQuery()->where('user_id', $userId)->latest()->get();
     }
 
     public function countByUserId(string $userId): int
     {
-        return $this->model->where('user_id', $userId)->count();
+        return $this->getQuery()->where('user_id', $userId)->count();
     }
 }

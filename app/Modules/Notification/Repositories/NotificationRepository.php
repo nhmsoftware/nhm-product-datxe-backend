@@ -19,7 +19,7 @@ final class NotificationRepository extends BaseRepository implements Notificatio
     public function findForUser(string $id, string $userId): ?Notification
     {
         /** @var Notification|null */
-        return $this->model
+        return $this->getQuery()
             ->where('id', $id)
             ->where('notifiable_id', $userId)
             ->first();
@@ -27,7 +27,7 @@ final class NotificationRepository extends BaseRepository implements Notificatio
 
     public function getForUser(string $userId, ?string $category, int $perPage): LengthAwarePaginator
     {
-        $query = $this->model
+        $query = $this->getQuery()
             ->where('notifiable_id', $userId)
             ->where('notifiable_type', 'App\Modules\User\Model\User') // Standard Laravel morph type
             ->latest();
@@ -41,7 +41,7 @@ final class NotificationRepository extends BaseRepository implements Notificatio
 
     public function markAsRead(string $id, string $userId): bool
     {
-        return (bool) $this->model
+        return (bool) $this->getQuery()
             ->where('id', $id)
             ->where('notifiable_id', $userId)
             ->whereNull('read_at')
@@ -50,7 +50,7 @@ final class NotificationRepository extends BaseRepository implements Notificatio
 
     public function markAllAsRead(string $userId): int
     {
-        return $this->model
+        return $this->getQuery()
             ->where('notifiable_id', $userId)
             ->whereNull('read_at')
             ->update(['read_at' => now()]);
@@ -58,7 +58,7 @@ final class NotificationRepository extends BaseRepository implements Notificatio
 
     public function deleteForUser(string $id, string $userId): bool
     {
-        return (bool) $this->model
+        return (bool) $this->getQuery()
             ->where('id', $id)
             ->where('notifiable_id', $userId)
             ->delete();
@@ -66,7 +66,7 @@ final class NotificationRepository extends BaseRepository implements Notificatio
 
     public function getUnreadCount(string $userId): int
     {
-        return $this->model
+        return $this->getQuery()
             ->where('notifiable_id', $userId)
             ->whereNull('read_at')
             ->count();

@@ -18,7 +18,7 @@ class BannerRepository extends BaseRepository implements BannerRepositoryInterfa
 
     public function getActiveBanners()
     {
-        return $this->model
+        return $this->getQuery()
             ->where('status', MarketingItemStatus::ACTIVE->value)
             ->orderBy('order', 'asc')
             ->orderBy('id', 'desc')

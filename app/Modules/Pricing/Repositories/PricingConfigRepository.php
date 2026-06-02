@@ -19,11 +19,11 @@ final class PricingConfigRepository extends BaseRepository implements PricingCon
     public function findByVehicleType(int $vehicleType): ?PricingConfig
     {
         /** @var PricingConfig|null */
-        return $this->model->where('vehicle_type', $vehicleType)->first();
+        return $this->getQuery()->where('vehicle_type', $vehicleType)->first();
     }
 
     public function getAllConfigs(): Collection
     {
-        return $this->model->all();
+        return $this->getQuery()->all();
     }
 }

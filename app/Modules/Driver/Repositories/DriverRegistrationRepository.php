@@ -24,7 +24,7 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
     public function findActiveApplicationByUser(int|string $userId, KycType $kycType): ?UserReviewApplication
     {
         /** @var UserReviewApplication|null */
-        return $this->model
+        return $this->getQuery()
             ->where('user_id', $userId)
             ->where('kyc_type', $kycType->value)
             ->whereIn('kyc_status', [KycStatus::PENDING->value, KycStatus::APPROVED->value])
@@ -39,7 +39,7 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
      */
     public function existsByCitizenId(string $citizenId, int|string $excludeUserId = '0'): bool
     {
-        return $this->model
+        return $this->getQuery()
             ->where('kyc_type', KycType::DRIVER->value)
             ->whereIn('kyc_status', [KycStatus::PENDING->value, KycStatus::APPROVED->value])
             ->where('user_id', '!=', $excludeUserId)
@@ -53,7 +53,7 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
      */
     public function existsByVehicleNumber(string $vehicleNumber, int|string $excludeUserId = '0'): bool
     {
-        return $this->model
+        return $this->getQuery()
             ->where('kyc_type', KycType::DRIVER->value)
             ->whereIn('kyc_status', [KycStatus::PENDING->value, KycStatus::APPROVED->value])
             ->where('user_id', '!=', $excludeUserId)
@@ -71,7 +71,7 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
         KycType $kycType,
     ): UserReviewApplication {
         /** @var UserReviewApplication */
-        return $this->model->create([
+        return $this->getQuery()->create([
             'user_id'       => $userId,
             'snapshot_data' => $snapshotData,
             'kyc_type'      => $kycType->value,
@@ -84,7 +84,7 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
      */
     public function updateStatus(int|string $applicationId, KycStatus $status, ?string $cancelReason = null): bool
     {
-        return (bool) $this->model->where('id', $applicationId)->update([
+        return (bool) $this->getQuery()->where('id', $applicationId)->update([
             'kyc_status'    => $status->value,
             'cancel_reason' => $cancelReason,
         ]);
@@ -95,7 +95,7 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
      */
     public function getPendingApplications(): \Illuminate\Support\Collection
     {
-        return $this->model
+        return $this->getQuery()
             ->where('kyc_status', KycStatus::PENDING->value)
             ->with('user')
             ->latest()
@@ -108,6 +108,6 @@ final class DriverRegistrationRepository extends BaseRepository implements Drive
     public function findByIdWithUser(int|string $applicationId): ?UserReviewApplication
     {
         /** @var UserReviewApplication|null */
-        return $this->model->with('user')->find($applicationId);
+        return $this->getQuery()->with('user')->find($applicationId);
     }
 }

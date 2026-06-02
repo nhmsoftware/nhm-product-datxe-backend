@@ -19,7 +19,7 @@ final class WalletTransactionRepository extends BaseRepository implements Wallet
 
     public function getRecentByWalletId(string $walletId, int $limit = 10): Collection
     {
-        return $this->model
+        return $this->getQuery()
             ->where('wallet_id', $walletId)
             ->orderByDesc('created_at')
             ->limit($limit)
@@ -28,7 +28,7 @@ final class WalletTransactionRepository extends BaseRepository implements Wallet
 
     public function paginateByWalletId(string $walletId, int $page, int $limit): array
     {
-        $paginator = $this->model
+        $paginator = $this->getQuery()
             ->where('wallet_id', $walletId)
             ->orderByDesc('created_at')
             ->paginate($limit, ['*'], 'page', $page);
@@ -46,7 +46,7 @@ final class WalletTransactionRepository extends BaseRepository implements Wallet
 
     public function getTotalTopUp(string $walletId): float
     {
-        return (float) $this->model
+        return (float) $this->getQuery()
             ->where('wallet_id', $walletId)
             ->where('type', WalletTransactionType::TOP_UP->value)
             ->sum('amount');
@@ -55,7 +55,7 @@ final class WalletTransactionRepository extends BaseRepository implements Wallet
     public function getTotalUsed(string $walletId): float
     {
         // Fee and Withdrawal are "used"
-        return (float) $this->model
+        return (float) $this->getQuery()
             ->where('wallet_id', $walletId)
             ->whereIn('type', [
                 WalletTransactionType::FEE->value,
@@ -67,7 +67,7 @@ final class WalletTransactionRepository extends BaseRepository implements Wallet
     public function findByIdAndWallet(string $transactionId, string $walletId): ?WalletTransaction
     {
         /** @var WalletTransaction|null */
-        return $this->model
+        return $this->getQuery()
             ->where('id', $transactionId)
             ->where('wallet_id', $walletId)
             ->first();

@@ -17,6 +17,6 @@ final class ComboItemRepository extends BaseRepository implements ComboItemRepos
 
     public function deleteByCombo(string $comboId): void
     {
-        $this->model->where('combo_id', $comboId)->delete();
+        $this->getQuery()->where('combo_id', $comboId)->delete();
     }
 }

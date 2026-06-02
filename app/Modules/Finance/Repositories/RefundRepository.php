@@ -49,6 +49,6 @@ final class RefundRepository extends BaseRepository implements RefundRepositoryI
     public function findWithDetails(string $id): ?RefundRequest
     {
         /** @var RefundRequest|null */
-        return $this->model->with(['customer', 'refundable', 'processor'])->find($id);
+        return $this->getQuery()->with(['customer', 'refundable', 'processor'])->find($id);
     }
 }

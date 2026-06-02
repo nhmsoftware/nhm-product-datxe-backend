@@ -18,20 +18,18 @@ final class FoodRatingRepository extends BaseRepository implements FoodRatingRep
 
     public function saveRating(array $ratingData, array $itemsRatingData): FoodRating
     {
-        return DB::transaction(function () use ($ratingData, $itemsRatingData) {
-            /** @var FoodRating $rating */
-            $rating = $this->model->create($ratingData);
+        /** @var FoodRating $rating */
+        $rating = $this->getQuery()->create($ratingData);
 
-            foreach ($itemsRatingData as $itemData) {
-                $rating->itemRatings()->create($itemData);
-            }
+        foreach ($itemsRatingData as $itemData) {
+            $rating->itemRatings()->create($itemData);
+        }
 
-            return $rating;
-        });
+        return $rating;
     }
 
     public function isOrderRated(string $orderId): bool
     {
-        return $this->model->where('food_order_id', $orderId)->exists();
+        return $this->getQuery()->where('food_order_id', $orderId)->exists();
     }
 }

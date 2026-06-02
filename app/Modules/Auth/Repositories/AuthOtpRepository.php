@@ -25,7 +25,7 @@ class AuthOtpRepository extends BaseRepository implements AuthOtpRepositoryInter
      */
     public function getLastOtp(string $phone, UserOtpType $type): ?UserOtp
     {
-        return $this->model
+        return $this->getQuery()
             ->where('phone', $phone)
             ->where('type', $type->value)
             ->latest('created_at')
@@ -38,7 +38,7 @@ class AuthOtpRepository extends BaseRepository implements AuthOtpRepositoryInter
      */
     public function getLastVerified(string $phone, UserOtpType $type): ?UserOtp
     {
-        return $this->model
+        return $this->getQuery()
             ->where('phone', $phone)
             ->where('type', $type->value)
             ->whereNotNull('verified_at')
@@ -54,7 +54,7 @@ class AuthOtpRepository extends BaseRepository implements AuthOtpRepositoryInter
      */
     public function countSentToday(string $phone, UserOtpType $type): int
     {
-        return $this->model
+        return $this->getQuery()
             ->where('phone', $phone)
             ->where('type', $type->value)
             ->whereDate('created_at', today())
@@ -76,7 +76,7 @@ class AuthOtpRepository extends BaseRepository implements AuthOtpRepositoryInter
         $plainCode = '123456';
 
         /** @var UserOtp $otp */
-        $otp = $this->model->create([
+        $otp = $this->getQuery()->create([
             'phone'        => $phone,
             'otp_hash'     => bcrypt($plainCode),
             'type'         => $type,
@@ -119,7 +119,7 @@ class AuthOtpRepository extends BaseRepository implements AuthOtpRepositoryInter
      */
     public function markLatestAsUsed(string $phone, UserOtpType $type): void
     {
-        $this->model
+        $this->getQuery()
             ->where('phone', $phone)
             ->where('type', $type->value)
             ->whereNotNull('verified_at')

@@ -59,7 +59,7 @@ final class FraudAlertRepository extends BaseRepository implements FraudAlertRep
      */
     public function getFraudStatistics(): array
     {
-        $riskLevelSummary = $this->model->select('risk_level', DB::raw('count(*) as total'))
+        $riskLevelSummary = $this->getQuery()->select('risk_level', DB::raw('count(*) as total'))
             ->groupBy('risk_level')
             ->get()
             ->mapWithKeys(function ($item) {
@@ -68,7 +68,7 @@ final class FraudAlertRepository extends BaseRepository implements FraudAlertRep
                 return [(string)$key => $item->total];
             })->toArray();
 
-        $targetTypeSummary = $this->model->select('target_type', DB::raw('count(*) as total'))
+        $targetTypeSummary = $this->getQuery()->select('target_type', DB::raw('count(*) as total'))
             ->groupBy('target_type')
             ->get()
             ->mapWithKeys(function ($item) {
@@ -77,7 +77,7 @@ final class FraudAlertRepository extends BaseRepository implements FraudAlertRep
             })->toArray();
 
         return [
-            'active_alerts_count' => $this->model->whereIn('status', [
+            'active_alerts_count' => $this->getQuery()->whereIn('status', [
                 FraudAlertStatus::PENDING->value,
                 FraudAlertStatus::INVESTIGATING->value
             ])->count(),

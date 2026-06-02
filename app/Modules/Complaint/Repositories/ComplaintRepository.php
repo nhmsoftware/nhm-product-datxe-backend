@@ -45,6 +45,6 @@ final class ComplaintRepository extends BaseRepository implements ComplaintRepos
     public function findWithDetails(string $id): ?Complaint
     {
         /** @var Complaint|null */
-        return $this->model->with(['sender', 'complaintable', 'processor'])->find($id);
+        return $this->getQuery()->with(['sender', 'complaintable', 'processor'])->find($id);
     }
 }

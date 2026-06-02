@@ -23,7 +23,7 @@ final class PaymentMethodRepository extends BaseRepository implements PaymentMet
     public function getActiveMethods(): Collection
     {
         /** @var Collection<int, PaymentMethod> */
-        return $this->model->where('is_active', true)
+        return $this->getQuery()->where('is_active', true)
             ->orderBy('sort_order')
             ->get();
     }
@@ -34,7 +34,7 @@ final class PaymentMethodRepository extends BaseRepository implements PaymentMet
     public function findActiveByCode(string $code): ?PaymentMethod
     {
         /** @var PaymentMethod|null */
-        return $this->model->where('code', $code)
+        return $this->getQuery()->where('code', $code)
             ->where('is_active', true)
             ->first();
     }
@@ -45,7 +45,7 @@ final class PaymentMethodRepository extends BaseRepository implements PaymentMet
     public function findActiveTransferAccount(): ?PaymentMethod
     {
         /** @var PaymentMethod|null */
-        return $this->model->where('type', PaymentMethodType::BANK_TRANSFER->value)
+        return $this->getQuery()->where('type', PaymentMethodType::BANK_TRANSFER->value)
             ->where('is_active', true)
             ->first();
     }
@@ -56,6 +56,6 @@ final class PaymentMethodRepository extends BaseRepository implements PaymentMet
     public function getAllForAdmin(): Collection
     {
         /** @var Collection<int, PaymentMethod> */
-        return $this->model->orderBy('sort_order')->get();
+        return $this->getQuery()->orderBy('sort_order')->get();
     }
 }

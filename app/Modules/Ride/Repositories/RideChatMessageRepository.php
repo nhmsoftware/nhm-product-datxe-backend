@@ -20,7 +20,7 @@ final class RideChatMessageRepository extends BaseRepository implements RideChat
 
     public function getConversationByRideId(string $rideId): Collection
     {
-        return $this->model
+        return $this->getQuery()
             ->with('sender')
             ->where('ride_id', $rideId)
             ->orderBy('created_at')

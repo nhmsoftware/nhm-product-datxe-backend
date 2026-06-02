@@ -25,7 +25,7 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
      */
     public function getByCustomer(CustomerProfile $customerProfile): Collection
     {
-        return $this->model->where('customer_id', $customerProfile->id)
+        return $this->getQuery()->where('customer_id', $customerProfile->id)
             ->orderByDesc('is_default')
             ->orderByDesc('created_at')
             ->get();
@@ -36,7 +36,7 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
      */
     public function countByCustomer(CustomerProfile $customerProfile): int
     {
-        return $this->model->where('customer_id', $customerProfile->id)->count();
+        return $this->getQuery()->where('customer_id', $customerProfile->id)->count();
     }
 
     /**
@@ -44,7 +44,7 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
      */
     public function findDuplicate(CustomerProfile $customerProfile, float $lat, float $lng, ?int $excludeId = null): ?CustomerSavedAddress
     {
-        return $this->model
+        return $this->getQuery()
             ->where('customer_id', $customerProfile->id)
             ->where('lat', $lat)
             ->where('lng', $lng)
@@ -59,7 +59,7 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
      */
     public function unsetDefaults(CustomerProfile $customerProfile, ?int $excludeId = null): void
     {
-        $query = $this->model->where('customer_id', $customerProfile->id)
+        $query = $this->getQuery()->where('customer_id', $customerProfile->id)
             ->where('is_default', true);
 
         if ($excludeId) {
@@ -74,7 +74,7 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
      */
     public function findFirstByCustomer(CustomerProfile $customerProfile): ?CustomerSavedAddress
     {
-        return $this->model->where('customer_id', $customerProfile->id)->first();
+        return $this->getQuery()->where('customer_id', $customerProfile->id)->first();
     }
 
     /**
@@ -82,7 +82,7 @@ class SavedAddressRepository extends BaseRepository implements SavedAddressRepos
      */
     public function createForCustomer(CustomerProfile $customerProfile, array $data): CustomerSavedAddress
     {
-        return $this->model->create([
+        return $this->getQuery()->create([
             'customer_id' => $customerProfile->id,
             'label' => $data['label'],
             'name' => $data['name'] ?? null,

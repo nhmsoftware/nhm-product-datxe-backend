@@ -18,6 +18,6 @@ final class PricingGlobalSettingRepository extends BaseRepository implements Pri
     public function getSettings(): ?PricingGlobalSetting
     {
         /** @var PricingGlobalSetting|null */
-        return $this->model->first();
+        return $this->getQuery()->first();
     }
 }

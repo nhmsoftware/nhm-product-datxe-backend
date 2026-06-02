@@ -20,7 +20,7 @@ final class VoucherWalletRepository extends BaseRepository implements VoucherWal
      */
     public function isSavedByCustomer(string $customerId, string $voucherId): bool
     {
-        return $this->model
+        return $this->getQuery()
             ->where('customer_id', $customerId)
             ->where('voucher_id', $voucherId)
             ->exists();
@@ -31,7 +31,7 @@ final class VoucherWalletRepository extends BaseRepository implements VoucherWal
      */
     public function saveToWallet(string $customerId, string $voucherId): bool
     {
-        return (bool) $this->model->updateOrCreate(
+        return (bool) $this->getQuery()->updateOrCreate(
             ['customer_id' => $customerId, 'voucher_id' => $voucherId],
             ['saved_at' => now()]
         );
@@ -42,7 +42,7 @@ final class VoucherWalletRepository extends BaseRepository implements VoucherWal
      */
     public function findVouchersByCustomer(string $customerId): \Illuminate\Support\Collection
     {
-        return $this->model
+        return $this->getQuery()
             ->with('voucher')
             ->where('customer_id', $customerId)
             ->whereNull('used_at')
@@ -56,7 +56,7 @@ final class VoucherWalletRepository extends BaseRepository implements VoucherWal
      */
     public function markAsUsed(string $customerId, string $voucherId): bool
     {
-        return (bool) $this->model
+        return (bool) $this->getQuery()
             ->where('customer_id', $customerId)
             ->where('voucher_id', $voucherId)
             ->update(['used_at' => now()]);

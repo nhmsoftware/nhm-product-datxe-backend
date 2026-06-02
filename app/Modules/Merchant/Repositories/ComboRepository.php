@@ -18,7 +18,7 @@ final class ComboRepository extends BaseRepository implements ComboRepositoryInt
 
     public function getByMerchant(string $merchantProfileId): Collection
     {
-        return $this->model->where('merchant_profile_id', $merchantProfileId)
+        return $this->getQuery()->where('merchant_profile_id', $merchantProfileId)
             ->withCount('items')
             ->orderBy('order')
             ->get();
@@ -27,13 +27,13 @@ final class ComboRepository extends BaseRepository implements ComboRepositoryInt
     public function findWithDetails(string $comboId): ?Combo
     {
         /** @var Combo|null */
-        return $this->model->where('id', $comboId)
+        return $this->getQuery()->where('id', $comboId)
             ->with(['items.menuItem'])
             ->first();
     }
 
     public function findWithTrashed(string $comboId): ?Combo
     {
-        return $this->model->withTrashed()->where('id', $comboId)->first();
+        return $this->getQuery()->withTrashed()->where('id', $comboId)->first();
     }
 }

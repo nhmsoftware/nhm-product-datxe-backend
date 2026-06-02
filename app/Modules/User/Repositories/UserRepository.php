@@ -25,7 +25,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function findByPhone(string $phone): ?User
     {
-        return $this->model
+        return $this->getQuery()
             ->where('phone', $phone)
             ->withTrashed()
             ->first();
@@ -37,7 +37,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function existsByPhone(string $phone): bool
     {
-        return $this->model
+        return $this->getQuery()
             ->where('phone', $phone)
             ->withTrashed()
             ->exists();
@@ -49,7 +49,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
             return null;
         }
 
-        return $this->model
+        return $this->getQuery()
             ->where('email', $email)
             ->withTrashed()
             ->first();
@@ -60,12 +60,12 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function existsByGoogleId(string $googleId): bool
     {
-        return $this->model->where('google_id', $googleId)->exists();
+        return $this->getQuery()->where('google_id', $googleId)->exists();
     }
 
     public function findByGoogleId(string $googleId): ?User
     {
-        return $this->model
+        return $this->getQuery()
             ->where('google_id', $googleId)
             ->first();
     }
@@ -75,12 +75,12 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function existsByAppleId(string $appleId): bool
     {
-        return $this->model->where('apple_id', $appleId)->exists();
+        return $this->getQuery()->where('apple_id', $appleId)->exists();
     }
 
     public function findByAppleId(string $appleId): ?User
     {
-        return $this->model
+        return $this->getQuery()
             ->where('apple_id', $appleId)
             ->first();
     }
@@ -125,7 +125,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function updateRole(int|string $userId, UserRole $role): bool
     {
-        return (bool) $this->model->where('id', $userId)->update([
+        return (bool) $this->getQuery()->where('id', $userId)->update([
             'role' => $role->value,
         ]);
     }
@@ -135,7 +135,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function countUsersByRoles(array $roles): int
     {
-        return $this->model->whereIn('role', $roles)->count();
+        return $this->getQuery()->whereIn('role', $roles)->count();
     }
 
     /**
@@ -143,7 +143,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function countActiveMerchants(): int
     {
-        return $this->model
+        return $this->getQuery()
             ->where('role', UserRole::Merchants->value)
             ->where('is_active', true)
             ->count();
@@ -155,7 +155,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
     public function findDriverWithProfileById(string $driverId): ?User
     {
         /** @var User|null */
-        return $this->model->with('driverProfile')
+        return $this->getQuery()->with('driverProfile')
             ->where('id', $driverId)
             ->first();
     }
@@ -165,7 +165,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function findCustomers(array $filters, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $query = $this->model->with('customerProfile')
+        $query = $this->getQuery()->with('customerProfile')
             ->where('role', UserRole::Customer->value);
 
         if (!empty($filters['keyword'])) {
@@ -191,7 +191,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function updateActiveStatus(string|int $userId, array $data): bool
     {
-        return (bool) $this->model->where('id', $userId)->update($data);
+        return (bool) $this->getQuery()->where('id', $userId)->update($data);
     }
 
     /**
@@ -199,7 +199,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function findDrivers(array $filters, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $query = $this->model->with(['driverProfile', 'userReviewApplications' => function ($q) {
+        $query = $this->getQuery()->with(['driverProfile', 'userReviewApplications' => function ($q) {
             $q->where('kyc_type', KycType::Driver->value)->latest();
         }])
             ->where('role', UserRole::Driver->value);
@@ -217,7 +217,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
 
         if (isset($filters['kyc_status']) && $filters['kyc_status'] !== '') {
             $kycStatusValue = (int) $filters['kyc_status'];
-            
+
             if ($kycStatusValue === 0) {
                 // Lọc những người chưa từng nộp hồ sơ
                 $query->whereDoesntHave('userReviewApplications', function ($q) {
@@ -242,7 +242,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
         if (isset($filters['is_active'])) {
             $query->where('is_active', (bool) $filters['is_active']);
         }
-        
+
         if (!empty($filters['driver_group_type'])) {
             $query->whereHas('driverProfile', function ($q) use ($filters) {
                 $q->where('driver_group_type', (int) $filters['driver_group_type']);
@@ -257,7 +257,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function approveDriverApplication(string|int $userId): bool
     {
-        return (bool) $this->model->find($userId)
+        return (bool) $this->getQuery()->find($userId)
             ->userReviewApplications()
             ->where('kyc_type', KycType::Driver->value)
             ->where('kyc_status', KycStatus::Pending->value)
@@ -270,7 +270,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function rejectDriverApplication(string|int $userId, string $reason): bool
     {
-        return (bool) $this->model->find($userId)
+        return (bool) $this->getQuery()->find($userId)
             ->userReviewApplications()
             ->where('kyc_type', KycType::Driver->value)
             ->where('kyc_status', KycStatus::Pending->value)
@@ -286,7 +286,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function findDriverDetailById(string|int $userId): ?User
     {
-        return $this->model->with(['driverProfile', 'userReviewApplications' => function ($q) {
+        return $this->getQuery()->with(['driverProfile', 'userReviewApplications' => function ($q) {
             $q->where('kyc_type', KycType::Driver->value)->latest();
         }])
             ->where('role', UserRole::Driver->value)
@@ -298,7 +298,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function updateDriverGroup(string|int $userId, DriverGroupType $groupType): bool
     {
-        return (bool) $this->model->find($userId)
+        return (bool) $this->getQuery()->find($userId)
             ->driverProfile()
             ->update([
                 'driver_group_type' => $groupType->value,
@@ -311,7 +311,7 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
     public function findDetailById(string|int $userId): ?User
     {
         /** @var User|null */
-        return $this->model->with(['customerProfile', 'driverProfile'])
+        return $this->getQuery()->with(['customerProfile', 'driverProfile'])
             ->where('id', $userId)
             ->first();
     }
@@ -333,6 +333,6 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
      */
     public function chunkActiveUsers(int $chunkSize, callable $callback): void
     {
-        $this->model->where('is_active', true)->chunk($chunkSize, $callback);
+        $this->getQuery()->where('is_active', true)->chunk($chunkSize, $callback);
     }
 }

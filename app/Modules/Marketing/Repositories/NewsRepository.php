@@ -18,7 +18,7 @@ class NewsRepository extends BaseRepository implements NewsRepositoryInterface
 
     public function getActiveNews()
     {
-        return $this->model
+        return $this->getQuery()
             ->where('status', MarketingItemStatus::ACTIVE->value)
             ->orderBy('order', 'asc')
             ->orderBy('id', 'desc')

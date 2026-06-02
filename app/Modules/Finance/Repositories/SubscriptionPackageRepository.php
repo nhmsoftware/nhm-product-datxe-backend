@@ -21,7 +21,7 @@ final class SubscriptionPackageRepository extends BaseRepository implements Subs
      */
     public function getActivePackages(): Collection
     {
-        return $this->model->where('is_active', true)->orderBy('price')->get();
+        return $this->getQuery()->where('is_active', true)->orderBy('price')->get();
     }
 
     /**
@@ -29,7 +29,7 @@ final class SubscriptionPackageRepository extends BaseRepository implements Subs
      */
     public function getAllPackages(): Collection
     {
-        return $this->model->orderBy('price')->get();
+        return $this->getQuery()->orderBy('price')->get();
     }
 
     /**
@@ -38,7 +38,7 @@ final class SubscriptionPackageRepository extends BaseRepository implements Subs
     public function findByName(string $name, ?string $excludeId = null): ?SubscriptionPackage
     {
         /** @var SubscriptionPackage|null */
-        $query = $this->model->where('name', $name);
+        $query = $this->getQuery()->where('name', $name);
 
         if ($excludeId !== null) {
             $query->where('id', '!=', $excludeId);

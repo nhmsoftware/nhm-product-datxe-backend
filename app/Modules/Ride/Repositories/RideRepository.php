@@ -6,6 +6,7 @@ namespace App\Modules\Ride\Repositories;
 
 use App\Core\Repository\BaseRepository;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
+use App\Modules\Ride\Model\DeliveryOrder;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\RideType;
@@ -33,7 +34,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         }
 
         /** @var Ride|null */
-        return $this->model->where('id', $rideId)
+        return $this->getQuery()->where('id', $rideId)
             ->where('customer_id', $customerId)
             ->first();
     }
@@ -45,7 +46,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         }
 
         /** @var Ride|null */
-        return $this->model->with(['driver', 'driver.driverProfile'])
+        return $this->getQuery()->with(['driver', 'driver.driverProfile'])
             ->whereRaw('id = ?::bigint', [(string) $rideId])
             ->where(function ($query) use ($customerId) {
                 $query->whereRaw('customer_id::text = ?', [(string) $customerId])
@@ -59,7 +60,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function applyVoucher(string $rideId, string $voucherCode, float $discountAmount, float $finalPrice): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'voucher_code'    => $voucherCode,
             'discount_amount' => $discountAmount,
             'total_price'     => $finalPrice,
@@ -71,7 +72,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function clearVoucher(string $rideId, float $originalPrice): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'voucher_code'    => null,
             'discount_amount' => 0,
             'total_price'     => $originalPrice,
@@ -83,7 +84,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function confirmBooking(string $rideId, float $finalPrice): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'status'      => RideStatus::PENDING->value,
             'total_price' => $finalPrice,
         ]);
@@ -94,7 +95,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function cancel(string $rideId, ?string $reason, float $cancellationFee): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'status'           => RideStatus::CANCELLED->value,
             'cancel_reason'    => $reason,
             'cancellation_fee' => $cancellationFee,
@@ -106,7 +107,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function getSpendingSummary(string $customerId, CarbonInterface $start, CarbonInterface $end): array
     {
-        $data = $this->model
+        $data = $this->getQuery()
             ->where('customer_id', $customerId)
             ->where('status', RideStatus::COMPLETED->value)
             ->whereBetween('created_at', [$start, $end])
@@ -124,8 +125,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function hasActiveRideByDriver(string $driverId): bool
     {
-        return $this->model
-            ->where('driver_id', $driverId)
+        return $this->getQuery()->where('driver_id', $driverId)
             ->whereIn('status', [RideStatus::ACCEPTED->value, RideStatus::IN_PROGRESS->value])
             ->exists();
     }
@@ -135,7 +135,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function acceptByDriver(string $rideId, string $driverId): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'status'          => RideStatus::ACCEPTED->value,
             'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED->value,
             'driver_id'       => $driverId,
@@ -147,7 +147,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function rejectByDriver(string $rideId, string $driverId): bool
     {
-        $ride = $this->model->find($rideId);
+        $ride = $this->getQuery()->find($rideId);
         if (!$ride) {
             return false;
         }
@@ -163,7 +163,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function cancelByDriver(string $rideId, string $reasonId): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'status'          => RideStatus::CANCELLED->value,
             'tracking_status' => RideTrackingStatus::DRIVER_CANCELLED->value,
             'cancel_reason'   => (string) $reasonId, // Lưu ID lý do hoặc map sang label
@@ -174,7 +174,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function pickup(string $rideId): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'status' => RideStatus::PICKED_UP->value,
         ]);
     }
@@ -184,7 +184,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function startTrip(string $rideId): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'status'     => RideStatus::IN_PROGRESS->value,
             'started_at' => now(),
         ]);
@@ -195,7 +195,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function completeTrip(string $rideId, float $finalFare, float $serviceFee, float $driverEarnings): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'status'          => RideStatus::COMPLETED->value,
             'completed_at'    => now(),
             'total_price'     => $finalFare,
@@ -209,7 +209,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function isRejectedByDriver(string $rideId, string $driverId): bool
     {
-        $ride = $this->model->find($rideId);
+        $ride = $this->getQuery()->find($rideId);
         if (!$ride) {
             return false;
         }
@@ -227,7 +227,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             $data['cancel_reason'] = $reason;
         }
 
-        return (bool) $this->model->where('id', $rideId)->update($data);
+        return (bool) $this->getQuery()->where('id', $rideId)->update($data);
     }
 
     /**
@@ -236,7 +236,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function findActiveByDriver(string $driverId): ?Ride
     {
         /** @var Ride|null */
-        return $this->model
+        return $this->getQuery()
             ->where('driver_id', $driverId)
             ->whereIn('status', [
                 RideStatus::ACCEPTED->value,
@@ -254,7 +254,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function findActiveByCustomer(string $customerId): ?Ride
     {
         /** @var Ride|null */
-        return $this->model
+        return $this->getQuery()
             ->where('customer_id', $customerId)
             ->whereIn('status', [
                 RideStatus::PENDING->value,
@@ -274,7 +274,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         }
 
         /** @var Ride|null */
-        return $this->model->with(['driver.driverProfile'])
+        return $this->getQuery()->with(['driver.driverProfile'])
             ->where('id', $rideId)
             ->where('customer_id', $customerId)
             ->first();
@@ -282,7 +282,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function assignDriver(string $rideId, string $driverId, CarbonInterface $acceptedAt): bool
     {
-        return (bool) $this->model->where('id', $rideId)
+        return (bool) $this->getQuery()->where('id', $rideId)
             ->where('status', RideStatus::PENDING->value)
             ->whereNull('driver_id')
             ->update([
@@ -296,7 +296,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function findTrackingRideByIdAndDriver(string $rideId, string $driverId): ?Ride
     {
         /** @var Ride|null */
-        return $this->model->with(['driver.driverProfile'])
+        return $this->getQuery()->with(['driver.driverProfile'])
             ->where('id', $rideId)
             ->where('driver_id', $driverId)
             ->first();
@@ -304,14 +304,14 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function refreshTrackingHeartbeat(string $rideId, CarbonInterface $trackedAt): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'tracking_last_ping_at' => $trackedAt,
         ]);
     }
 
     public function markDriverArrived(string $rideId, CarbonInterface $arrivedAt): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'driver_arrived_at' => $arrivedAt,
             'tracking_status'   => RideTrackingStatus::DRIVER_ARRIVED->value,
         ]);
@@ -319,7 +319,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function releaseDriverFromRide(string $rideId, ?string $reason): bool
     {
-        return (bool) $this->model->where('id', $rideId)->update([
+        return (bool) $this->getQuery()->where('id', $rideId)->update([
             'status'             => RideStatus::PENDING->value,
             'tracking_status'    => RideTrackingStatus::WAITING_DRIVER->value,
             'driver_id'          => null,
@@ -331,7 +331,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function countCancellationsToday(string $driverId): int
     {
-        return $this->model
+        return $this->getQuery()
             ->where('driver_id', $driverId)
             ->where('status', RideStatus::CANCELLED->value)
             ->where('updated_at', '>=', now()->startOfDay())
@@ -340,12 +340,12 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function createIntercityRide(array $data): Ride
     {
-        return $this->model->create($data);
+        return $this->getQuery()->create($data);
     }
 
     public function createAirportRide(array $data): Ride
     {
-        return $this->model->create($data);
+        return $this->getQuery()->create($data);
     }
 
     public function findAvailableScheduledRides(int $vehicleType, array $filters): Collection
@@ -412,7 +412,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         }
 
         /** @var Ride|null */
-        return $this->model->whereRaw('id = ?::bigint', [$rideId])
+        return $this->getQuery()->whereRaw('id = ?::bigint', [$rideId])
             ->where('status', RideStatus::PENDING->value)
             ->first();
     }
@@ -427,7 +427,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         }
 
         /** @var Ride|null */
-        return $this->model->with($relations)
+        return $this->getQuery()->with($relations)
             ->select($columns)
             ->whereRaw('id = ?::bigint', [(string) $id])
             ->first();
@@ -435,7 +435,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
     public function findDriverAcceptedRides(string $driverId): Collection
     {
-        return $this->model->with(['customer'])
+        return $this->getQuery()->with(['customer'])
             ->whereRaw('driver_id = ?::bigint', [(string) $driverId])
             ->whereNotIn('status', [
                 RideStatus::COMPLETED->value,
@@ -451,7 +451,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function countTotalOrders(): int
     {
-        return $this->model->count();
+        return $this->getQuery()->count();
     }
 
     /**
@@ -459,7 +459,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function sumTotalRevenue(): float
     {
-        return (float) $this->model
+        return (float) $this->getQuery()
             ->where('status', RideStatus::COMPLETED->value)
             ->sum('total_price');
     }
@@ -469,8 +469,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function sumTotalCommission(): float
     {
-        return (float) $this->model
-            ->where('status', RideStatus::COMPLETED->value)
+        return (float) $this->getQuery()->where('status', RideStatus::COMPLETED->value)
             ->sum('service_fee');
     }
 
@@ -563,7 +562,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             return 0;
         }
 
-        return $this->model->whereIn('id', $rideIds)
+        return $this->getQuery()->whereIn('id', $rideIds)
             ->where('status', RideStatus::PENDING->value)
             ->update(['is_pushed_to_pool' => true]);
     }
@@ -574,7 +573,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function pushAllPendingScheduledToPool(): int
     {
-        return $this->model
+        return $this->getQuery()
             ->where('status', RideStatus::PENDING->value)
             ->where('is_pushed_to_pool', false)
             ->whereNotNull('travel_date')
@@ -587,7 +586,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function hideAllPendingScheduledFromPool(): int
     {
-        return $this->model
+        return $this->getQuery()
             ->where('status', RideStatus::PENDING->value)
             ->where('is_pushed_to_pool', true)
             ->whereNotNull('travel_date')
@@ -598,15 +597,15 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     // UC-25: Giao hàng (Delivery)
     // =========================================================
 
-    public function createDeliveryRide(array $data): \App\Modules\Ride\Model\Ride
+    public function createDeliveryRide(array $data): Ride
     {
-        /** @var \App\Modules\Ride\Model\Ride */
-        return $this->model->create($data);
+        /** @var Ride */
+        return $this->getQuery()->create($data);
     }
 
-    public function createDeliveryOrderDetail(array $data): \App\Modules\Ride\Model\DeliveryOrder
+    public function createDeliveryOrderDetail(array $data): DeliveryOrder
     {
-        return \App\Modules\Ride\Model\DeliveryOrder::create($data);
+        return DeliveryOrder::create($data);
     }
 
     // =========================================================
@@ -625,7 +624,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         ?string $skipReason,
         ?string $note
     ): bool {
-        return (bool) $this->model->where('id', $rideId)->update(array_filter([
+        return (bool) $this->getQuery()->where('id', $rideId)->update(array_filter([
             'pickup_proof_photo_url'   => $photoUrl,
             'pickup_proof_captured_at' => $capturedAt,
             'pickup_proof_skip_reason' => $skipReason,
@@ -646,7 +645,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         ?string $skipReason,
         ?string $note
     ): bool {
-        return (bool) $this->model->where('id', $rideId)->update(array_filter([
+        return (bool) $this->getQuery()->where('id', $rideId)->update(array_filter([
             'delivery_proof_photo_url'   => $photoUrl,
             'delivery_proof_captured_at' => $capturedAt,
             'delivery_proof_skip_reason' => $skipReason,
@@ -664,7 +663,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         }
 
         /** @var Ride|null */
-        return $this->model->where('id', $rideId)
+        return $this->getQuery()->where('id', $rideId)
             ->where('driver_id', $driverId)
             ->first();
     }
@@ -722,7 +721,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function getOrderOperationalStats(CarbonInterface $start, CarbonInterface $end): array
     {
-        $total = $this->model->whereBetween('created_at', [$start, $end])->count();
+        $total = $this->getQuery()->whereBetween('created_at', [$start, $end])->count();
         if ($total === 0) {
             return [
                 'completion_rate' => 0,
@@ -732,15 +731,15 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ];
         }
 
-        $completed = $this->model->whereBetween('created_at', [$start, $end])
+        $completed = $this->getQuery()->whereBetween('created_at', [$start, $end])
             ->where('status', RideStatus::COMPLETED->value)
             ->count();
 
-        $cancelled = $this->model->whereBetween('created_at', [$start, $end])
+        $cancelled = $this->getQuery()->whereBetween('created_at', [$start, $end])
             ->where('status', RideStatus::CANCELLED->value)
             ->count();
 
-        $statusDistribution = $this->model->whereBetween('created_at', [$start, $end])
+        $statusDistribution = $this->getQuery()->whereBetween('created_at', [$start, $end])
             ->select('status', DB::raw('count(*) as count'))
             ->groupBy('status')
             ->get()
@@ -749,7 +748,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             })
             ->toArray();
 
-        $cancelReasons = $this->model->whereBetween('created_at', [$start, $end])
+        $cancelReasons = $this->getQuery()->whereBetween('created_at', [$start, $end])
             ->where('status', RideStatus::CANCELLED->value)
             ->whereNotNull('cancel_reason')
             ->select('cancel_reason', DB::raw('count(*) as count'))
@@ -908,17 +907,17 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function getMonthlyRideDataForFinance(int $year): \Illuminate\Support\Collection
     {
-        return $this->model->query()
+        return $this->getQuery()
             ->where('status', RideStatus::COMPLETED)
             ->whereYear('completed_at', $year)
             ->whereNotNull('completed_at')
             ->select([
-                \Illuminate\Support\Facades\DB::raw('MONTH(completed_at) as month'),
-                \Illuminate\Support\Facades\DB::raw('SUM(total_price) as gmv'),
-                \Illuminate\Support\Facades\DB::raw('SUM(service_fee) as commission'),
-                \Illuminate\Support\Facades\DB::raw('COUNT(*) as ride_count'),
+                DB::raw('EXTRACT(MONTH FROM completed_at) as month'),
+                DB::raw('SUM(total_price) as gmv'),
+                DB::raw('SUM(service_fee) as commission'),
+                DB::raw('COUNT(*) as ride_count'),
             ])
-            ->groupBy(\Illuminate\Support\Facades\DB::raw('MONTH(completed_at)'))
+            ->groupBy(DB::raw('EXTRACT(MONTH FROM completed_at)'))
             ->orderBy('month')
             ->get()
             ->keyBy('month');

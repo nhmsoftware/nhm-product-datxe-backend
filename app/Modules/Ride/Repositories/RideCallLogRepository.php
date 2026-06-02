@@ -39,7 +39,7 @@ final class RideCallLogRepository extends BaseRepository implements RideCallLogR
     public function findRideCallByIdAndRide(string $rideId, string $callId): ?RideCallLog
     {
         /** @var RideCallLog|null */
-        return $this->model
+        return $this->getQuery()
             ->where('id', $callId)
             ->where('ride_id', $rideId)
             ->first();
@@ -47,7 +47,7 @@ final class RideCallLogRepository extends BaseRepository implements RideCallLogR
 
     public function updateRideCallStatus(string $callId, RideCallStatus $status, ?string $failureReason = null): bool
     {
-        return (bool) $this->model
+        return (bool) $this->getQuery()
             ->where('id', $callId)
             ->update([
                 'status' => $status->value,
