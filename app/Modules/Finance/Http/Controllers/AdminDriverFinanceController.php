@@ -68,4 +68,21 @@ final class AdminDriverFinanceController extends BaseController
 
         return $this->sendSuccess($result->getData(), 'Tải dữ liệu tổng quan tài chính tài xế thành công.');
     }
+
+    /**
+     * UC-116 Extended: Báo cáo Tài chính chi tiết theo tháng.
+     * GET /api/v1/admin/finance/reports
+     */
+    public function reports(Request $request): JsonResponse
+    {
+        $result = $this->adminDriverFinanceService->getReports(
+            AdminDriverFinanceSummaryDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), 'Tải báo cáo tài chính chi tiết thành công.');
+    }
 }

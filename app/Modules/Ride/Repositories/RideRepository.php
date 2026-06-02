@@ -906,6 +906,27 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     /**
      * @inheritDoc
      */
+    public function getMonthlyRideDataForFinance(int $year): \Illuminate\Support\Collection
+    {
+        return $this->model->query()
+            ->where('status', RideStatus::COMPLETED)
+            ->whereYear('completed_at', $year)
+            ->whereNotNull('completed_at')
+            ->select([
+                \Illuminate\Support\Facades\DB::raw('MONTH(completed_at) as month'),
+                \Illuminate\Support\Facades\DB::raw('SUM(total_price) as gmv'),
+                \Illuminate\Support\Facades\DB::raw('SUM(service_fee) as commission'),
+                \Illuminate\Support\Facades\DB::raw('COUNT(*) as ride_count'),
+            ])
+            ->groupBy(\Illuminate\Support\Facades\DB::raw('MONTH(completed_at)'))
+            ->orderBy('month')
+            ->get()
+            ->keyBy('month');
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getDriverRides(string $driverId, ?array $statuses = null, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
         $query = $this->getQuery()

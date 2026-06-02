@@ -17,4 +17,14 @@ interface AdminDriverFinanceServiceInterface
      * @return ServiceReturn
      */
     public function getSummary(AdminDriverFinanceSummaryDTO $dto): ServiceReturn;
+
+    /**
+     * Lấy báo cáo tài chính chi tiết theo tháng.
+     * Bao gồm: GMV monthly, Commission monthly, Subscription breakdown, Commission by type
+     *
+     * @param AdminDriverFinanceSummaryDTO $dto
+     * @return ServiceReturn
+     */
+    public function getReports(AdminDriverFinanceSummaryDTO $dto): ServiceReturn;
 }
+

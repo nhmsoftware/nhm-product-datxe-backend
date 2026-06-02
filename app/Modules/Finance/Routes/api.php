@@ -73,6 +73,9 @@ Route::prefix('v1/admin/finance')->middleware(['auth:sanctum'])->group(function 
     // UC-116: Manage Driver Financial Model
     Route::get('driver-summary', [\App\Modules\Finance\Http\Controllers\AdminDriverFinanceController::class, 'summary'])->name('admin.finance.driver-summary');
 
+    // UC-116 Extended: Báo cáo tài chính chi tiết
+    Route::get('reports', [\App\Modules\Finance\Http\Controllers\AdminDriverFinanceController::class, 'reports'])->name('admin.finance.reports');
+
     // UC-117: Configure Credit Wallet
     Route::get('credit-wallet-config', [\App\Modules\Finance\Http\Controllers\AdminCreditWalletConfigController::class, 'show'])->name('admin.finance.credit-wallet-config.show');
     Route::post('credit-wallet-config', [\App\Modules\Finance\Http\Controllers\AdminCreditWalletConfigController::class, 'update'])->name('admin.finance.credit-wallet-config.update');

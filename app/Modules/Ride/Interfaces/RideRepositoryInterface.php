@@ -387,7 +387,15 @@ interface RideRepositoryInterface
     public function listDeliveryRidesForAdmin(array $excludeRideIds): \Illuminate\Support\Collection;
 
     /**
-     * Lấy danh sách các chuyến xe của tài xế theo trạng thái và phân trang.
+     * Lấy dữ liệu các chuyến xe của tài xế theo trạng thái và phân trang.
      */
     public function getDriverRides(string $driverId, ?array $statuses = null, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;
+
+    /**
+     * Lấy dữ liệu GMV và Commission theo từng tháng trong năm (Dùng cho báo cáo tài chính).
+     *
+     * @param int $year
+     * @return \Illuminate\Support\Collection
+     */
+    public function getMonthlyRideDataForFinance(int $year): \Illuminate\Support\Collection;
 }

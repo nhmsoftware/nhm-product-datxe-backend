@@ -18,4 +18,19 @@ interface DriverSubscriptionRepositoryInterface extends BaseRepositoryInterface
      * Check if driver already has an active subscription
      */
     public function hasActiveSubscription(string $driverId): bool;
+
+    /**
+     * Đếm tổng số đăng ký gói trong năm
+     */
+    public function countTotalSubscriptionsByYear(int $year): int;
+
+    /**
+     * Lấy số lượng đăng ký nhóm theo từng loại gói trong năm
+     */
+    public function getSubscriptionsGroupedByPackage(int $year): \Illuminate\Support\Collection;
+
+    /**
+     * Đếm số đăng ký gói trong tháng cụ thể của một năm
+     */
+    public function countSubscriptionsByMonth(int $year, int $month): int;
 }
