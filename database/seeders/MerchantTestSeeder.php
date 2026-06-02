@@ -38,7 +38,54 @@ class MerchantTestSeeder extends Seeder
                 'total_orders' => 0,
             ]
         );
+
+        // Seeding thêm quán mockup từ giao diện
+        $user2 = User::updateOrCreate(
+            ['phone' => '0988888889'],
+            [
+                'email' => 'merchant2@test.com',
+                'password' => Hash::make('123456'),
+                'role' => UserRole::Merchants,
+                'is_active' => true,
+                'is_verified' => true,
+                'is_phone_verified' => true,
+            ]
+        );
+        MerchantProfile::updateOrCreate(
+            ['user_id' => $user2->id],
+            [
+                'store_name' => 'Phở Hùng - Nguyễn Trãi',
+                'store_address' => 'Nguyễn Trãi, Hà Nội',
+                'is_open' => true,
+                'status' => KycStatus::Approved,
+                'average_rating' => 4.8,
+                'total_orders' => 150,
+            ]
+        );
+
+        $user3 = User::updateOrCreate(
+            ['phone' => '0988888890'],
+            [
+                'email' => 'merchant3@test.com',
+                'password' => Hash::make('123456'),
+                'role' => UserRole::Merchants,
+                'is_active' => true,
+                'is_verified' => true,
+                'is_phone_verified' => true,
+            ]
+        );
+        MerchantProfile::updateOrCreate(
+            ['user_id' => $user3->id],
+            [
+                'store_name' => 'The Burger Joint',
+                'store_address' => 'Cầu Giấy, Hà Nội',
+                'is_open' => true,
+                'status' => KycStatus::Approved,
+                'average_rating' => 4.5,
+                'total_orders' => 85,
+            ]
+        );
         
-        echo "Merchant test user created: 0988888888 / 123456\n";
+        echo "Merchant test users created: 0988888888, 0988888889, 0988888890\n";
     }
 }

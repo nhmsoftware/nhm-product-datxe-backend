@@ -8,6 +8,7 @@ use App\Core\Services\BaseService;
 use App\Core\Services\ServiceException;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Homepage\Interfaces\HomepageServiceInterface;
+use App\Modules\User\Interfaces\MerchantProfileRepositoryInterface;
 use App\Modules\User\Interfaces\SavedAddressRepositoryInterface;
 use App\Modules\User\Model\User;
 use App\Modules\Marketing\Interfaces\BannerRepositoryInterface;
@@ -18,15 +19,18 @@ class HomepageService extends BaseService implements HomepageServiceInterface
     protected SavedAddressRepositoryInterface $savedAddressRepo;
     protected BannerRepositoryInterface $bannerRepo;
     protected NewsRepositoryInterface $newsRepo;
+    protected MerchantProfileRepositoryInterface $merchantProfileRepo;
 
     public function __construct(
         SavedAddressRepositoryInterface $savedAddressRepo,
         BannerRepositoryInterface $bannerRepo,
-        NewsRepositoryInterface $newsRepo
+        NewsRepositoryInterface $newsRepo,
+        MerchantProfileRepositoryInterface $merchantProfileRepo
     ) {
         $this->savedAddressRepo = $savedAddressRepo;
         $this->bannerRepo = $bannerRepo;
         $this->newsRepo = $newsRepo;
+        $this->merchantProfileRepo = $merchantProfileRepo;
     }
 
     /**
@@ -168,28 +172,27 @@ class HomepageService extends BaseService implements HomepageServiceInterface
             ];
         }
 
+        $merchants = $this->merchantProfileRepo->getRandomActiveMerchants(5);
+
+        $items = $merchants->map(function ($merchant) {
+            // TODO: Sử dụng tọa độ thực để tính toán khoảng cách nếu cần.
+            // Xếp hạng và khoảng cách của trình giữ chỗ vì chúng ta có thể chưa tính toán chặt chẽ trong truy vấn DB
+            $rating = $merchant->average_rating ? number_format((float) $merchant->average_rating, 1) : '5.0';
+
+            return [
+                'id' => $merchant->id,
+                'name' => $merchant->store_name ?? 'Cửa hàng',
+                'imageAssetPath' => $merchant->store_image ?: 'assets/images/img_promotion_default.png',
+                'rating' => $rating,
+                'timeText' => '15 phut',
+                'distanceText' => '2.4 km',
+                'badgeLabel' => 'BAN CHAY',
+            ];
+        })->toArray();
+
         return [
-            'status' => 'success',
-            'items' => [
-                [
-                    'id' => 1,
-                    'name' => 'Phở Hùng - Nguyễn Trãi',
-                    'image' => 'restaurant_1_url',
-                    'rating' => 4.5,
-                    'delivery_time' => '20 min',
-                    'distance' => '1.2 km',
-                    'promo_label' => 'Giá tốt'
-                ],
-                [
-                    'id' => 2,
-                    'name' => 'The Burger Joint',
-                    'image' => 'restaurant_2_url',
-                    'rating' => 4.8,
-                    'delivery_time' => '30 min',
-                    'distance' => '2.5 km',
-                    'promo_label' => null
-                ],
-            ]
+            'status' => 'Lấy thành công',
+            'items' => $items
         ];
     }
 }

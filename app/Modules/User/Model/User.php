@@ -239,6 +239,13 @@ class User extends Authenticatable
      */
     public function isProfileApproved(): bool
     {
+        if ($this->role === UserRole::Customer) {
+            $latestApp = $this->userReviewApplications()
+                ->latest()
+                ->first();
+            return $latestApp !== null && $latestApp->kyc_status === KycStatus::Approved;
+        }
+
         if ($this->role === UserRole::Driver) {
             return $this->driverProfile !== null;
         }
@@ -256,6 +263,16 @@ class User extends Authenticatable
      */
     public function getProfileStatus(): KycStatus
     {
+        if ($this->role === UserRole::Customer) {
+            $latestApp = $this->userReviewApplications()
+                ->latest()
+                ->first();
+            if ($latestApp) {
+                return $latestApp->kyc_status;
+            }
+            return KycStatus::NotSubmitted;
+        }
+
         if ($this->role === UserRole::Driver) {
             if ($this->driverProfile !== null) {
                 return KycStatus::Approved;
