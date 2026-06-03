@@ -24,6 +24,6 @@ final class PricingConfigRepository extends BaseRepository implements PricingCon
 
     public function getAllConfigs(): Collection
     {
-        return $this->getQuery()->all();
+        return $this->getQuery()->get();
     }
 }
