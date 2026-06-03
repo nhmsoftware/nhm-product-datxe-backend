@@ -3014,20 +3014,62 @@
                                     "metadata": {
                                         "properties": {
                                             "merchant_id": {
+                                                "description": "Dành cho MoMo",
                                                 "type": "string",
                                                 "example": "MOMO123"
                                             },
+                                            "partner_code": {
+                                                "description": "Dành cho MoMo",
+                                                "type": "string",
+                                                "example": "MOMO123"
+                                            },
+                                            "access_key": {
+                                                "description": "Dành cho MoMo",
+                                                "type": "string",
+                                                "example": "acc_abc"
+                                            },
+                                            "secret_key": {
+                                                "description": "Dành cho MoMo",
+                                                "type": "string",
+                                                "example": "sec_xyz"
+                                            },
+                                            "app_id": {
+                                                "description": "Dành cho ZaloPay",
+                                                "type": "string",
+                                                "example": "2553"
+                                            },
+                                            "key_1": {
+                                                "description": "Dành cho ZaloPay",
+                                                "type": "string",
+                                                "example": "key1_abc"
+                                            },
+                                            "key_2": {
+                                                "description": "Dành cho ZaloPay",
+                                                "type": "string",
+                                                "example": "key2_xyz"
+                                            },
+                                            "client_id": {
+                                                "description": "Dành cho payOS",
+                                                "type": "string",
+                                                "example": "client_abc"
+                                            },
                                             "api_key": {
+                                                "description": "Dành cho payOS",
                                                 "type": "string",
                                                 "example": "key_abc"
                                             },
-                                            "secret_key": {
+                                            "checksum_key": {
+                                                "description": "Dành cho payOS",
                                                 "type": "string",
-                                                "example": "sec_xyz"
+                                                "example": "chk_xyz"
                                             },
                                             "endpoint": {
                                                 "type": "string",
                                                 "example": "https://payment.momo.vn"
+                                            },
+                                            "webhook_url": {
+                                                "type": "string",
+                                                "example": "https://api.nhm.com/callback"
                                             },
                                             "transaction_fee": {
                                                 "type": "number",

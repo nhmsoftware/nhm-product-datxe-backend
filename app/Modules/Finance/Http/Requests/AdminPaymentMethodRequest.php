@@ -68,19 +68,30 @@ final class AdminPaymentMethodRequest extends FormRequest
 
             // E-Wallet & Bank Card Configuration (stored in metadata)
             'metadata'     => 'sometimes|nullable|array',
-            'metadata.merchant_id'  => [
-                $isUpdate ? 'sometimes' : Rule::requiredIf(fn() => in_array($this->input('type'), ['e_wallet', 'bank_card'])),
-                'string',
-                'max:100'
-            ],
-            'metadata.api_key'      => 'sometimes|nullable|string|max:255',
+            
+            // MoMo
+            'metadata.merchant_id'  => 'sometimes|nullable|string|max:100',
+            'metadata.partner_code' => 'sometimes|nullable|string|max:100',
+            'metadata.access_key'   => 'sometimes|nullable|string|max:255',
             'metadata.secret_key'   => 'sometimes|nullable|string|max:255',
+            
+            // ZaloPay
+            'metadata.app_id'       => 'sometimes|nullable|string|max:100',
+            'metadata.key_1'        => 'sometimes|nullable|string|max:255',
+            'metadata.key_2'        => 'sometimes|nullable|string|max:255',
+            
+            // payOS
+            'metadata.client_id'    => 'sometimes|nullable|string|max:100',
+            'metadata.api_key'      => 'sometimes|nullable|string|max:255',
+            'metadata.checksum_key' => 'sometimes|nullable|string|max:255',
+
             'metadata.endpoint'     => [
                 $isUpdate ? 'sometimes' : Rule::requiredIf(fn() => in_array($this->input('type'), ['e_wallet', 'bank_card'])),
                 'nullable',
                 'url',
                 'max:255'
             ],
+            'metadata.webhook_url'     => 'sometimes|nullable|url|max:255',
             'metadata.transaction_fee' => 'sometimes|nullable|numeric|min:0',
             'metadata.internal_note'   => 'sometimes|nullable|string|max:1000',
             'metadata.require_otp'     => 'sometimes|nullable|boolean',

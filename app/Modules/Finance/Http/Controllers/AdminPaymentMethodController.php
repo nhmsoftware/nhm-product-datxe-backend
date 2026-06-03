@@ -125,10 +125,22 @@ final class AdminPaymentMethodController extends BaseController
                 new OA\Property(
                     property: 'metadata',
                     properties: [
-                        new OA\Property(property: 'merchant_id', type: 'string', example: 'MOMO123'),
-                        new OA\Property(property: 'api_key', type: 'string', example: 'key_abc'),
-                        new OA\Property(property: 'secret_key', type: 'string', example: 'sec_xyz'),
+                        // MoMo
+                        new OA\Property(property: 'merchant_id', type: 'string', example: 'MOMO123', description: 'Dành cho MoMo'),
+                        new OA\Property(property: 'partner_code', type: 'string', example: 'MOMO123', description: 'Dành cho MoMo'),
+                        new OA\Property(property: 'access_key', type: 'string', example: 'acc_abc', description: 'Dành cho MoMo'),
+                        new OA\Property(property: 'secret_key', type: 'string', example: 'sec_xyz', description: 'Dành cho MoMo'),
+                        // ZaloPay
+                        new OA\Property(property: 'app_id', type: 'string', example: '2553', description: 'Dành cho ZaloPay'),
+                        new OA\Property(property: 'key_1', type: 'string', example: 'key1_abc', description: 'Dành cho ZaloPay'),
+                        new OA\Property(property: 'key_2', type: 'string', example: 'key2_xyz', description: 'Dành cho ZaloPay'),
+                        // payOS
+                        new OA\Property(property: 'client_id', type: 'string', example: 'client_abc', description: 'Dành cho payOS'),
+                        new OA\Property(property: 'api_key', type: 'string', example: 'key_abc', description: 'Dành cho payOS'),
+                        new OA\Property(property: 'checksum_key', type: 'string', example: 'chk_xyz', description: 'Dành cho payOS'),
+                        // Common
                         new OA\Property(property: 'endpoint', type: 'string', example: 'https://payment.momo.vn'),
+                        new OA\Property(property: 'webhook_url', type: 'string', example: 'https://api.nhm.com/callback'),
                         new OA\Property(property: 'transaction_fee', type: 'number', example: 1.5),
                         new OA\Property(property: 'internal_note', type: 'string', example: 'Internal notes'),
                         new OA\Property(property: 'require_otp', type: 'boolean', example: true),
