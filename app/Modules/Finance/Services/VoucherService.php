@@ -36,12 +36,13 @@ final class VoucherService extends BaseService implements VoucherServiceInterfac
             // Lọc theo service type nếu có
             if ($serviceType !== null) {
                 $type = match (strtolower($serviceType)) {
-                    'ride' => [VoucherServiceType::RIDE, VoucherServiceType::BOTH],
-                    'food' => [VoucherServiceType::FOOD, VoucherServiceType::BOTH],
-                    default => [VoucherServiceType::BOTH],
+                    'ride' => [VoucherServiceType::RIDE, VoucherServiceType::BOTH, VoucherServiceType::ALL],
+                    'food' => [VoucherServiceType::FOOD, VoucherServiceType::BOTH, VoucherServiceType::ALL],
+                    'delivery' => [VoucherServiceType::DELIVERY, VoucherServiceType::ALL],
+                    default => [VoucherServiceType::ALL],
                 };
 
-                $vouchers = $vouchers->filter(fn(Voucher $v) => in_array($v->service_type, $type));
+                $vouchers = $vouchers->filter(fn(Voucher $v) => in_array($v->service_type, $type, true));
             }
 
             return $vouchers->map(function (Voucher $v) use ($customerId) {
@@ -152,8 +153,9 @@ final class VoucherService extends BaseService implements VoucherServiceInterfac
 
             // Kiểm tra loại dịch vụ
             $type = match (strtolower($serviceType)) {
-                'ride' => [VoucherServiceType::RIDE, VoucherServiceType::BOTH],
-                'food' => [VoucherServiceType::FOOD, VoucherServiceType::BOTH],
+                'ride' => [VoucherServiceType::RIDE, VoucherServiceType::BOTH, VoucherServiceType::ALL],
+                'food' => [VoucherServiceType::FOOD, VoucherServiceType::BOTH, VoucherServiceType::ALL],
+                'delivery' => [VoucherServiceType::DELIVERY, VoucherServiceType::ALL],
                 default => [],
             };
             $this->validate(in_array($voucher->service_type, $type), 'Voucher không áp dụng cho dịch vụ này.', 400);
