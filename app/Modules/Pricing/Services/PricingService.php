@@ -97,9 +97,9 @@ final class PricingService extends BaseService implements PricingServiceInterfac
 
             $baseFare     = (float) $config['base_fare'];
             $minFare      = (float) $config['min_fare'];
-            $distanceKm   = (float) $dto->distance / 1000;
+            $distanceKm   = (float) $dto->distance;
             $distanceFare = $distanceKm * (float) $config['distance_rate'];
-            $timeFare     = ((float) $dto->duration / 60) * (float) $config['time_rate'];
+            $timeFare     = (float) $dto->duration * (float) $config['time_rate'];
 
             // Giá vé cơ bản = Giá cơ bản + (Khoảng cách × Giá/km) + (Thời gian × Giá/phút)
             $baseTotalFare = $baseFare + $distanceFare + $timeFare;

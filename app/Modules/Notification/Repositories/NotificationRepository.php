@@ -7,6 +7,7 @@ namespace App\Modules\Notification\Repositories;
 use App\Core\Repository\BaseRepository;
 use App\Modules\Notification\Interfaces\NotificationRepositoryInterface;
 use App\Modules\Notification\Model\Notification;
+use App\Modules\User\Model\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class NotificationRepository extends BaseRepository implements NotificationRepositoryInterface
@@ -29,7 +30,7 @@ final class NotificationRepository extends BaseRepository implements Notificatio
     {
         $query = $this->getQuery()
             ->where('notifiable_id', $userId)
-            ->where('notifiable_type', 'App\Modules\User\Model\User') // Standard Laravel morph type
+            ->where('notifiable_type', User::class) // Standard Laravel morph type
             ->latest();
 
         if ($category) {
