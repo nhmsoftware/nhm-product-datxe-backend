@@ -56,7 +56,7 @@ final class NotifyRealtimeOnDriverApproved implements ShouldQueue
                 'channel'        => self::COMMUNICATION_CHANNEL
             ]);
 
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('NotifyRealtimeOnDriverApproved failed', [
                 'error'          => $e->getMessage(),
                 'user_id'        => $event->userId,

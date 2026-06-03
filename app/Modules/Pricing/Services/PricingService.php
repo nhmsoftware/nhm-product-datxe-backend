@@ -22,6 +22,7 @@ use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Finance\Interfaces\CommissionRuleServiceInterface;
 use App\Modules\Finance\Model\Enums\CommissionServiceType;
 use App\Modules\Finance\Model\Enums\CommissionTargetType;
+use Carbon\Carbon;
 
 final class PricingService extends BaseService implements PricingServiceInterface
 {
@@ -108,14 +109,14 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             $activeRules = $this->pricingSurgeRuleRepository->getActiveRules((int) $dto->vehicleType);
             $dynamicMultiplier = 1.0;
             $now = now();
-            
+
             foreach ($activeRules as $rule) {
                 $isTimeMatch = true;
                 if ($rule->start_time && $rule->end_time) {
                     // Chuyển đổi time string thành đối tượng Carbon để so sánh
-                    $startTime = \Carbon\Carbon::createFromTimeString($rule->start_time);
-                    $endTime   = \Carbon\Carbon::createFromTimeString($rule->end_time);
-                    
+                    $startTime = Carbon::createFromTimeString($rule->start_time);
+                    $endTime   = Carbon::createFromTimeString($rule->end_time);
+
                     // Nếu thời gian kết thúc nhỏ hơn bắt đầu (qua đêm), xử lý đặc biệt
                     if ($endTime->lessThan($startTime)) {
                         if (!$now->greaterThanOrEqualTo($startTime) && !$now->lessThanOrEqualTo($endTime)) {
@@ -127,8 +128,8 @@ final class PricingService extends BaseService implements PricingServiceInterfac
                         }
                     }
                 }
-                
-                // Hiện tại chúng ta ưu tiên kiểm tra khung giờ. 
+
+                // Hiện tại chúng ta ưu tiên kiểm tra khung giờ.
                 // Các điều kiện conditions (JSON) như "weather_rain" sẽ được tích hợp khi có hệ thống sensor/weather API.
                 if ($isTimeMatch) {
                     $dynamicMultiplier = max($dynamicMultiplier, (float) $rule->multiplier);
@@ -141,7 +142,7 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             if ($surgeMultiplier === 1.0 && isset($config['surge_multiplier'])) {
                 $surgeMultiplier = (float) $config['surge_multiplier'];
             }
-            
+
             $surgeMultiplier = max($surgeMultiplier, $dynamicMultiplier);
             $surgeFare = $baseTotalFare * $surgeMultiplier;
 
@@ -153,22 +154,22 @@ final class PricingService extends BaseService implements PricingServiceInterfac
                 CommissionTargetType::DRIVER,
                 CommissionServiceType::RIDE
             );
-            
+
             if (!$commissionResult->isError()) {
                 $rule = $commissionResult->getData();
                 $commissionRate = (float) $rule['commission_rate'];
                 $minCommission  = $rule['min_commission'] ? (float) $rule['min_commission'] : 0.0;
                 $maxCommission  = $rule['max_commission'] ? (float) $rule['max_commission'] : null;
-                
+
                 $commissionFare = ($finalFare * ($commissionRate / 100));
-                
+
                 if ($minCommission > 0) {
                     $commissionFare = max($commissionFare, $minCommission);
                 }
                 if ($maxCommission !== null && $maxCommission > 0) {
                     $commissionFare = min($commissionFare, $maxCommission);
                 }
-                
+
                 $commissionFare = round($commissionFare / 100) * 100; // Làm tròn 100 VND
             } else {
                 // Fallback về config cũ nếu không tìm thấy rule trong Finance
@@ -201,7 +202,7 @@ final class PricingService extends BaseService implements PricingServiceInterfac
 
             foreach ($supportedTypes as $typeId) {
                 $config = $dbConfigs->get($typeId);
-                
+
                 if ($config) {
                     $dto = PricingConfigDTO::fromModel($config);
                     $finalConfigs[] = [
@@ -294,7 +295,7 @@ final class PricingService extends BaseService implements PricingServiceInterfac
     {
         return $this->execute(function () use ($dto, $ruleId): array {
             $data = $dto->toArray();
-            
+
             // Chỉ update nếu ruleId có giá trị thực (không phải null hoặc chuỗi rỗng)
             if (!empty($ruleId)) {
                 $this->pricingSurgeRuleRepository->updateById($ruleId, $data);

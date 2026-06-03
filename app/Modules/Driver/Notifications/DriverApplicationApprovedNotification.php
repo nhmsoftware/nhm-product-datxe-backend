@@ -16,7 +16,7 @@ final class DriverApplicationApprovedNotification extends Notification implement
     private const NOTIFICATION_BODY = 'Bạn hiện đã có thể bắt đầu nhận cuốc xe. Hãy chuyển sang trạng thái "Sẵn sàng" nhé!';
 
     public function __construct(
-        private readonly int $applicationId
+        private readonly int|string $applicationId
     ) {}
 
     /**
