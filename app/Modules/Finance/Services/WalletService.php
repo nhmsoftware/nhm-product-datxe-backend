@@ -196,7 +196,13 @@ final class WalletService extends BaseService implements WalletServiceInterface
                 );
             }
 
-            // 5. Tạo TopUp session với status Pending — mã giao dịch duy nhất (Business Rule)
+            // 5. Tính expired_at theo loại phương thức (Business Rule #5)
+            // e-wallet (MoMo, ZaloPay): 30 phút | bank_transfer (payOS): 24 giờ
+            $expiredAt = $paymentMethod->type === PaymentMethodType::BANK_TRANSFER
+                ? now()->addHours(24)
+                : now()->addMinutes(30);
+
+            // 6. Tạo TopUp session với status Pending — mã giao dịch duy nhất (Business Rule)
             $externalId = 'TX-' . strtoupper(substr($dto->paymentMethodCode, 0, 3)) . '-' . strtoupper(uniqid());
             $topUp = $this->topUpRepository->create([
                 'user_id'        => $dto->userId,
@@ -205,9 +211,10 @@ final class WalletService extends BaseService implements WalletServiceInterface
                 'status'         => TopUpStatus::PENDING,
                 'payment_method' => $dto->paymentMethodCode,
                 'external_id'    => $externalId,
+                'expired_at'     => $expiredAt,
             ]);
 
-            // 6. Cấu trúc response theo luồng
+            // 7. Cấu trúc response theo luồng
             $response = [
                 'top_up_id'      => (string) $topUp->id,
                 'external_id'    => $topUp->external_id,
@@ -215,6 +222,7 @@ final class WalletService extends BaseService implements WalletServiceInterface
                 'payment_method' => $topUp->payment_method,
                 'status'         => TopUpStatus::PENDING->value,
                 'status_label'   => TopUpStatus::PENDING->getLabel(),
+                'expired_at'     => $expiredAt->toIso8601String(),
             ];
 
             if ($paymentMethod->type === PaymentMethodType::BANK_TRANSFER) {
@@ -304,20 +312,55 @@ final class WalletService extends BaseService implements WalletServiceInterface
                 ];
             }
 
-            // Xác định kết quả từ Gateway (A5/A8/A13/A14)
+            // Xác định kết quả từ Gateway
             $gatewayStatus = strtolower($payload['status'] ?? 'success');
-            $isFailed      = in_array($gatewayStatus, ['failed', 'cancelled', 'error'], true);
 
-            if ($isFailed) {
+            // A9: Gateway báo expired (payOS timeout)
+            if ($gatewayStatus === 'expired') {
                 $this->topUpRepository->updateById($topUp->id, [
-                    'status'   => TopUpStatus::FAILED,
+                    'status'   => TopUpStatus::EXPIRED,
                     'metadata' => $payload,
                 ]);
                 return [
-                    'status'  => TopUpStatus::FAILED->value,
+                    'status'  => TopUpStatus::EXPIRED->value,
+                    'message' => 'Giao dịch đã hết hạn.',
+                    'wallet'  => [],
+                ];
+            }
+
+            // A5/A6/A7/A8: Failed or Cancelled
+            $isFailed = in_array($gatewayStatus, ['failed', 'cancelled', 'error'], true);
+            if ($isFailed) {
+                $this->topUpRepository->updateById($topUp->id, [
+                    'status'   => $gatewayStatus === 'cancelled' ? TopUpStatus::CANCELLED : TopUpStatus::FAILED,
+                    'metadata' => $payload,
+                ]);
+                return [
+                    'status'  => $gatewayStatus === 'cancelled' ? TopUpStatus::CANCELLED->value : TopUpStatus::FAILED->value,
                     'message' => 'Giao dịch nạp tiền thất bại.',
                     'wallet'  => [],
                 ];
+            }
+
+            // A12: Số tiền thanh toán không khớp — không cộng tiền, ghi log để đối soát
+            if (isset($payload['amount'])) {
+                $paidAmount = (float) $payload['amount'];
+                if (abs($paidAmount - (float) $topUp->amount) > 0.01) {
+                    Log::warning('UC-45 A12: Amount mismatch detected', [
+                        'top_up_id'    => (string) $topUp->id,
+                        'expected'     => (float) $topUp->amount,
+                        'received'     => $paidAmount,
+                        'external_id'  => $externalId,
+                    ]);
+                    $this->topUpRepository->updateById($topUp->id, [
+                        'metadata' => array_merge($payload, ['mismatch' => true]),
+                    ]);
+                    return [
+                        'status'  => TopUpStatus::PENDING->value,
+                        'message' => 'Giao dịch cần được kiểm tra lại.',
+                        'wallet'  => [],
+                    ];
+                }
             }
 
             // 1. Cập nhật TopUp → SUCCESS

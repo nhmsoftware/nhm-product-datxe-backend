@@ -21,7 +21,7 @@ final class CancellationConfigRepository extends BaseRepository implements Cance
      */
     public function search(array $filters): LengthAwarePaginator
     {
-        $query = $this->getQuery()->query();
+        $query = $this->getQuery();
 
         if (isset($filters['ride_type'])) {
             $query->where('ride_type', $filters['ride_type']);
@@ -41,7 +41,7 @@ final class CancellationConfigRepository extends BaseRepository implements Cance
     public function findApplicableRule(int $rideType, int $minutesUntilPickup): ?ScheduledRideCancellationConfig
     {
         /** @var ScheduledRideCancellationConfig|null */
-        return $this->getQuery()->query()
+        return $this->getQuery()
             ->where('ride_type', $rideType)
             ->where('is_active', true)
             // Lấy quy tắc có min_minutes_before_pickup lớn nhất nhưng vẫn <= minutesUntilPickup

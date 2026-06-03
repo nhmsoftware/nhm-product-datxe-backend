@@ -6,6 +6,7 @@ namespace App\Modules\Finance\Repositories;
 
 use App\Core\Repository\BaseRepository;
 use App\Modules\Finance\Interfaces\TopUpRepositoryInterface;
+use App\Modules\Finance\Model\Enums\TopUpStatus;
 use App\Modules\Finance\Model\TopUp;
 
 final class TopUpRepository extends BaseRepository implements TopUpRepositoryInterface
@@ -56,8 +57,9 @@ final class TopUpRepository extends BaseRepository implements TopUpRepositoryInt
      */
     public function hasPendingTopUps(string $paymentMethodCode): bool
     {
-        return $this->getQuery()->where('payment_method', $paymentMethodCode)
-            ->where('status', \App\Modules\Finance\Model\Enums\TopUpStatus::PENDING->value)
+        return $this->getQuery()
+            ->where('payment_method', $paymentMethodCode)
+            ->where('status', TopUpStatus::PENDING->value)
             ->exists();
     }
 }

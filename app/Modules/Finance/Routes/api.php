@@ -40,13 +40,22 @@ Route::prefix('v1/finance')->middleware(['auth:sanctum', 'check.account.status']
     // UC-45: Top Up
     Route::get('wallet/top-up/options', [WalletController::class, 'getTopUpOptions'])->name('finance.wallet.top-up.options');      // B1: Màn hình nạp tiền
     Route::post('wallet/top-up', [WalletController::class, 'initiateTopUp'])->name('finance.wallet.top-up.initiate');               // B5: Xác nhận nạp tiền
-    Route::post('wallet/top-up/callback', [WalletController::class, 'callback'])->name('finance.wallet.top-up.callback');           // Callback từ gateway
     Route::get('wallet/top-up/{topUpId}', [WalletController::class, 'getTopUpDetail'])->name('finance.wallet.top-up.detail');       // Chi tiết giao dịch
     Route::delete('wallet/top-up/{topUpId}', [WalletController::class, 'cancelTopUp'])->name('finance.wallet.top-up.cancel');       // A4: Hủy giao dịch
 
     // UC-46: Subscription Packages
     Route::get('subscriptions/packages', [\App\Modules\Finance\Http\Controllers\SubscriptionController::class, 'packages'])->name('finance.subscriptions.packages');
     Route::post('subscriptions/register', [\App\Modules\Finance\Http\Controllers\SubscriptionController::class, 'register'])->name('finance.subscriptions.register');
+});
+
+// UC-45: Webhook/Callback từ Payment Gateway — PUBLIC (không cần auth, gateway không có Bearer token)
+Route::prefix('v1/finance')->group(function () {
+    // MoMo callback
+    Route::post('wallet/top-up/callback/momo', [WalletController::class, 'callbackMomo'])->name('finance.wallet.top-up.callback.momo');
+    // ZaloPay callback
+    Route::post('wallet/top-up/callback/zalopay', [WalletController::class, 'callbackZalopay'])->name('finance.wallet.top-up.callback.zalopay');
+    // payOS callback
+    Route::post('wallet/top-up/callback/payos', [WalletController::class, 'callbackPayos'])->name('finance.wallet.top-up.callback.payos');
 });
 
 // Admin Routes

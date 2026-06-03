@@ -4538,6 +4538,11 @@
                                             "type": "string",
                                             "example": "Đang xử lý"
                                         },
+                                        "expired_at": {
+                                            "description": "Thời gian hết hạn của giao dịch",
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
                                         "redirect_url": {
                                             "description": "URL redirect cho e_wallet/bank_card",
                                             "type": "string",
@@ -4721,14 +4726,14 @@
                 ]
             }
         },
-        "/api/v1/finance/wallet/top-up/callback": {
+        "/api/v1/finance/wallet/top-up/callback/momo": {
             "post": {
                 "tags": [
                     "Finance"
                 ],
-                "summary": "Callback nạp tiền (UC-45)",
-                "description": "Nhận phản hồi từ cổng thanh toán để cập nhật trạng thái nạp tiền. Idempotent — an toàn khi gọi nhiều lần.",
-                "operationId": "3a944811ed10bda01c7cd17c70dfc828",
+                "summary": "Callback MoMo (UC-45)",
+                "description": "Nhận phản hồi từ MoMo. Idempotent — an toàn khi gọi nhiều lần.",
+                "operationId": "fc389567d453a8c864b4e4b6329de1d7",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -4748,7 +4753,102 @@
                                         "enum": [
                                             "success",
                                             "failed",
-                                            "cancelled"
+                                            "cancelled",
+                                            "expired"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Xử lý kết quả nạp tiền thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy giao dịch"
+                    }
+                }
+            }
+        },
+        "/api/v1/finance/wallet/top-up/callback/zalopay": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Callback ZaloPay (UC-45)",
+                "description": "Nhận phản hồi từ ZaloPay. Idempotent — an toàn khi gọi nhiều lần.",
+                "operationId": "4dcb03d0b26bfc62b89fb6d90f8d9f2a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "external_id"
+                                ],
+                                "properties": {
+                                    "external_id": {
+                                        "type": "string",
+                                        "example": "TX-ZAL-68461AB2C8A12"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "success",
+                                        "enum": [
+                                            "success",
+                                            "failed",
+                                            "cancelled",
+                                            "expired"
+                                        ]
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Xử lý kết quả nạp tiền thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy giao dịch"
+                    }
+                }
+            }
+        },
+        "/api/v1/finance/wallet/top-up/callback/payos": {
+            "post": {
+                "tags": [
+                    "Finance"
+                ],
+                "summary": "Callback payOS (UC-45)",
+                "description": "Nhận phản hồi từ payOS. Idempotent — an toàn khi gọi nhiều lần.",
+                "operationId": "765e748fcf74762b2bf45b88ab7e8ef2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "external_id"
+                                ],
+                                "properties": {
+                                    "external_id": {
+                                        "type": "string",
+                                        "example": "TX-PAY-68461AB2C8A12"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "example": "success",
+                                        "enum": [
+                                            "success",
+                                            "failed",
+                                            "cancelled",
+                                            "expired"
                                         ]
                                     }
                                 },

@@ -6,6 +6,8 @@ namespace App\Modules\Merchant\Services;
 
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
+use App\Modules\Finance\Interfaces\WalletRepositoryInterface;
+use App\Modules\Finance\Interfaces\WalletTransactionRepositoryInterface;
 use App\Modules\Merchant\Interfaces\MerchantStoreServiceInterface;
 use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
 use App\Modules\Food\Interfaces\FoodOrderRepositoryInterface;
@@ -15,8 +17,8 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
     public function __construct(
         private readonly MerchantRepositoryInterface $merchantRepository,
         private readonly FoodOrderRepositoryInterface $foodOrderRepository,
-        private readonly \App\Modules\Finance\Interfaces\WalletRepositoryInterface $walletRepository,
-        private readonly \App\Modules\Finance\Interfaces\WalletTransactionRepositoryInterface $walletTransactionRepository,
+        private readonly WalletRepositoryInterface $walletRepository,
+        private readonly WalletTransactionRepositoryInterface $walletTransactionRepository,
     ) {}
 
     public function getStoreInfo(string $userId): ServiceReturn
@@ -26,7 +28,7 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
                 ->with('openingHours')
                 ->where('user_id', $userId)
                 ->first();
-                
+
             $this->validate($store !== null, 'Bạn chưa có cửa hàng.', 404);
 
             return $store->toArray();
@@ -41,7 +43,7 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
 
             // Giả lập check đơn hàng hoạt động (UC-55 A1)
             // Trong tương lai sẽ gọi foodOrderRepository::countActiveOrders($store->id)
-            $activeOrdersCount = 0; 
+            $activeOrdersCount = 0;
 
             $store->update(['is_open' => $isOpen]);
 
@@ -87,7 +89,7 @@ final class MerchantStoreService extends BaseService implements MerchantStoreSer
 
                 if (!$isClosed) {
                     $this->validate(!empty($opening) && !empty($closing), "Vui lòng nhập giờ mở/đóng cho ngày thứ {$dayOfWeek}.", 400);
-                    
+
                     $isOvernight = false;
                     // Logic Overnight: nếu giờ đóng < giờ mở
                     if (strtotime($closing) < strtotime($opening)) {

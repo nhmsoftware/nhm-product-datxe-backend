@@ -196,6 +196,7 @@ final class WalletController extends BaseController
                 new OA\Property(property: 'payment_method', type: 'string', example: 'momo'),
                 new OA\Property(property: 'status', type: 'string', example: 'pending'),
                 new OA\Property(property: 'status_label', type: 'string', example: 'Đang xử lý'),
+                new OA\Property(property: 'expired_at', type: 'string', format: 'date-time', description: 'Thời gian hết hạn của giao dịch'),
                 new OA\Property(property: 'redirect_url', type: 'string', nullable: true, description: 'URL redirect cho e_wallet/bank_card'),
                 new OA\Property(
                     property: 'transfer_info',
@@ -290,9 +291,9 @@ final class WalletController extends BaseController
     }
 
     #[OA\Post(
-        path: '/api/v1/finance/wallet/top-up/callback',
-        description: 'Nhận phản hồi từ cổng thanh toán để cập nhật trạng thái nạp tiền. Idempotent — an toàn khi gọi nhiều lần.',
-        summary: 'Callback nạp tiền (UC-45)',
+        path: '/api/v1/finance/wallet/top-up/callback/momo',
+        description: 'Nhận phản hồi từ MoMo. Idempotent — an toàn khi gọi nhiều lần.',
+        summary: 'Callback MoMo (UC-45)',
         tags: ['Finance']
     )]
     #[OA\RequestBody(
@@ -301,13 +302,63 @@ final class WalletController extends BaseController
             required: ['external_id'],
             properties: [
                 new OA\Property(property: 'external_id', type: 'string', example: 'TX-MOM-68461AB2C8A12'),
-                new OA\Property(property: 'status', type: 'string', enum: ['success', 'failed', 'cancelled'], example: 'success'),
+                new OA\Property(property: 'status', type: 'string', enum: ['success', 'failed', 'cancelled', 'expired'], example: 'success'),
             ]
         )
     )]
     #[OA\Response(response: 200, description: 'Xử lý kết quả nạp tiền thành công')]
     #[OA\Response(response: 404, description: 'Không tìm thấy giao dịch')]
-    public function callback(Request $request): JsonResponse
+    public function callbackMomo(Request $request): JsonResponse
+    {
+        $result = $this->walletService->processTopUpCallback($request->all());
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), 'Xử lý kết quả nạp tiền thành công.');
+    }
+
+    #[OA\Post(
+        path: '/api/v1/finance/wallet/top-up/callback/zalopay',
+        description: 'Nhận phản hồi từ ZaloPay. Idempotent — an toàn khi gọi nhiều lần.',
+        summary: 'Callback ZaloPay (UC-45)',
+        tags: ['Finance']
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['external_id'],
+            properties: [
+                new OA\Property(property: 'external_id', type: 'string', example: 'TX-ZAL-68461AB2C8A12'),
+                new OA\Property(property: 'status', type: 'string', enum: ['success', 'failed', 'cancelled', 'expired'], example: 'success'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Xử lý kết quả nạp tiền thành công')]
+    #[OA\Response(response: 404, description: 'Không tìm thấy giao dịch')]
+    public function callbackZalopay(Request $request): JsonResponse
+    {
+        $result = $this->walletService->processTopUpCallback($request->all());
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
+        return $this->sendSuccess($result->getData(), 'Xử lý kết quả nạp tiền thành công.');
+    }
+
+    #[OA\Post(
+        path: '/api/v1/finance/wallet/top-up/callback/payos',
+        description: 'Nhận phản hồi từ payOS. Idempotent — an toàn khi gọi nhiều lần.',
+        summary: 'Callback payOS (UC-45)',
+        tags: ['Finance']
+    )]
+    #[OA\RequestBody(
+        required: true,
+        content: new OA\JsonContent(
+            required: ['external_id'],
+            properties: [
+                new OA\Property(property: 'external_id', type: 'string', example: 'TX-PAY-68461AB2C8A12'),
+                new OA\Property(property: 'status', type: 'string', enum: ['success', 'failed', 'cancelled', 'expired'], example: 'success'),
+            ]
+        )
+    )]
+    #[OA\Response(response: 200, description: 'Xử lý kết quả nạp tiền thành công')]
+    #[OA\Response(response: 404, description: 'Không tìm thấy giao dịch')]
+    public function callbackPayos(Request $request): JsonResponse
     {
         $result = $this->walletService->processTopUpCallback($request->all());
         if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());

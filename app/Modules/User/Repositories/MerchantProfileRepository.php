@@ -19,7 +19,7 @@ class MerchantProfileRepository extends BaseRepository implements MerchantProfil
 
     public function getRandomActiveMerchants(int $limit = 5): Collection
     {
-        return $this->query()
+        return $this->getQuery()
             ->where('status', KycStatus::Approved)
             ->where('is_open', true)
             ->inRandomOrder()

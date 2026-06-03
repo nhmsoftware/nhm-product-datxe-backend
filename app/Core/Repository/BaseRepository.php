@@ -24,12 +24,18 @@ abstract class BaseRepository implements BaseRepositoryInterface
     /**
      * Instantiate the model
      */
-    public function setModel()
+    public function setModel(): void
     {
-        $this->model = app()->make($this->getModel());
+        $model = app()->make($this->getModel());
+
+        if (!$model instanceof Model) {
+            throw new \Exception("Class {$this->getModel()} must be an instance of Eloquent Model");
+        }
+
+        $this->model = $model;
     }
 
-    public function query()
+    public function query(): Builder
     {
         return $this->model->query();
     }
@@ -59,6 +65,14 @@ abstract class BaseRepository implements BaseRepositoryInterface
         return $this->model->with($relations)->where($conditions)->first();
     }
 
+    public function firstWhere(string $column, mixed $value, array $relations = []): ?Model
+    {
+        return $this->query()
+            ->with($relations)
+            ->where($column, $value)
+            ->first();
+    }
+
     /**
      * Trả về Query Builder nếu cần custom query phức tạp ở Child Repositories
      */
@@ -67,19 +81,22 @@ abstract class BaseRepository implements BaseRepositoryInterface
         return $this->model->newQuery();
     }
 
-    public function create(array $attributes)
+    public function create(array $attributes): Model
     {
         return $this->model->create($attributes);
     }
 
-    public function updateById($id, array $attributes)
+    public function updateById($id, array $attributes): ?Model
     {
         $record = $this->find($id);
-        if ($record) {
-            $record->update($attributes);
-            return $record;
+
+        if (!$record) {
+            return null;
         }
-        return false;
+
+        $record->update($attributes);
+
+        return $record->fresh();
     }
 
     public function deleteById($id)
@@ -90,5 +107,10 @@ abstract class BaseRepository implements BaseRepositoryInterface
             return true;
         }
         return false;
+    }
+
+    public function findOrFail($id): Model
+    {
+        return $this->query()->findOrFail($id);
     }
 }

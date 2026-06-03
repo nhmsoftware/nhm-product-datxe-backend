@@ -30,6 +30,7 @@ final class TopUp extends Model
         'payment_method',
         'external_id',
         'metadata',
+        'expired_at',
     ];
 
     protected $casts = [
@@ -39,5 +40,6 @@ final class TopUp extends Model
         'amount'     => 'float',
         'status'     => TopUpStatus::class,
         'metadata'   => 'array',
+        'expired_at' => 'datetime',
     ];
 }

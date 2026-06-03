@@ -42,7 +42,7 @@ final class VoucherRepository extends BaseRepository implements VoucherRepositor
      */
     public function search(array $filters): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $query = $this->getQuery()->query();
+        $query = $this->getQuery();
 
         if (!empty($filters['code'])) {
             $query->where('code', 'ilike', '%' . $filters['code'] . '%');

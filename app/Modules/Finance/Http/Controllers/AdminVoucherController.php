@@ -35,6 +35,7 @@ final class AdminVoucherController extends BaseController
     public function index(AdminListVoucherRequest $request): JsonResponse
     {
         $result = $this->adminVoucherService->listVouchers($request->validated());
+        if ($result->isError()) return $this->sendError($result->getMessage(), $result->getCode());
         return $this->sendSuccess($result->getData(), 'Lấy danh sách voucher thành công.');
     }
 
