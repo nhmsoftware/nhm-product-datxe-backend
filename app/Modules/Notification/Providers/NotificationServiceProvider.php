@@ -59,19 +59,7 @@ final class NotificationServiceProvider extends BaseModuleServiceProvider
             SendPushOnNotificationSent::class
         );
 
-        Event::listen(
-            RideAcceptedByDriver::class,
-            RidePushNotificationListener::class
-        );
-
-        Event::listen(
-            RideCanceled::class,
-            RidePushNotificationListener::class
-        );
-
-        Event::listen(
-            RideCancelled::class,
-            RidePushNotificationListener::class
-        );
+        // Event Subscriber cho toàn bộ các thông báo
+        Event::subscribe(\App\Modules\Notification\Listeners\NotificationEventSubscriber::class);
     }
 }
