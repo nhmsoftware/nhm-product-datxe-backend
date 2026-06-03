@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace App\Modules\Notification\Providers;
 
 use App\Core\Providers\BaseModuleServiceProvider;
-use App\Modules\Driver\Events\RideCancelled;
 use App\Modules\Notification\Events\NotificationReadStatusUpdated;
 use App\Modules\Notification\Interfaces\NotificationRepositoryInterface;
 use App\Modules\Notification\Interfaces\NotificationServiceInterface;
 use App\Modules\Notification\Interfaces\PushNotificationServiceInterface;
+use App\Modules\Notification\Listeners\NotificationEventSubscriber;
 use App\Modules\Notification\Listeners\NotifyRealtimeOnNotificationRead;
 use App\Modules\Notification\Listeners\NotifyRealtimeOnNotificationSent;
-use App\Modules\Notification\Listeners\RidePushNotificationListener;
 use App\Modules\Notification\Listeners\SendPushOnNotificationSent;
+use App\Modules\Notification\Notifications\SystemNotification;
 use App\Modules\Notification\Repositories\NotificationRepository;
 use App\Modules\Notification\Services\NotificationService;
 use App\Modules\Notification\Services\PushNotificationService;
-use App\Modules\Ride\Events\RideAcceptedByDriver;
-use App\Modules\Ride\Events\RideCanceled;
+use App\Modules\User\Model\User;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Support\Facades\Event;
 
@@ -43,6 +43,11 @@ final class NotificationServiceProvider extends BaseModuleServiceProvider
     {
         parent::boot();
 
+        Relation::enforceMorphMap([
+            'user' => User::class,
+            'system_notification' => SystemNotification::class,
+        ]);
+
         // Mapping Events to Listeners
         Event::listen(
             NotificationReadStatusUpdated::class,
@@ -60,6 +65,6 @@ final class NotificationServiceProvider extends BaseModuleServiceProvider
         );
 
         // Event Subscriber cho toàn bộ các thông báo
-        Event::subscribe(\App\Modules\Notification\Listeners\NotificationEventSubscriber::class);
+        Event::subscribe(NotificationEventSubscriber::class);
     }
 }
