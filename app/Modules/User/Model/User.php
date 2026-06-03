@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Modules\User\Model;
 
 use App\Core\Traits\HasBigIntId;
+use App\Modules\Complaint\Model\Complaint;
+use App\Modules\Notification\Model\Notification;
+use App\Modules\RiskManagement\Model\UserViolation;
 use App\Modules\User\Model\Enums\Gender;
 use App\Modules\User\Model\Enums\KycStatus;
 use App\Modules\User\Model\Enums\KycType;
 use App\Modules\User\Model\Enums\UserRole;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
@@ -140,11 +144,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the entity's notifications.
+     *
+     * @return MorphMany
+     */
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable')->latest();
+    }
+
+    /**
      * Get all violations for the user.
      */
     public function violations(): HasMany
     {
-        return $this->hasMany(\App\Modules\RiskManagement\Model\UserViolation::class);
+        return $this->hasMany(UserViolation::class);
     }
 
     /**
@@ -152,7 +166,7 @@ class User extends Authenticatable
      */
     public function complaints(): HasMany
     {
-        return $this->hasMany(\App\Modules\Complaint\Model\Complaint::class, 'sender_id');
+        return $this->hasMany(Complaint::class, 'sender_id');
     }
 
     // ─── Helpers ─────────────────────────────────────────────────

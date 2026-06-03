@@ -384,6 +384,11 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
         if (!empty($filters['rideType'])) {
             $query->where('ride_type', (int) $filters['rideType']);
+        } else {
+            $query->whereIn('ride_type', [
+                RideType::INTERCITY->value,
+                RideType::AIRPORT->value
+            ]);
         }
 
         if (isset($filters['minPrice'])) {
@@ -479,11 +484,22 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function listScheduledRidesForAdmin(array $filters)
     {
         $query = $this->getQuery()
-            ->with(['customer', 'driver'])
-            ->whereNotIn('ride_type', [
-                RideType::CHAUFFEUR->value,
-                RideType::DELIVERY->value
+            ->with(['customer', 'driver']);
+
+        $rideType = $filters['ride_type'] ?? $filters['rideType'] ?? null;
+        if (!empty($rideType)) {
+            $query->where('ride_type', (int) $rideType);
+        } else {
+            $query->whereIn('ride_type', [
+                RideType::INTERCITY->value,
+                RideType::AIRPORT->value
             ]);
+        }
+
+        $vehicleType = $filters['vehicle_type'] ?? $filters['vehicleType'] ?? null;
+        if (!empty($vehicleType)) {
+            $query->where('vehicle_type', (int) $vehicleType);
+        }
 
         if (!empty($filters['status'])) {
             $statusMap = [

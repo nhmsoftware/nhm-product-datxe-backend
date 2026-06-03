@@ -116,10 +116,10 @@ class RideServiceProvider extends BaseModuleServiceProvider
             NotifyRealtimeOnRideAccepted::class
         );
 
-        Event::listen(
-            RideAcceptedByDriver::class,
-            SendFCMPushNotificationOnRideAccepted::class
-        );
+        // Event::listen(
+        //     RideAcceptedByDriver::class,
+        //     SendFCMPushNotificationOnRideAccepted::class
+        // );
 
         parent::boot();
     }

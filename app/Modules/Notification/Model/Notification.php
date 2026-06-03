@@ -32,6 +32,23 @@ class Notification extends DatabaseNotification
         'category' => NotificationCategory::class,
     ];
 
+    protected static function booted(): void
+    {
+        static::creating(function (self $notification) {
+            if (isset($notification->data['category'])) {
+                $notification->category = $notification->data['category'];
+            } elseif ($notification->data) {
+                if (isset($notification->data['ride_id']) || isset($notification->data['order_id'])) {
+                    $notification->category = NotificationCategory::Order;
+                } else {
+                    $notification->category = NotificationCategory::System;
+                }
+            } else {
+                $notification->category = NotificationCategory::System;
+            }
+        });
+    }
+
     /**
      * Get title from data
      */
@@ -45,7 +62,7 @@ class Notification extends DatabaseNotification
      */
     public function getContent(): string
     {
-        return $this->data['content'] ?? '';
+        return $this->data['content'] ?? $this->data['message'] ?? '';
     }
 
     /**

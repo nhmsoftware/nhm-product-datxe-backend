@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\Notification\Listeners;
 
-use App\Modules\Notification\Interfaces\PushNotificationServiceInterface;
+use App\Modules\Notification\Notifications\RideNotification;
 use App\Modules\Ride\Events\RideAcceptedByDriver;
 use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Driver\Events\RideCancelled;
@@ -14,10 +14,6 @@ use Illuminate\Support\Facades\Log;
 
 final class RidePushNotificationListener implements ShouldQueue
 {
-    public function __construct(
-        private readonly PushNotificationServiceInterface $pushNotificationService
-    ) {}
-
     public function handle(object $event): void
     {
         if ($event instanceof RideAcceptedByDriver) {
@@ -41,12 +37,12 @@ final class RidePushNotificationListener implements ShouldQueue
 
         if ($customer) {
             $driverName = $ride->driver->full_name ?? '';
-            $this->pushNotificationService->sendToUser(
-                $customer,
+            $customer->notify(new RideNotification(
                 'Tài xế đã nhận chuyến',
                 "Tài xế {$driverName} đang đến đón bạn.",
-                ['ride_id' => $ride->id, 'event' => 'ride.accepted']
-            );
+                'order',
+                ['ride_id' => (string) $ride->id, 'event' => 'ride.accepted']
+            ));
         }
     }
 
@@ -61,22 +57,22 @@ final class RidePushNotificationListener implements ShouldQueue
 
         // Notify Customer if Driver canceled
         if ($event->canceledBy === 'driver' && $ride->customer) {
-            $this->pushNotificationService->sendToUser(
-                $ride->customer,
+            $ride->customer->notify(new RideNotification(
                 'Chuyến xe đã bị hủy',
                 'Rất tiếc, tài xế đã hủy chuyến xe của bạn.',
-                ['ride_id' => $ride->id, 'event' => 'ride.canceled']
-            );
+                'order',
+                ['ride_id' => (string) $ride->id, 'event' => 'ride.canceled']
+            ));
         }
 
         // Notify Driver if Customer canceled
         if ($event->canceledBy === 'customer' && $ride->driver) {
-            $this->pushNotificationService->sendToUser(
-                $ride->driver,
+            $ride->driver->notify(new RideNotification(
                 'Khách hàng đã hủy chuyến',
                 'Cuốc xe của bạn đã bị khách hàng hủy.',
-                ['ride_id' => $ride->id, 'event' => 'ride.canceled']
-            );
+                'order',
+                ['ride_id' => (string) $ride->id, 'event' => 'ride.canceled']
+            ));
         }
     }
 
@@ -90,12 +86,12 @@ final class RidePushNotificationListener implements ShouldQueue
         }
 
         if ($ride->customer) {
-            $this->pushNotificationService->sendToUser(
-                $ride->customer,
+            $ride->customer->notify(new RideNotification(
                 'Tài xế đã hủy chuyến',
                 'Tài xế đã hủy chuyến đi của bạn. Hệ thống đang tìm tài xế khác.',
-                ['ride_id' => $ride->id, 'event' => 'ride.driver_cancelled']
-            );
+                'order',
+                ['ride_id' => (string) $ride->id, 'event' => 'ride.driver_cancelled']
+            ));
         }
     }
 }

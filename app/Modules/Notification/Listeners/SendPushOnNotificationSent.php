@@ -25,7 +25,7 @@ final class SendPushOnNotificationSent implements ShouldQueue
             $data = $notification->toArray($user);
 
             $title   = $data['title'] ?? 'Thông báo mới';
-            $content = $data['content'] ?? '';
+            $content = $data['content'] ?? $data['message'] ?? '';
             $icon    = $data['icon'] ?? null;
 
             // Gửi push qua service

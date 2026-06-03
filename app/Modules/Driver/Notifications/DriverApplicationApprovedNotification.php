@@ -42,6 +42,7 @@ final class DriverApplicationApprovedNotification extends Notification implement
             'message'        => self::NOTIFICATION_BODY,
             'type'           => 'driver_approved',
             'action'         => 'driver_status_toggle',
+            'category'       => 'system',
             'occurred_at'    => now()->toIso8601String(),
         ];
     }

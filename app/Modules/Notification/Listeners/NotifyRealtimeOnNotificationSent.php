@@ -27,7 +27,7 @@ final class NotifyRealtimeOnNotificationSent implements ShouldQueue
                     'id' => $event->response, // Standardly notification ID
                     'type' => get_class($notification),
                     'title' => $data['title'] ?? '',
-                    'content' => $data['content'] ?? '',
+                    'content' => $data['content'] ?? $data['message'] ?? '',
                     'icon' => $data['icon'] ?? '',
                     'category' => $data['category'] ?? 'system',
                     'created_at' => now()->toIso8601String(),
