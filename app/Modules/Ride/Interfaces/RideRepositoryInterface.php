@@ -387,6 +387,15 @@ interface RideRepositoryInterface
     public function listDeliveryRidesForAdmin(array $excludeRideIds): \Illuminate\Support\Collection;
 
     /**
+     * Danh sách đơn dịch vụ (DELIVERY=4, FOOD_DELIVERY=6) cho Admin quản lý.
+     * Phân tách hoàn toàn với listScheduledRidesForAdmin (chuyến xe hành khách).
+     *
+     * @param array $filters Bộ lọc: status, ride_type, keyword, per_page, no_pagination
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator|\Illuminate\Support\Collection
+     */
+    public function listServiceOrdersForAdmin(array $filters);
+
+    /**
      * Lấy dữ liệu các chuyến xe của tài xế theo trạng thái và phân trang.
      */
     public function getDriverRides(string $driverId, ?array $statuses = null, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator;

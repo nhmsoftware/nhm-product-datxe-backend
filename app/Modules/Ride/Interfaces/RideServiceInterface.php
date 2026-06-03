@@ -137,6 +137,12 @@ interface RideServiceInterface
     public function listChauffeurRidesForAdmin(array $filters): ServiceReturn;
 
     /**
+     * Danh sách đơn dịch vụ (Giao hàng, Đồ ăn) cho Admin.
+     * Chỉ lấy ride_type = DELIVERY(4) và FOOD_DELIVERY(6).
+     */
+    public function listServiceOrdersForAdmin(array $filters): ServiceReturn;
+
+    /**
      * Admin gán chuyến xe cho tài xế đội xe nhà.
      */
     public function assignInternalDriver(\App\Modules\Ride\DTO\AssignInternalDriverDTO $dto): ServiceReturn;

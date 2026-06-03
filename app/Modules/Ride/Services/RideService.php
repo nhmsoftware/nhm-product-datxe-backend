@@ -1257,6 +1257,13 @@ final class RideService extends BaseService implements RideServiceInterface
         });
     }
 
+    public function listServiceOrdersForAdmin(array $filters): ServiceReturn
+    {
+        return $this->execute(function () use ($filters) {
+            return $this->rideRepository->listServiceOrdersForAdmin($filters);
+        });
+    }
+
     public function assignInternalDriver(AssignInternalDriverDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {

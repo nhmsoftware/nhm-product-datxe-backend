@@ -488,13 +488,26 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
 
         $rideType = $filters['ride_type'] ?? $filters['rideType'] ?? null;
         if (!empty($rideType)) {
-            $query->where('ride_type', (int) $rideType);
-        } else {
-            $query->whereIn('ride_type', [
+            // Chỉ cho phép lọc trong nhóm chuyến xe (CITY, INTERCITY, AIRPORT)
+            // CHAUFFEUR(5) có trang quản lý riêng tại /admin/chauffeur/rides
+            $rideTypes = [
+                RideType::CITY->value,
                 RideType::INTERCITY->value,
-                RideType::AIRPORT->value
+                RideType::AIRPORT->value,
+            ];
+            $requestedType = (int) $rideType;
+            if (in_array($requestedType, $rideTypes)) {
+                $query->where('ride_type', $requestedType);
+            }
+        } else {
+            // Mặc định: CITY + INTERCITY + AIRPORT (không lẫn CHAUFFEUR, DELIVERY, FOOD_DELIVERY)
+            $query->whereIn('ride_type', [
+                RideType::CITY->value,
+                RideType::INTERCITY->value,
+                RideType::AIRPORT->value,
             ]);
         }
+
 
         $vehicleType = $filters['vehicle_type'] ?? $filters['vehicleType'] ?? null;
         if (!empty($vehicleType)) {
@@ -916,6 +929,63 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         }
 
         return $query->latest()->get();
+    }
+
+    /**
+     * Danh sách đơn dịch vụ (DELIVERY, FOOD_DELIVERY) cho Admin quản lý.
+     * Phân tách hoàn toàn với listScheduledRidesForAdmin (chuyến xe hành khách).
+     */
+    public function listServiceOrdersForAdmin(array $filters)
+    {
+        $query = $this->getQuery()
+            ->with(['customer', 'driver']);
+
+        // Chỉ lấy các loại dịch vụ
+        $serviceType = $filters['ride_type'] ?? $filters['rideType'] ?? null;
+        if (!empty($serviceType)) {
+            $serviceTypes = [RideType::DELIVERY->value, RideType::FOOD_DELIVERY->value];
+            $requestedType = (int) $serviceType;
+            if (in_array($requestedType, $serviceTypes)) {
+                $query->where('ride_type', $requestedType);
+            } else {
+                // Nếu truyền sai loại, không trả về gì
+                $query->whereRaw('1 = 0');
+            }
+        } else {
+            $query->whereIn('ride_type', [
+                RideType::DELIVERY->value,
+                RideType::FOOD_DELIVERY->value,
+            ]);
+        }
+
+        if (!empty($filters['status'])) {
+            $statusMap = [
+                'waiting'   => RideStatus::PENDING->value,
+                'assigned'  => RideStatus::ACCEPTED->value,
+                'completed' => RideStatus::COMPLETED->value,
+                'canceled'  => RideStatus::CANCELLED->value,
+            ];
+            $status = $statusMap[$filters['status']] ?? $filters['status'];
+            $query->where('status', $status);
+        }
+
+        if (!empty($filters['keyword'])) {
+            $keyword = '%' . $filters['keyword'] . '%';
+            $query->where(function ($q) use ($keyword) {
+                $q->whereRaw('id::text LIKE ?', [$keyword])
+                    ->orWhere('pickup_address', 'like', $keyword)
+                    ->orWhere('destination_address', 'like', $keyword)
+                    ->orWhereHas('customer', function ($qc) use ($keyword) {
+                        $qc->where('phone', 'like', $keyword);
+                    });
+            });
+        }
+
+        if (!empty($filters['no_pagination'])) {
+            return $query->latest()->get();
+        }
+
+        return $query->latest()->paginate($filters['per_page'] ?? 15);
     }
 
     /**
