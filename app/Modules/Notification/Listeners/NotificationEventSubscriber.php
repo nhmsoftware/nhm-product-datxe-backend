@@ -20,6 +20,7 @@ use App\Modules\Order\Events\FoodCancellationRequestHandled;
 use App\Modules\Order\Events\FoodOrderStatusUpdated;
 use App\Modules\Ride\Events\RideAcceptedByDriver;
 use App\Modules\Ride\Events\RideAssignedByAdmin;
+use App\Modules\Ride\Events\RideBooked;
 use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Ride\Events\RideCancellationRequested;
 use App\Modules\Ride\Events\RideCancellationResponded;
@@ -36,6 +37,7 @@ final class NotificationEventSubscriber implements ShouldQueue
     public function subscribe(Dispatcher $events): void
     {
         // Ride Events
+        $events->listen(RideBooked::class, [$this, 'handleRideBooked']);
         $events->listen(RideAcceptedByDriver::class, [$this, 'handleRideAcceptedByDriver']);
         $events->listen(DriverArrivedAtPickup::class, [$this, 'handleDriverArrivedAtPickup']);
         $events->listen(RidePickedUp::class, [$this, 'handleRidePickedUp']);
@@ -76,6 +78,17 @@ final class NotificationEventSubscriber implements ShouldQueue
         if ($ride && $ride->customer_id) {
             $this->notifyUser($ride->customer_id, $title, $message, $category, array_merge(['ride_id' => $rideId], $extraData));
         }
+    }
+
+    public function handleRideBooked(RideBooked $event): void
+    {
+        $this->notifyCustomerByRide(
+            $event->rideId,
+            'Đặt xe thành công',
+            'Hệ thống đã nhận được yêu cầu đặt xe của bạn và đang tìm tài xế phù hợp.',
+            'order',
+            ['event' => 'ride.booked']
+        );
     }
 
     public function handleRideAcceptedByDriver(RideAcceptedByDriver $event): void

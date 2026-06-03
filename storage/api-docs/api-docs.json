@@ -9947,6 +9947,113 @@
                 ]
             }
         },
+        "/api/v1/admin/services": {
+            "get": {
+                "tags": [
+                    "Admin Services"
+                ],
+                "summary": "Danh sách đơn dịch vụ (Admin)",
+                "description": "Lấy danh sách tất cả đơn giao hàng và đặt đồ ăn. Hỗ trợ lọc theo status, ride_type, keyword và phân trang.",
+                "operationId": "ea9acc5f524515e14549f1c92f82ad91",
+                "parameters": [
+                    {
+                        "name": "keyword",
+                        "in": "query",
+                        "description": "Tìm theo ID, địa chỉ hoặc SĐT khách",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Trạng thái (waiting, assigned, completed, canceled)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "ride_type",
+                        "in": "query",
+                        "description": "Loại dịch vụ: 4=Giao hàng, 6=Đồ ăn",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "no_pagination",
+                        "in": "query",
+                        "description": "Lấy toàn bộ không phân trang (truyền 1)",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "401": {
+                        "description": "Chưa đăng nhập"
+                    },
+                    "403": {
+                        "description": "Không có quyền Admin"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/admin/services/{id}": {
+            "get": {
+                "tags": [
+                    "Admin Services"
+                ],
+                "summary": "Chi tiết đơn dịch vụ (Admin)",
+                "description": "Chi tiết một đơn dịch vụ.",
+                "operationId": "22ef629b866d954601dd1314990d9604",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    },
+                    "404": {
+                        "description": "Không tìm thấy đơn"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/ride/{rideId}/communication/messages": {
             "get": {
                 "tags": [
@@ -10154,6 +10261,12 @@
                                         "type": "number",
                                         "format": "float",
                                         "example": 105.9458
+                                    },
+                                    "service_type": {
+                                        "description": "Loại dịch vụ (city, intercity, airport, delivery). Mặc định city.",
+                                        "type": "string",
+                                        "example": "intercity",
+                                        "nullable": true
                                     }
                                 },
                                 "type": "object"
@@ -15610,6 +15723,10 @@
         {
             "name": "Admin Scheduled Rides",
             "description": "Admin Scheduled Rides"
+        },
+        {
+            "name": "Admin Services",
+            "description": "Admin Services"
         },
         {
             "name": "Ride Communication",
