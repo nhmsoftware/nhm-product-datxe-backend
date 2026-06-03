@@ -61,6 +61,7 @@ final class RideController extends BaseController
                 new OA\Property(property: 'pickup_lng', type: 'number', format: 'float', example: 105.8428),
                 new OA\Property(property: 'destination_lat', type: 'number', format: 'float', example: 20.9944),
                 new OA\Property(property: 'destination_lng', type: 'number', format: 'float', example: 105.9458),
+                new OA\Property(property: 'service_type', type: 'string', example: 'intercity', description: 'Loại dịch vụ (city, intercity, airport, delivery). Mặc định city.', nullable: true),
             ]
         )
     )]

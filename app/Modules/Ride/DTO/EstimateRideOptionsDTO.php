@@ -14,6 +14,7 @@ final readonly class EstimateRideOptionsDTO
         public float $pickupLng,
         public float $destinationLat,
         public float $destinationLng,
+        public ?string $serviceType = null,
     ) {
     }
 
@@ -25,6 +26,7 @@ final readonly class EstimateRideOptionsDTO
             pickupLng: (float) $request->input('pickup_lng'),
             destinationLat: (float) $request->input('destination_lat'),
             destinationLng: (float) $request->input('destination_lng'),
+            serviceType: $request->input('service_type') ? (string) $request->input('service_type') : null,
         );
     }
 }

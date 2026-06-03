@@ -25,6 +25,7 @@ final class EstimateRideOptionsRequest extends FormRequest
             'pickup_lng' => ['required', 'numeric', 'between:-180,180'],
             'destination_lat' => ['required', 'numeric', 'between:-90,90'],
             'destination_lng' => ['required', 'numeric', 'between:-180,180'],
+            'service_type' => ['nullable', 'string', 'in:city,intercity,airport,delivery'],
         ];
     }
 

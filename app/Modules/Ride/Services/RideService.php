@@ -115,7 +115,9 @@ final class RideService extends BaseService implements RideServiceInterface
 
                     return VehicleOptionDTO::fromVehicleType($vehicleType, $pricingData->finalFare)->toArray();
                 },
-                [VehicleType::BIKE, VehicleType::CAR_4_SEATS, VehicleType::CAR_7_SEATS, VehicleType::CAR_9_SEATS]
+                $dto->serviceType === 'intercity'
+                    ? [VehicleType::CAR_4_SEATS, VehicleType::CAR_7_SEATS, VehicleType::CAR_9_SEATS, VehicleType::CAR_SHARED]
+                    : [VehicleType::BIKE, VehicleType::CAR_4_SEATS, VehicleType::CAR_7_SEATS, VehicleType::CAR_9_SEATS]
             )));
 
             return [
