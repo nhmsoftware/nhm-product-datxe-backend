@@ -23,3 +23,8 @@ Homestead.json
 Homestead.yaml
 Thumbs.db
 /storage/app/firebase/credentials.json
+data
+tests/Feature
+.docs/ai-context.md
+.docs/Nghiệp vụ - Đặc tả product đặt xe công nghệ.txt
+scratch
