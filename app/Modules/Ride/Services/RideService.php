@@ -781,6 +781,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'voucher_code'        => $dto->voucherCode,
                 'discount_amount'     => $discountAmount,
                 'is_pushed_to_pool'   => $this->shouldPushToPoolImmediately(),
+                'is_pushed_to_internal_pool' => $this->shouldPushToInternalImmediately(),
             ]);
 
             // 5. Không phát sự kiện RideBooked ngay lập tức để tránh tự động dispatch (theo yêu cầu)
@@ -853,6 +854,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'voucher_code'        => $dto->voucherCode,
                 'discount_amount'     => $discountAmount,
                 'is_pushed_to_pool'   => $this->shouldPushToPoolImmediately(),
+                'is_pushed_to_internal_pool' => $this->shouldPushToInternalImmediately(),
             ]);
 
             // 5. Không phát sự kiện RideBooked ngay lập tức để tránh tự động dispatch (theo yêu cầu)
@@ -938,6 +940,8 @@ final class RideService extends BaseService implements RideServiceInterface
                 'total_price'         => $totalPrice,
                 'voucher_code'        => $dto->voucherCode,
                 'discount_amount'     => $discountAmount,
+                'is_pushed_to_pool'   => $this->shouldPushToPoolImmediately(),
+                'is_pushed_to_internal_pool' => $this->shouldPushToInternalImmediately(),
             ]);
 
             // 6. Tạo DeliveryOrder đính kèm
@@ -1231,17 +1235,18 @@ final class RideService extends BaseService implements RideServiceInterface
     /**
      * @inheritDoc
      */
-    public function getAirports(): ServiceReturn
+    public function getAirports(\App\Modules\Ride\DTO\GetAirportsDTO $dto): ServiceReturn
     {
-        return $this->execute(function () {
-            $airports = $this->airportRepository->getActiveAirports();
+        return $this->execute(function () use ($dto) {
+            $airports = $this->airportRepository->getActiveAirports($dto->lat, $dto->lng);
 
             return $airports->map(fn($airport) => [
-                'id'   => $airport->id,
-                'name' => $airport->name,
-                'code' => $airport->code,
-                'lat'  => (float) $airport->lat,
-                'lng'  => (float) $airport->lng,
+                'id'       => $airport->id,
+                'name'     => $airport->name,
+                'code'     => $airport->code,
+                'lat'      => (float) $airport->lat,
+                'lng'      => (float) $airport->lng,
+                'distance' => isset($airport->distance) ? (float) $airport->distance : null,
             ])->toArray();
         });
     }
@@ -1364,6 +1369,19 @@ final class RideService extends BaseService implements RideServiceInterface
         // Chỉ tự động push khi mode là OPEN_POOL
         // Khi INTERNAL_PRIORITY (Admin bật chế độ kiểm soát) → không tự push
         return $settings->scheduled_dispatch_mode === ScheduledDispatchMode::OPEN_POOL;
+    }
+
+    private function shouldPushToInternalImmediately(): bool
+    {
+        $settings = $this->pricingGlobalSettingRepository->getSettings();
+
+        if (!$settings) {
+            return false;
+        }
+
+        // Chỉ tự động push vào pool nội bộ khi ở chế độ INTERNAL_PRIORITY và bật auto_push_internal
+        return $settings->scheduled_dispatch_mode === ScheduledDispatchMode::INTERNAL_PRIORITY 
+            && $settings->auto_push_internal;
     }
 
     // =========================================================

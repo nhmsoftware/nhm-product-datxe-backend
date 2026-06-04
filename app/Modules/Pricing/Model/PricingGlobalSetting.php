@@ -17,11 +17,13 @@ final class PricingGlobalSetting extends Model
     protected $fillable = [
         'is_free_mode',
         'scheduled_dispatch_mode',
+        'auto_push_internal',
     ];
 
     protected $casts = [
         'id'                      => 'string',
         'is_free_mode'            => 'boolean',
         'scheduled_dispatch_mode' => ScheduledDispatchMode::class,
+        'auto_push_internal'      => 'boolean',
     ];
 }

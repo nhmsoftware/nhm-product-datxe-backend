@@ -38,6 +38,7 @@ final class ScheduledPricingService extends BaseService implements ScheduledPric
                     ? 'Tự động (Tài xế nhận chuyến)'
                     : 'Admin phân phối (Thủ công)',
                 'is_admin_controlled' => $dispatchMode === ScheduledDispatchMode::INTERNAL_PRIORITY->value,
+                'auto_push_internal'  => (bool) ($global?->auto_push_internal ?? false),
             ];
         });
     }
@@ -137,6 +138,39 @@ final class ScheduledPricingService extends BaseService implements ScheduledPric
                 'message'             => $newMode === ScheduledDispatchMode::OPEN_POOL
                     ? "Đã bật chế độ tự động. {$affectedRides} chuyến đặt trước đã được đẩy cho tài xế."
                     : "Đã bật chế độ Admin phân phối. {$affectedRides} chuyến đặt trước đã được ẩn khỏi pool tài xế.",
+            ];
+        });
+    }
+
+    public function toggleInternalAutoPush(bool $isAutoPush): ServiceReturn
+    {
+        return $this->execute(function () use ($isAutoPush) {
+            $global = $this->globalSettingRepository->getSettings();
+            if ($global) {
+                $this->globalSettingRepository->updateById($global->id, [
+                    'auto_push_internal' => $isAutoPush,
+                ]);
+            } else {
+                $this->globalSettingRepository->create([
+                    'is_free_mode'            => false,
+                    'scheduled_dispatch_mode' => ScheduledDispatchMode::INTERNAL_PRIORITY->value,
+                    'auto_push_internal'      => $isAutoPush,
+                ]);
+            }
+
+            $affectedRides = 0;
+            if ($isAutoPush) {
+                $affectedRides = $this->rideRepository->pushAllPendingScheduledToInternalPool();
+            } else {
+                $affectedRides = $this->rideRepository->hideAllPendingScheduledFromInternalPool();
+            }
+
+            return [
+                'auto_push_internal' => $isAutoPush,
+                'affected_rides'     => $affectedRides,
+                'message'            => $isAutoPush
+                    ? "Đã bật chế độ tự động phát chuyến nội bộ. {$affectedRides} chuyến đã được đẩy cho đội xe nhà."
+                    : "Đã tắt tự động phát chuyến nội bộ. {$affectedRides} chuyến đã được thu hồi khỏi đội xe nhà.",
             ];
         });
     }

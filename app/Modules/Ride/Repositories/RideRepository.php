@@ -352,7 +352,12 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     {
         $query = $this->getQuery()
             ->where('status', RideStatus::PENDING->value)
-            ->where('is_pushed_to_pool', true)
+            ->where(function ($q) use ($filters) {
+                $q->where('is_pushed_to_pool', true);
+                if (($filters['driverGroupType'] ?? '') === \App\Modules\Driver\Model\Enums\DriverGroupType::INTERNAL->value) {
+                    $q->orWhere('is_pushed_to_internal_pool', true);
+                }
+            })
             ->where('vehicle_type', $vehicleType)
             // Lọc ra các đơn mà tài xế đã từ chối trước đó (nếu có lưu vết)
             ->whereNotExists(function ($q) use ($filters) {
@@ -1023,6 +1028,37 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         }
 
         return $query->orderByDesc('created_at')->paginate($perPage);
+    }
+
+    /**
+     * Đẩy toàn bộ chuyến xe đặt trước đang chờ ra pool nội bộ.
+     */
+    public function pushAllPendingScheduledToInternalPool(): int
+    {
+        return $this->getQuery()->whereIn('ride_type', [
+                RideType::CITY->value,
+                RideType::INTERCITY->value,
+                RideType::AIRPORT->value
+            ])
+            ->where('status', RideStatus::PENDING->value)
+            ->where('is_pushed_to_pool', false)
+            ->where('is_pushed_to_internal_pool', false)
+            ->update(['is_pushed_to_internal_pool' => true]);
+    }
+
+    /**
+     * Ẩn toàn bộ chuyến xe đặt trước đang chờ khỏi pool nội bộ.
+     */
+    public function hideAllPendingScheduledFromInternalPool(): int
+    {
+        return $this->getQuery()->whereIn('ride_type', [
+                RideType::CITY->value,
+                RideType::INTERCITY->value,
+                RideType::AIRPORT->value
+            ])
+            ->where('status', RideStatus::PENDING->value)
+            ->where('is_pushed_to_internal_pool', true)
+            ->update(['is_pushed_to_internal_pool' => false]);
     }
 }
 

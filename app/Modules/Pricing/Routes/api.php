@@ -49,5 +49,8 @@ Route::prefix('v1/admin/pricing')
             // POST { "mode": 2 } → TẮT Admin / Tự động đẩy cho tài xế
             Route::post('toggle-dispatch', [\App\Modules\Pricing\Http\Controllers\AdminScheduledPricingController::class, 'toggleDispatch'])
                 ->name('admin.pricing.scheduled.toggle_dispatch');
+            
+            Route::post('toggle-internal-auto-push', [\App\Modules\Pricing\Http\Controllers\AdminScheduledPricingController::class, 'toggleInternalAutoPush'])
+                ->name('admin.pricing.scheduled.toggle_internal_auto_push');
         });
     });

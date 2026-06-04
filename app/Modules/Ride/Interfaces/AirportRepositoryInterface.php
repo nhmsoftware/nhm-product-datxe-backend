@@ -13,9 +13,12 @@ use Illuminate\Support\Collection;
 interface AirportRepositoryInterface extends BaseRepositoryInterface
 {
     /**
-     * Lấy danh sách các sân bay đang hoạt động.
+     * Lấy danh sách sân bay hoạt động.
+     * Nếu có truyền tọa độ, sắp xếp theo khoảng cách từ gần đến xa.
      *
+     * @param float|null $lat
+     * @param float|null $lng
      * @return Collection
      */
-    public function getActiveAirports(): Collection;
+    public function getActiveAirports(?float $lat = null, ?float $lng = null): Collection;
 }

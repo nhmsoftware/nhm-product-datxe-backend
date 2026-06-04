@@ -28,3 +28,6 @@ tests/Feature
 .docs/ai-context.md
 .docs/Nghiệp vụ - Đặc tả product đặt xe công nghệ.txt
 scratch
+docker-compose.yml
+Dockerfile
+docker-up-local.txt

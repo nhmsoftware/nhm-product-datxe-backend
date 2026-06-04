@@ -124,7 +124,7 @@ interface RideServiceInterface
     /**
      * Lấy danh sách sân bay hỗ trợ (UC-27).
      */
-    public function getAirports(): ServiceReturn;
+    public function getAirports(\App\Modules\Ride\DTO\GetAirportsDTO $dto): ServiceReturn;
 
     /**
      * Danh sách chuyến đặt trước cho Admin.

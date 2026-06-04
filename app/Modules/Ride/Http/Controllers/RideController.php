@@ -478,15 +478,17 @@ final class RideController extends BaseController
     }
     #[OA\Get(
         path: '/api/v1/ride/airports',
-        description: 'Lấy danh sách các sân bay được hỗ trợ để đặt xe (UC-27).',
+        description: 'Lấy danh sách các sân bay được hỗ trợ để đặt xe (UC-27). Nếu truyền vào tọa độ vị trí của khách hàng (lat và lng), danh sách trả về sẽ được tự động sắp xếp theo thứ tự khoảng cách từ gần nhất đến xa nhất.',
         summary: 'Danh sách sân bay hỗ trợ (UC-27)',
         security: [['sanctum' => []]],
         tags: ['Ride']
     )]
+    #[OA\Parameter(name: 'lat', description: 'Vĩ độ (Latitude) hiện tại của khách hàng', in: 'query', required: false, schema: new OA\Schema(type: 'number', format: 'float'))]
+    #[OA\Parameter(name: 'lng', description: 'Kinh độ (Longitude) hiện tại của khách hàng', in: 'query', required: false, schema: new OA\Schema(type: 'number', format: 'float'))]
     #[OA\Response(response: 200, description: 'Lấy danh sách thành công')]
-    public function listAirports(): JsonResponse
+    public function listAirports(\App\Modules\Ride\Http\Requests\GetAirportsRequest $request): JsonResponse
     {
-        $result = $this->rideService->getAirports();
+        $result = $this->rideService->getAirports(\App\Modules\Ride\DTO\GetAirportsDTO::fromRequest($request));
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());

@@ -19,11 +19,19 @@ final class AirportRepository extends BaseRepository implements AirportRepositor
     /**
      * @inheritDoc
      */
-    public function getActiveAirports(): Collection
+    public function getActiveAirports(?float $lat = null, ?float $lng = null): Collection
     {
-        return $this->getQuery()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get();
+        $query = $this->getQuery()->where('is_active', true);
+
+        if ($lat !== null && $lng !== null) {
+            $haversine = "(6371 * acos(cos(radians(?)) * cos(radians(lat)) * cos(radians(lng) - radians(?)) + sin(radians(?)) * sin(radians(lat))))";
+            
+            $query->selectRaw("*, {$haversine} AS distance", [$lat, $lng, $lat])
+                  ->orderBy('distance');
+        } else {
+            $query->orderBy('name');
+        }
+
+        return $query->get();
     }
 }

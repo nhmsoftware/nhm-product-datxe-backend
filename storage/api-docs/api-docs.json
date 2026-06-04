@@ -9698,6 +9698,45 @@
                 ]
             }
         },
+        "/api/v1/admin/pricing/scheduled/toggle-internal-auto-push": {
+            "post": {
+                "tags": [
+                    "Admin Scheduled Pricing"
+                ],
+                "summary": "Bật/Tắt tự động đẩy đơn cho xe nhà (UC-122)",
+                "description": "UC-122: Bật/Tắt chế độ tự động đẩy chuyến cho đội xe nhà",
+                "operationId": "2b2647f0988241a410ab4b9ef662939d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "is_auto_push"
+                                ],
+                                "properties": {
+                                    "is_auto_push": {
+                                        "type": "boolean",
+                                        "example": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Thành công"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/admin/chauffeur/rides": {
             "get": {
                 "tags": [
@@ -11009,8 +11048,30 @@
                     "Ride"
                 ],
                 "summary": "Danh sách sân bay hỗ trợ (UC-27)",
-                "description": "Lấy danh sách các sân bay được hỗ trợ để đặt xe (UC-27).",
+                "description": "Lấy danh sách các sân bay được hỗ trợ để đặt xe (UC-27). Nếu truyền vào tọa độ vị trí của khách hàng (lat và lng), danh sách trả về sẽ được tự động sắp xếp theo thứ tự khoảng cách từ gần nhất đến xa nhất.",
                 "operationId": "9fb257380cc121a39f76d25db105ae7d",
+                "parameters": [
+                    {
+                        "name": "lat",
+                        "in": "query",
+                        "description": "Vĩ độ (Latitude) hiện tại của khách hàng",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    },
+                    {
+                        "name": "lng",
+                        "in": "query",
+                        "description": "Kinh độ (Longitude) hiện tại của khách hàng",
+                        "required": false,
+                        "schema": {
+                            "type": "number",
+                            "format": "float"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "Lấy danh sách thành công"

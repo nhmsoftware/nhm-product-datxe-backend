@@ -125,4 +125,45 @@ final class AdminScheduledPricingController extends BaseController
 
         return $this->sendSuccess($result->getData(), $result->getData()['message'] ?? 'Cập nhật thành công.');
     }
+
+    /**
+     * UC-122: Bật/Tắt chế độ tự động đẩy chuyến cho đội xe nhà
+     */
+    #[OA\Post(
+        path: '/api/v1/admin/pricing/scheduled/toggle-internal-auto-push',
+        summary: 'Bật/Tắt tự động đẩy đơn cho xe nhà (UC-122)',
+        security: [['sanctum' => []]],
+        tags: ['Admin Scheduled Pricing'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['is_auto_push'],
+                properties: [
+                    new OA\Property(
+                        property: 'is_auto_push',
+                        type: 'boolean',
+                        example: true,
+                    ),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Thành công'
+            )
+        ]
+    )]
+    public function toggleInternalAutoPush(Request $request): JsonResponse
+    {
+        $isAutoPush = filter_var($request->input('is_auto_push'), FILTER_VALIDATE_BOOLEAN);
+
+        $result = $this->service->toggleInternalAutoPush($isAutoPush);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getData()['message'] ?? 'Cập nhật thành công.');
+    }
 }
