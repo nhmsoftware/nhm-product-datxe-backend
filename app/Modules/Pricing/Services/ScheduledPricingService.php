@@ -47,13 +47,8 @@ final class ScheduledPricingService extends BaseService implements ScheduledPric
     {
         return $this->execute(function () use ($dto) {
             return DB::transaction(function () use ($dto) {
-                // 1. Cập nhật hoặc tạo mới cấu hình giá
-                $config = $this->repository->getCurrentConfig();
-                if ($config) {
-                    $this->repository->updateById($config->id, $dto->toPricingConfigArray());
-                } else {
-                    $config = $this->repository->create($dto->toPricingConfigArray());
-                }
+                // 1. Cập nhật cấu hình giá (surcharges & rules)
+                $config = $this->repository->saveConfig($dto->toSurchargeArray(), $dto->rules);
 
                 // 2. Cập nhật Dispatch Mode trong Global Settings
                 $global = $this->globalSettingRepository->getSettings();
@@ -64,6 +59,11 @@ final class ScheduledPricingService extends BaseService implements ScheduledPric
                     $this->globalSettingRepository->updateById($global->id, [
                         'scheduled_dispatch_mode' => $newMode->value,
                     ]);
+                } else {
+                    $this->globalSettingRepository->create([
+                        'is_free_mode'            => false,
+                        'scheduled_dispatch_mode' => $newMode->value,
+                    ]);
                 }
 
                 // 3. Phát event nếu chế độ phân phối thay đổi
@@ -72,7 +72,7 @@ final class ScheduledPricingService extends BaseService implements ScheduledPric
                 }
 
                 return [
-                    'pricing'       => $config->fresh(),
+                    'pricing'       => $config,
                     'dispatch_mode' => $newMode->value,
                 ];
             });

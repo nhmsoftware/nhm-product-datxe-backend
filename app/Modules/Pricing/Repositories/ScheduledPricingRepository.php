@@ -4,23 +4,60 @@ declare(strict_types=1);
 
 namespace App\Modules\Pricing\Repositories;
 
-use App\Core\Repository\BaseRepository;
 use App\Modules\Pricing\Interfaces\ScheduledPricingRepositoryInterface;
-use App\Modules\Pricing\Model\ScheduledPricingConfig;
+use App\Modules\Pricing\Model\ScheduledPricingSurcharge;
+use App\Modules\Pricing\Model\ScheduledPricingRule;
+use App\Modules\Pricing\Model\ScheduledPricingRange;
+use Illuminate\Support\Facades\DB;
 
-final class ScheduledPricingRepository extends BaseRepository implements ScheduledPricingRepositoryInterface
+final class ScheduledPricingRepository implements ScheduledPricingRepositoryInterface
 {
-    public function getModel(): string
+    public function getCurrentConfig(): array
     {
-        return ScheduledPricingConfig::class;
+        $surcharge = ScheduledPricingSurcharge::where('is_active', true)->first();
+        $rules = ScheduledPricingRule::with('ranges')->where('is_active', true)->get();
+
+        return [
+            'surcharges' => $surcharge ? $surcharge->toArray() : null,
+            'rules'      => $rules->toArray(),
+        ];
     }
 
-    /**
-     * @inheritDoc
-     */
-    public function getCurrentConfig(): ?ScheduledPricingConfig
+    public function saveConfig(array $surchargeData, array $rulesData): array
     {
-        /** @var ScheduledPricingConfig|null */
-        return $this->getQuery()->where('is_active', true)->first();
+        return DB::transaction(function () use ($surchargeData, $rulesData) {
+            // Vô hiệu hóa cấu hình cũ
+            ScheduledPricingSurcharge::where('is_active', true)->update(['is_active' => false]);
+            ScheduledPricingRule::where('is_active', true)->update(['is_active' => false]);
+            // Không cần update ranges vì ranges cũ sẽ đi theo rules cũ
+
+            // Tạo cấu hình phụ phí mới
+            $surchargeData['is_active'] = true;
+            $surcharge = ScheduledPricingSurcharge::create($surchargeData);
+
+            $rules = [];
+            foreach ($rulesData as $ruleData) {
+                $rangesData = $ruleData['ranges'] ?? [];
+                unset($ruleData['ranges']);
+
+                $ruleData['is_active'] = true;
+                $rule = ScheduledPricingRule::create($ruleData);
+
+                $ruleRanges = [];
+                foreach ($rangesData as $rangeData) {
+                    $rangeData['is_active'] = true;
+                    $ruleRanges[] = $rule->ranges()->create($rangeData)->toArray();
+                }
+
+                $ruleArray = $rule->toArray();
+                $ruleArray['ranges'] = $ruleRanges;
+                $rules[] = $ruleArray;
+            }
+
+            return [
+                'surcharges' => $surcharge->toArray(),
+                'rules'      => $rules,
+            ];
+        });
     }
 }

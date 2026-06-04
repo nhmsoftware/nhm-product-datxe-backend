@@ -7,10 +7,15 @@ namespace App\Modules\Pricing\Interfaces;
 use App\Core\Interfaces\BaseRepositoryInterface;
 use App\Modules\Pricing\Model\ScheduledPricingConfig;
 
-interface ScheduledPricingRepositoryInterface extends BaseRepositoryInterface
+interface ScheduledPricingRepositoryInterface
 {
     /**
-     * Lấy cấu hình giá hiện tại (chỉ lấy 1 dòng active duy nhất)
+     * Lấy cấu hình giá hiện tại (bao gồm phụ phí và rules + ranges)
      */
-    public function getCurrentConfig(): ?ScheduledPricingConfig;
+    public function getCurrentConfig(): array;
+
+    /**
+     * Lưu cấu hình giá mới
+     */
+    public function saveConfig(array $surchargeData, array $rulesData): array;
 }

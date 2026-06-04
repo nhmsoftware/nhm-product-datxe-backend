@@ -1687,7 +1687,35 @@
                 "operationId": "52fbe60d01ae5dc112ba5da8c1bb532f",
                 "responses": {
                     "200": {
-                        "description": "Thành công"
+                        "description": "Thành công",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "label": {
+                                                "type": "string",
+                                                "example": "Xe ôm"
+                                            },
+                                            "supported_vehicle_types": {
+                                                "description": "Danh sách các loại xe hỗ trợ dịch vụ này. 1: Xe máy, 2: Ô tô 4 chỗ...",
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                }
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -9584,6 +9612,20 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "pricing": {
+                                            "properties": {
+                                                "surcharges": {
+                                                    "type": "object"
+                                                },
+                                                "rules": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
                                         "dispatch_mode": {
                                             "description": "1 = Admin phân phối, 2 = Tự động",
                                             "type": "integer",
@@ -9596,6 +9638,10 @@
                                         "is_admin_controlled": {
                                             "type": "boolean",
                                             "example": true
+                                        },
+                                        "auto_push_internal": {
+                                            "type": "boolean",
+                                            "example": false
                                         }
                                     },
                                     "type": "object"
@@ -9617,6 +9663,98 @@
                 "summary": "Cập nhật cấu hình giá đặt trước (UC-121)",
                 "description": "UC-121: Cập nhật cấu hình giá đặt trước",
                 "operationId": "0f1000ef5f0ad431ff6a0499856a7c6f",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "pre_book_surcharge": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 20000
+                                    },
+                                    "night_surcharge": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 15000
+                                    },
+                                    "holiday_surcharge": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 50000
+                                    },
+                                    "waiting_surcharge": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 5000
+                                    },
+                                    "toll_surcharge": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 10000
+                                    },
+                                    "dispatch_mode": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "rules": {
+                                        "type": "array",
+                                        "items": {
+                                            "properties": {
+                                                "service_type": {
+                                                    "type": "integer",
+                                                    "example": 6
+                                                },
+                                                "ride_mode": {
+                                                    "type": "string",
+                                                    "example": "shared"
+                                                },
+                                                "vehicle_type": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "airport_id": {
+                                                    "type": "string",
+                                                    "nullable": true
+                                                },
+                                                "ranges": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "start_km": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 0
+                                                            },
+                                                            "end_km": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 10
+                                                            },
+                                                            "price": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 150000
+                                                            },
+                                                            "unit": {
+                                                                "type": "string",
+                                                                "example": "per_passenger"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
                 "responses": {
                     "200": {
                         "description": "Thành công"

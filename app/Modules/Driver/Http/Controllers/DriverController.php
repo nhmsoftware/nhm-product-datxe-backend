@@ -29,7 +29,25 @@ final class DriverController extends BaseController
         security: [['sanctum' => []]],
         tags: ['Driver'],
         responses: [
-            new OA\Response(response: 200, description: 'Thành công'),
+            new OA\Response(
+                response: 200, 
+                description: 'Thành công',
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'id', type: 'integer', example: 1),
+                            new OA\Property(property: 'label', type: 'string', example: 'Xe ôm'),
+                            new OA\Property(
+                                property: 'supported_vehicle_types', 
+                                type: 'array', 
+                                items: new OA\Items(type: 'integer', example: 1),
+                                description: 'Danh sách các loại xe hỗ trợ dịch vụ này. 1: Xe máy, 2: Ô tô 4 chỗ...'
+                            ),
+                        ]
+                    )
+                )
+            ),
         ]
     )]
     public function getRegistrationServices(): JsonResponse

@@ -32,9 +32,18 @@ final class AdminScheduledPricingController extends BaseController
                 description: 'Thành công',
                 content: new OA\JsonContent(
                     properties: [
+                        new OA\Property(
+                            property: 'pricing', 
+                            properties: [
+                                new OA\Property(property: 'surcharges', type: 'object'),
+                                new OA\Property(property: 'rules', type: 'array', items: new OA\Items(type: 'object'))
+                            ],
+                            type: 'object'
+                        ),
                         new OA\Property(property: 'dispatch_mode', type: 'integer', example: 1, description: '1 = Admin phân phối, 2 = Tự động'),
                         new OA\Property(property: 'dispatch_mode_label', type: 'string', example: 'Admin phân phối (Thủ công)'),
                         new OA\Property(property: 'is_admin_controlled', type: 'boolean', example: true),
+                        new OA\Property(property: 'auto_push_internal', type: 'boolean', example: false),
                     ]
                 )
             )
@@ -54,6 +63,43 @@ final class AdminScheduledPricingController extends BaseController
         summary: 'Cập nhật cấu hình giá đặt trước (UC-121)',
         security: [['sanctum' => []]],
         tags: ['Admin Scheduled Pricing'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'pre_book_surcharge', type: 'number', format: 'float', example: 20000),
+                    new OA\Property(property: 'night_surcharge', type: 'number', format: 'float', example: 15000),
+                    new OA\Property(property: 'holiday_surcharge', type: 'number', format: 'float', example: 50000),
+                    new OA\Property(property: 'waiting_surcharge', type: 'number', format: 'float', example: 5000),
+                    new OA\Property(property: 'toll_surcharge', type: 'number', format: 'float', example: 10000),
+                    new OA\Property(property: 'dispatch_mode', type: 'integer', example: 1),
+                    new OA\Property(
+                        property: 'rules', 
+                        type: 'array', 
+                        items: new OA\Items(
+                            properties: [
+                                new OA\Property(property: 'service_type', type: 'integer', example: 6),
+                                new OA\Property(property: 'ride_mode', type: 'string', example: 'shared'),
+                                new OA\Property(property: 'vehicle_type', type: 'integer', example: 2),
+                                new OA\Property(property: 'airport_id', type: 'string', nullable: true),
+                                new OA\Property(
+                                    property: 'ranges',
+                                    type: 'array',
+                                    items: new OA\Items(
+                                        properties: [
+                                            new OA\Property(property: 'start_km', type: 'number', format: 'float', example: 0),
+                                            new OA\Property(property: 'end_km', type: 'number', format: 'float', example: 10),
+                                            new OA\Property(property: 'price', type: 'number', format: 'float', example: 150000),
+                                            new OA\Property(property: 'unit', type: 'string', example: 'per_passenger'),
+                                        ]
+                                    )
+                                )
+                            ]
+                        )
+                    )
+                ]
+            )
+        ),
         responses: [new OA\Response(response: 200, description: 'Thành công')]
     )]
     public function update(AdminScheduledPricingRequest $request): JsonResponse

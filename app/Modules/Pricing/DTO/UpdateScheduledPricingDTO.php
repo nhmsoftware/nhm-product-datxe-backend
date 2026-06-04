@@ -9,61 +9,37 @@ use Illuminate\Http\Request;
 final class UpdateScheduledPricingDTO
 {
     public function __construct(
-        public readonly float $basePrice,
-        public readonly float $scheduledSurcharge,
-        public readonly float $intercityBasePrice,
-        public readonly float $intercityDistanceRate,
-        public readonly float $intercityTimeRate,
-        public readonly float $intercityMinFare,
-        public readonly float $airportBasePrice,
-        public readonly float $airportDistanceRate,
-        public readonly float $airportTimeRate,
-        public readonly float $airportMinFare,
-        public readonly float $deliveryBasePrice,
-        public readonly float $deliveryDistanceRate,
-        public readonly float $deliveryTimeRate,
-        public readonly float $deliveryMinFare,
+        public readonly float $preBookSurcharge,
+        public readonly float $nightSurcharge,
+        public readonly float $holidaySurcharge,
+        public readonly float $waitingSurcharge,
+        public readonly float $tollSurcharge,
         public readonly int $dispatchMode,
+        /** @var array<array> */
+        public readonly array $rules,
     ) {}
 
     public static function fromRequest(Request $request): self
     {
         return new self(
-            basePrice:             (float) $request->input('base_price'),
-            scheduledSurcharge:    (float) $request->input('scheduled_surcharge'),
-            intercityBasePrice:    (float) $request->input('intercity_base_price'),
-            intercityDistanceRate: (float) $request->input('intercity_distance_rate'),
-            intercityTimeRate:     (float) $request->input('intercity_time_rate'),
-            intercityMinFare:      (float) $request->input('intercity_min_fare'),
-            airportBasePrice:      (float) $request->input('airport_base_price'),
-            airportDistanceRate:   (float) $request->input('airport_distance_rate'),
-            airportTimeRate:       (float) $request->input('airport_time_rate'),
-            airportMinFare:        (float) $request->input('airport_min_fare'),
-            deliveryBasePrice:     (float) $request->input('delivery_base_price'),
-            deliveryDistanceRate:  (float) $request->input('delivery_distance_rate'),
-            deliveryTimeRate:      (float) $request->input('delivery_time_rate'),
-            deliveryMinFare:       (float) $request->input('delivery_min_fare'),
-            dispatchMode:          (int) $request->input('dispatch_mode'),
+            preBookSurcharge: (float) $request->input('pre_book_surcharge', 0),
+            nightSurcharge:   (float) $request->input('night_surcharge', 0),
+            holidaySurcharge: (float) $request->input('holiday_surcharge', 0),
+            waitingSurcharge: (float) $request->input('waiting_surcharge', 0),
+            tollSurcharge:    (float) $request->input('toll_surcharge', 0),
+            dispatchMode:     (int) $request->input('dispatch_mode', 1),
+            rules:            (array) $request->input('rules', []),
         );
     }
 
-    public function toPricingConfigArray(): array
+    public function toSurchargeArray(): array
     {
         return [
-            'base_price'              => $this->basePrice,
-            'scheduled_surcharge'     => $this->scheduledSurcharge,
-            'intercity_base_price'    => $this->intercityBasePrice,
-            'intercity_distance_rate' => $this->intercityDistanceRate,
-            'intercity_time_rate'     => $this->intercityTimeRate,
-            'intercity_min_fare'      => $this->intercityMinFare,
-            'airport_base_price'      => $this->airportBasePrice,
-            'airport_distance_rate'   => $this->airportDistanceRate,
-            'airport_time_rate'       => $this->airportTimeRate,
-            'airport_min_fare'        => $this->airportMinFare,
-            'delivery_base_price'     => $this->deliveryBasePrice,
-            'delivery_distance_rate'  => $this->deliveryDistanceRate,
-            'delivery_time_rate'      => $this->deliveryTimeRate,
-            'delivery_min_fare'       => $this->deliveryMinFare,
+            'pre_book_surcharge' => $this->preBookSurcharge,
+            'night_surcharge'    => $this->nightSurcharge,
+            'holiday_surcharge'  => $this->holidaySurcharge,
+            'waiting_surcharge'  => $this->waitingSurcharge,
+            'toll_surcharge'     => $this->tollSurcharge,
         ];
     }
 }

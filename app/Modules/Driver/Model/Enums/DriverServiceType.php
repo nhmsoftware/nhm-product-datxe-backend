@@ -36,6 +36,24 @@ enum DriverServiceType: int
     }
 
     /**
+     * Trả về danh sách loại xe hỗ trợ dịch vụ này.
+     * Cần đồng bộ với App\Modules\User\Model\Enums\VehicleType
+     */
+    public function getSupportedVehicleTypes(): array
+    {
+        return match ($this) {
+            self::BIKE_RIDE       => [1],
+            self::TAXI_4_SEATS    => [2],
+            self::TAXI_7_SEATS    => [3],
+            self::FOOD_DELIVERY   => [1],
+            self::PARCEL_DELIVERY => [1, 2, 3, 4],
+            self::INTERCITY       => [2, 3, 4, 5],
+            self::AIRPORT         => [2, 3, 4],
+            self::DRIVER_FOR_HIRE => [1, 2, 3, 4, 6],
+        };
+    }
+
+    /**
      * Trả về toàn bộ danh sách dịch vụ kèm label để Frontend hiển thị.
      */
     public static function getList(): array
@@ -43,8 +61,9 @@ enum DriverServiceType: int
         $list = [];
         foreach (self::cases() as $case) {
             $list[] = [
-                'id'    => $case->value,
-                'label' => $case->getLabel(),
+                'id'                      => $case->value,
+                'label'                   => $case->getLabel(),
+                'supported_vehicle_types' => $case->getSupportedVehicleTypes(),
             ];
         }
         return $list;
