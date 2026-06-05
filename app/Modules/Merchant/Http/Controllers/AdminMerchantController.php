@@ -228,7 +228,7 @@ final class AdminMerchantController extends BaseController
         if ($isLock) {
             $request->validate([
                 'reason'      => 'required|string',
-                'locked_days' => 'nullable|integer|min:1'
+                'locked_days' => 'nullable|integer|min:2'
             ], [
                 'reason.required'    => 'Vui lòng nhập lý do khóa tài khoản.',
                 'locked_days.integer' => 'Số ngày khóa không hợp lệ.',

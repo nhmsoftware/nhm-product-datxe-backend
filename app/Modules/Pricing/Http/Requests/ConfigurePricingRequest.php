@@ -20,7 +20,7 @@ final class ConfigurePricingRequest extends FormRequest
     {
         return [
             'vehicle_type'     => ['required', 'integer'],
-            'base_price'       => ['required', 'numeric', 'min:0'],
+            'base_price'       => ['required', 'numeric', 'gt:0'],
             'distance_rate'    => ['required', 'numeric', 'min:0'],
             'time_rate'        => ['required', 'numeric', 'min:0'],
             'min_fare'         => ['required', 'numeric', 'min:0', 'gte:base_price'],
@@ -35,7 +35,7 @@ final class ConfigurePricingRequest extends FormRequest
             'vehicle_type.required' => 'Vui lòng chọn loại xe.',
             'base_price.required'   => 'Giá mở cửa không hợp lệ.',
             'base_price.numeric'    => 'Giá mở cửa không hợp lệ.',
-            'base_price.min'        => 'Giá mở cửa không hợp lệ.',
+            'base_price.gt'         => 'Giá mở cửa không được dưới 0 đ.',
             'min_fare.required'     => 'Giá tối thiểu không hợp lệ.',
             'min_fare.numeric'      => 'Giá tối thiểu không hợp lệ.',
             'min_fare.min'          => 'Giá tối thiểu không hợp lệ.',

@@ -23,7 +23,7 @@ class UpdateUserStatusRequest extends FormRequest
         return [
             'is_active'       => 'required|boolean',
             'reason'          => 'required_if:is_active,false|nullable|string|max:255',
-            'locked_days'     => 'nullable|integer|min:1',
+            'locked_days'     => 'nullable|integer|min:2',
             'lock_expired_at' => 'nullable|date|after:today',
         ];
     }
@@ -37,7 +37,7 @@ class UpdateUserStatusRequest extends FormRequest
             'reason.string'            => 'Lý do khóa phải là chuỗi ký tự.',
             'reason.max'               => 'Lý do khóa quá dài (tối đa 255 ký tự).',
             'locked_days.integer'      => 'Số ngày khóa phải là số nguyên.',
-            'locked_days.min'          => 'Số ngày khóa tối thiểu là 1 ngày.',
+            'locked_days.min'          => 'Số ngày khóa không hợp lệ.',
             'lock_expired_at.date'     => 'Ngày hết hạn không đúng định dạng.',
             'lock_expired_at.after'    => 'Ngày hết hạn khóa phải sau ngày hôm nay.',
         ];

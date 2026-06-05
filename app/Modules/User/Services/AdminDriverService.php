@@ -306,7 +306,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 $this->validate($driverProfile !== null, 'Vui lòng duyệt hồ sơ tài xế trước khi gán đội xe.', 400);
             }
 
-            if ($driverProfile->driver_group_type === $dto->groupType) {
+            if ($driverProfile->driver_group_type === $dto->groupType->value) {
                 $label = $dto->groupType === \App\Modules\User\Model\Enums\DriverGroupType::INTERNAL ? 'đội xe nhà' : 'đối tác';
                 $this->validate(false, "Tài xế đã thuộc {$label}.", 400);
             }

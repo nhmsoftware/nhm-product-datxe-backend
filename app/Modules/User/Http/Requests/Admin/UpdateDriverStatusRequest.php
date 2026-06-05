@@ -27,7 +27,7 @@ class UpdateDriverStatusRequest extends FormRequest
         // Nếu khóa tài khoản
         if ($this->boolean('is_active') === false) {
             $rules['lock_reason'] = 'required|string|max:500';
-            $rules['locked_days'] = 'nullable|integer|min:1';
+            $rules['locked_days'] = 'nullable|integer|min:2';
         }
 
         return $rules;

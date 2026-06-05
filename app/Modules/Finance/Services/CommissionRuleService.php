@@ -34,9 +34,17 @@ final class CommissionRuleService extends BaseService implements CommissionRuleS
 
             $this->validate(!$isOverlap, 'Đã tồn tại cấu hình hoa hồng đang hoạt động trong khoảng thời gian này.', 400);
 
+            $name = $dto->name;
+            if (empty($name)) {
+                $serviceLabel = $dto->serviceType->getLabel();
+                $targetLabel = $dto->targetType->label();
+                $areaLabel = $dto->scope->value === 1 ? 'Toàn quốc' : ($dto->areaId ?? 'Khu vực');
+                $name = "Hoa hồng {$targetLabel} - {$serviceLabel} ({$areaLabel})";
+            }
+
             // 2. Tạo rule mới
             $rule = $this->commissionRuleRepository->create([
-                'name'            => $dto->name,
+                'name'            => $name,
                 'target_type'     => $dto->targetType->value,
                 'service_type'    => $dto->serviceType->value,
                 'scope'           => $dto->scope->value,
