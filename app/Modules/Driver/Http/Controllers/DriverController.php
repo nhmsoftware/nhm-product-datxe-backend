@@ -22,30 +22,102 @@ final class DriverController extends BaseController
 
     /**
      * UC-30 Lấy danh sách dịch vụ tài xế có thể đăng ký.
+     *
+     * API này KHÔNG yêu cầu đăng nhập. Frontend gọi trước khi hiển thị form đăng ký
+     * để lấy danh sách dịch vụ và các loại xe tương ứng.
+     *
+     * Luồng sử dụng điển hình:
+     *  1. Frontend gọi API này để lấy danh sách dịch vụ.
+     *  2. User chọn dịch vụ muốn đăng ký → frontend lọc `supported_vehicle_types`
+     *     để chỉ hiển thị các loại xe hợp lệ cho dịch vụ đó.
+     *  3. User điền thông tin và nộp hồ sơ qua POST /api/v1/driver/register/submit.
      */
     #[OA\Get(
         path: '/api/v1/driver/register/services',
         summary: 'UC-30: Lấy danh sách dịch vụ tài xế có thể đăng ký',
-        security: [['sanctum' => []]],
+        description: 'Trả về toàn bộ các dịch vụ vận chuyển mà tài xế có thể đăng ký hoạt động, kèm danh sách loại xe hỗ trợ cho từng dịch vụ. API này là **public** — không cần xác thực. Frontend dùng để render form đăng ký tài xế.',
         tags: ['Driver'],
         responses: [
             new OA\Response(
-                response: 200, 
-                description: 'Thành công',
+                response: 200,
+                description: 'Danh sách dịch vụ',
                 content: new OA\JsonContent(
-                    type: 'array',
-                    items: new OA\Items(
-                        properties: [
-                            new OA\Property(property: 'id', type: 'integer', example: 1),
-                            new OA\Property(property: 'label', type: 'string', example: 'Xe ôm'),
-                            new OA\Property(
-                                property: 'supported_vehicle_types', 
-                                type: 'array', 
-                                items: new OA\Items(type: 'integer', example: 1),
-                                description: 'Danh sách các loại xe hỗ trợ dịch vụ này. 1: Xe máy, 2: Ô tô 4 chỗ...'
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: true),
+                        new OA\Property(property: 'message', type: 'string', example: ''),
+                        new OA\Property(
+                            property: 'data',
+                            type: 'array',
+                            description: 'Danh sách dịch vụ tài xế có thể đăng ký',
+                            items: new OA\Items(
+                                required: ['id', 'label', 'supported_vehicle_types'],
+                                properties: [
+                                    new OA\Property(
+                                        property: 'id',
+                                        type: 'integer',
+                                        description: 'ID dịch vụ — dùng để submit vào trường `services[]` khi đăng ký',
+                                        example: 1,
+                                        enum: [1, 2, 3, 4, 5, 6, 7, 8],
+                                    ),
+                                    new OA\Property(
+                                        property: 'label',
+                                        type: 'string',
+                                        description: 'Tên hiển thị của dịch vụ',
+                                        example: 'Xe ôm',
+                                    ),
+                                    new OA\Property(
+                                        property: 'supported_vehicle_types',
+                                        type: 'array',
+                                        description: 'Danh sách các loại phương tiện hợp lệ cho dịch vụ này. Frontend dùng để validate trường `vehicle_type` khi user chọn dịch vụ.',
+                                        items: new OA\Items(
+                                            required: ['id', 'label'],
+                                            properties: [
+                                                new OA\Property(
+                                                    property: 'id',
+                                                    type: 'integer',
+                                                    description: 'ID loại xe — dùng để submit vào trường `vehicle_type` khi đăng ký',
+                                                    example: 1,
+                                                    enum: [1, 2, 3, 4, 5],
+                                                ),
+                                                new OA\Property(
+                                                    property: 'label',
+                                                    type: 'string',
+                                                    description: 'Tên hiển thị của loại xe',
+                                                    example: 'Xe máy',
+                                                ),
+                                            ]
+                                        ),
+                                    ),
+                                ]
                             ),
-                        ]
-                    )
+                            example: [
+                                [
+                                    'id'    => 1,
+                                    'label' => 'Xe ôm',
+                                    'supported_vehicle_types' => [
+                                        ['id' => 1, 'label' => 'Xe máy'],
+                                    ],
+                                ],
+                                [
+                                    'id'    => 2,
+                                    'label' => 'Taxi 4 chỗ',
+                                    'supported_vehicle_types' => [
+                                        ['id' => 2, 'label' => 'Ô tô 4 chỗ'],
+                                    ],
+                                ],
+                                [
+                                    'id'    => 5,
+                                    'label' => 'Giao hàng',
+                                    'supported_vehicle_types' => [
+                                        ['id' => 1, 'label' => 'Xe máy'],
+                                        ['id' => 2, 'label' => 'Ô tô 4 chỗ'],
+                                        ['id' => 3, 'label' => 'Ô tô 7 chỗ'],
+                                        ['id' => 4, 'label' => 'Ô tô 9 chỗ'],
+                                    ],
+                                ],
+                            ],
+                        ),
+                    ]
                 )
             ),
         ]
