@@ -19,7 +19,7 @@ final class DashboardReportRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'start_date' => ['nullable', 'date'],
+            'start_date' => ['nullable', 'date', 'before_or_equal:end_date'],
             'end_date'   => ['nullable', 'date', 'after_or_equal:start_date'],
             'interval'   => ['nullable', 'string', 'in:day,month,year'],
             'area'       => ['nullable', 'string'],

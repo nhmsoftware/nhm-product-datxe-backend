@@ -37,7 +37,7 @@ final class DashboardService extends BaseService implements DashboardServiceInte
             return [
                 'total_users'      => $totalUsers,
                 'total_orders'     => $totalOrders,
-                'total_revenue'    => number_format($totalRevenue, 0, ',', '.') . 'đ',
+                'total_revenue'    => (float) $totalRevenue,
                 'active_merchants' => $activeMerchants,
                 'active_drivers'   => $activeDrivers,
             ];

@@ -461,7 +461,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
      */
     public function countTotalOrders(): int
     {
-        return $this->getQuery()->count();
+        return $this->getQuery()->where('status', '!=', RideStatus::DRAFT->value)->count();
     }
 
     /**

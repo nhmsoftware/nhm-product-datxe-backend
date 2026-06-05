@@ -107,6 +107,13 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
     public function countActiveDrivers(): int
     {
         return $this->getQuery()
+            ->whereHas('user', function ($q) {
+                $q->where('is_active', true)
+                  ->whereHas('userReviewApplications', function ($q2) {
+                      $q2->where('kyc_type', \App\Modules\User\Model\Enums\KycType::Driver->value)
+                         ->where('kyc_status', \App\Modules\User\Model\Enums\KycStatus::Approved->value);
+                  });
+            })
             ->where('is_online', true)
             ->where(function ($q) {
                 $q->where('status', DriverStatus::ACTIVE->value)

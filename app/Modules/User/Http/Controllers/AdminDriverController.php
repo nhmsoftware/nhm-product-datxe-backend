@@ -273,7 +273,25 @@ final class AdminDriverController extends BaseController
 
             // Headers
             if (!empty($data)) {
-                fputcsv($handle, array_keys($data[0]));
+                $headerMap = [
+                    'id' => 'ID',
+                    'full_name' => 'Họ và tên',
+                    'phone' => 'Số điện thoại',
+                    'email' => 'Email',
+                    'kyc_status' => 'Trạng thái duyệt',
+                    'is_active' => 'Hoạt động',
+                    'driver_group_type' => 'Loại đội xe',
+                    'created_at' => 'Ngày tạo',
+                    'updated_at' => 'Ngày cập nhật',
+                    'status' => 'Trạng thái',
+                    'avatar' => 'Ảnh đại diện',
+                    'citizen_id' => 'CCCD/CMND'
+                ];
+                $headers = array_keys($data[0]);
+                $translatedHeaders = array_map(function($key) use ($headerMap) {
+                    return $headerMap[$key] ?? $key;
+                }, $headers);
+                fputcsv($handle, $translatedHeaders);
             }
 
             foreach ($data as $row) {
