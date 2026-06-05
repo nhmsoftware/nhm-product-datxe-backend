@@ -284,9 +284,19 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
     /**
      * @inheritDoc
      */
-    public function getRegistrationServices(): ServiceReturn
+    public function getRegistrationServices(?int $vehicleTypeId = null): ServiceReturn
     {
-        return $this->execute(function () {
+        return $this->execute(function () use ($vehicleTypeId) {
+            if ($vehicleTypeId !== null) {
+                // Validate vehicle type hợp lệ
+                $vehicleType = \App\Modules\User\Model\Enums\VehicleType::tryFrom($vehicleTypeId);
+                if ($vehicleType === null || $vehicleType === \App\Modules\User\Model\Enums\VehicleType::Unknown) {
+                    $this->throw('Loại xe không hợp lệ.', 422);
+                }
+
+                return \App\Modules\Driver\Model\Enums\DriverServiceType::getListByVehicleType($vehicleTypeId);
+            }
+
             return \App\Modules\Driver\Model\Enums\DriverServiceType::getList();
         });
     }

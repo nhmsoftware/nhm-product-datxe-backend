@@ -38,6 +38,9 @@ interface DriverRegistrationServiceInterface
 
     /**
      * Lấy danh sách các dịch vụ tài xế có thể đăng ký (UC-30).
+     *
+     * @param int|null $vehicleTypeId  Nếu truyền vào → trả về chỉ các dịch vụ loại xe đó hỗ trợ.
+     *                                 Nếu null → trả về toàn bộ dịch vụ kèm supported_vehicle_types.
      */
-    public function getRegistrationServices(): ServiceReturn;
+    public function getRegistrationServices(?int $vehicleTypeId = null): ServiceReturn;
 }

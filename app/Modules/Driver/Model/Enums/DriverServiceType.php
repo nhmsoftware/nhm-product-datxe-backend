@@ -73,6 +73,14 @@ enum DriverServiceType: int
     }
 
     /**
+     * Kiểm tra dịch vụ này có hỗ trợ loại xe không.
+     */
+    public function supportsVehicleType(int $vehicleTypeId): bool
+    {
+        return in_array($vehicleTypeId, $this->getSupportedVehicleTypeValues(), strict: true);
+    }
+
+    /**
      * Trả về toàn bộ danh sách dịch vụ kèm label để Frontend hiển thị.
      */
     public static function getList(): array
@@ -84,6 +92,25 @@ enum DriverServiceType: int
                 'label'                   => $case->getLabel(),
                 'supported_vehicle_types' => $case->getSupportedVehicleTypes(),
             ];
+        }
+        return $list;
+    }
+
+    /**
+     * Trả về danh sách dịch vụ mà một loại xe cụ thể có thể đăng ký.
+     *
+     * @param int $vehicleTypeId  ID loại xe (VehicleType enum value: 1=Xe máy, 2=Ô tô 4 chỗ...)
+     */
+    public static function getListByVehicleType(int $vehicleTypeId): array
+    {
+        $list = [];
+        foreach (self::cases() as $case) {
+            if ($case->supportsVehicleType($vehicleTypeId)) {
+                $list[] = [
+                    'id'    => $case->value,
+                    'label' => $case->getLabel(),
+                ];
+            }
         }
         return $list;
     }

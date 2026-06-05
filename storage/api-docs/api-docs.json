@@ -1683,46 +1683,142 @@
                     "Driver"
                 ],
                 "summary": "UC-30: Lấy danh sách dịch vụ tài xế có thể đăng ký",
-                "description": "UC-30 Lấy danh sách dịch vụ tài xế có thể đăng ký.",
+                "description": "**Public API — không cần xác thực.**\n\nCó 2 chế độ hoạt động:\n\n- **Không truyền `vehicle_type_id`**: Trả toàn bộ dịch vụ, mỗi dịch vụ kèm `supported_vehicle_types` là danh sách loại xe hỗ trợ.\n- **Truyền `vehicle_type_id`**: Lọc và chỉ trả về các dịch vụ mà loại xe đó có thể đăng ký (không có `supported_vehicle_types`).\n\n**VehicleType ID mapping:**\n- `1` → Xe máy\n- `2` → Ô tô 4 chỗ\n- `3` → Ô tô 7 chỗ\n- `4` → Ô tô 9 chỗ\n- `5` → Xe ghép / Tiện chuyến",
                 "operationId": "52fbe60d01ae5dc112ba5da8c1bb532f",
+                "parameters": [
+                    {
+                        "name": "vehicle_type_id",
+                        "in": "query",
+                        "description": "ID loại xe (VehicleType). Nếu truyền vào → chỉ trả về dịch vụ mà loại xe này hỗ trợ. Nếu bỏ trống → trả toàn bộ dịch vụ.",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1,
+                            "enum": [
+                                1,
+                                2,
+                                3,
+                                4,
+                                5
+                            ]
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Thành công",
+                        "description": "Danh sách dịch vụ",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "label": {
-                                                "type": "string",
-                                                "example": "Xe ôm"
-                                            },
-                                            "supported_vehicle_types": {
-                                                "description": "Danh sách các loại xe hỗ trợ dịch vụ này. 1: Xe máy, 2: Ô tô 4 chỗ...",
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                }
-                                            }
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
                                         },
-                                        "type": "object"
-                                    }
+                                        "message": {
+                                            "type": "string",
+                                            "example": ""
+                                        },
+                                        "data": {
+                                            "description": "Nếu có `vehicle_type_id`: chỉ có `id` + `label`. Nếu không có: kèm thêm `supported_vehicle_types`.",
+                                            "type": "array",
+                                            "items": {
+                                                "required": [
+                                                    "id",
+                                                    "label"
+                                                ],
+                                                "properties": {
+                                                    "id": {
+                                                        "description": "ID dịch vụ — dùng để submit vào `services[]` khi đăng ký",
+                                                        "type": "integer",
+                                                        "example": 1,
+                                                        "enum": [
+                                                            1,
+                                                            2,
+                                                            3,
+                                                            4,
+                                                            5,
+                                                            6,
+                                                            7,
+                                                            8
+                                                        ]
+                                                    },
+                                                    "label": {
+                                                        "description": "Tên hiển thị của dịch vụ",
+                                                        "type": "string",
+                                                        "example": "Xe ôm"
+                                                    },
+                                                    "supported_vehicle_types": {
+                                                        "description": "Chỉ có khi KHÔNG truyền vehicle_type_id. Danh sách loại xe hỗ trợ dịch vụ này.",
+                                                        "type": "array",
+                                                        "items": {
+                                                            "required": [
+                                                                "id",
+                                                                "label"
+                                                            ],
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "label": {
+                                                                    "type": "string",
+                                                                    "example": "Xe máy"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "nullable": true
+                                                    }
+                                                },
+                                                "type": "object"
+                                            },
+                                            "example": [
+                                                {
+                                                    "id": 1,
+                                                    "label": "Xe ôm"
+                                                },
+                                                {
+                                                    "id": 4,
+                                                    "label": "Giao đồ ăn"
+                                                },
+                                                {
+                                                    "id": 5,
+                                                    "label": "Giao hàng"
+                                                },
+                                                {
+                                                    "id": 8,
+                                                    "label": "Lái hộ"
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "vehicle_type_id không hợp lệ",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Loại xe không hợp lệ."
+                                        }
+                                    },
+                                    "type": "object"
                                 }
                             }
                         }
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
+                }
             }
         },
         "/api/v1/driver/register/submit": {

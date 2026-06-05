@@ -23,20 +23,42 @@ final class DriverController extends BaseController
     /**
      * UC-30 Lấy danh sách dịch vụ tài xế có thể đăng ký.
      *
-     * API này KHÔNG yêu cầu đăng nhập. Frontend gọi trước khi hiển thị form đăng ký
-     * để lấy danh sách dịch vụ và các loại xe tương ứng.
+     * - Không truyền `vehicle_type_id` → trả toàn bộ dịch vụ kèm supported_vehicle_types.
+     * - Truyền `vehicle_type_id`        → trả chỉ các dịch vụ mà loại xe đó hỗ trợ.
      *
      * Luồng sử dụng điển hình:
-     *  1. Frontend gọi API này để lấy danh sách dịch vụ.
-     *  2. User chọn dịch vụ muốn đăng ký → frontend lọc `supported_vehicle_types`
-     *     để chỉ hiển thị các loại xe hợp lệ cho dịch vụ đó.
-     *  3. User điền thông tin và nộp hồ sơ qua POST /api/v1/driver/register/submit.
+     *  1. User chọn loại xe → frontend gọi ?vehicle_type_id={id} → nhận danh sách dịch vụ phù hợp.
+     *  2. User chọn dịch vụ và điền thông tin.
+     *  3. Submit hồ sơ qua POST /api/v1/driver/register/submit.
      */
     #[OA\Get(
         path: '/api/v1/driver/register/services',
         summary: 'UC-30: Lấy danh sách dịch vụ tài xế có thể đăng ký',
-        description: 'Trả về toàn bộ các dịch vụ vận chuyển mà tài xế có thể đăng ký hoạt động, kèm danh sách loại xe hỗ trợ cho từng dịch vụ. API này là **public** — không cần xác thực. Frontend dùng để render form đăng ký tài xế.',
+        description: <<<'DESC'
+**Public API — không cần xác thực.**
+
+Có 2 chế độ hoạt động:
+
+- **Không truyền `vehicle_type_id`**: Trả toàn bộ dịch vụ, mỗi dịch vụ kèm `supported_vehicle_types` là danh sách loại xe hỗ trợ.
+- **Truyền `vehicle_type_id`**: Lọc và chỉ trả về các dịch vụ mà loại xe đó có thể đăng ký (không có `supported_vehicle_types`).
+
+**VehicleType ID mapping:**
+- `1` → Xe máy
+- `2` → Ô tô 4 chỗ
+- `3` → Ô tô 7 chỗ
+- `4` → Ô tô 9 chỗ
+- `5` → Xe ghép / Tiện chuyến
+DESC,
         tags: ['Driver'],
+        parameters: [
+            new OA\Parameter(
+                name: 'vehicle_type_id',
+                in: 'query',
+                required: false,
+                description: 'ID loại xe (VehicleType). Nếu truyền vào → chỉ trả về dịch vụ mà loại xe này hỗ trợ. Nếu bỏ trống → trả toàn bộ dịch vụ.',
+                schema: new OA\Schema(type: 'integer', enum: [1, 2, 3, 4, 5], example: 1),
+            ),
+        ],
         responses: [
             new OA\Response(
                 response: 200,
@@ -48,14 +70,14 @@ final class DriverController extends BaseController
                         new OA\Property(
                             property: 'data',
                             type: 'array',
-                            description: 'Danh sách dịch vụ tài xế có thể đăng ký',
+                            description: 'Nếu có `vehicle_type_id`: chỉ có `id` + `label`. Nếu không có: kèm thêm `supported_vehicle_types`.',
                             items: new OA\Items(
-                                required: ['id', 'label', 'supported_vehicle_types'],
+                                required: ['id', 'label'],
                                 properties: [
                                     new OA\Property(
                                         property: 'id',
                                         type: 'integer',
-                                        description: 'ID dịch vụ — dùng để submit vào trường `services[]` khi đăng ký',
+                                        description: 'ID dịch vụ — dùng để submit vào `services[]` khi đăng ký',
                                         example: 1,
                                         enum: [1, 2, 3, 4, 5, 6, 7, 8],
                                     ),
@@ -68,63 +90,47 @@ final class DriverController extends BaseController
                                     new OA\Property(
                                         property: 'supported_vehicle_types',
                                         type: 'array',
-                                        description: 'Danh sách các loại phương tiện hợp lệ cho dịch vụ này. Frontend dùng để validate trường `vehicle_type` khi user chọn dịch vụ.',
+                                        nullable: true,
+                                        description: 'Chỉ có khi KHÔNG truyền vehicle_type_id. Danh sách loại xe hỗ trợ dịch vụ này.',
                                         items: new OA\Items(
                                             required: ['id', 'label'],
                                             properties: [
-                                                new OA\Property(
-                                                    property: 'id',
-                                                    type: 'integer',
-                                                    description: 'ID loại xe — dùng để submit vào trường `vehicle_type` khi đăng ký',
-                                                    example: 1,
-                                                    enum: [1, 2, 3, 4, 5],
-                                                ),
-                                                new OA\Property(
-                                                    property: 'label',
-                                                    type: 'string',
-                                                    description: 'Tên hiển thị của loại xe',
-                                                    example: 'Xe máy',
-                                                ),
+                                                new OA\Property(property: 'id', type: 'integer', example: 1),
+                                                new OA\Property(property: 'label', type: 'string', example: 'Xe máy'),
                                             ]
                                         ),
                                     ),
-                                ]
+                                ],
                             ),
                             example: [
-                                [
-                                    'id'    => 1,
-                                    'label' => 'Xe ôm',
-                                    'supported_vehicle_types' => [
-                                        ['id' => 1, 'label' => 'Xe máy'],
-                                    ],
-                                ],
-                                [
-                                    'id'    => 2,
-                                    'label' => 'Taxi 4 chỗ',
-                                    'supported_vehicle_types' => [
-                                        ['id' => 2, 'label' => 'Ô tô 4 chỗ'],
-                                    ],
-                                ],
-                                [
-                                    'id'    => 5,
-                                    'label' => 'Giao hàng',
-                                    'supported_vehicle_types' => [
-                                        ['id' => 1, 'label' => 'Xe máy'],
-                                        ['id' => 2, 'label' => 'Ô tô 4 chỗ'],
-                                        ['id' => 3, 'label' => 'Ô tô 7 chỗ'],
-                                        ['id' => 4, 'label' => 'Ô tô 9 chỗ'],
-                                    ],
-                                ],
+                                ['id' => 1, 'label' => 'Xe ôm'],
+                                ['id' => 4, 'label' => 'Giao đồ ăn'],
+                                ['id' => 5, 'label' => 'Giao hàng'],
+                                ['id' => 8, 'label' => 'Lái hộ'],
                             ],
                         ),
                     ]
                 )
             ),
+            new OA\Response(
+                response: 422,
+                description: 'vehicle_type_id không hợp lệ',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'success', type: 'boolean', example: false),
+                        new OA\Property(property: 'message', type: 'string', example: 'Loại xe không hợp lệ.'),
+                    ]
+                )
+            ),
         ]
     )]
-    public function getRegistrationServices(): JsonResponse
+    public function getRegistrationServices(\Illuminate\Http\Request $request): JsonResponse
     {
-        $result = $this->driverRegistrationService->getRegistrationServices();
+        $vehicleTypeId = $request->query('vehicle_type_id') !== null
+            ? (int) $request->query('vehicle_type_id')
+            : null;
+
+        $result = $this->driverRegistrationService->getRegistrationServices($vehicleTypeId);
         return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 
