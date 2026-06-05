@@ -197,9 +197,12 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
     /**
      * @inheritDoc
      *
-     * Khi filter kyc_status=1 (Pending), query bao gồm cả user role=Customer
-     * đang có hồ sơ tài xế chờ duyệt (chưa được nâng role lên Driver).
-     * Các trường hợp còn lại chỉ trả về user role=Driver.
+     * Quy tắc roles được đưa vào scope:
+     *  - kyc_status không filter (tất cả): Driver + Customer có hồ sơ KYC tài xế (đang chờ hoặc bị từ chối)
+     *  - kyc_status=1 (Pending):           Driver + Customer (chưa được nâng role)
+     *  - kyc_status=3 (Rejected):          Driver + Customer (bị từ chối, vẫn ở role Customer)
+     *  - kyc_status=2 (Approved):          Driver chỉ (đã được nâng role)
+     *  - kyc_status=0 (Chưa nộp):          Driver chỉ (chưa nộp hồ sơ)
      */
     public function findDrivers(array $filters, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
@@ -207,10 +210,11 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
             ? (int) $filters['kyc_status']
             : null;
 
-        // Khi lọc "Chờ duyệt" (kyc_status=1): bao gồm cả Customer đang chờ nâng cấp thành tài xế
-        $isPendingFilter = $kycStatusValue === 1;
+        // Customer có thể có hồ sơ đang chờ (1) hoặc bị từ chối (3) mà chưa được nâng role.
+        // Khi không filter (null), cũng cần bao gồm Customer có hồ sơ để admin có thể tìm kiếm.
+        $includeCustomers = $kycStatusValue === null || $kycStatusValue === 1 || $kycStatusValue === 3;
 
-        $rolesInScope = $isPendingFilter
+        $rolesInScope = $includeCustomers
             ? [UserRole::Customer->value, UserRole::Driver->value]
             : [UserRole::Driver->value];
 
@@ -223,6 +227,17 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
                 },
             ])
             ->whereIn('role', $rolesInScope);
+
+        // Khi không lọc kyc_status, Customer phải có ít nhất 1 hồ sơ KYC tài xế
+        // để tránh hiện toàn bộ khách hàng trong danh sách tài xế.
+        if ($kycStatusValue === null) {
+            $query->where(function ($q) {
+                $q->where('role', UserRole::Driver->value)
+                  ->orWhereHas('userReviewApplications', function ($q2) {
+                      $q2->where('kyc_type', KycType::Driver->value);
+                  });
+            });
+        }
 
         if (!empty($filters['keyword'])) {
             $keyword = '%' . $filters['keyword'] . '%';
