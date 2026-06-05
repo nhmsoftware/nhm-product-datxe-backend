@@ -37,8 +37,9 @@ Route::prefix('v1/admin/risk')->middleware(['auth:sanctum'])->group(function () 
         Route::delete('/{id}', [\App\Modules\RiskManagement\Http\Controllers\AdminCancellationConfigController::class, 'destroy'])->name('admin.risk.cancellation-configs.destroy');
     });
 
-    // UC-110: Warn Driver
+    // UC-110: Warn Driver & Violation Log
     Route::prefix('violations')->group(function () {
+        Route::get('/', [\App\Modules\RiskManagement\Http\Controllers\ViolationController::class, 'index'])->name('admin.risk.violations.index');
         Route::get('{userId}', [\App\Modules\RiskManagement\Http\Controllers\ViolationController::class, 'history'])->name('admin.risk.violations.history');
         Route::post('{userId}/warn', [\App\Modules\RiskManagement\Http\Controllers\ViolationController::class, 'warn'])->name('admin.risk.violations.warn');
         Route::post('customer/{userId}/warn', [\App\Modules\RiskManagement\Http\Controllers\ViolationController::class, 'warnCustomer'])->name('admin.risk.violations.customer.warn');

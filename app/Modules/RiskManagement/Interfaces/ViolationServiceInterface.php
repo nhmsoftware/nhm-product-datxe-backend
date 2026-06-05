@@ -24,4 +24,9 @@ interface ViolationServiceInterface
      * Get violation history of a user
      */
     public function getHistory(string $userId): ServiceReturn;
+
+    /**
+     * Get all violations paginated
+     */
+    public function getAllViolations(int $page = 1, int $perPage = 20): ServiceReturn;
 }

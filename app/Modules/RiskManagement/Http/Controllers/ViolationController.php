@@ -18,6 +18,28 @@ final class ViolationController extends BaseController
     ) {}
 
     #[OA\Get(
+        path: '/api/v1/admin/risk/violations',
+        summary: 'Danh sách nhật ký vi phạm',
+        security: [['sanctum' => []]],
+        tags: ['RiskManagement'],
+        parameters: [
+            new OA\Parameter(name: 'page', in: 'query', schema: new OA\Schema(type: 'integer', default: 1)),
+            new OA\Parameter(name: 'per_page', in: 'query', schema: new OA\Schema(type: 'integer', default: 20)),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Thành công'),
+        ]
+    )]
+    public function index(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $result = $this->violationService->getAllViolations(
+            (int) $request->input('page', 1),
+            (int) $request->input('per_page', 20)
+        );
+        return $this->sendSuccess($result->getData());
+    }
+
+    #[OA\Get(
         path: '/api/v1/admin/risk/violations/{userId}',
         summary: 'Lịch sử vi phạm của người dùng (UC-110)',
         security: [['sanctum' => []]],

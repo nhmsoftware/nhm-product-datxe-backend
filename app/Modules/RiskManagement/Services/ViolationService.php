@@ -94,4 +94,48 @@ final class ViolationService extends BaseService implements ViolationServiceInte
     {
         return $this->execute(fn() => $this->userViolationRepository->getByUserId($userId)->toArray());
     }
+
+    public function getAllViolations(int $page = 1, int $perPage = 20): ServiceReturn
+    {
+        return $this->execute(function() use ($page, $perPage) {
+            $query = \App\Modules\RiskManagement\Model\UserViolation::with('user');
+            $paginator = $query->orderBy('created_at', 'desc')->paginate($perPage, ['*'], 'page', $page);
+            
+            $items = collect($paginator->items())->map(function ($violation) {
+                // Determine violation count for this user
+                $count = \App\Modules\RiskManagement\Model\UserViolation::where('user_id', $violation->user_id)
+                            ->where('created_at', '<=', $violation->created_at)
+                            ->count();
+                
+                // Determine status based on count
+                $status = 'WARNED';
+                if ($count >= 3) {
+                    $status = 'SUSPENDED';
+                }
+                
+                return [
+                    'id' => $violation->id,
+                    'subject' => $violation->user ? ($violation->user->full_name ?: 'Người dùng vô danh') : 'Người dùng vô danh',
+                    'role' => $violation->user ? ($violation->user->role?->value === 2 ? 'Driver' : 'Customer') : 'Unknown',
+                    'phone' => $violation->user ? $violation->user->phone : '',
+                    'type' => $violation->type,
+                    'reason' => $violation->reason,
+                    'count' => $count,
+                    'created_at' => $violation->created_at->format('Y-m-d H:i'),
+                    'status' => $status,
+                    'ride_id' => 'N/A'
+                ];
+            });
+
+            return [
+                'data' => $items,
+                'meta' => [
+                    'current_page' => $paginator->currentPage(),
+                    'last_page' => $paginator->lastPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                ]
+            ];
+        });
+    }
 }

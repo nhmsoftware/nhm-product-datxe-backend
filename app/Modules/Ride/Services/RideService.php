@@ -1215,7 +1215,7 @@ final class RideService extends BaseService implements RideServiceInterface
             return $rides->map(function ($ride) {
                 return [
                     'ride_id'             => $ride->id,
-                    'customer_name'       => $ride->customer ? $ride->customer->name : 'Khách hàng',
+                    'customer_name'       => $ride->customer ? ($ride->customer->full_name ?? 'Khách hàng') : 'Khách hàng',
                     'customer_phone'      => $ride->customer ? $ride->customer->phone : null,
                     'pickup_address'      => $ride->pickup_address,
                     'destination_address' => $ride->destination_address,
@@ -1608,7 +1608,7 @@ final class RideService extends BaseService implements RideServiceInterface
             $paginator->getCollection()->transform(function ($ride) {
                 return [
                     'ride_id'             => $ride->id,
-                    'customer_name'       => $ride->customer ? $ride->customer->name : 'Khách hàng',
+                    'customer_name'       => $ride->customer ? ($ride->customer->full_name ?? 'Khách hàng') : 'Khách hàng',
                     'customer_phone'      => $ride->customer ? $ride->customer->phone : null,
                     'pickup_address'      => $ride->pickup_address,
                     'destination_address' => $ride->destination_address,
