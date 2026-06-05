@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Driver\Model\Enums;
 
+use App\Modules\User\Model\Enums\VehicleType;
+
 /**
  * Danh sách các dịch vụ mà tài xế có thể đăng ký hoạt động (UC-30).
  */
@@ -36,10 +38,10 @@ enum DriverServiceType: int
     }
 
     /**
-     * Trả về danh sách loại xe hỗ trợ dịch vụ này.
+     * Trả về danh sách loại xe hỗ trợ dịch vụ này (raw int values).
      * Cần đồng bộ với App\Modules\User\Model\Enums\VehicleType
      */
-    public function getSupportedVehicleTypes(): array
+    private function getSupportedVehicleTypeValues(): array
     {
         return match ($this) {
             self::BIKE_RIDE       => [1],
@@ -49,8 +51,25 @@ enum DriverServiceType: int
             self::PARCEL_DELIVERY => [1, 2, 3, 4],
             self::INTERCITY       => [2, 3, 4, 5],
             self::AIRPORT         => [2, 3, 4],
-            self::DRIVER_FOR_HIRE => [1, 2, 3, 4, 6],
+            self::DRIVER_FOR_HIRE => [1, 2, 3, 4],
         };
+    }
+
+    /**
+     * Trả về danh sách loại xe hỗ trợ kèm label để frontend hiển thị.
+     */
+    public function getSupportedVehicleTypes(): array
+    {
+        return array_values(array_filter(
+            array_map(function (int $id) {
+                $type = VehicleType::tryFrom($id);
+                if ($type === null || $type === VehicleType::Unknown) {
+                    return null;
+                }
+                return ['id' => $type->value, 'label' => $type->label()];
+            }, $this->getSupportedVehicleTypeValues()),
+            fn ($item) => $item !== null
+        ));
     }
 
     /**
