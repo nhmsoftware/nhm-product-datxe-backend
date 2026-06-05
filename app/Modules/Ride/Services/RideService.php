@@ -412,7 +412,7 @@ final class RideService extends BaseService implements RideServiceInterface
             $cancellationFee = 0.0;
 
             // Tính toán thời gian còn lại đến khi đón khách (cho chuyến đặt trước)
-            $minutesUntilPickup = 999999; // Mặc định rất lớn cho chuyến nội thành (City)
+            $minutesUntilPickup = 999999; // Mặc định rất lớn cho chuyến Chuyến xe thường (City)
             if ($ride->travel_date && $ride->travel_time) {
                 $pickupDateTime = \Illuminate\Support\Carbon::parse(
                     $ride->travel_date->format('Y-m-d') . ' ' . $ride->travel_time
@@ -432,7 +432,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 }
             }
 
-            // Fallback: Nếu là chuyến nội thành đã có tài xế và chưa có cấu hình riêng, áp dụng phí mặc định 10k
+            // Fallback: Nếu là chuyến Chuyến xe thường đã có tài xế và chưa có cấu hình riêng, áp dụng phí mặc định 10k
             if ($ride->ride_type === RideType::CITY && $ride->status === RideStatus::ACCEPTED && $cancellationFee <= 0) {
                 $cancellationFee = 10000.0;
             }
@@ -1380,7 +1380,7 @@ final class RideService extends BaseService implements RideServiceInterface
         }
 
         // Chỉ tự động push vào pool nội bộ khi ở chế độ INTERNAL_PRIORITY và bật auto_push_internal
-        return $settings->scheduled_dispatch_mode === ScheduledDispatchMode::INTERNAL_PRIORITY 
+        return $settings->scheduled_dispatch_mode === ScheduledDispatchMode::INTERNAL_PRIORITY
             && $settings->auto_push_internal;
     }
 

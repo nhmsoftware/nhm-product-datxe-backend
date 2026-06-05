@@ -289,7 +289,7 @@
 
 ### RideType
 ```
-1: City (Nội thành)
+1: City (Chuyến xe thường)
 2: Intercity (Đi tỉnh)
 3: Airport (Sân bay)
 ```
@@ -297,7 +297,7 @@
 ## rides
 ```
     # note
-    - Bảng rides quản lý thông tin các chuyến xe (Nội thành và Liên tỉnh).
+    - Bảng rides quản lý thông tin các chuyến xe (Chuyến xe thường và Liên tỉnh).
 
     # cấu trúc
     - id (unsigned bigint, auto increment, primary key)

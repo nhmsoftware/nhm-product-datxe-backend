@@ -366,7 +366,7 @@ final class RideController extends BaseController
     )]
     #[OA\Parameter(name: 'travel_date', description: 'Ngày đi (Y-m-d)', in: 'query', required: false, schema: new OA\Schema(type: 'string'))]
     #[OA\Parameter(name: 'travel_time', description: 'Giờ đi (H:i)', in: 'query', required: false, schema: new OA\Schema(type: 'string'))]
-    #[OA\Parameter(name: 'ride_type', description: 'Loại chuyến (1: Nội thành, 2: Đi tỉnh, 3: Sân bay)', in: 'query', required: false, schema: new OA\Schema(type: 'integer'))]
+    #[OA\Parameter(name: 'ride_type', description: 'Loại chuyến (1: Chuyến xe thường, 2: Đi tỉnh, 3: Sân bay)', in: 'query', required: false, schema: new OA\Schema(type: 'integer'))]
     #[OA\Parameter(name: 'min_price', description: 'Giá tối thiểu', in: 'query', required: false, schema: new OA\Schema(type: 'number'))]
     #[OA\Parameter(name: 'max_price', description: 'Giá tối đa', in: 'query', required: false, schema: new OA\Schema(type: 'number'))]
     #[OA\Response(response: 200, description: 'Lấy danh sách thành công')]

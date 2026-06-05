@@ -33,7 +33,7 @@ final class OrderService extends BaseService implements OrderServiceInterface
                 $itemArray = $item->toArray();
                 $itemArray['status_label'] = $this->getStatusLabel($itemArray['service_type'], (int) $itemArray['status']);
                 $itemArray['service_name'] = match ($itemArray['service_type']) {
-                    'ride' => 'Nội thành',
+                    'ride' => 'Chuyến xe thường',
                     'intercity' => 'Đi tỉnh',
                     'airport' => 'Sân bay',
                     'delivery' => 'Giao hàng',
@@ -68,7 +68,7 @@ final class OrderService extends BaseService implements OrderServiceInterface
 
             $order['status_label'] = $this->getStatusLabel($serviceType, (int) $order['status']);
             $order['service_name'] = match ($serviceType) {
-                'ride' => 'Nội thành',
+                'ride' => 'Chuyến xe thường',
                 'intercity' => 'Đi tỉnh',
                 'airport' => 'Sân bay',
                 'delivery' => 'Giao hàng',

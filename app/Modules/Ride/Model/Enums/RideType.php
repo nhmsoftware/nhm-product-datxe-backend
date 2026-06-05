@@ -9,7 +9,7 @@ namespace App\Modules\Ride\Model\Enums;
  */
 enum RideType: int
 {
-    case CITY      = 1; // Nội thành
+    case CITY      = 1; // Chuyến xe thường
     case INTERCITY = 2; // Đi tỉnh
     case AIRPORT   = 3; // Sân bay
     case DELIVERY  = 4; // Giao hàng
@@ -19,7 +19,7 @@ enum RideType: int
     public function getLabel(): string
     {
         return match ($this) {
-            self::CITY          => 'Nội thành',
+            self::CITY          => 'Chuyến xe thường',
             self::INTERCITY     => 'Đi tỉnh',
             self::AIRPORT       => 'Sân bay',
             self::DELIVERY      => 'Giao hàng',
