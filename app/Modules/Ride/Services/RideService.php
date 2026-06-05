@@ -1003,6 +1003,17 @@ final class RideService extends BaseService implements RideServiceInterface
                 $data['driver_info'] = null;
             }
 
+            // Thông tin khách hàng
+            if ($ride->customer) {
+                $data['customer_info'] = [
+                    'full_name' => $ride->customer->full_name ?? null,
+                    'phone'     => $ride->customer->phone ?? null,
+                    'avatar'    => $ride->customer->avatar ?? null,
+                ];
+            } else {
+                $data['customer_info'] = null;
+            }
+
             return $data;
         });
     }

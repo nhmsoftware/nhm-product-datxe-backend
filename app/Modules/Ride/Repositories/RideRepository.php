@@ -46,7 +46,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
         }
 
         /** @var Ride|null */
-        return $this->getQuery()->with(['driver', 'driver.driverProfile'])
+        return $this->getQuery()->with(['driver', 'driver.driverProfile', 'customer'])
             ->whereRaw('id = ?::bigint', [(string) $rideId])
             ->where(function ($query) use ($customerId) {
                 $query->whereRaw('customer_id::text = ?', [(string) $customerId])
