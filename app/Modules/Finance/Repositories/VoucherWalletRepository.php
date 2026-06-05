@@ -31,10 +31,22 @@ final class VoucherWalletRepository extends BaseRepository implements VoucherWal
      */
     public function saveToWallet(string $customerId, string $voucherId): bool
     {
-        return (bool) $this->getQuery()->updateOrCreate(
-            ['customer_id' => $customerId, 'voucher_id' => $voucherId],
-            ['saved_at' => now()]
-        );
+        $wallet = $this->getQuery()->withTrashed()
+            ->where('customer_id', $customerId)
+            ->where('voucher_id', $voucherId)
+            ->first();
+
+        if ($wallet) {
+            $wallet->restore();
+            $wallet->saved_at = now();
+            return $wallet->save();
+        }
+
+        return (bool) $this->getQuery()->create([
+            'customer_id' => $customerId,
+            'voucher_id' => $voucherId,
+            'saved_at' => now(),
+        ]);
     }
 
     /**

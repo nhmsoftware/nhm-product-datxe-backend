@@ -24,7 +24,7 @@ final class AdminCreateVoucherRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'code' => 'required|string|unique:vouchers,code|max:50',
+            'code' => ['required', 'string', 'max:50', 'unique:vouchers,code', 'regex:/^\S+$/'],
             'name' => 'required|string|max:100',
             'service_type' => ['required', new Enum(VoucherServiceType::class)],
             'discount_type' => ['required', new Enum(VoucherDiscountType::class)],
@@ -53,5 +53,15 @@ final class AdminCreateVoucherRequest extends FormRequest
         throw new HttpResponseException(
             $this->sendValidation('Dữ liệu tạo voucher không hợp lệ.', $validator->errors()->toArray(), 400)
         );
+    }
+
+    public function messages(): array
+    {
+        return [
+            'code.unique' => 'Mã voucher đã tồn tại.',
+            'code.regex' => 'Mã voucher không được chứa khoảng trắng.',
+            'valid_until.after' => 'Thời gian hiệu lực không hợp lệ.',
+            'valid_until.after_or_equal' => 'Thời gian hiệu lực không hợp lệ.',
+        ];
     }
 }

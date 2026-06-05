@@ -25,7 +25,7 @@ final class AdminUpdateVoucherRequest extends FormRequest
     {
         $id = $this->route('id');
         return [
-            'code' => 'nullable|string|max:50|unique:vouchers,code,' . $id,
+            'code' => ['nullable', 'string', 'max:50', 'unique:vouchers,code,' . $id, 'regex:/^\S+$/'],
             'name' => 'nullable|string|max:100',
             'service_type' => ['nullable', new Enum(VoucherServiceType::class)],
             'discount_type' => ['nullable', new Enum(VoucherDiscountType::class)],
@@ -55,5 +55,15 @@ final class AdminUpdateVoucherRequest extends FormRequest
         throw new HttpResponseException(
             $this->sendValidation('Dữ liệu cập nhật voucher không hợp lệ.', $validator->errors()->toArray(), 400)
         );
+    }
+
+    public function messages(): array
+    {
+        return [
+            'code.unique' => 'Mã voucher đã tồn tại.',
+            'code.regex' => 'Mã voucher không được chứa khoảng trắng.',
+            'valid_until.after' => 'Thời gian hiệu lực không hợp lệ.',
+            'valid_until.after_or_equal' => 'Thời gian hiệu lực không hợp lệ.',
+        ];
     }
 }
