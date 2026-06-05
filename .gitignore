@@ -31,3 +31,5 @@ scratch
 docker-compose.yml
 Dockerfile
 docker-up-local.txt
+docker-entrypoint.sh
+storage/firebase/credentials.json

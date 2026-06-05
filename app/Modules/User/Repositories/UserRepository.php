@@ -196,13 +196,33 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
 
     /**
      * @inheritDoc
+     *
+     * Khi filter kyc_status=1 (Pending), query bao gồm cả user role=Customer
+     * đang có hồ sơ tài xế chờ duyệt (chưa được nâng role lên Driver).
+     * Các trường hợp còn lại chỉ trả về user role=Driver.
      */
     public function findDrivers(array $filters, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
     {
-        $query = $this->getQuery()->with(['driverProfile', 'userReviewApplications' => function ($q) {
-            $q->where('kyc_type', KycType::Driver->value)->latest();
-        }])
-            ->where('role', UserRole::Driver->value);
+        $kycStatusValue = isset($filters['kyc_status']) && $filters['kyc_status'] !== ''
+            ? (int) $filters['kyc_status']
+            : null;
+
+        // Khi lọc "Chờ duyệt" (kyc_status=1): bao gồm cả Customer đang chờ nâng cấp thành tài xế
+        $isPendingFilter = $kycStatusValue === 1;
+
+        $rolesInScope = $isPendingFilter
+            ? [UserRole::Customer->value, UserRole::Driver->value]
+            : [UserRole::Driver->value];
+
+        $query = $this->getQuery()
+            ->with([
+                'driverProfile',
+                'customerProfile', // Cần thiết để accessor full_name trả đúng tên với Customer role
+                'userReviewApplications' => function ($q) {
+                    $q->where('kyc_type', KycType::Driver->value)->latest();
+                },
+            ])
+            ->whereIn('role', $rolesInScope);
 
         if (!empty($filters['keyword'])) {
             $keyword = '%' . $filters['keyword'] . '%';
@@ -211,20 +231,21 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
                   ->orWhere('email', 'like', $keyword)
                   ->orWhereHas('driverProfile', function ($qp) use ($keyword) {
                       $qp->where('full_name', 'like', $keyword);
+                  })
+                  ->orWhereHas('customerProfile', function ($qp) use ($keyword) {
+                      $qp->where('full_name', 'like', $keyword);
                   });
             });
         }
 
-        if (isset($filters['kyc_status']) && $filters['kyc_status'] !== '') {
-            $kycStatusValue = (int) $filters['kyc_status'];
-
+        if ($kycStatusValue !== null) {
             if ($kycStatusValue === 0) {
                 // Lọc những người chưa từng nộp hồ sơ
                 $query->whereDoesntHave('userReviewApplications', function ($q) {
                     $q->where('kyc_type', KycType::Driver->value);
                 });
             } else {
-                // Lọc theo trạng thái cụ thể
+                // Lọc theo trạng thái cụ thể (Pending=1 / Approved=2 / Rejected=3)
                 $query->whereHas('userReviewApplications', function ($q) use ($kycStatusValue) {
                     $q->where('kyc_type', KycType::Driver->value)
                       ->where('kyc_status', $kycStatusValue)
