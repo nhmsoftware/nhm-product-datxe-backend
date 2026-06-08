@@ -19,6 +19,11 @@ interface MerchantRepositoryInterface extends BaseRepositoryInterface
     public function findByUserId(string $userId): ?MerchantProfile;
 
     /**
+     * Check if merchant has active food orders.
+     */
+    public function hasActiveOrders(string $merchantId): bool;
+
+    /**
      * Check if store name already exists.
      *
      * @param string $storeName

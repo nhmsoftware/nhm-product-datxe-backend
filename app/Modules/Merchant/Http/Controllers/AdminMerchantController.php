@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace App\Modules\Merchant\Http\Controllers;
 
 use App\Core\Controller\BaseController;
+use App\Modules\Merchant\DTO\CreateMerchantDTO;
 use App\Modules\Merchant\DTO\MerchantFilterDTO;
+use App\Modules\Merchant\DTO\UpdateMerchantDTO;
+use App\Modules\Merchant\Http\Requests\Admin\CreateMerchantRequest;
 use App\Modules\Merchant\Http\Requests\Admin\MerchantListRequest;
+use App\Modules\Merchant\Http\Requests\Admin\UpdateMerchantRequest;
 use App\Modules\Merchant\Interfaces\MerchantAdminServiceInterface;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -48,6 +52,56 @@ final class AdminMerchantController extends BaseController
     {
         $result = $this->merchantAdminService->getMerchants(MerchantFilterDTO::fromRequest($request));
         return $this->sendSuccess($result->getData());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/admin/merchant',
+        summary: 'Tạo Merchant (UC-146)',
+        security: [['sanctum' => []]],
+        tags: ['Admin|Merchant'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['owner_name', 'phone', 'store_name', 'store_address'],
+                    properties: [
+                        new OA\Property(property: 'owner_name', type: 'string', example: 'Nguyen Van Chu'),
+                        new OA\Property(property: 'phone', type: 'string', example: '0900000099'),
+                        new OA\Property(property: 'email', type: 'string', format: 'email'),
+                        new OA\Property(property: 'store_name', type: 'string', example: 'Com Nha Tot'),
+                        new OA\Property(property: 'store_address', type: 'string', example: '123 Nguyen Hue, Q1'),
+                        new OA\Property(property: 'latitude', type: 'number', format: 'float'),
+                        new OA\Property(property: 'longitude', type: 'number', format: 'float'),
+                        new OA\Property(property: 'business_type', type: 'integer', example: 1),
+                        new OA\Property(property: 'business_license', type: 'string', example: 'GPKD-123'),
+                        new OA\Property(property: 'business_license_image', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'store_image', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'opening_time', type: 'string', example: '08:00'),
+                        new OA\Property(property: 'closing_time', type: 'string', example: '22:00'),
+                        new OA\Property(property: 'registered_at', type: 'string', format: 'date'),
+                        new OA\Property(property: 'status', type: 'integer', example: 1),
+                        new OA\Property(property: 'is_active', type: 'boolean', example: true),
+                        new OA\Property(property: 'password', type: 'string', example: 'Password@123'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Tạo Merchant thành công'),
+            new OA\Response(response: 400, description: 'Dữ liệu không hợp lệ'),
+            new OA\Response(response: 409, description: 'Số điện thoại hoặc tên cửa hàng đã tồn tại'),
+        ]
+    )]
+    public function store(CreateMerchantRequest $request): JsonResponse
+    {
+        $result = $this->merchantAdminService->createMerchant(CreateMerchantDTO::fromRequest($request));
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage(), 201);
     }
 
     /**
@@ -125,6 +179,82 @@ final class AdminMerchantController extends BaseController
         }
 
         return $this->sendSuccess($result->getData());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/admin/merchant/{id}',
+        summary: 'Cập nhật Merchant (UC-147)',
+        security: [['sanctum' => []]],
+        tags: ['Admin|Merchant'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['owner_name', 'phone', 'store_name', 'store_address'],
+                    properties: [
+                        new OA\Property(property: 'owner_name', type: 'string'),
+                        new OA\Property(property: 'phone', type: 'string'),
+                        new OA\Property(property: 'email', type: 'string', format: 'email'),
+                        new OA\Property(property: 'store_name', type: 'string'),
+                        new OA\Property(property: 'store_address', type: 'string'),
+                        new OA\Property(property: 'latitude', type: 'number', format: 'float'),
+                        new OA\Property(property: 'longitude', type: 'number', format: 'float'),
+                        new OA\Property(property: 'business_type', type: 'integer'),
+                        new OA\Property(property: 'business_license', type: 'string'),
+                        new OA\Property(property: 'business_license_image', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'store_image', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'opening_time', type: 'string'),
+                        new OA\Property(property: 'closing_time', type: 'string'),
+                        new OA\Property(property: 'status', type: 'integer'),
+                        new OA\Property(property: 'is_active', type: 'boolean'),
+                        new OA\Property(property: 'lock_reason', type: 'string'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Cập nhật thành công'),
+            new OA\Response(response: 404, description: 'Không tìm thấy Merchant'),
+        ]
+    )]
+    public function update(UpdateMerchantRequest $request, string $id): JsonResponse
+    {
+        $result = $this->merchantAdminService->updateMerchant(UpdateMerchantDTO::fromRequest($request, $id));
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Delete(
+        path: '/api/v1/admin/merchant/{id}',
+        summary: 'Xóa Merchant (UC-147)',
+        security: [['sanctum' => []]],
+        tags: ['Admin|Merchant'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Xóa thành công'),
+            new OA\Response(response: 404, description: 'Không tìm thấy Merchant'),
+            new OA\Response(response: 409, description: 'Merchant đang có đơn xử lý'),
+        ]
+    )]
+    public function destroy(string $id): JsonResponse
+    {
+        $result = $this->merchantAdminService->deleteMerchant($id);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 
     /**

@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Merchant\Repositories;
 
 use App\Core\Repository\BaseRepository;
+use App\Modules\Food\Model\Enums\FoodOrderStatus;
+use App\Modules\Food\Model\FoodOrder;
 use App\Modules\Merchant\Interfaces\MerchantRepositoryInterface;
 use App\Modules\User\Model\MerchantProfile;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -20,6 +22,23 @@ final class MerchantRepository extends BaseRepository implements MerchantReposit
     {
         /** @var MerchantProfile|null */
         return $this->getQuery()->where('user_id', $userId)->first();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasActiveOrders(string $merchantId): bool
+    {
+        return FoodOrder::query()
+            ->where('merchant_id', $merchantId)
+            ->whereIn('status', [
+                FoodOrderStatus::PENDING->value,
+                FoodOrderStatus::CONFIRMED->value,
+                FoodOrderStatus::PREPARING->value,
+                FoodOrderStatus::READY->value,
+                FoodOrderStatus::PICKED_UP->value,
+            ])
+            ->exists();
     }
 
     public function isStoreNameExists(string $storeName, ?string $excludeUserId = null): bool

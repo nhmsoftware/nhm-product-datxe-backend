@@ -93,11 +93,20 @@ Route::prefix('v1/admin/merchant')
     ->middleware(['auth:sanctum'])
     ->group(function () {
         // UC-86 Manage Merchant
+        Route::post('/', [AdminMerchantController::class, 'store'])
+            ->name('admin.merchant.store');
+
         Route::get('/', [AdminMerchantController::class, 'index'])
             ->name('admin.merchant.index');
 
         Route::get('/{id}', [AdminMerchantController::class, 'show'])
             ->name('admin.merchant.show');
+
+        Route::post('/{id}', [AdminMerchantController::class, 'update'])
+            ->name('admin.merchant.update');
+
+        Route::delete('/{id}', [AdminMerchantController::class, 'destroy'])
+            ->name('admin.merchant.destroy');
 
         Route::post('/{id}/approve', [AdminMerchantController::class, 'approve'])
             ->name('admin.merchant.approve');

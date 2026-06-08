@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Merchant\Interfaces;
 
 use App\Core\Services\ServiceReturn;
+use App\Modules\Merchant\DTO\CreateMerchantDTO;
 use App\Modules\Merchant\DTO\MerchantFilterDTO;
+use App\Modules\Merchant\DTO\UpdateMerchantDTO;
 
 interface MerchantAdminServiceInterface
 {
@@ -20,6 +22,21 @@ interface MerchantAdminServiceInterface
      * UC-86 Manage Merchant
      */
     public function getMerchantDetails(string $id): ServiceReturn;
+
+    /**
+     * Create merchant account from admin portal.
+     */
+    public function createMerchant(CreateMerchantDTO $dto): ServiceReturn;
+
+    /**
+     * Update merchant from admin portal.
+     */
+    public function updateMerchant(UpdateMerchantDTO $dto): ServiceReturn;
+
+    /**
+     * Soft delete merchant from admin portal.
+     */
+    public function deleteMerchant(string $id): ServiceReturn;
 
     /**
      * Approve merchant registration.
