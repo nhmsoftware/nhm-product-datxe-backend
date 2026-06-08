@@ -52,8 +52,17 @@ Route::prefix('v1/admin')
             Route::get('customers', [\App\Modules\User\Http\Controllers\AdminUserController::class, 'listCustomers'])
                 ->name('admin.users.customers.index');
 
+            Route::post('customers', [\App\Modules\User\Http\Controllers\AdminUserController::class, 'store'])
+                ->name('admin.users.customers.store');
+
             Route::get('{userId}', [\App\Modules\User\Http\Controllers\AdminUserController::class, 'show'])
                 ->name('admin.users.show');
+
+            Route::put('{userId}', [\App\Modules\User\Http\Controllers\AdminUserController::class, 'update'])
+                ->name('admin.users.update');
+
+            Route::delete('{userId}', [\App\Modules\User\Http\Controllers\AdminUserController::class, 'destroy'])
+                ->name('admin.users.destroy');
 
             Route::put('{userId}/status', [\App\Modules\User\Http\Controllers\AdminUserController::class, 'updateStatus'])
                 ->name('admin.users.status.update');

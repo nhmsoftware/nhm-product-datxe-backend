@@ -140,6 +140,21 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     public function findDetailById(string|int $userId): ?User;
 
     /**
+     * Kiểm tra khách hàng có chuyến xe đang xử lý hay không.
+     */
+    public function hasActiveRide(string|int $userId): bool;
+
+    /**
+     * Kiểm tra khách hàng có đơn đồ ăn đang xử lý hay không.
+     */
+    public function hasActiveFoodOrder(string|int $userId): bool;
+
+    /**
+     * Xóa mềm khách hàng và các profile/liên kết liên quan.
+     */
+    public function softDeleteCustomer(User $user): void;
+
+    /**
      * Kiểm tra CCCD đã được sử dụng chưa (không tính bản thân).
      */
     public function isCitizenIdExists(string $citizenId, ?string $excludeUserId = null): bool;

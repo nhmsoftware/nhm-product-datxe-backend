@@ -5,13 +5,19 @@ declare(strict_types=1);
 namespace App\Modules\User\Repositories;
 
 use App\Core\Repository\BaseRepository;
+use App\Modules\Food\Model\Enums\FoodOrderStatus;
+use App\Modules\Food\Model\FoodOrder;
+use App\Modules\Ride\Model\Enums\RideStatus;
+use App\Modules\Ride\Model\Ride;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\CustomerProfile;
+use App\Modules\User\Model\CustomerSavedAddress;
 use App\Modules\User\Model\Enums\DriverGroupType;
 use App\Modules\User\Model\Enums\KycStatus;
 use App\Modules\User\Model\Enums\KycType;
 use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\User;
+use App\Modules\User\Model\UserDevice;
 
 final class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
@@ -350,6 +356,59 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
         return $this->getQuery()->with(['customerProfile', 'driverProfile'])
             ->where('id', $userId)
             ->first();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasActiveRide(string|int $userId): bool
+    {
+        return Ride::query()
+            ->where('customer_id', (string) $userId)
+            ->whereIn('status', [
+                RideStatus::PENDING->value,
+                RideStatus::ACCEPTED->value,
+                RideStatus::PICKED_UP->value,
+                RideStatus::IN_PROGRESS->value,
+                RideStatus::CANCELLATION_REQUESTED->value,
+            ])
+            ->exists();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasActiveFoodOrder(string|int $userId): bool
+    {
+        return FoodOrder::query()
+            ->where('customer_id', (string) $userId)
+            ->whereIn('status', [
+                FoodOrderStatus::PENDING->value,
+                FoodOrderStatus::CONFIRMED->value,
+                FoodOrderStatus::PREPARING->value,
+                FoodOrderStatus::READY->value,
+                FoodOrderStatus::PICKED_UP->value,
+            ])
+            ->exists();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function softDeleteCustomer(User $user): void
+    {
+        $user->tokens()->delete();
+        UserDevice::query()->where('user_id', $user->id)->delete();
+
+        if ($user->customerProfile) {
+            CustomerSavedAddress::query()
+                ->where('customer_id', $user->customerProfile->id)
+                ->delete();
+
+            $user->customerProfile->delete();
+        }
+
+        $user->delete();
     }
 
     /**
