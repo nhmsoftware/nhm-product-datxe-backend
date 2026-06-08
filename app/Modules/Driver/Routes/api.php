@@ -89,6 +89,9 @@ Route::prefix('v1/admin/driver')
         Route::post('applications/{id}/approve', [AdminDriverController::class, 'approve'])
             ->name('admin.driver.application.approve');
 
+        Route::post('users/{userId}/register-submit', [AdminDriverController::class, 'submitForUser'])
+            ->name('admin.driver.user.register-submit');
+
         Route::get('groups', [AdminDriverController::class, 'groups'])
             ->name('admin.driver.groups.index');
     });

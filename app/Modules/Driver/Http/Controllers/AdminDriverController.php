@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Modules\Driver\Http\Controllers;
 
 use App\Core\Controller\BaseController;
+use App\Modules\Driver\DTO\AdminSubmitDriverRegistrationDTO;
 use App\Modules\Driver\DTO\ApproveRegistrationDTO;
+use App\Modules\Driver\Http\Requests\AdminSubmitDriverRegistrationRequest;
 use App\Modules\Driver\Http\Requests\ApproveRegistrationRequest;
 use App\Modules\Driver\Interfaces\DriverRegistrationServiceInterface;
 use Illuminate\Http\JsonResponse;
@@ -127,5 +129,59 @@ final class AdminDriverController extends BaseController
     {
         $result = $this->driverRegistrationService->getDriverGroups();
         return $this->sendSuccess($result->getData());
+    }
+
+    #[OA\Post(
+        path: '/api/v1/admin/driver/users/{userId}/register-submit',
+        summary: 'Admin upload hồ sơ KYC cho tài xế',
+        security: [['sanctum' => []]],
+        tags: ['Admin|Driver'],
+        parameters: [
+            new OA\Parameter(name: 'userId', in: 'path', required: true, schema: new OA\Schema(type: 'string'))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    required: ['full_name', 'phone', 'citizen_id', 'vehicle_type', 'vehicle_name', 'vehicle_color', 'vehicle_number', 'vehicle_year', 'services', 'cccd_front', 'cccd_back', 'driver_license', 'vehicle_reg', 'criminal_record', 'health_cert', 'portrait', 'insurance'],
+                    properties: [
+                        new OA\Property(property: 'full_name', type: 'string'),
+                        new OA\Property(property: 'phone', type: 'string'),
+                        new OA\Property(property: 'citizen_id', type: 'string'),
+                        new OA\Property(property: 'vehicle_type', type: 'integer'),
+                        new OA\Property(property: 'vehicle_name', type: 'string'),
+                        new OA\Property(property: 'vehicle_color', type: 'integer'),
+                        new OA\Property(property: 'vehicle_number', type: 'string'),
+                        new OA\Property(property: 'vehicle_year', type: 'integer'),
+                        new OA\Property(property: 'services', type: 'array', items: new OA\Items(type: 'integer')),
+                        new OA\Property(property: 'cccd_front', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'cccd_back', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'driver_license', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'vehicle_reg', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'criminal_record', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'health_cert', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'portrait', type: 'string', format: 'binary'),
+                        new OA\Property(property: 'insurance', type: 'string', format: 'binary'),
+                    ]
+                )
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Tạo hồ sơ KYC thành công'),
+            new OA\Response(response: 400, description: 'Dữ liệu không hợp lệ'),
+        ]
+    )]
+    public function submitForUser(AdminSubmitDriverRegistrationRequest $request, string $userId): JsonResponse
+    {
+        $result = $this->driverRegistrationService->submitRegistrationByAdmin(
+            AdminSubmitDriverRegistrationDTO::fromRequest($request)
+        );
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 }

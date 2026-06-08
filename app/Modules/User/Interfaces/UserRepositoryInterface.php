@@ -35,6 +35,11 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
     public function createCustomerProfile(User $user, array $data): CustomerProfile;
 
     /**
+     * Tạo profile cho tài xế.
+     */
+    public function createDriverProfile(User $user, array $data): \App\Modules\User\Model\DriverProfile;
+
+    /**
      * Upsert device
      * @param User $user
      * @param array $data
@@ -153,6 +158,21 @@ interface UserRepositoryInterface extends BaseRepositoryInterface
      * Xóa mềm khách hàng và các profile/liên kết liên quan.
      */
     public function softDeleteCustomer(User $user): void;
+
+    /**
+     * Kiểm tra tài xế có chuyến xe đang xử lý hay không.
+     */
+    public function hasActiveRideForDriver(string|int $userId): bool;
+
+    /**
+     * Kiểm tra tài xế có đơn đồ ăn đang xử lý hay không.
+     */
+    public function hasActiveFoodOrderForDriver(string|int $userId): bool;
+
+    /**
+     * Xóa mềm tài xế và các profile/liên kết liên quan.
+     */
+    public function softDeleteDriver(User $user): void;
 
     /**
      * Kiểm tra CCCD đã được sử dụng chưa (không tính bản thân).

@@ -6,6 +6,7 @@ namespace App\Modules\Driver\Services;
 
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
+use App\Modules\Driver\DTO\AdminSubmitDriverRegistrationDTO;
 use App\Modules\Driver\DTO\ApproveRegistrationDTO;
 use App\Modules\Driver\DTO\RegisterDriverSubmitDTO;
 use App\Modules\Driver\Events\DriverApplicationApproved;
@@ -114,6 +115,26 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
             );
 
         }, useTransaction: true);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function submitRegistrationByAdmin(AdminSubmitDriverRegistrationDTO $dto): ServiceReturn
+    {
+        return $this->submitRegistration(new RegisterDriverSubmitDTO(
+            userId: $dto->userId,
+            fullName: $dto->fullName,
+            phone: $dto->phone,
+            citizenId: $dto->citizenId,
+            vehicleType: $dto->vehicleType,
+            vehicleName: $dto->vehicleName,
+            vehicleColor: $dto->vehicleColor,
+            vehicleNumber: $dto->vehicleNumber,
+            vehicleYear: $dto->vehicleYear,
+            services: $dto->services,
+            files: $dto->files,
+        ));
     }
 
     /**

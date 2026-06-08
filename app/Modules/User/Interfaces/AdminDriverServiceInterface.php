@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\User\Interfaces;
 
 use App\Core\Services\ServiceReturn;
+use App\Modules\User\DTO\Admin\CreateDriverDTO;
 use App\Modules\User\DTO\Admin\ListDriversDTO;
 use App\Modules\User\DTO\Admin\ApproveDriverDTO;
 use App\Modules\User\DTO\Admin\RejectDriverDTO;
+use App\Modules\User\DTO\Admin\UpdateDriverDTO;
 use App\Modules\User\DTO\Admin\UpdateDriverStatusDTO;
 use App\Modules\User\DTO\Admin\AssignDriverGroupDTO;
 
@@ -17,6 +19,11 @@ interface AdminDriverServiceInterface
      * Lấy danh sách tài xế (UC-80).
      */
     public function listDrivers(ListDriversDTO $dto): ServiceReturn;
+
+    /**
+     * Tạo tài xế mới (UC-144).
+     */
+    public function createDriver(CreateDriverDTO $dto): ServiceReturn;
 
     /**
      * Duyệt tài xế (UC-81).
@@ -34,6 +41,16 @@ interface AdminDriverServiceInterface
     public function getDriverDetail(string|int $userId): ServiceReturn;
 
     /**
+     * Cập nhật thông tin tài xế (UC-145).
+     */
+    public function updateDriver(UpdateDriverDTO $dto): ServiceReturn;
+
+    /**
+     * Xóa mềm tài xế (UC-145).
+     */
+    public function deleteDriver(string|int $userId): ServiceReturn;
+
+    /**
      * Khóa/Mở khóa tài xế (UC-84).
      */
     public function updateStatus(UpdateDriverStatusDTO $dto): ServiceReturn;
@@ -48,4 +65,3 @@ interface AdminDriverServiceInterface
      */
     public function exportDrivers(ListDriversDTO $dto): ServiceReturn;
 }
-

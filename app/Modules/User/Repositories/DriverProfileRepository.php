@@ -24,6 +24,15 @@ final class DriverProfileRepository extends BaseRepository implements DriverProf
     }
 
     /**
+     * @inheritDoc
+     */
+    public function findByUserIdWithTrashed(string $userId): ?DriverProfile
+    {
+        /** @var DriverProfile|null */
+        return $this->getQuery()->withTrashed()->where('user_id', $userId)->first();
+    }
+
+    /**
      * Cập nhật trạng thái trực tuyến của Driver.
      */
     public function updateOnlineStatus(

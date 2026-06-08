@@ -70,6 +70,9 @@ Route::prefix('v1/admin')
 
         // Quản lý tài xế (Drivers)
         Route::prefix('drivers')->group(function () {
+            Route::post('/', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'store'])
+                ->name('admin.drivers.store');
+
             Route::get('/', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'listDrivers'])
                 ->name('admin.drivers.index');
             
@@ -79,6 +82,11 @@ Route::prefix('v1/admin')
             Route::get('{userId}', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'show'])
                 ->name('admin.drivers.show');
 
+            Route::put('{userId}', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'update'])
+                ->name('admin.drivers.update');
+
+            Route::delete('{userId}', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'destroy'])
+                ->name('admin.drivers.destroy');
 
             Route::put('{userId}/status', [\App\Modules\User\Http\Controllers\AdminDriverController::class, 'updateStatus'])
                 ->name('admin.drivers.status.update');

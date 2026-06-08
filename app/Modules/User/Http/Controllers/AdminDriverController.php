@@ -5,14 +5,18 @@ declare(strict_types=1);
 namespace App\Modules\User\Http\Controllers;
 
 use App\Core\Controller\BaseController;
+use App\Modules\User\DTO\Admin\CreateDriverDTO;
 use App\Modules\User\DTO\Admin\ListDriversDTO;
 use App\Modules\User\DTO\Admin\ApproveDriverDTO;
 use App\Modules\User\DTO\Admin\RejectDriverDTO;
+use App\Modules\User\DTO\Admin\UpdateDriverDTO;
 use App\Modules\User\DTO\Admin\UpdateDriverStatusDTO;
 use App\Modules\User\DTO\Admin\AssignDriverGroupDTO;
+use App\Modules\User\Http\Requests\Admin\CreateDriverRequest;
 use App\Modules\User\Http\Requests\Admin\ListDriversRequest;
 use App\Modules\User\Http\Requests\Admin\ApproveDriverRequest;
 use App\Modules\User\Http\Requests\Admin\RejectDriverRequest;
+use App\Modules\User\Http\Requests\Admin\UpdateDriverRequest;
 use App\Modules\User\Http\Requests\Admin\UpdateDriverStatusRequest;
 use App\Modules\User\Http\Requests\Admin\AssignDriverGroupRequest;
 use App\Modules\User\Model\Enums\DriverGroupType;
@@ -54,6 +58,51 @@ final class AdminDriverController extends BaseController
 
         return $this->sendSuccess($result->getData()->toArray(), $result->getMessage());
 
+    }
+
+    #[OA\Post(
+        path: '/api/v1/admin/drivers',
+        summary: 'Tạo tài xế (UC-144)',
+        description: 'Tạo mới tài khoản tài xế trên Admin Portal.',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Driver Management'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['full_name', 'phone'],
+                properties: [
+                    new OA\Property(property: 'full_name', type: 'string', example: 'Nguyen Van Tai'),
+                    new OA\Property(property: 'phone', type: 'string', example: '0900000012'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'driver@example.com'),
+                    new OA\Property(property: 'gender', type: 'integer', example: 1),
+                    new OA\Property(property: 'birthday', type: 'string', format: 'date', example: '1995-04-12'),
+                    new OA\Property(property: 'address', type: 'string', example: '12 Cach Mang Thang 8, Q3, TP.HCM'),
+                    new OA\Property(property: 'driver_group_type', type: 'integer', example: 1, description: '1: Xe nha, 2: Doi tac'),
+                    new OA\Property(property: 'vehicle_type', type: 'integer', example: 1),
+                    new OA\Property(property: 'vehicle_color', type: 'integer', example: 1),
+                    new OA\Property(property: 'vehicle_name', type: 'string', example: 'Honda Vision'),
+                    new OA\Property(property: 'vehicle_number', type: 'string', example: '59A1-12345'),
+                    new OA\Property(property: 'password', type: 'string', example: 'Password@123'),
+                    new OA\Property(property: 'is_active', type: 'boolean', example: true),
+                    new OA\Property(property: 'note', type: 'string', example: 'Tạo nhanh từ admin'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Tạo tài xế thành công'),
+            new OA\Response(response: 400, description: 'Lỗi validation'),
+            new OA\Response(response: 409, description: 'Số điện thoại hoặc email đã tồn tại'),
+        ]
+    )]
+    public function store(CreateDriverRequest $request): JsonResponse
+    {
+        $result = $this->adminDriverService->createDriver(CreateDriverDTO::fromRequest($request));
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage(), 201);
     }
 
     #[OA\Post(
@@ -150,6 +199,80 @@ final class AdminDriverController extends BaseController
     public function show(string|int $userId): JsonResponse
     {
         $result = $this->adminDriverService->getDriverDetail($userId);
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Put(
+        path: '/api/v1/admin/drivers/{userId}',
+        summary: 'Cập nhật tài xế (UC-145)',
+        description: 'Cập nhật thông tin hồ sơ tài xế.',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Driver Management'],
+        parameters: [
+            new OA\Parameter(name: 'userId', in: 'path', required: true, description: 'ID tài xế', schema: new OA\Schema(type: 'string')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['full_name', 'phone'],
+                properties: [
+                    new OA\Property(property: 'full_name', type: 'string', example: 'Nguyen Van Tai'),
+                    new OA\Property(property: 'phone', type: 'string', example: '0900000012'),
+                    new OA\Property(property: 'email', type: 'string', format: 'email', example: 'driver@example.com'),
+                    new OA\Property(property: 'gender', type: 'integer', example: 1),
+                    new OA\Property(property: 'birthday', type: 'string', format: 'date', example: '1995-04-12'),
+                    new OA\Property(property: 'address', type: 'string', example: '12 Cach Mang Thang 8, Q3, TP.HCM'),
+                    new OA\Property(property: 'driver_group_type', type: 'integer', example: 1),
+                    new OA\Property(property: 'vehicle_type', type: 'integer', example: 1),
+                    new OA\Property(property: 'vehicle_color', type: 'integer', example: 1),
+                    new OA\Property(property: 'vehicle_name', type: 'string', example: 'Honda Vision'),
+                    new OA\Property(property: 'vehicle_number', type: 'string', example: '59A1-12345'),
+                    new OA\Property(property: 'is_active', type: 'boolean', example: true),
+                    new OA\Property(property: 'kyc_status', type: 'integer', example: 1, description: '0: Chua nop, 1: Cho duyet, 2: Da duyet, 3: Tu choi'),
+                    new OA\Property(property: 'lock_reason', type: 'string', example: 'Tam khoa do vi pham'),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Cập nhật thành công'),
+            new OA\Response(response: 400, description: 'Lỗi validation'),
+            new OA\Response(response: 404, description: 'Không tìm thấy tài xế'),
+        ]
+    )]
+    public function update(string|int $userId, UpdateDriverRequest $request): JsonResponse
+    {
+        $result = $this->adminDriverService->updateDriver(UpdateDriverDTO::fromRequest($request, $userId));
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Delete(
+        path: '/api/v1/admin/drivers/{userId}',
+        summary: 'Xóa tài xế (UC-145)',
+        description: 'Xóa mềm tài khoản tài xế nếu không có chuyến/đơn đang xử lý.',
+        security: [['bearerAuth' => []]],
+        tags: ['Admin Driver Management'],
+        parameters: [
+            new OA\Parameter(name: 'userId', in: 'path', required: true, description: 'ID tài xế', schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Xóa thành công'),
+            new OA\Response(response: 404, description: 'Không tìm thấy tài xế'),
+            new OA\Response(response: 409, description: 'Tài xế đang có chuyến/đơn đang xử lý'),
+        ]
+    )]
+    public function destroy(string|int $userId): JsonResponse
+    {
+        $result = $this->adminDriverService->deleteDriver($userId);
 
         if ($result->isError()) {
             return $this->sendError($result->getMessage(), $result->getCode());
@@ -304,5 +427,4 @@ final class AdminDriverController extends BaseController
         ]);
     }
 }
-
 

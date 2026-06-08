@@ -101,6 +101,14 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
     }
 
     /**
+     * @inheritDoc
+     */
+    public function createDriverProfile(User $user, array $data): \App\Modules\User\Model\DriverProfile
+    {
+        return $user->driverProfile()->create($data);
+    }
+
+    /**
      * Upsert thiết bị của user.
      * - Nếu device_id đã tồn tại với user này → cập nhật token
      * - Nếu chưa → tạo mới
@@ -406,6 +414,64 @@ final class UserRepository extends BaseRepository implements UserRepositoryInter
                 ->delete();
 
             $user->customerProfile->delete();
+        }
+
+        $user->delete();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasActiveRideForDriver(string|int $userId): bool
+    {
+        return Ride::query()
+            ->where('driver_id', (string) $userId)
+            ->whereIn('status', [
+                RideStatus::ACCEPTED->value,
+                RideStatus::PICKED_UP->value,
+                RideStatus::IN_PROGRESS->value,
+                RideStatus::CANCELLATION_REQUESTED->value,
+            ])
+            ->exists();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function hasActiveFoodOrderForDriver(string|int $userId): bool
+    {
+        return FoodOrder::query()
+            ->whereHas('ride', function ($q) use ($userId) {
+                $q->where('driver_id', (string) $userId);
+            })
+            ->whereIn('status', [
+                FoodOrderStatus::PENDING->value,
+                FoodOrderStatus::CONFIRMED->value,
+                FoodOrderStatus::PREPARING->value,
+                FoodOrderStatus::READY->value,
+                FoodOrderStatus::PICKED_UP->value,
+            ])
+            ->exists();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function softDeleteDriver(User $user): void
+    {
+        $user->tokens()->delete();
+        UserDevice::query()->where('user_id', $user->id)->delete();
+
+        if ($user->customerProfile) {
+            CustomerSavedAddress::query()
+                ->where('customer_id', $user->customerProfile->id)
+                ->delete();
+
+            $user->customerProfile->delete();
+        }
+
+        if ($user->driverProfile) {
+            $user->driverProfile->delete();
         }
 
         $user->delete();

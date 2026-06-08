@@ -55,6 +55,11 @@ interface DriverProfileRepositoryInterface extends BaseRepositoryInterface
     public function findEligibleDrivers(array $userIds, int $vehicleType, ?int $groupType = null): \Illuminate\Support\Collection;
 
     /**
+     * Tìm profile theo user_id, bao gồm soft-deleted.
+     */
+    public function findByUserIdWithTrashed(string $userId): ?DriverProfile;
+
+    /**
      * Đếm số lượng tài xế đang hoạt động (Online và Active)
      */
     public function countActiveDrivers(): int;
