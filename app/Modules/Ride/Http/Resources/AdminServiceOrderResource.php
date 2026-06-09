@@ -57,6 +57,7 @@ class AdminServiceOrderResource extends JsonResource
             'destination_address'    => $this->destination_address,
             'vehicle_type'           => $this->vehicle_type?->value,
             'vehicle_type_name'      => $this->vehicle_type?->getLabel() ?? '',
+            'total_amount'           => (float) $this->total_price,
             'final_fare'             => (float) $this->total_price,
             'base_price'             => (float) $this->base_price,
             'discount_amount'        => (float) $this->discount_amount,
