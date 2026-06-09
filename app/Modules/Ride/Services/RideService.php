@@ -15,7 +15,9 @@ use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Ride\DTO\AcceptRideTrackingDTO;
 use App\Modules\Ride\DTO\AdminCancelRideBookingDTO;
 use App\Modules\Ride\DTO\AdminCreateRideBookingDTO;
+use App\Modules\Ride\DTO\AdminCreateDeliveryOrderDTO;
 use App\Modules\Ride\DTO\AdminUpdateRideBookingDTO;
+use App\Modules\Ride\DTO\AdminUpdateDeliveryOrderDTO;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
@@ -1448,6 +1450,190 @@ final class RideService extends BaseService implements RideServiceInterface
                 'status' => RideStatus::CANCELLED->value,
                 'status_label' => RideStatus::CANCELLED->getLabel(),
             ], 'Hủy chuyến xe thành công.');
+        }, useTransaction: true);
+    }
+
+    public function getAdminDeliveryOrderDetail(string $rideId): ServiceReturn
+    {
+        return $this->execute(function () use ($rideId) {
+            $this->authorizeAdminOrFail();
+
+            $ride = $this->rideRepository->findById($rideId, relations: ['customer.customerProfile', 'driver.driverProfile', 'deliveryOrder']);
+            $this->validate($ride !== null && $ride->ride_type === RideType::DELIVERY, 'Không tìm thấy đơn giao hàng.', 404);
+
+            return $ride;
+        });
+    }
+
+    public function createAdminDeliveryOrder(AdminCreateDeliveryOrderDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $this->authorizeAdminOrFail();
+
+            $customer = $this->resolveOrCreateCustomer($dto->senderName, $dto->senderPhone);
+
+            $ride = $this->createAdminRideBookingWithRetry([
+                'customer_id' => $customer->id,
+                'pickup_address' => $dto->pickupAddress,
+                'pickup_lat' => $dto->pickupLat ?? 0,
+                'pickup_lng' => $dto->pickupLng ?? 0,
+                'destination_address' => $dto->destinationAddress,
+                'destination_lat' => $dto->destinationLat ?? 0,
+                'destination_lng' => $dto->destinationLng ?? 0,
+                'distance' => $dto->distanceKm !== null ? (int) round($dto->distanceKm * 1000) : 0,
+                'duration' => $dto->durationMinutes !== null ? max(0, $dto->durationMinutes * 60) : 0,
+                'vehicle_type' => VehicleType::BIKE->value,
+                'ride_type' => RideType::DELIVERY->value,
+                'status' => RideStatus::PENDING->value,
+                'tracking_status' => RideTrackingStatus::WAITING_DRIVER->value,
+                'base_price' => $dto->totalPrice,
+                'distance_price' => 0,
+                'time_fare' => 0,
+                'total_price' => $dto->totalPrice,
+                'discount_amount' => 0,
+                'is_paid' => false,
+                'is_pushed_to_pool' => $this->shouldPushToPoolImmediately(),
+                'is_pushed_to_internal_pool' => $this->shouldPushToInternalImmediately(),
+            ]);
+
+            $this->rideRepository->createDeliveryOrderDetail([
+                'ride_id' => $ride->id,
+                'sender_name' => $dto->senderName,
+                'sender_phone' => $dto->senderPhone,
+                'receiver_name' => $dto->receiverName,
+                'receiver_phone' => $dto->receiverPhone,
+                'goods_type' => $dto->goodsType,
+                'goods_weight' => 0.1,
+                'goods_note' => $dto->goodsNote,
+                'is_fragile' => false,
+            ]);
+
+            $ride = $this->rideRepository->findById($ride->id, relations: ['customer.customerProfile', 'driver.driverProfile', 'deliveryOrder']);
+            $this->validate($ride !== null, 'Không thể tạo đơn giao hàng lúc này. Vui lòng thử lại.', 500);
+
+            Logging::userActivity(
+                action: 'admin_create_delivery_order',
+                description: sprintf(
+                    'Tạo đơn giao hàng #%s cho người gửi %s, trạng thái Chờ tài xế%s',
+                    $ride->id,
+                    $dto->senderName,
+                    $dto->driverId ? ' (tài xế sẽ được gán sau khi tạo)' : ''
+                ),
+                userId: (string) (request()->user()?->id ?? 'guest')
+            );
+
+            return $this->success($ride, 'Tạo đơn giao hàng thành công.');
+        });
+    }
+
+    public function updateAdminDeliveryOrder(AdminUpdateDeliveryOrderDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $this->authorizeAdminOrFail();
+
+            $ride = $this->rideRepository->findById($dto->rideId, relations: ['driver.driverProfile', 'deliveryOrder']);
+            $this->validate($ride !== null && $ride->ride_type === RideType::DELIVERY, 'Không tìm thấy đơn giao hàng.', 404);
+            $this->validate(
+                !in_array($ride->status, [RideStatus::COMPLETED, RideStatus::CANCELLED], true),
+                'Không thể cập nhật đơn giao hàng lúc này. Vui lòng thử lại.',
+                400
+            );
+
+            $success = $this->rideRepository->updateById($dto->rideId, [
+                'pickup_address' => $dto->pickupAddress,
+                'pickup_lat' => $dto->pickupLat ?? 0,
+                'pickup_lng' => $dto->pickupLng ?? 0,
+                'destination_address' => $dto->destinationAddress,
+                'destination_lat' => $dto->destinationLat ?? 0,
+                'destination_lng' => $dto->destinationLng ?? 0,
+                'distance' => $dto->distanceKm !== null ? (int) round($dto->distanceKm * 1000) : 0,
+                'duration' => $dto->durationMinutes !== null ? max(0, $dto->durationMinutes * 60) : 0,
+                'base_price' => $dto->totalPrice,
+                'distance_price' => 0,
+                'time_fare' => 0,
+                'total_price' => $dto->totalPrice,
+            ]);
+            $this->validate($success !== null, 'Không thể cập nhật đơn giao hàng lúc này. Vui lòng thử lại.', 500);
+
+            if ($ride->deliveryOrder) {
+                $ride->deliveryOrder->update([
+                    'sender_name' => $dto->senderName,
+                    'sender_phone' => $dto->senderPhone,
+                    'receiver_name' => $dto->receiverName,
+                    'receiver_phone' => $dto->receiverPhone,
+                    'goods_type' => $dto->goodsType,
+                    'goods_note' => $dto->goodsNote,
+                ]);
+            }
+
+            $ride = $this->rideRepository->findById($dto->rideId, relations: ['driver.driverProfile', 'deliveryOrder']);
+            $this->validate($ride !== null, 'Không tìm thấy đơn giao hàng.', 404);
+
+            if (!$dto->driverId && $ride->driver_id !== null) {
+                $this->rideRepository->releaseDriverFromRide($ride->id, 'Admin unassigned driver from delivery order');
+                $this->rideRepository->updateStatus($ride->id, RideStatus::PENDING);
+            } elseif ($dto->driverId && (string) $ride->driver_id !== (string) $dto->driverId) {
+                if ($ride->driver_id !== null) {
+                    $this->rideRepository->releaseDriverFromRide($ride->id, 'Admin changed driver for delivery order');
+                    $this->rideRepository->updateStatus($ride->id, RideStatus::PENDING);
+                }
+                $this->assignDriverToAdminRide($ride, $dto->driverId);
+            }
+
+            $updatedRide = $this->rideRepository->findById($dto->rideId, relations: ['customer.customerProfile', 'driver.driverProfile', 'deliveryOrder']);
+            $this->validate($updatedRide !== null, 'Không tìm thấy đơn giao hàng.', 404);
+
+            Logging::userActivity(
+                action: 'admin_update_delivery_order',
+                description: sprintf(
+                    'Cập nhật đơn giao hàng #%s, trạng thái hiện tại: %s',
+                    $dto->rideId,
+                    $updatedRide->status->getLabel()
+                ),
+                userId: (string) (request()->user()?->id ?? 'guest')
+            );
+
+            return $this->success($updatedRide, 'Cập nhật đơn giao hàng thành công.');
+        }, useTransaction: true);
+    }
+
+    public function cancelAdminDeliveryOrder(AdminCancelRideBookingDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $this->authorizeAdminOrFail();
+
+            $ride = $this->rideRepository->findById($dto->rideId, relations: ['customer', 'driver', 'deliveryOrder']);
+            $this->validate($ride !== null && $ride->ride_type === RideType::DELIVERY, 'Không tìm thấy đơn giao hàng.', 404);
+            $this->validate($ride->status !== RideStatus::COMPLETED, 'Không thể hủy đơn giao hàng đã hoàn thành.', 400);
+            $this->validate($ride->status !== RideStatus::CANCELLED, 'Không thể hủy đơn giao hàng đã hủy.', 400);
+
+            $this->rideRepository->cancel($dto->rideId, $dto->reason, 0);
+
+            if ($ride->driver_id !== null) {
+                event(new RideCanceled(
+                    rideId: (string) $ride->id,
+                    customerId: (string) $ride->customer_id,
+                    driverId: (string) $ride->driver_id,
+                    reason: $dto->reason,
+                    canceledBy: 'admin',
+                ));
+            }
+
+            Logging::userActivity(
+                action: 'admin_cancel_delivery_order',
+                description: sprintf(
+                    'Hủy mềm đơn giao hàng #%s%s',
+                    $dto->rideId,
+                    $dto->reason ? " với lý do: {$dto->reason}" : ''
+                ),
+                userId: (string) (request()->user()?->id ?? 'guest')
+            );
+
+            return $this->success([
+                'ride_id' => (string) $ride->id,
+                'status' => RideStatus::CANCELLED->value,
+                'status_label' => RideStatus::CANCELLED->getLabel(),
+            ], 'Hủy đơn giao hàng thành công.');
         }, useTransaction: true);
     }
 

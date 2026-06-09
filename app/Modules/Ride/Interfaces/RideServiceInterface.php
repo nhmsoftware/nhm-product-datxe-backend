@@ -8,7 +8,9 @@ use App\Core\Services\ServiceReturn;
 use App\Modules\Driver\DTO\RespondRideCancellationDTO;
 use App\Modules\Ride\DTO\AdminCancelRideBookingDTO;
 use App\Modules\Ride\DTO\AdminCreateRideBookingDTO;
+use App\Modules\Ride\DTO\AdminCreateDeliveryOrderDTO;
 use App\Modules\Ride\DTO\AdminUpdateRideBookingDTO;
+use App\Modules\Ride\DTO\AdminUpdateDeliveryOrderDTO;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
 use App\Modules\Ride\DTO\CreateDraftRideDTO;
@@ -153,6 +155,26 @@ interface RideServiceInterface
      * Hủy / xóa mềm booking chuyến xe từ Admin Portal.
      */
     public function cancelAdminRideBooking(AdminCancelRideBookingDTO $dto): ServiceReturn;
+
+    /**
+     * Chi tiết đơn giao hàng cho Admin.
+     */
+    public function getAdminDeliveryOrderDetail(string $rideId): ServiceReturn;
+
+    /**
+     * Tạo đơn giao hàng thủ công từ Admin Portal.
+     */
+    public function createAdminDeliveryOrder(AdminCreateDeliveryOrderDTO $dto): ServiceReturn;
+
+    /**
+     * Cập nhật đơn giao hàng từ Admin Portal.
+     */
+    public function updateAdminDeliveryOrder(AdminUpdateDeliveryOrderDTO $dto): ServiceReturn;
+
+    /**
+     * Hủy / xóa mềm đơn giao hàng từ Admin Portal.
+     */
+    public function cancelAdminDeliveryOrder(AdminCancelRideBookingDTO $dto): ServiceReturn;
 
     /**
      * Danh sách chuyến Lái hộ cho Admin.

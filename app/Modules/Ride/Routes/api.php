@@ -104,10 +104,11 @@ Route::prefix('v1/admin/chauffeur')->middleware(['auth:sanctum'])->group(functio
  * Các route dành cho Quản trị viên (Admin) - Quản lý Dịch vụ (Giao hàng, Đồ ăn)
  */
 Route::prefix('v1/admin/services')->middleware(['auth:sanctum'])->group(function () {
-    // Danh sách đơn dịch vụ (DELIVERY=4, FOOD_DELIVERY=6)
+    Route::post('/', [\App\Modules\Ride\Http\Controllers\AdminServiceOrderController::class, 'store'])->name('admin.services.store');
     Route::get('/', [\App\Modules\Ride\Http\Controllers\AdminServiceOrderController::class, 'index'])->name('admin.services.index');
-    // Chi tiết đơn dịch vụ — constraint [0-9]+ để tránh conflict với /orders của Order module
     Route::get('/{id}', [\App\Modules\Ride\Http\Controllers\AdminServiceOrderController::class, 'show'])
         ->name('admin.services.show')
         ->where('id', '[0-9]+');
+    Route::put('/{id}', [\App\Modules\Ride\Http\Controllers\AdminServiceOrderController::class, 'update'])->name('admin.services.update');
+    Route::delete('/{id}', [\App\Modules\Ride\Http\Controllers\AdminServiceOrderController::class, 'destroy'])->name('admin.services.destroy');
 });

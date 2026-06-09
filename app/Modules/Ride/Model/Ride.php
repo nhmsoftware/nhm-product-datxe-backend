@@ -9,9 +9,11 @@ use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideType;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\VehicleType;
+use App\Modules\Ride\Model\DeliveryOrder;
 use App\Modules\User\Model\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -200,5 +202,10 @@ class Ride extends Model
     public function rejects(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(RideReject::class, 'ride_id', 'id');
+    }
+
+    public function deliveryOrder(): HasOne
+    {
+        return $this->hasOne(DeliveryOrder::class, 'ride_id', 'id');
     }
 }

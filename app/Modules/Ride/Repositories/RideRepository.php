@@ -943,7 +943,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function listServiceOrdersForAdmin(array $filters)
     {
         $query = $this->getQuery()
-            ->with(['customer', 'driver']);
+            ->with(['customer.customerProfile', 'driver.driverProfile', 'deliveryOrder']);
 
         // Chỉ lấy các loại dịch vụ
         $serviceType = $filters['ride_type'] ?? $filters['rideType'] ?? null;
@@ -1061,4 +1061,3 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             ->update(['is_pushed_to_internal_pool' => false]);
     }
 }
-

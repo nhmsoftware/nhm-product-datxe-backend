@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace App\Modules\Ride\Http\Controllers;
 
 use App\Core\Controller\BaseController;
+use App\Modules\Ride\DTO\AdminCancelRideBookingDTO;
+use App\Modules\Ride\DTO\AdminCreateDeliveryOrderDTO;
+use App\Modules\Ride\DTO\AdminUpdateDeliveryOrderDTO;
+use App\Modules\Ride\Http\Requests\AdminCreateDeliveryOrderRequest;
+use App\Modules\Ride\Http\Requests\AdminUpdateDeliveryOrderRequest;
 use App\Modules\Ride\Http\Resources\AdminServiceOrderResource;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +25,51 @@ final class AdminServiceOrderController extends BaseController
     public function __construct(
         private readonly RideServiceInterface $rideService
     ) {}
+
+    #[OA\Post(
+        path: '/api/v1/admin/services',
+        summary: 'UC-136: Tạo đơn giao hàng thủ công',
+        security: [['sanctum' => []]],
+        tags: ['Admin Services'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['sender_name', 'sender_phone', 'pickup_address', 'receiver_name', 'receiver_phone', 'destination_address', 'goods_type', 'total_price'],
+                properties: [
+                    new OA\Property(property: 'sender_name', type: 'string'),
+                    new OA\Property(property: 'sender_phone', type: 'string'),
+                    new OA\Property(property: 'pickup_address', type: 'string'),
+                    new OA\Property(property: 'pickup_lat', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'pickup_lng', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'receiver_name', type: 'string'),
+                    new OA\Property(property: 'receiver_phone', type: 'string'),
+                    new OA\Property(property: 'destination_address', type: 'string'),
+                    new OA\Property(property: 'destination_lat', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'destination_lng', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'goods_type', type: 'string'),
+                    new OA\Property(property: 'goods_note', type: 'string', nullable: true),
+                    new OA\Property(property: 'total_price', type: 'number', format: 'float'),
+                    new OA\Property(property: 'distance_km', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'duration_minutes', type: 'integer', nullable: true),
+                    new OA\Property(property: 'driver_id', type: 'string', nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Tạo đơn giao hàng thành công'),
+            new OA\Response(response: 400, description: 'Dữ liệu không hợp lệ'),
+        ]
+    )]
+    public function store(AdminCreateDeliveryOrderRequest $request): JsonResponse
+    {
+        $result = $this->rideService->createAdminDeliveryOrder(AdminCreateDeliveryOrderDTO::fromRequest($request));
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage(), 201);
+    }
 
     /**
      * Danh sách đơn dịch vụ cho Admin quản lý.
@@ -81,9 +131,8 @@ final class AdminServiceOrderController extends BaseController
     )]
     public function show(string $id): JsonResponse
     {
-        // Lấy danh sách dịch vụ filter theo keyword = id để tìm chính xác
         $result = $this->rideService->listServiceOrdersForAdmin([
-            'keyword'       => $id,
+            'keyword' => $id,
             'no_pagination' => 1,
         ]);
 
@@ -93,7 +142,6 @@ final class AdminServiceOrderController extends BaseController
             return $this->sendError('Không tìm thấy đơn dịch vụ.', 404);
         }
 
-        // Tìm chính xác theo ID
         $order = is_iterable($data)
             ? collect($data)->firstWhere('id', $id)
             : null;
@@ -106,5 +154,78 @@ final class AdminServiceOrderController extends BaseController
             new AdminServiceOrderResource($order),
             'Lấy chi tiết đơn dịch vụ thành công.'
         );
+    }
+
+    #[OA\Put(
+        path: '/api/v1/admin/services/{id}',
+        summary: 'UC-137: Cập nhật đơn giao hàng',
+        security: [['sanctum' => []]],
+        tags: ['Admin Services'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['sender_name', 'sender_phone', 'pickup_address', 'receiver_name', 'receiver_phone', 'destination_address', 'goods_type', 'total_price'],
+                properties: [
+                    new OA\Property(property: 'sender_name', type: 'string'),
+                    new OA\Property(property: 'sender_phone', type: 'string'),
+                    new OA\Property(property: 'pickup_address', type: 'string'),
+                    new OA\Property(property: 'pickup_lat', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'pickup_lng', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'receiver_name', type: 'string'),
+                    new OA\Property(property: 'receiver_phone', type: 'string'),
+                    new OA\Property(property: 'destination_address', type: 'string'),
+                    new OA\Property(property: 'destination_lat', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'destination_lng', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'goods_type', type: 'string'),
+                    new OA\Property(property: 'goods_note', type: 'string', nullable: true),
+                    new OA\Property(property: 'total_price', type: 'number', format: 'float'),
+                    new OA\Property(property: 'distance_km', type: 'number', format: 'float', nullable: true),
+                    new OA\Property(property: 'duration_minutes', type: 'integer', nullable: true),
+                    new OA\Property(property: 'driver_id', type: 'string', nullable: true),
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Cập nhật đơn giao hàng thành công'),
+            new OA\Response(response: 404, description: 'Không tìm thấy đơn giao hàng'),
+        ]
+    )]
+    public function update(AdminUpdateDeliveryOrderRequest $request, string $id): JsonResponse
+    {
+        $result = $this->rideService->updateAdminDeliveryOrder(AdminUpdateDeliveryOrderDTO::fromRequest($request, $id));
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
+    }
+
+    #[OA\Delete(
+        path: '/api/v1/admin/services/{id}',
+        summary: 'UC-137: Cancel Delivery Order (soft cancel)',
+        security: [['sanctum' => []]],
+        tags: ['Admin Services'],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'reason', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Hủy đơn giao hàng thành công'),
+            new OA\Response(response: 404, description: 'Không tìm thấy đơn giao hàng'),
+        ]
+    )]
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        $result = $this->rideService->cancelAdminDeliveryOrder(AdminCancelRideBookingDTO::fromRequest($request, $id));
+
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), $result->getMessage());
     }
 }
