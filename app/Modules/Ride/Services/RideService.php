@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Ride\Services;
 
 use App\Core\Helpers\FileHelper;
+use App\Core\Logs\Logging;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Driver\Events\RideCancelled;
@@ -12,6 +13,9 @@ use App\Modules\Pricing\DTO\PricingRequestDTO;
 use App\Modules\Pricing\DTO\PricingResultDTO;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Ride\DTO\AcceptRideTrackingDTO;
+use App\Modules\Ride\DTO\AdminCancelRideBookingDTO;
+use App\Modules\Ride\DTO\AdminCreateRideBookingDTO;
+use App\Modules\Ride\DTO\AdminUpdateRideBookingDTO;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
@@ -62,14 +66,19 @@ use App\Modules\RiskManagement\Model\Enums\CancellationFeeType;
 use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Model\Enums\ScheduledDispatchMode;
 use App\Modules\Finance\Interfaces\VoucherServiceInterface;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 final class RideService extends BaseService implements RideServiceInterface
 {
+    private const ADMIN_RIDE_ID_RETRY_TIMES = 3;
+
     public function __construct(
         private readonly RideRepositoryInterface $rideRepository,
         private readonly MapServiceInterface $mapService,
@@ -1261,9 +1270,191 @@ final class RideService extends BaseService implements RideServiceInterface
             ])->toArray();
         });
     }
+
+    public function getAdminRideDetail(string $rideId): ServiceReturn
+    {
+        return $this->execute(function () use ($rideId) {
+            $this->authorizeAdminOrFail();
+
+            $ride = $this->rideRepository->findById($rideId, relations: ['customer.customerProfile', 'driver.driverProfile']);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+
+            return $ride;
+        });
+    }
+
+    public function createAdminRideBooking(AdminCreateRideBookingDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $this->authorizeAdminOrFail();
+
+            $rideType = RideType::from($dto->rideType);
+            $vehicleType = VehicleType::from($dto->vehicleType);
+            $customer = $this->resolveAdminRideCustomer($dto);
+
+            $ride = $this->createAdminRideBookingWithRetry([
+                'customer_id' => $customer->id,
+                'pickup_address' => $dto->pickupAddress,
+                'pickup_lat' => $dto->pickupLat ?? 0,
+                'pickup_lng' => $dto->pickupLng ?? 0,
+                'destination_address' => $dto->destinationAddress,
+                'destination_lat' => $dto->destinationLat ?? 0,
+                'destination_lng' => $dto->destinationLng ?? 0,
+                'distance' => $dto->distanceKm !== null ? (int) round($dto->distanceKm * 1000) : 0,
+                'duration' => $dto->durationMinutes !== null ? max(0, $dto->durationMinutes * 60) : 0,
+                'vehicle_type' => $vehicleType->value,
+                'ride_type' => $rideType->value,
+                'travel_date' => $dto->travelDate,
+                'travel_time' => $dto->travelTime,
+                'airport_id' => $dto->airportId,
+                'airport_direction' => $dto->airportDirection,
+                'status' => RideStatus::PENDING->value,
+                'tracking_status' => RideTrackingStatus::WAITING_DRIVER->value,
+                'base_price' => $dto->totalPrice,
+                'distance_price' => 0,
+                'time_fare' => 0,
+                'total_price' => $dto->totalPrice,
+                'discount_amount' => 0,
+                'is_paid' => false,
+                'is_pushed_to_pool' => $this->shouldPushToPoolImmediately(),
+            ]);
+
+            $ride = $this->rideRepository->findById($ride->id, relations: ['customer.customerProfile', 'driver.driverProfile']);
+            $this->validate($ride !== null, 'Không thể tạo chuyến xe lúc này. Vui lòng thử lại.', 500);
+
+            Logging::userActivity(
+                action: 'admin_create_ride_booking',
+                description: sprintf(
+                    'Tạo chuyến xe #%s [%s] cho khách hàng #%s (%s), trạng thái Chờ tài xế%s',
+                    $ride->id,
+                    $rideType->getLabel(),
+                    $customer->id,
+                    $dto->customerMode,
+                    $dto->driverId ? ' (tài xế sẽ được gán sau khi tạo)' : ''
+                ),
+                userId: (string) (request()->user()?->id ?? 'guest')
+            );
+
+            return $this->success($ride, 'Tạo chuyến xe thành công.');
+        });
+    }
+
+    public function updateAdminRideBooking(AdminUpdateRideBookingDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $this->authorizeAdminOrFail();
+
+            $ride = $this->rideRepository->findById($dto->rideId, relations: ['driver.driverProfile', 'customer.customerProfile']);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+            $this->validate(
+                !in_array($ride->status, [RideStatus::COMPLETED, RideStatus::CANCELLED], true),
+                'Không thể cập nhật chuyến xe ở trạng thái hiện tại.',
+                400
+            );
+
+            $rideType = RideType::from($dto->rideType);
+            $vehicleType = VehicleType::from($dto->vehicleType);
+
+            $updateData = [
+                'pickup_address' => $dto->pickupAddress,
+                'pickup_lat' => $dto->pickupLat ?? 0,
+                'pickup_lng' => $dto->pickupLng ?? 0,
+                'destination_address' => $dto->destinationAddress,
+                'destination_lat' => $dto->destinationLat ?? 0,
+                'destination_lng' => $dto->destinationLng ?? 0,
+                'distance' => $dto->distanceKm !== null ? (int) round($dto->distanceKm * 1000) : 0,
+                'duration' => $dto->durationMinutes !== null ? max(0, $dto->durationMinutes * 60) : 0,
+                'vehicle_type' => $vehicleType->value,
+                'ride_type' => $rideType->value,
+                'travel_date' => $dto->travelDate,
+                'travel_time' => $dto->travelTime,
+                'airport_id' => $dto->airportId,
+                'airport_direction' => $dto->airportDirection,
+                'base_price' => $dto->totalPrice,
+                'distance_price' => 0,
+                'time_fare' => 0,
+                'total_price' => $dto->totalPrice,
+            ];
+
+            $success = $this->rideRepository->updateById($dto->rideId, $updateData);
+            $this->validate($success !== null, 'Không thể cập nhật chuyến xe lúc này. Vui lòng thử lại.', 500);
+
+            $ride = $this->rideRepository->findById($dto->rideId, relations: ['driver.driverProfile', 'customer.customerProfile']);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+
+            if (!$dto->driverId && $ride->driver_id !== null) {
+                $this->rideRepository->releaseDriverFromRide($ride->id, 'Admin unassigned driver');
+                $this->rideRepository->updateStatus($ride->id, RideStatus::PENDING);
+            } elseif ($dto->driverId && (string) $ride->driver_id !== (string) $dto->driverId) {
+                if ($ride->driver_id !== null) {
+                    $this->rideRepository->releaseDriverFromRide($ride->id, 'Admin changed driver');
+                    $this->rideRepository->updateStatus($ride->id, RideStatus::PENDING);
+                }
+                $this->assignDriverToAdminRide($ride, $dto->driverId);
+            }
+
+            $updatedRide = $this->rideRepository->findById($dto->rideId, relations: ['customer.customerProfile', 'driver.driverProfile']);
+            $this->validate($updatedRide !== null, 'Không tìm thấy chuyến xe.', 404);
+
+            Logging::userActivity(
+                action: 'admin_update_ride_booking',
+                description: sprintf(
+                    'Cập nhật chuyến xe #%s, trạng thái hiện tại: %s%s',
+                    $dto->rideId,
+                    $updatedRide->status->getLabel(),
+                    !$dto->driverId && $ride->driver_id !== null ? ', bỏ gán tài xế và chuyển về Chờ tài xế' : ''
+                ),
+                userId: (string) (request()->user()?->id ?? 'guest')
+            );
+
+            return $this->success($updatedRide, 'Cập nhật chuyến xe thành công.');
+        }, useTransaction: true);
+    }
+
+    public function cancelAdminRideBooking(AdminCancelRideBookingDTO $dto): ServiceReturn
+    {
+        return $this->execute(function () use ($dto) {
+            $this->authorizeAdminOrFail();
+
+            $ride = $this->rideRepository->findById($dto->rideId, relations: ['customer', 'driver']);
+            $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
+            $this->validate($ride->status !== RideStatus::COMPLETED, 'Không thể hủy chuyến đã hoàn thành.', 400);
+            $this->validate($ride->status !== RideStatus::CANCELLED, 'Không thể hủy chuyến đã hủy.', 400);
+
+            $this->rideRepository->cancel($dto->rideId, $dto->reason, 0);
+
+            if ($ride->driver_id !== null) {
+                event(new RideCanceled(
+                    rideId: (string) $ride->id,
+                    customerId: (string) $ride->customer_id,
+                    driverId: (string) $ride->driver_id,
+                    reason: $dto->reason,
+                    canceledBy: 'admin',
+                ));
+            }
+
+            Logging::userActivity(
+                action: 'admin_cancel_ride_booking',
+                description: sprintf(
+                    'Hủy mềm chuyến xe #%s%s',
+                    $dto->rideId,
+                    $dto->reason ? " với lý do: {$dto->reason}" : ''
+                ),
+                userId: (string) (request()->user()?->id ?? 'guest')
+            );
+
+            return $this->success([
+                'ride_id' => (string) $ride->id,
+                'status' => RideStatus::CANCELLED->value,
+                'status_label' => RideStatus::CANCELLED->getLabel(),
+            ], 'Hủy chuyến xe thành công.');
+        }, useTransaction: true);
+    }
+
     public function listScheduledRidesForAdmin(array $filters): ServiceReturn
     {
         return $this->execute(function () use ($filters) {
+            $this->authorizeAdminOrFail();
             return $this->rideRepository->listScheduledRidesForAdmin($filters);
         });
     }
@@ -1271,6 +1462,7 @@ final class RideService extends BaseService implements RideServiceInterface
     public function listChauffeurRidesForAdmin(array $filters): ServiceReturn
     {
         return $this->execute(function () use ($filters) {
+            $this->authorizeAdminOrFail();
             return $this->rideRepository->listChauffeurRidesForAdmin($filters);
         });
     }
@@ -1278,6 +1470,7 @@ final class RideService extends BaseService implements RideServiceInterface
     public function listServiceOrdersForAdmin(array $filters): ServiceReturn
     {
         return $this->execute(function () use ($filters) {
+            $this->authorizeAdminOrFail();
             return $this->rideRepository->listServiceOrdersForAdmin($filters);
         });
     }
@@ -1285,6 +1478,7 @@ final class RideService extends BaseService implements RideServiceInterface
     public function assignInternalDriver(AssignInternalDriverDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {
+            $this->authorizeAdminOrFail();
             $ride = $this->rideRepository->findById($dto->rideId);
             $this->validate($ride !== null, 'Không tìm thấy chuyến xe.', 404);
             $this->validate($ride->status === RideStatus::PENDING, 'Chuyến xe đã được phân phối hoặc không hợp lệ.');
@@ -1342,6 +1536,7 @@ final class RideService extends BaseService implements RideServiceInterface
     public function pushScheduledRidesToPool(BulkPushToPoolDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto) {
+            $this->authorizeAdminOrFail();
             $count = $this->rideRepository->pushToPool($dto->rideIds);
 
             if ($count > 0) {
@@ -1353,6 +1548,138 @@ final class RideService extends BaseService implements RideServiceInterface
                 'message' => "Đã đẩy $count chuyến xe ra danh sách chung.",
             ];
         });
+    }
+
+    private function authorizeAdminOrFail(): void
+    {
+        $requestUser = request()->user();
+
+        $this->validate(
+            $requestUser !== null && method_exists($requestUser, 'isAdmin') && $requestUser->isAdmin(),
+            'Bạn không có quyền thực hiện thao tác này.',
+            403
+        );
+    }
+
+    private function resolveAdminRideCustomer(AdminCreateRideBookingDTO $dto): User
+    {
+        if ($dto->customerMode === 'existing') {
+            $this->validate(!empty($dto->customerId), 'Vui lòng chọn khách hàng hiện có.', 400);
+
+            /** @var User|null $customer */
+            $customer = $this->userRepository->findDetailById((string) $dto->customerId);
+            $this->validate($customer !== null && $customer->isCustomer() && $customer->deleted_at === null, 'Không tìm thấy khách hàng.', 404);
+
+            return $customer;
+        }
+
+        $this->validate(!empty($dto->customerName), 'Vui lòng nhập tên khách hàng.', 400);
+        $this->validate(!empty($dto->customerPhone), 'Vui lòng nhập số điện thoại khách hàng.', 400);
+
+        return $this->resolveOrCreateCustomer($dto->customerName, $dto->customerPhone, $dto->customerEmail);
+    }
+
+    private function resolveOrCreateCustomer(string $name, string $phone, ?string $email = null): User
+    {
+        $existingUser = $this->userRepository->findByPhone($phone);
+
+        if ($existingUser !== null) {
+            $this->validate($existingUser->deleted_at === null, 'Số điện thoại này đã được sử dụng bởi tài khoản khác.', 409);
+            $this->validate($existingUser->role === \App\Modules\User\Model\Enums\UserRole::Customer, 'Số điện thoại này đã được sử dụng bởi tài khoản khác.', 409);
+
+            if ($existingUser->customerProfile === null) {
+                $this->userRepository->createCustomerProfile($existingUser, ['full_name' => $name]);
+            }
+
+            return $existingUser;
+        }
+
+        $user = $this->userRepository->create([
+            'phone' => $phone,
+            'email' => $email,
+            'password' => Hash::make(sprintf('Tmp@%06d', random_int(0, 999999))),
+            'role' => \App\Modules\User\Model\Enums\UserRole::Customer,
+            'is_verified' => true,
+            'is_phone_verified' => true,
+            'is_active' => true,
+        ]);
+
+        $this->userRepository->createCustomerProfile($user, [
+            'full_name' => $name,
+            'gender' => \App\Modules\User\Model\Enums\Gender::Other->value,
+        ]);
+
+        return $user->fresh();
+    }
+
+    private function createAdminRideBookingWithRetry(array $rideData): Ride
+    {
+        for ($attempt = 1; $attempt <= self::ADMIN_RIDE_ID_RETRY_TIMES; $attempt++) {
+            DB::beginTransaction();
+
+            try {
+                /** @var Ride $ride */
+                $ride = $this->rideRepository->create($rideData);
+                DB::commit();
+
+                return $ride->refresh();
+            } catch (QueryException $e) {
+                DB::rollBack();
+
+                if ($this->isPrimaryKeyCollision($e) && $attempt < self::ADMIN_RIDE_ID_RETRY_TIMES) {
+                    continue;
+                }
+
+                if ($this->isPrimaryKeyCollision($e)) {
+                    $this->throw('Không thể tạo mã chuyến xe. Vui lòng thử lại.', 500);
+                }
+
+                throw $e;
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                throw $e;
+            }
+        }
+
+        $this->throw('Không thể tạo mã chuyến xe. Vui lòng thử lại.', 500);
+    }
+
+    private function assignDriverToAdminRide(Ride $ride, string $driverId): void
+    {
+        /** @var User|null $driver */
+        $driver = $this->userRepository->findDriverWithProfileById($driverId);
+        $this->validate($driver !== null, 'Không tìm thấy tài xế.', 404);
+        $this->validate($driver->driverProfile !== null, 'Tài xế chưa có hồ sơ vận hành hoặc thông tin xe.', 400);
+        $this->validate($driver->is_active, 'Tài xế đang bị khóa.', 400);
+        $this->validate(
+            $driver->driverProfile->vehicle_type->value === $ride->vehicle_type->value,
+            'Loại xe của tài xế không khớp với chuyến xe.',
+            400
+        );
+
+        $updated = $this->rideRepository->assignDriver($ride->id, $driverId, now());
+        if (!$updated) {
+            $this->rideRepository->updateById($ride->id, [
+                'driver_id' => $driverId,
+                'status' => RideStatus::ACCEPTED->value,
+                'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED->value,
+                'driver_assigned_at' => now(),
+            ]);
+        }
+
+        \App\Modules\Ride\Events\RideAssignedByAdmin::dispatch(
+            $ride->id,
+            $driverId,
+            $ride->customer_id
+        );
+    }
+
+    private function isPrimaryKeyCollision(QueryException $e): bool
+    {
+        $message = Str::lower($e->getMessage());
+
+        return str_contains($message, 'duplicate key value violates unique constraint')
+            || (str_contains($message, 'duplicate entry') && str_contains($message, 'primary'));
     }
 
     /**

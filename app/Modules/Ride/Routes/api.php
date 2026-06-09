@@ -83,8 +83,11 @@ Route::prefix('v1/driver')->middleware(['auth:sanctum', 'check.account.status'])
 Route::prefix('v1/admin/rides')->middleware(['auth:sanctum'])->group(function () {
     // UC-122: Manage Scheduled Ride Bookings
     Route::prefix('scheduled')->group(function () {
+        Route::post('/', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'store'])->name('admin.rides.scheduled.store');
         Route::get('/', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'index'])->name('admin.rides.scheduled.index');
         Route::get('/{id}', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'show'])->name('admin.rides.scheduled.show');
+        Route::put('/{id}', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'update'])->name('admin.rides.scheduled.update');
+        Route::delete('/{id}', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'destroy'])->name('admin.rides.scheduled.destroy');
         Route::post('/assign', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'assign'])->name('admin.rides.scheduled.assign');
         Route::post('/push-to-pool', [\App\Modules\Ride\Http\Controllers\AdminScheduledRideController::class, 'pushToPool'])->name('admin.rides.scheduled.push_to_pool');
     });
@@ -108,4 +111,3 @@ Route::prefix('v1/admin/services')->middleware(['auth:sanctum'])->group(function
         ->name('admin.services.show')
         ->where('id', '[0-9]+');
 });
-

@@ -108,6 +108,7 @@ class Ride extends Model
         'voucher_code',
         'discount_amount',
         'tracking_status',
+        'is_pushed_to_pool',
         'is_paid',
         'cancel_reason',
         'cancellation_fee',
@@ -150,6 +151,7 @@ class Ride extends Model
         'airport_direction' => 'integer',
         'status' => RideStatus::class,
         'tracking_status' => RideTrackingStatus::class,
+        'is_pushed_to_pool' => 'boolean',
         'base_price' => 'decimal:2',
         'distance_price' => 'decimal:2',
         'time_fare' => 'decimal:2',
@@ -200,4 +202,3 @@ class Ride extends Model
         return $this->hasMany(RideReject::class, 'ride_id', 'id');
     }
 }
-
