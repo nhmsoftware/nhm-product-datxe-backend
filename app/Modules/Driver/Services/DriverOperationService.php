@@ -243,7 +243,7 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 (float) $ride->destination_lng
             );
 
-            if ($distance > 200) {
+            if ($distance > 400) {
                 $this->throw('Bạn chưa đủ gần điểm đến để hoàn thành chuyến đi.', 422);
             }
 

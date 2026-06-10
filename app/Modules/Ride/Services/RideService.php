@@ -12,7 +12,6 @@ use App\Modules\Driver\Events\RideCancelled;
 use App\Modules\Pricing\DTO\PricingRequestDTO;
 use App\Modules\Pricing\DTO\PricingResultDTO;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
-use App\Modules\Ride\DTO\AcceptRideTrackingDTO;
 use App\Modules\Ride\DTO\AdminCancelRideBookingDTO;
 use App\Modules\Ride\DTO\AdminCreateRideBookingDTO;
 use App\Modules\Ride\DTO\AdminCreateDeliveryOrderDTO;
@@ -21,17 +20,14 @@ use App\Modules\Ride\DTO\AdminUpdateDeliveryOrderDTO;
 use App\Modules\Ride\DTO\ApplyVoucherDTO;
 use App\Modules\Ride\DTO\CancelRideDTO;
 use App\Modules\Ride\DTO\ConfirmBookingDTO;
-use App\Modules\Ride\DTO\CreateDraftRideDTO;
 use App\Modules\Ride\DTO\CreateIntercityRideDTO;
 use App\Modules\Ride\DTO\CreateAirportRideDTO;
 use App\Modules\Ride\DTO\FilterScheduledRideDTO;
 use App\Modules\Ride\DTO\GetDriverRidesFilterDTO;
 use App\Modules\Ride\DTO\DriverCancelRideDTO;
 use App\Modules\Ride\DTO\EstimateRideOptionsDTO;
-use App\Modules\Ride\DTO\MarkDriverArrivedDTO;
 use App\Modules\Ride\DTO\PriceEstimateDTO;
 use App\Modules\Ride\DTO\ShowRideTrackingDTO;
-use App\Modules\Ride\DTO\UpdateDriverLocationDTO;
 use App\Modules\Ride\DTO\VehicleOptionDTO;
 use App\Modules\Ride\DTO\AssignInternalDriverDTO;
 use App\Modules\Ride\DTO\BulkPushToPoolDTO;
@@ -54,8 +50,6 @@ use App\Modules\Ride\Events\RideAcceptedByDriver;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideType;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
-use App\Modules\Ride\Model\Enums\VehicleType;
-use App\Modules\Ride\Model\Airport;
 use App\Modules\Ride\Model\Ride;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
@@ -74,8 +68,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use BackedEnum;
 
 final class RideService extends BaseService implements RideServiceInterface
 {
@@ -85,6 +79,7 @@ final class RideService extends BaseService implements RideServiceInterface
         private readonly RideRepositoryInterface $rideRepository,
         private readonly MapServiceInterface $mapService,
         private readonly PricingServiceInterface $pricingService,
+        private readonly VehicleTypeCatalogService $vehicleTypeCatalogService,
         private readonly UserRepositoryInterface $userRepository,
         private readonly DriverProfileRepositoryInterface $driverProfileRepository,
         private readonly RideTrackingRealtimeInterface $rideTrackingRealtime,
@@ -109,12 +104,16 @@ final class RideService extends BaseService implements RideServiceInterface
                 $dto->destinationLng
             );
 
+            $vehicleTypeIds = $dto->serviceType === 'intercity'
+                ? [2, 3, 4, 5]
+                : [1, 2, 3, 4];
+
             $vehicleOptions = array_values(array_filter(array_map(
-                function (VehicleType $vehicleType) use ($matrix): ?array {
+                function (int $vehicleTypeId) use ($matrix): ?array {
                     $pricingResult = $this->calculatePriceFor(
                         distanceMeters: $matrix->distance,
                         durationSeconds: $matrix->duration,
-                        vehicleType: $vehicleType
+                        vehicleTypeId: $vehicleTypeId
                     );
 
                     if ($pricingResult->isError()) {
@@ -124,11 +123,9 @@ final class RideService extends BaseService implements RideServiceInterface
                     /** @var PricingResultDTO $pricingData */
                     $pricingData = $pricingResult->getData();
 
-                    return VehicleOptionDTO::fromVehicleType($vehicleType, $pricingData->finalFare)->toArray();
+                    return $this->buildVehicleOption($vehicleTypeId, $pricingData->finalFare);
                 },
-                $dto->serviceType === 'intercity'
-                    ? [VehicleType::CAR_4_SEATS, VehicleType::CAR_7_SEATS, VehicleType::CAR_9_SEATS, VehicleType::CAR_SHARED]
-                    : [VehicleType::BIKE, VehicleType::CAR_4_SEATS, VehicleType::CAR_7_SEATS, VehicleType::CAR_9_SEATS]
+                $vehicleTypeIds
             )));
 
             return [
@@ -318,13 +315,13 @@ final class RideService extends BaseService implements RideServiceInterface
                 $dto->destinationLng
             );
 
-            $vehicleType = VehicleType::from($dto->vehicleType);
+            $vehicleTypeId = $this->requireVehicleTypeId($dto->vehicleType);
 
             // Tính toán giá cước
             $pricingResult = $this->calculatePriceFor(
                 distanceMeters: $matrix->distance,
                 durationSeconds: $matrix->duration,
-                vehicleType: $vehicleType
+                vehicleTypeId: $vehicleTypeId
             );
             $this->validate(!$pricingResult->isError(), $pricingResult->getMessage());
 
@@ -366,7 +363,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'destination_lng' => $dto->destinationLng,
                 'distance' => $matrix->distance,
                 'duration' => $matrix->duration,
-                'vehicle_type' => $vehicleType->value,
+                'vehicle_type' => $vehicleTypeId,
                 'status' => RideStatus::PENDING->value,
                 'base_price' => $pricingData->baseFare,
                 'distance_price' => $pricingData->distanceFare,
@@ -476,12 +473,12 @@ final class RideService extends BaseService implements RideServiceInterface
         });
     }
 
-    private function calculatePriceFor(int $distanceMeters, int $durationSeconds, VehicleType $vehicleType): ServiceReturn
+    private function calculatePriceFor(int $distanceMeters, int $durationSeconds, int $vehicleTypeId): ServiceReturn
     {
         $pricingRequest = PricingRequestDTO::create(
             distance: $distanceMeters / 1000,
             duration: $durationSeconds / 60,
-            vehicleType: $vehicleType->value,
+            vehicleType: $vehicleTypeId,
             surgeMultiplier: 1.0
         );
 
@@ -567,8 +564,8 @@ final class RideService extends BaseService implements RideServiceInterface
                 'phone' => $driver->phone,
                 'vehicle_number' => $driverProfile?->vehicle_number,
                 'vehicle_name' => $driverProfile?->vehicle_name,
-                'vehicle_type' => $ride->vehicle_type->value,
-                'vehicle_type_label' => $ride->vehicle_type->getLabel(),
+                'vehicle_type' => $this->getVehicleTypeId($ride->vehicle_type),
+                'vehicle_type_label' => $this->getVehicleTypeLabel($ride->vehicle_type),
                 'rating' => $driverProfile?->average_rating !== null ? (float) $driverProfile->average_rating : null,
             ],
             'location' => [
@@ -597,9 +594,9 @@ final class RideService extends BaseService implements RideServiceInterface
             return 350.0;
         }
 
-        return match ($driverProfile->vehicle_type->value) {
-            VehicleType::BIKE->value => 450.0,
-            VehicleType::CAR_4_SEATS->value, VehicleType::CAR_7_SEATS->value, VehicleType::CAR_9_SEATS->value => 350.0,
+        return match ($this->getVehicleTypeId($driverProfile->vehicle_type)) {
+            1 => 450.0,
+            2, 3, 4 => 350.0,
             default => 350.0,
         };
     }
@@ -750,8 +747,8 @@ final class RideService extends BaseService implements RideServiceInterface
             $durationSeconds = $matrix->duration;
 
             // 2. Tính giá cước
-            $vehicleType = VehicleType::from($dto->vehicleType);
-            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleType);
+            $vehicleTypeId = $this->requireVehicleTypeId($dto->vehicleType);
+            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleTypeId);
             if ($pricingResult->isError()) {
                 $this->throw($pricingResult->getMessage());
             }
@@ -781,7 +778,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'destination_lng'     => $dto->destinationLng,
                 'distance'            => $distanceMeters,
                 'duration'            => $durationSeconds,
-                'vehicle_type'        => $dto->vehicleType,
+                'vehicle_type'        => $vehicleTypeId,
                 'ride_type'           => RideType::INTERCITY->value,
                 'travel_date'         => $dto->travelDate,
                 'travel_time'         => $dto->travelTime,
@@ -822,8 +819,8 @@ final class RideService extends BaseService implements RideServiceInterface
             $durationSeconds = $matrix->duration;
 
             // 2. Tính giá cước
-            $vehicleType = VehicleType::from($dto->vehicleType);
-            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleType);
+            $vehicleTypeId = $this->requireVehicleTypeId($dto->vehicleType);
+            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleTypeId);
             if ($pricingResult->isError()) {
                 $this->throw($pricingResult->getMessage());
             }
@@ -852,7 +849,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'destination_lng'     => $dto->destinationLng,
                 'distance'            => $distanceMeters,
                 'duration'            => $durationSeconds,
-                'vehicle_type'        => $dto->vehicleType,
+                'vehicle_type'        => $vehicleTypeId,
                 'ride_type'           => RideType::AIRPORT->value,
                 'travel_date'         => $dto->travelDate,
                 'travel_time'         => $dto->travelTime,
@@ -913,8 +910,8 @@ final class RideService extends BaseService implements RideServiceInterface
             $durationSeconds = $matrix->duration;
 
             // 3. Tính giá cước theo loại xe
-            $vehicleType   = VehicleType::from($dto->vehicleType);
-            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleType);
+            $vehicleTypeId = $this->requireVehicleTypeId($dto->vehicleType);
+            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleTypeId);
             if ($pricingResult->isError()) {
                 $this->throw($pricingResult->getMessage());
             }
@@ -943,7 +940,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'destination_lng'     => $dto->destinationLng,
                 'distance'            => $distanceMeters,
                 'duration'            => $durationSeconds,
-                'vehicle_type'        => $dto->vehicleType,
+                'vehicle_type'        => $vehicleTypeId,
                 'ride_type'           => RideType::DELIVERY->value,
                 'status'              => RideStatus::PENDING->value,
                 'base_price'          => $priceData->baseFare,
@@ -995,7 +992,7 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // Bổ sung label cho Enums
             $data['status_label'] = $ride->status->getLabel();
-            $data['vehicle_type_label'] = $ride->vehicle_type->getLabel();
+            $data['vehicle_type_label'] = $this->getVehicleTypeLabel($ride->vehicle_type);
             $data['ride_type_label'] = $ride->ride_type->getLabel();
 
             // Thông tin tài xế nếu đã có
@@ -1040,7 +1037,7 @@ final class RideService extends BaseService implements RideServiceInterface
             // 2. Lấy danh sách từ repository
             $filters = (array) $dto;
             $rides = $this->rideRepository->findAvailableScheduledRides(
-                $driver->driverProfile->vehicle_type->value,
+                $this->requireVehicleTypeId($driver->driverProfile->vehicle_type),
                 $filters
             );
 
@@ -1052,8 +1049,8 @@ final class RideService extends BaseService implements RideServiceInterface
                     'destination_address' => $ride->destination_address,
                     'travel_date'         => $ride->travel_date ? $ride->travel_date->format('Y-m-d') : null,
                     'travel_time'         => $ride->travel_time,
-                    'vehicle_type'        => $ride->vehicle_type->value,
-                    'vehicle_type_label'  => $ride->vehicle_type->getLabel(),
+                    'vehicle_type'        => $this->getVehicleTypeId($ride->vehicle_type),
+                    'vehicle_type_label'  => $this->getVehicleTypeLabel($ride->vehicle_type),
                     'ride_type'           => $ride->ride_type->value,
                     'ride_type_label'     => $ride->ride_type->getLabel(),
                     'total_price'         => (float) $ride->total_price,
@@ -1082,7 +1079,7 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // 3. Kiểm tra phù hợp loại xe
             $this->validate(
-                $ride->vehicle_type->value === $driver->driverProfile->vehicle_type->value,
+                $this->getVehicleTypeId($ride->vehicle_type) === $this->getVehicleTypeId($driver->driverProfile->vehicle_type),
                 'Bạn không đủ điều kiện để xem chuyến xe này.',
                 403
             );
@@ -1100,8 +1097,8 @@ final class RideService extends BaseService implements RideServiceInterface
                 'duration'            => $ride->duration,
                 'travel_date'         => $ride->travel_date ? $ride->travel_date->format('Y-m-d') : null,
                 'travel_time'         => $ride->travel_time,
-                'vehicle_type'        => $ride->vehicle_type->value,
-                'vehicle_type_label'  => $ride->vehicle_type->getLabel(),
+                'vehicle_type'        => $this->getVehicleTypeId($ride->vehicle_type),
+                'vehicle_type_label'  => $this->getVehicleTypeLabel($ride->vehicle_type),
                 'ride_type'           => $ride->ride_type->value,
                 'ride_type_label'     => $ride->ride_type->getLabel(),
                 'total_price'         => (float) $ride->total_price,
@@ -1128,7 +1125,7 @@ final class RideService extends BaseService implements RideServiceInterface
             // 3. Kiểm tra trạng thái và loại xe
             $this->validate($ride->status === RideStatus::PENDING, 'Chuyến xe đã được tài xế khác nhận hoặc không còn khả dụng.', 400);
             $this->validate(
-                $ride->vehicle_type->value === $driver->driverProfile->vehicle_type->value,
+                $this->getVehicleTypeId($ride->vehicle_type) === $this->getVehicleTypeId($driver->driverProfile->vehicle_type),
                 'Loại xe của bạn không phù hợp với chuyến này.',
                 403
             );
@@ -1291,7 +1288,7 @@ final class RideService extends BaseService implements RideServiceInterface
             $this->authorizeAdminOrFail();
 
             $rideType = RideType::from($dto->rideType);
-            $vehicleType = VehicleType::from($dto->vehicleType);
+            $vehicleTypeId = $this->requireVehicleTypeId($dto->vehicleType);
             $customer = $this->resolveAdminRideCustomer($dto);
 
             $ride = $this->createAdminRideBookingWithRetry([
@@ -1304,7 +1301,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'destination_lng' => $dto->destinationLng ?? 0,
                 'distance' => $dto->distanceKm !== null ? (int) round($dto->distanceKm * 1000) : 0,
                 'duration' => $dto->durationMinutes !== null ? max(0, $dto->durationMinutes * 60) : 0,
-                'vehicle_type' => $vehicleType->value,
+                'vehicle_type' => $vehicleTypeId,
                 'ride_type' => $rideType->value,
                 'travel_date' => $dto->travelDate,
                 'travel_time' => $dto->travelTime,
@@ -1355,7 +1352,7 @@ final class RideService extends BaseService implements RideServiceInterface
             );
 
             $rideType = RideType::from($dto->rideType);
-            $vehicleType = VehicleType::from($dto->vehicleType);
+            $vehicleTypeId = $this->requireVehicleTypeId($dto->vehicleType);
 
             $updateData = [
                 'pickup_address' => $dto->pickupAddress,
@@ -1366,7 +1363,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'destination_lng' => $dto->destinationLng ?? 0,
                 'distance' => $dto->distanceKm !== null ? (int) round($dto->distanceKm * 1000) : 0,
                 'duration' => $dto->durationMinutes !== null ? max(0, $dto->durationMinutes * 60) : 0,
-                'vehicle_type' => $vehicleType->value,
+                'vehicle_type' => $vehicleTypeId,
                 'ride_type' => $rideType->value,
                 'travel_date' => $dto->travelDate,
                 'travel_time' => $dto->travelTime,
@@ -1482,7 +1479,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'destination_lng' => $dto->destinationLng ?? 0,
                 'distance' => $dto->distanceKm !== null ? (int) round($dto->distanceKm * 1000) : 0,
                 'duration' => $dto->durationMinutes !== null ? max(0, $dto->durationMinutes * 60) : 0,
-                'vehicle_type' => VehicleType::BIKE->value,
+                'vehicle_type' => 1,
                 'ride_type' => RideType::DELIVERY->value,
                 'status' => RideStatus::PENDING->value,
                 'tracking_status' => RideTrackingStatus::WAITING_DRIVER->value,
@@ -1697,8 +1694,12 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // 4. Kiểm tra loại xe có khớp với loại xe yêu cầu của chuyến đi không
             $this->validate(
-                $ride->vehicle_type->value === $driver->driverProfile->vehicle_type->value,
-                "Loại xe của tài xế ({$driver->driverProfile->vehicle_type->getLabel()}) không khớp với loại xe yêu cầu của chuyến đi ({$ride->vehicle_type->getLabel()}).",
+                $this->getVehicleTypeId($ride->vehicle_type) === $this->getVehicleTypeId($driver->driverProfile->vehicle_type),
+                sprintf(
+                    'Loại xe của tài xế (%s) không khớp với loại xe yêu cầu của chuyến đi (%s).',
+                    $this->getVehicleTypeLabel($driver->driverProfile->vehicle_type),
+                    $this->getVehicleTypeLabel($ride->vehicle_type)
+                ),
                 400
             );
 
@@ -1838,7 +1839,7 @@ final class RideService extends BaseService implements RideServiceInterface
         $this->validate($driver->driverProfile !== null, 'Tài xế chưa có hồ sơ vận hành hoặc thông tin xe.', 400);
         $this->validate($driver->is_active, 'Tài xế đang bị khóa.', 400);
         $this->validate(
-            $driver->driverProfile->vehicle_type->value === $ride->vehicle_type->value,
+            $this->getVehicleTypeId($driver->driverProfile->vehicle_type) === $this->getVehicleTypeId($ride->vehicle_type),
             'Loại xe của tài xế không khớp với chuyến xe.',
             400
         );
@@ -1858,6 +1859,56 @@ final class RideService extends BaseService implements RideServiceInterface
             $driverId,
             $ride->customer_id
         );
+    }
+
+    private function buildVehicleOption(int $vehicleTypeId, float $estimatedFare): array
+    {
+        $metadata = $this->vehicleTypeCatalogService->getMetadataById($vehicleTypeId);
+        $this->validate($metadata !== null, 'Loại xe không hợp lệ.', 422);
+
+        return VehicleOptionDTO::fromMetadata(
+            vehicleType: $vehicleTypeId,
+            name: (string) $metadata['name_vi'],
+            description: (string) $metadata['description_vi'],
+            capacity: (int) $metadata['capacity'],
+            estimatedWaitTime: (string) $metadata['estimated_wait_time'],
+            estimatedFare: $estimatedFare,
+        )->toArray();
+    }
+
+    private function requireVehicleTypeId(mixed $vehicleType): int
+    {
+        $vehicleTypeId = $this->getVehicleTypeId($vehicleType);
+        $this->validate($vehicleTypeId !== null, 'Loại xe không hợp lệ.', 422);
+
+        return $vehicleTypeId;
+    }
+
+    private function getVehicleTypeId(mixed $vehicleType): ?int
+    {
+        if ($vehicleType instanceof BackedEnum) {
+            return $vehicleType->value;
+        }
+
+        if (is_int($vehicleType)) {
+            return $vehicleType;
+        }
+
+        if (is_numeric($vehicleType)) {
+            return (int) $vehicleType;
+        }
+
+        return null;
+    }
+
+    private function getVehicleTypeLabel(mixed $vehicleType): string
+    {
+        $vehicleTypeId = $this->getVehicleTypeId($vehicleType);
+        if ($vehicleTypeId === null) {
+            return 'Chua cap nhat';
+        }
+
+        return $this->vehicleTypeCatalogService->getLabelById($vehicleTypeId) ?? 'Chua cap nhat';
     }
 
     private function isPrimaryKeyCollision(QueryException $e): bool

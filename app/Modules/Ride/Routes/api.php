@@ -4,6 +4,7 @@ namespace App\Modules\Ride\Routes;
 
 use App\Modules\Ride\Http\Controllers\RideCommunicationController;
 use App\Modules\Ride\Http\Controllers\RideController;
+use App\Modules\Ride\Http\Controllers\VehicleTypeController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -45,6 +46,14 @@ Route::prefix('v1/ride')->middleware(['auth:sanctum', 'check.account.status'])->
 
     // UC-29: Xem chi tiết chuyến xe (Customer)
     Route::get('{rideId}', [RideController::class, 'show'])->name('ride.show');
+});
+
+Route::prefix('v1/meta')->group(function () {
+    Route::get('vehicle-types', [VehicleTypeController::class, 'index'])->name('meta.vehicle_types.index');
+});
+
+Route::prefix('v1/admin/meta')->middleware(['auth:sanctum'])->group(function () {
+    Route::get('vehicle-types', [VehicleTypeController::class, 'listAll'])->name('admin.meta.vehicle_types.index');
 });
 
 /**

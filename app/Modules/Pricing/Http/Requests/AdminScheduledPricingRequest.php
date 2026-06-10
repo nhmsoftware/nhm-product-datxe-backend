@@ -26,7 +26,7 @@ final class AdminScheduledPricingRequest extends FormRequest
             'rules'                   => 'nullable|array',
             'rules.*.service_type'    => 'required|integer|in:6,7',
             'rules.*.ride_mode'       => 'required|string',
-            'rules.*.vehicle_type'    => 'required|integer|min:1',
+            'rules.*.vehicle_type_id' => 'required|integer|min:1',
             'rules.*.airport_id'      => 'nullable|string',
             'rules.*.ranges'          => 'required|array|min:1',
             'rules.*.ranges.*.start_km'=> 'required|numeric|min:0',

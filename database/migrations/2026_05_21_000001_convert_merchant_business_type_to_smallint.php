@@ -10,6 +10,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
         if (!Schema::hasColumn('merchant_profiles', 'business_type')) {
             return;
         }
@@ -34,6 +38,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
         if (!Schema::hasColumn('merchant_profiles', 'business_type')) {
             return;
         }

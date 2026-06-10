@@ -22,6 +22,7 @@ use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Finance\Interfaces\CommissionRuleServiceInterface;
 use App\Modules\Finance\Model\Enums\CommissionServiceType;
 use App\Modules\Finance\Model\Enums\CommissionTargetType;
+use App\Modules\Ride\Services\VehicleTypeCatalogService;
 use Carbon\Carbon;
 
 final class PricingService extends BaseService implements PricingServiceInterface
@@ -32,9 +33,10 @@ final class PricingService extends BaseService implements PricingServiceInterfac
         private readonly PricingGlobalSettingRepositoryInterface $pricingGlobalSettingRepository,
         private readonly PricingSurgeRuleRepositoryInterface $pricingSurgeRuleRepository,
         private readonly CommissionRuleServiceInterface $commissionRuleService,
+        private readonly VehicleTypeCatalogService $vehicleTypeCatalogService,
     ) {}
 
-    private const RATE_CONFIG = [
+    private const LEGACY_RATE_CONFIG = [
         1 => [ // BIKE
             'base_fare'     => 12000.0,
             'min_fare'      => 15000.0,
@@ -95,6 +97,7 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             }
 
             $config = $this->getConfigForVehicleType((int) $dto->vehicleType);
+            $this->validate($config !== null, 'Loại xe này chưa có cấu hình giá đang hoạt động.', 422);
 
             $baseFare     = (float) $config['base_fare'];
             $minFare      = (float) $config['min_fare'];
@@ -193,37 +196,36 @@ final class PricingService extends BaseService implements PricingServiceInterfac
     public function getConfigs(): ServiceReturn
     {
         return $this->execute(function (): array {
-            $dbConfigs      = $this->pricingConfigRepository->getAllConfigs()->keyBy('vehicle_type');
+            $latestConfigs  = $this->pricingConfigRepository->getAllLatestConfigs()->keyBy('vehicle_type_id');
             $globalSettings = $this->pricingGlobalSettingRepository->getSettings();
+            $catalogTypes   = $this->vehicleTypeCatalogService->listAll();
 
             $finalConfigs = [];
-            // Lấy danh sách các vehicle types được hỗ trợ từ RATE_CONFIG
-            $supportedTypes = array_keys(self::RATE_CONFIG);
+            foreach ($catalogTypes as $type) {
+                $config = $latestConfigs->get($type['id']);
+                $dto = $config ? PricingConfigDTO::fromModel($config) : null;
 
-            foreach ($supportedTypes as $typeId) {
-                $config = $dbConfigs->get($typeId);
-
-                if ($config) {
-                    $dto = PricingConfigDTO::fromModel($config);
-                    $finalConfigs[] = [
-                        'vehicle_type'     => $typeId,
-                        'base_price'       => (float) $dto->basePrice,
-                        'distance_rate'    => (float) $dto->distanceRate,
-                        'time_rate'        => (float) $dto->timeRate,
-                        'min_fare'         => (float) $dto->minFare,
-                        'surge_multiplier' => (float) $dto->surgeMultiplier,
-                    ];
-                } else {
-                    $default = self::RATE_CONFIG[$typeId];
-                    $finalConfigs[] = [
-                        'vehicle_type'     => $typeId,
-                        'base_price'       => (float) $default['base_fare'],
-                        'distance_rate'    => (float) $default['distance_rate'],
-                        'time_rate'        => (float) $default['time_rate'],
-                        'min_fare'         => (float) $default['min_fare'],
-                        'surge_multiplier' => (float) $default['surge_multiplier'],
-                    ];
-                }
+                $finalConfigs[] = [
+                    'config_id'          => $dto?->id,
+                    'vehicle_type'       => (int) $type['id'],
+                    'vehicle_type_id'    => (int) $type['id'],
+                    'vehicle_code'       => $type['code'],
+                    'vehicle_label'      => $type['name_vi'],
+                    'vehicle_description'=> $type['description_vi'],
+                    'service_scopes'     => $type['service_scopes'] ?? [],
+                    'is_bookable'        => (bool) ($type['is_bookable'] ?? true),
+                    'is_catalog_active'  => (bool) ($type['is_active'] ?? true),
+                    'config_status'      => $config === null
+                        ? 'not_configured'
+                        : ((bool) $config->is_active ? 'configured' : 'inactive'),
+                    'is_active'          => (bool) ($config?->is_active ?? false),
+                    'base_price'         => $dto?->basePrice,
+                    'distance_rate'      => $dto?->distanceRate,
+                    'time_rate'          => $dto?->timeRate,
+                    'min_fare'           => $dto?->minFare,
+                    'surge_multiplier'   => $dto?->surgeMultiplier,
+                    'commission_rate'    => $config?->commission_rate !== null ? (float) $config->commission_rate : null,
+                ];
             }
 
             return [
@@ -238,24 +240,30 @@ final class PricingService extends BaseService implements PricingServiceInterfac
     public function updateConfig(UpdatePricingConfigDTO $dto): ServiceReturn
     {
         return $this->execute(function () use ($dto): array {
-            $config = $this->pricingConfigRepository->findByVehicleType($dto->vehicleType->value);
+            $vehicleType = $this->vehicleTypeCatalogService->getMetadataById($dto->vehicleTypeId);
+            $this->validate($vehicleType !== null, 'Loại xe không tồn tại.', 404);
+
+            $config = $this->pricingConfigRepository->findLatestByVehicleTypeId($dto->vehicleTypeId);
 
             $data = [
-                'vehicle_type'     => $dto->vehicleType->value,
+                'vehicle_type'     => $dto->vehicleTypeId,
+                'vehicle_type_id'  => $dto->vehicleTypeId,
                 'base_price'       => $dto->basePrice,
                 'distance_rate'    => $dto->distanceRate,
                 'time_rate'        => $dto->timeRate,
                 'min_fare'         => $dto->minFare,
                 'surge_multiplier' => $dto->surgeMultiplier,
+                'commission_rate'  => $dto->commissionRate,
+                'is_active'        => $dto->isActive,
             ];
 
             if ($config) {
                 $oldData = $config->toArray();
                 $this->pricingConfigRepository->updateById($config->id, $data);
-                event(new PricingConfigUpdated($dto->vehicleType->value, $oldData, $data, $dto->adminId));
+                event(new PricingConfigUpdated($dto->vehicleTypeId, $oldData, $data, $dto->adminId));
             } else {
                 $this->pricingConfigRepository->create($data);
-                event(new PricingConfigUpdated($dto->vehicleType->value, [], $data, $dto->adminId));
+                event(new PricingConfigUpdated($dto->vehicleTypeId, [], $data, $dto->adminId));
             }
 
             return ['status' => 'success'];
@@ -318,10 +326,24 @@ final class PricingService extends BaseService implements PricingServiceInterfac
     public function resetToDefault(int $vehicleType): ServiceReturn
     {
         return $this->execute(function () use ($vehicleType): array {
-            $config = $this->pricingConfigRepository->findByVehicleType($vehicleType);
+            $config = $this->pricingConfigRepository->findLatestByVehicleTypeId($vehicleType);
             if ($config) {
-                $this->pricingConfigRepository->deleteById($config->id);
+                $this->pricingConfigRepository->updateById($config->id, ['is_active' => false]);
             }
+            return ['status' => 'success'];
+        }, useTransaction: true);
+    }
+
+    public function archiveConfig(int $vehicleTypeId): ServiceReturn
+    {
+        return $this->execute(function () use ($vehicleTypeId): array {
+            $config = $this->pricingConfigRepository->findLatestByVehicleTypeId($vehicleTypeId);
+            $this->validate($config !== null, 'Không tìm thấy cấu hình giá để lưu trữ.', 404);
+
+            $oldData = $config->toArray();
+            $this->pricingConfigRepository->updateById($config->id, ['is_active' => false]);
+            event(new PricingConfigUpdated($vehicleTypeId, $oldData, array_merge($oldData, ['is_active' => false]), (string) request()->user()?->id));
+
             return ['status' => 'success'];
         }, useTransaction: true);
     }
@@ -329,13 +351,18 @@ final class PricingService extends BaseService implements PricingServiceInterfac
     public function getPricingHistory(int $vehicleType): ServiceReturn
     {
         return $this->execute(function () use ($vehicleType) {
-            return $this->pricingConfigHistoryRepository->getByVehicleType($vehicleType);
+            return $this->pricingConfigHistoryRepository->getByVehicleTypeId($vehicleType);
         });
     }
 
     private function getConfigForVehicleType(int $vehicleType): array
     {
-        $dbConfig = $this->pricingConfigRepository->findByVehicleType($vehicleType);
+        $metadata = $this->vehicleTypeCatalogService->getMetadataById($vehicleType);
+        if ($metadata === null || !($metadata['is_active'] ?? false) || !($metadata['is_bookable'] ?? false)) {
+            return null;
+        }
+
+        $dbConfig = $this->pricingConfigRepository->findActiveByVehicleTypeId($vehicleType);
         if ($dbConfig) {
             return [
                 'base_fare'        => (float) $dbConfig->base_price,
@@ -343,9 +370,10 @@ final class PricingService extends BaseService implements PricingServiceInterfac
                 'distance_rate'    => (float) $dbConfig->distance_rate,
                 'time_rate'        => (float) $dbConfig->time_rate,
                 'surge_multiplier' => (float) $dbConfig->surge_multiplier,
+                'commission_rate'  => (float) $dbConfig->commission_rate,
             ];
         }
 
-        return self::RATE_CONFIG[$vehicleType] ?? self::RATE_CONFIG[1];
+        return self::LEGACY_RATE_CONFIG[$vehicleType] ?? null;
     }
 }

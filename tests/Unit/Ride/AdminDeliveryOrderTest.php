@@ -10,7 +10,6 @@ use App\Modules\Ride\Model\DeliveryOrder;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\RideType;
-use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\Ride\Model\Ride;
 use App\Modules\Ride\Services\RideService;
 use App\Modules\User\Model\Enums\UserRole;
@@ -76,7 +75,7 @@ it('creates admin delivery order in pending state', function () {
         'destination_lng' => 106.2,
         'distance' => 5000,
         'duration' => 600,
-        'vehicle_type' => VehicleType::BIKE,
+        'vehicle_type' => 1,
         'ride_type' => RideType::DELIVERY,
         'status' => RideStatus::PENDING,
         'tracking_status' => RideTrackingStatus::WAITING_DRIVER,
@@ -113,6 +112,7 @@ it('creates admin delivery order in pending state', function () {
         $rideRepository,
         \Mockery::mock(\App\Modules\Ride\Interfaces\MapServiceInterface::class),
         \Mockery::mock(\App\Modules\Pricing\Interfaces\PricingServiceInterface::class),
+        new \App\Modules\Ride\Services\VehicleTypeCatalogService(\Mockery::mock(\App\Modules\Ride\Interfaces\VehicleTypeRepositoryInterface::class)),
         $userRepository,
         \Mockery::mock(\App\Modules\User\Interfaces\DriverProfileRepositoryInterface::class),
         \Mockery::mock(\App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface::class),
@@ -166,7 +166,7 @@ it('returns delivery order to pending when admin removes assigned driver', funct
         'destination_lng' => 106.2,
         'distance' => 5000,
         'duration' => 600,
-        'vehicle_type' => VehicleType::BIKE,
+        'vehicle_type' => 1,
         'ride_type' => RideType::DELIVERY,
         'status' => RideStatus::ACCEPTED,
         'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED,
@@ -203,6 +203,7 @@ it('returns delivery order to pending when admin removes assigned driver', funct
         $rideRepository,
         \Mockery::mock(\App\Modules\Ride\Interfaces\MapServiceInterface::class),
         \Mockery::mock(\App\Modules\Pricing\Interfaces\PricingServiceInterface::class),
+        new \App\Modules\Ride\Services\VehicleTypeCatalogService(\Mockery::mock(\App\Modules\Ride\Interfaces\VehicleTypeRepositoryInterface::class)),
         \Mockery::mock(\App\Modules\User\Interfaces\UserRepositoryInterface::class),
         \Mockery::mock(\App\Modules\User\Interfaces\DriverProfileRepositoryInterface::class),
         \Mockery::mock(\App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface::class),
@@ -259,7 +260,7 @@ it('soft cancels delivery order and dispatches driver notification event', funct
         'destination_lng' => 106.2,
         'distance' => 5000,
         'duration' => 600,
-        'vehicle_type' => VehicleType::BIKE,
+        'vehicle_type' => 1,
         'ride_type' => RideType::DELIVERY,
         'status' => RideStatus::ACCEPTED,
         'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED,
@@ -276,6 +277,7 @@ it('soft cancels delivery order and dispatches driver notification event', funct
         $rideRepository,
         \Mockery::mock(\App\Modules\Ride\Interfaces\MapServiceInterface::class),
         \Mockery::mock(\App\Modules\Pricing\Interfaces\PricingServiceInterface::class),
+        new \App\Modules\Ride\Services\VehicleTypeCatalogService(\Mockery::mock(\App\Modules\Ride\Interfaces\VehicleTypeRepositoryInterface::class)),
         \Mockery::mock(\App\Modules\User\Interfaces\UserRepositoryInterface::class),
         \Mockery::mock(\App\Modules\User\Interfaces\DriverProfileRepositoryInterface::class),
         \Mockery::mock(\App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface::class),
@@ -307,7 +309,7 @@ it('maps delivery admin resource with delivery info', function () {
         'destination_lng' => 106.2,
         'distance' => 5000,
         'duration' => 600,
-        'vehicle_type' => VehicleType::BIKE,
+        'vehicle_type' => 1,
         'ride_type' => RideType::DELIVERY,
         'status' => RideStatus::PENDING,
         'tracking_status' => RideTrackingStatus::WAITING_DRIVER,

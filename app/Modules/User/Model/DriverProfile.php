@@ -6,8 +6,8 @@ namespace App\Modules\User\Model;
 
 use App\Core\Helpers\FileHelper;
 use App\Core\Traits\HasBigIntId;
+use App\Modules\Ride\Model\VehicleTypeRef;
 use App\Modules\User\Model\Enums\DriverStatus;
-use App\Modules\User\Model\Enums\VehicleType;
 use App\Modules\User\Model\Enums\VehicleColor;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $full_name
  * @property int|null $driver_group_id
  * @property int $driver_group_type
- * @property \App\Modules\User\Model\Enums\VehicleType $vehicle_type
+ * @property int $vehicle_type
  * @property string $vehicle_name
  * @property \App\Modules\User\Model\Enums\VehicleColor $vehicle_color
  * @property string $vehicle_number
@@ -117,7 +117,7 @@ class DriverProfile extends Model
         'total_trips'    => 'integer',
         'cooldown_until' => 'datetime',
         'status'         => DriverStatus::class,
-        'vehicle_type'   => VehicleType::class,
+        'vehicle_type'   => 'integer',
         'vehicle_color'  => VehicleColor::class,
     ];
 
@@ -135,6 +135,11 @@ class DriverProfile extends Model
     public function driverGroup(): BelongsTo
     {
         return $this->belongsTo(DriverGroup::class, 'driver_group_id');
+    }
+
+    public function vehicleTypeRef(): BelongsTo
+    {
+        return $this->belongsTo(VehicleTypeRef::class, 'vehicle_type', 'id');
     }
 
     /**

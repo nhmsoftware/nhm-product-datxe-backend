@@ -77,7 +77,7 @@ final class AdminScheduledRideController extends BaseController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['ride_type', 'customer_mode', 'pickup_address', 'destination_address', 'vehicle_type', 'total_price'],
+                required: ['ride_type', 'customer_mode', 'pickup_address', 'destination_address', 'vehicle_type_id', 'total_price'],
                 properties: [
                     new OA\Property(property: 'ride_type', type: 'integer', example: 1, description: '1: Chuyến xe thường, 2: Đi tỉnh, 3: Sân bay'),
                     new OA\Property(property: 'customer_mode', type: 'string', enum: ['existing', 'new'], example: 'existing'),
@@ -91,7 +91,7 @@ final class AdminScheduledRideController extends BaseController
                     new OA\Property(property: 'destination_address', type: 'string'),
                     new OA\Property(property: 'destination_lat', type: 'number', format: 'float', nullable: true),
                     new OA\Property(property: 'destination_lng', type: 'number', format: 'float', nullable: true),
-                    new OA\Property(property: 'vehicle_type', type: 'integer'),
+                    new OA\Property(property: 'vehicle_type_id', type: 'integer'),
                     new OA\Property(property: 'total_price', type: 'number', format: 'float'),
                     new OA\Property(property: 'distance_km', type: 'number', format: 'float', nullable: true),
                     new OA\Property(property: 'duration_minutes', type: 'integer', nullable: true),
@@ -160,7 +160,7 @@ final class AdminScheduledRideController extends BaseController
         requestBody: new OA\RequestBody(
             required: true,
             content: new OA\JsonContent(
-                required: ['ride_type', 'pickup_address', 'destination_address', 'vehicle_type', 'total_price'],
+                required: ['ride_type', 'pickup_address', 'destination_address', 'vehicle_type_id', 'total_price'],
                 properties: [
                     new OA\Property(property: 'ride_type', type: 'integer'),
                     new OA\Property(property: 'pickup_address', type: 'string'),
@@ -169,7 +169,7 @@ final class AdminScheduledRideController extends BaseController
                     new OA\Property(property: 'destination_address', type: 'string'),
                     new OA\Property(property: 'destination_lat', type: 'number', format: 'float', nullable: true),
                     new OA\Property(property: 'destination_lng', type: 'number', format: 'float', nullable: true),
-                    new OA\Property(property: 'vehicle_type', type: 'integer'),
+                    new OA\Property(property: 'vehicle_type_id', type: 'integer'),
                     new OA\Property(property: 'total_price', type: 'number', format: 'float'),
                     new OA\Property(property: 'distance_km', type: 'number', format: 'float', nullable: true),
                     new OA\Property(property: 'duration_minutes', type: 'integer', nullable: true),

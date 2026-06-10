@@ -77,7 +77,7 @@ final class RideController extends BaseController
                     type: 'array',
                     items: new OA\Items(
                         properties: [
-                            new OA\Property(property: 'vehicle_type', type: 'integer', example: 2),
+                            new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 2),
                             new OA\Property(property: 'name', type: 'string', example: 'Ô Tô 4 Chỗ'),
                             new OA\Property(property: 'estimated_fare', type: 'number', example: 85000),
                             new OA\Property(property: 'estimated_wait_time', type: 'string', example: '3-7 phút'),
@@ -112,7 +112,7 @@ final class RideController extends BaseController
     #[OA\RequestBody(
         required: true,
         content: new OA\JsonContent(
-            required: ['pickup_address', 'pickup_lat', 'pickup_lng', 'destination_address', 'destination_lat', 'destination_lng', 'vehicle_type', 'expected_price'],
+            required: ['pickup_address', 'pickup_lat', 'pickup_lng', 'destination_address', 'destination_lat', 'destination_lng', 'vehicle_type_id', 'expected_price'],
             properties: [
                 new OA\Property(property: 'pickup_address', type: 'string', example: 'Số 1 Đào Duy Anh, Đống Đa, Hà Nội'),
                 new OA\Property(property: 'pickup_lat', type: 'number', format: 'float', example: 21.0072),
@@ -120,7 +120,7 @@ final class RideController extends BaseController
                 new OA\Property(property: 'destination_address', type: 'string', example: 'Vincom Mega Mall Ocean Park, Gia Lâm, Hà Nội'),
                 new OA\Property(property: 'destination_lat', type: 'number', format: 'float', example: 20.9944),
                 new OA\Property(property: 'destination_lng', type: 'number', format: 'float', example: 105.9458),
-                new OA\Property(property: 'vehicle_type', type: 'integer', example: 2, description: '1: Xe Máy, 2: 4 chỗ, 3: 7 chỗ, 4: 9 chỗ'),
+                new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 2, description: 'ID loại xe trong catalog'),
                 new OA\Property(property: 'expected_price', type: 'number', format: 'float', example: 45000, description: 'Giá kỳ vọng lấy từ tính toán để kiểm tra chênh lệch'),
                 new OA\Property(property: 'voucher_code', type: 'string', example: 'DEMO10', description: 'Mã giảm giá (tùy chọn)'),
             ]
@@ -249,7 +249,7 @@ final class RideController extends BaseController
                 new OA\Property(property: 'destination_lng', type: 'number', example: 106.6881),
                 new OA\Property(property: 'travel_date', type: 'string', example: '2024-05-01'),
                 new OA\Property(property: 'travel_time', type: 'string', example: '08:00'),
-                new OA\Property(property: 'vehicle_type', type: 'integer', example: 2, description: '2: CAR_4_SEATS, 3: CAR_7_SEATS, 4: CAR_9_SEATS, 5: CAR_SHARED'),
+                new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 2, description: 'ID loại xe trong catalog'),
                 new OA\Property(property: 'voucher_code', type: 'string', example: 'DISCOUNT10'),
             ]
         )
@@ -286,7 +286,7 @@ final class RideController extends BaseController
                 new OA\Property(property: 'destination_lng', type: 'number', example: 105.8042),
                 new OA\Property(property: 'travel_date', type: 'string', example: '2024-05-01'),
                 new OA\Property(property: 'travel_time', type: 'string', example: '08:00'),
-                new OA\Property(property: 'vehicle_type', type: 'integer', example: 2),
+                new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 2),
                 new OA\Property(property: 'airport_id', type: 'integer', example: 1),
                 new OA\Property(property: 'airport_direction', type: 'integer', example: 1, description: '1: To Airport, 2: From Airport'),
                 new OA\Property(property: 'voucher_code', type: 'string', example: 'DISCOUNT10'),

@@ -19,6 +19,8 @@ Route::prefix('v1/admin/pricing')
             ->name('admin.pricing.configs');
 
         Route::post('/configs', [AdminPricingController::class, 'updateConfig']);
+        Route::post('/configs/{vehicleTypeId}/archive', [AdminPricingController::class, 'archiveConfig'])
+            ->name('admin.pricing.configs.archive');
         Route::delete('/configs/{vehicleType}/reset', [AdminPricingController::class, 'resetToDefault'])
             ->name('admin.pricing.configs.reset');
 

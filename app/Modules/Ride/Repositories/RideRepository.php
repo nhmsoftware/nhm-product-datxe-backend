@@ -45,14 +45,24 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             return null;
         }
 
+        $query = $this->getQuery()->with(['driver', 'driver.driverProfile', 'customer', 'customer.customerProfile']);
+
+        if ($this->isSqlite()) {
+            $query->where('id', (int) $rideId)
+                ->where(function ($subQuery) use ($customerId) {
+                    $subQuery->where('customer_id', (string) $customerId)
+                        ->orWhere('driver_id', (string) $customerId);
+                });
+        } else {
+            $query->whereRaw('id = ?::bigint', [(string) $rideId])
+                ->where(function ($subQuery) use ($customerId) {
+                    $subQuery->whereRaw('customer_id::text = ?', [(string) $customerId])
+                        ->orWhereRaw('driver_id::text = ?', [(string) $customerId]);
+                });
+        }
+
         /** @var Ride|null */
-        return $this->getQuery()->with(['driver', 'driver.driverProfile', 'customer', 'customer.customerProfile'])
-            ->whereRaw('id = ?::bigint', [(string) $rideId])
-            ->where(function ($query) use ($customerId) {
-                $query->whereRaw('customer_id::text = ?', [(string) $customerId])
-                      ->orWhereRaw('driver_id::text = ?', [(string) $customerId]);
-            })
-            ->first();
+        return $query->first();
     }
 
     /**
@@ -421,10 +431,16 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             return null;
         }
 
+        $query = $this->getQuery()->where('status', RideStatus::PENDING->value);
+
+        if ($this->isSqlite()) {
+            $query->where('id', (int) $rideId);
+        } else {
+            $query->whereRaw('id = ?::bigint', [$rideId]);
+        }
+
         /** @var Ride|null */
-        return $this->getQuery()->whereRaw('id = ?::bigint', [$rideId])
-            ->where('status', RideStatus::PENDING->value)
-            ->first();
+        return $query->first();
     }
 
     /**
@@ -436,24 +452,40 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
             return null;
         }
 
+        $query = $this->getQuery()->with($relations)->select($columns);
+
+        if ($this->isSqlite()) {
+            $query->where('id', (int) $id);
+        } else {
+            $query->whereRaw('id = ?::bigint', [(string) $id]);
+        }
+
         /** @var Ride|null */
-        return $this->getQuery()->with($relations)
-            ->select($columns)
-            ->whereRaw('id = ?::bigint', [(string) $id])
-            ->first();
+        return $query->first();
     }
 
     public function findDriverAcceptedRides(string $driverId): Collection
     {
-        return $this->getQuery()->with(['customer'])
-            ->whereRaw('driver_id = ?::bigint', [(string) $driverId])
+        $query = $this->getQuery()->with(['customer'])
             ->whereNotIn('status', [
                 RideStatus::COMPLETED->value,
                 RideStatus::CANCELLED->value
             ])
             ->orderBy('travel_date')
-            ->orderBy('travel_time')
-            ->get();
+            ->orderBy('travel_time');
+
+        if ($this->isSqlite()) {
+            $query->where('driver_id', (string) $driverId);
+        } else {
+            $query->whereRaw('driver_id = ?::bigint', [(string) $driverId]);
+        }
+
+        return $query->get();
+    }
+
+    private function isSqlite(): bool
+    {
+        return DB::connection()->getDriverName() === 'sqlite';
     }
 
     /**
@@ -489,7 +521,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function listScheduledRidesForAdmin(array $filters)
     {
         $query = $this->getQuery()
-            ->with(['customer', 'driver']);
+            ->with(['customer', 'driver', 'vehicleTypeRef']);
 
         $rideType = $filters['ride_type'] ?? $filters['rideType'] ?? null;
         if (!empty($rideType)) {
@@ -943,7 +975,7 @@ final class RideRepository extends BaseRepository implements RideRepositoryInter
     public function listServiceOrdersForAdmin(array $filters)
     {
         $query = $this->getQuery()
-            ->with(['customer.customerProfile', 'driver.driverProfile', 'deliveryOrder']);
+            ->with(['customer.customerProfile', 'driver.driverProfile', 'deliveryOrder', 'vehicleTypeRef']);
 
         // Chỉ lấy các loại dịch vụ
         $serviceType = $filters['ride_type'] ?? $filters['rideType'] ?? null;

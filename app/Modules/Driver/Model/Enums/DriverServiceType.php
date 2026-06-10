@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Driver\Model\Enums;
 
-use App\Modules\User\Model\Enums\VehicleType;
-
 /**
  * Danh sách các dịch vụ mà tài xế có thể đăng ký hoạt động (UC-30).
  */
@@ -19,6 +17,20 @@ enum DriverServiceType: int
     case INTERCITY       = 6; // Xe đi tỉnh
     case AIRPORT         = 7; // Xe sân bay
     case DRIVER_FOR_HIRE = 8; // Lái hộ
+
+    /**
+     * Compatibility map for fixed vehicle type IDs in phase 2.
+     *
+     * @var array<int, string>
+     */
+    private const VEHICLE_TYPE_LABELS = [
+        1 => 'Xe máy',
+        2 => 'Ô tô 4 chỗ',
+        3 => 'Ô tô 7 chỗ',
+        4 => 'Ô tô 9 chỗ',
+        5 => 'Xe ghép / Tiện chuyến',
+        6 => 'Lái hộ',
+    ];
 
     /**
      * Trả về tên hiển thị của dịch vụ.
@@ -39,7 +51,7 @@ enum DriverServiceType: int
 
     /**
      * Trả về danh sách loại xe hỗ trợ dịch vụ này (raw int values).
-     * Cần đồng bộ với App\Modules\User\Model\Enums\VehicleType
+     * Cần đồng bộ với canonical vehicle_types IDs.
      */
     private function getSupportedVehicleTypeValues(): array
     {
@@ -62,11 +74,12 @@ enum DriverServiceType: int
     {
         return array_values(array_filter(
             array_map(function (int $id) {
-                $type = VehicleType::tryFrom($id);
-                if ($type === null || $type === VehicleType::Unknown) {
+                $label = self::VEHICLE_TYPE_LABELS[$id] ?? null;
+                if ($label === null) {
                     return null;
                 }
-                return ['id' => $type->value, 'label' => $type->label()];
+
+                return ['id' => $id, 'label' => $label];
             }, $this->getSupportedVehicleTypeValues()),
             fn ($item) => $item !== null
         ));

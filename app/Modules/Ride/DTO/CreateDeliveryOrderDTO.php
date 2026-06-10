@@ -56,7 +56,7 @@ final readonly class CreateDeliveryOrderDTO
             destinationAddress: $request->input('destination_address'),
             destinationLat:     (float) $request->input('destination_lat'),
             destinationLng:     (float) $request->input('destination_lng'),
-            vehicleType:        (int) $request->input('vehicle_type', 1),
+            vehicleType:        (int) $request->input('vehicle_type_id', $request->input('vehicle_type', 1)),
             senderName:         $request->input('sender_name'),
             senderPhone:        $request->input('sender_phone'),
             receiverName:       $request->input('receiver_name'),

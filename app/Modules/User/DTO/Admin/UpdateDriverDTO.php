@@ -9,7 +9,6 @@ use App\Modules\User\Model\Enums\DriverGroupType;
 use App\Modules\User\Model\Enums\Gender;
 use App\Modules\User\Model\Enums\KycStatus;
 use App\Modules\User\Model\Enums\VehicleColor;
-use App\Modules\User\Model\Enums\VehicleType;
 
 final class UpdateDriverDTO
 {
@@ -22,7 +21,7 @@ final class UpdateDriverDTO
         public readonly ?string $birthday = null,
         public readonly ?string $address = null,
         public readonly ?DriverGroupType $driverGroupType = null,
-        public readonly ?VehicleType $vehicleType = null,
+        public readonly ?int $vehicleType = null,
         public readonly ?VehicleColor $vehicleColor = null,
         public readonly ?string $vehicleName = null,
         public readonly ?string $vehicleNumber = null,
@@ -42,7 +41,7 @@ final class UpdateDriverDTO
             birthday: $request->input('birthday'),
             address: $request->input('address'),
             driverGroupType: $request->filled('driver_group_type') ? DriverGroupType::from((int) $request->input('driver_group_type')) : null,
-            vehicleType: $request->filled('vehicle_type') ? VehicleType::from((int) $request->input('vehicle_type')) : null,
+            vehicleType: $request->filled('vehicle_type') ? (int) $request->input('vehicle_type') : null,
             vehicleColor: $request->filled('vehicle_color') ? VehicleColor::from((int) $request->input('vehicle_color')) : null,
             vehicleName: $request->input('vehicle_name'),
             vehicleNumber: $request->input('vehicle_number'),

@@ -15,6 +15,7 @@ final class PricingSurgeRule extends Model
 
     protected $fillable = [
         'vehicle_type',
+        'vehicle_type_id',
         'conditions',
         'multiplier',
         'start_time',
@@ -28,5 +29,6 @@ final class PricingSurgeRule extends Model
         'multiplier'   => 'float',
         'is_active'    => 'boolean',
         'vehicle_type' => 'integer',
+        'vehicle_type_id' => 'integer',
     ];
 }

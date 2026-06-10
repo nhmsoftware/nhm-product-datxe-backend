@@ -181,7 +181,7 @@ test('admin can assign a driver to a food order', function () {
         'user_id' => $driverUser->id,
         'full_name' => 'Internal Driver',
         'driver_group_type' => DriverGroupType::INTERNAL->value,
-        'vehicle_type' => \App\Modules\User\Model\Enums\VehicleType::Bike->value,
+        'vehicle_type' => 1,
         'vehicle_color' => VehicleColor::White->value,
         'vehicle_number' => '29AB-12345',
         'vehicle_name' => 'Wave Alpha',

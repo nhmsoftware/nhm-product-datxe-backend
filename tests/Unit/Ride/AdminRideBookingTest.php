@@ -10,7 +10,6 @@ use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\RideType;
-use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\Ride\Model\Ride;
 use App\Modules\Ride\Services\RideService;
 use App\Modules\User\Model\Enums\UserRole;
@@ -32,7 +31,7 @@ it('validates create ride booking for existing customer mode', function () {
         'customer_id' => null,
         'pickup_address' => 'A',
         'destination_address' => 'B',
-        'vehicle_type' => 1,
+        'vehicle_type_id' => 1,
         'total_price' => 100000,
     ]);
 
@@ -54,7 +53,7 @@ it('validates create ride booking for new customer mode and location rules', fun
         'pickup_lng' => 106.0,
         'destination_lat' => 10.0,
         'destination_lng' => 106.0,
-        'vehicle_type' => 1,
+        'vehicle_type_id' => 1,
         'total_price' => 100000,
     ]);
 
@@ -101,7 +100,7 @@ it('creates admin ride booking in pending state', function () {
         'destination_lng' => 106.2,
         'distance' => 5000,
         'duration' => 600,
-        'vehicle_type' => VehicleType::CAR_4_SEATS,
+        'vehicle_type' => 2,
         'ride_type' => RideType::CITY,
         'status' => RideStatus::PENDING,
         'tracking_status' => RideTrackingStatus::WAITING_DRIVER,
@@ -133,6 +132,7 @@ it('creates admin ride booking in pending state', function () {
         $rideRepository,
         $mapService,
         $pricingService,
+        new \App\Modules\Ride\Services\VehicleTypeCatalogService(\Mockery::mock(\App\Modules\Ride\Interfaces\VehicleTypeRepositoryInterface::class)),
         $userRepository,
         $driverProfileRepository,
         $realtime,
@@ -191,7 +191,7 @@ it('returns completed-state error when admin updates a completed ride', function
         'destination_lng' => 106.2,
         'distance' => 5000,
         'duration' => 600,
-        'vehicle_type' => VehicleType::CAR_4_SEATS,
+        'vehicle_type' => 2,
         'ride_type' => RideType::CITY,
         'status' => RideStatus::COMPLETED,
         'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED,
@@ -207,6 +207,7 @@ it('returns completed-state error when admin updates a completed ride', function
         $rideRepository,
         Mockery::mock(\App\Modules\Ride\Interfaces\MapServiceInterface::class),
         Mockery::mock(\App\Modules\Pricing\Interfaces\PricingServiceInterface::class),
+        new \App\Modules\Ride\Services\VehicleTypeCatalogService(\Mockery::mock(\App\Modules\Ride\Interfaces\VehicleTypeRepositoryInterface::class)),
         Mockery::mock(\App\Modules\User\Interfaces\UserRepositoryInterface::class),
         Mockery::mock(\App\Modules\User\Interfaces\DriverProfileRepositoryInterface::class),
         Mockery::mock(\App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface::class),
@@ -262,7 +263,7 @@ it('returns ride to pending when admin removes assigned driver', function () {
         'destination_lng' => 106.2,
         'distance' => 5000,
         'duration' => 600,
-        'vehicle_type' => VehicleType::CAR_4_SEATS,
+        'vehicle_type' => 2,
         'ride_type' => RideType::CITY,
         'status' => RideStatus::ACCEPTED,
         'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED,
@@ -300,6 +301,7 @@ it('returns ride to pending when admin removes assigned driver', function () {
         $rideRepository,
         Mockery::mock(\App\Modules\Ride\Interfaces\MapServiceInterface::class),
         Mockery::mock(\App\Modules\Pricing\Interfaces\PricingServiceInterface::class),
+        new \App\Modules\Ride\Services\VehicleTypeCatalogService(\Mockery::mock(\App\Modules\Ride\Interfaces\VehicleTypeRepositoryInterface::class)),
         Mockery::mock(\App\Modules\User\Interfaces\UserRepositoryInterface::class),
         Mockery::mock(\App\Modules\User\Interfaces\DriverProfileRepositoryInterface::class),
         Mockery::mock(\App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface::class),
@@ -356,7 +358,7 @@ it('soft cancels admin ride booking and notifies assigned driver', function () {
         'destination_lng' => 106.2,
         'distance' => 5000,
         'duration' => 600,
-        'vehicle_type' => VehicleType::CAR_4_SEATS,
+        'vehicle_type' => 2,
         'ride_type' => RideType::CITY,
         'status' => RideStatus::ACCEPTED,
         'tracking_status' => RideTrackingStatus::DRIVER_ACCEPTED,
@@ -373,6 +375,7 @@ it('soft cancels admin ride booking and notifies assigned driver', function () {
         $rideRepository,
         Mockery::mock(\App\Modules\Ride\Interfaces\MapServiceInterface::class),
         Mockery::mock(\App\Modules\Pricing\Interfaces\PricingServiceInterface::class),
+        new \App\Modules\Ride\Services\VehicleTypeCatalogService(\Mockery::mock(\App\Modules\Ride\Interfaces\VehicleTypeRepositoryInterface::class)),
         Mockery::mock(\App\Modules\User\Interfaces\UserRepositoryInterface::class),
         Mockery::mock(\App\Modules\User\Interfaces\DriverProfileRepositoryInterface::class),
         Mockery::mock(\App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface::class),
@@ -417,7 +420,7 @@ it('returns a reusable admin ride resource shape', function () {
         'destination_lng' => 106.2,
         'distance' => 5000,
         'duration' => 600,
-        'vehicle_type' => VehicleType::CAR_4_SEATS,
+        'vehicle_type' => 2,
         'ride_type' => RideType::CITY,
         'status' => RideStatus::PENDING,
         'tracking_status' => RideTrackingStatus::WAITING_DRIVER,

@@ -18,6 +18,7 @@ final class ScheduledPricingRule extends Model
         'service_type',
         'ride_mode',
         'vehicle_type',
+        'vehicle_type_id',
         'airport_id',
         'is_active',
     ];
@@ -27,6 +28,7 @@ final class ScheduledPricingRule extends Model
         'service_type' => 'integer',
         'ride_mode'    => 'string',
         'vehicle_type' => 'integer',
+        'vehicle_type_id' => 'integer',
         'airport_id'   => 'string',
         'is_active'    => 'boolean',
     ];

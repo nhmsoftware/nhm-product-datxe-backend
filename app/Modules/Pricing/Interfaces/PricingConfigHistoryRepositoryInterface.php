@@ -15,5 +15,5 @@ interface PricingConfigHistoryRepositoryInterface extends BaseRepositoryInterfac
      * @param int $vehicleType
      * @return Collection
      */
-    public function getByVehicleType(int $vehicleType): Collection;
+    public function getByVehicleTypeId(int $vehicleTypeId): Collection;
 }

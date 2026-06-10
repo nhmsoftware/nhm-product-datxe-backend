@@ -35,6 +35,11 @@ interface PricingServiceInterface
     public function updateConfig(\App\Modules\Pricing\DTO\UpdatePricingConfigDTO $dto): ServiceReturn;
 
     /**
+     * Archive / deactivate pricing configuration for a vehicle type.
+     */
+    public function archiveConfig(int $vehicleTypeId): ServiceReturn;
+
+    /**
      * Toggle system-wide free mode.
      * UC-91 Configure Pricing
      *

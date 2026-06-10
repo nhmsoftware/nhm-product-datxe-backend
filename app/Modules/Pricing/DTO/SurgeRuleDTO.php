@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 final class SurgeRuleDTO
 {
     public function __construct(
-        public readonly int     $vehicleType,
+        public readonly int     $vehicleTypeId,
         public readonly array   $conditions,
         public readonly float   $multiplier,
         public readonly ?string $startTime,
@@ -21,7 +21,7 @@ final class SurgeRuleDTO
     public static function fromRequest(Request $request): self
     {
         return new self(
-            vehicleType: (int) $request->input('vehicle_type'),
+            vehicleTypeId: (int) $request->input('vehicle_type_id', $request->input('vehicle_type')),
             conditions:  $request->input('conditions'),
             multiplier:  (float) $request->input('multiplier'),
             startTime:   $request->input('start_time'),
@@ -34,7 +34,8 @@ final class SurgeRuleDTO
     public function toArray(): array
     {
         return [
-            'vehicle_type' => $this->vehicleType,
+            'vehicle_type' => $this->vehicleTypeId,
+            'vehicle_type_id' => $this->vehicleTypeId,
             'conditions'   => $this->conditions,
             'multiplier'   => $this->multiplier,
             'start_time'   => $this->startTime,

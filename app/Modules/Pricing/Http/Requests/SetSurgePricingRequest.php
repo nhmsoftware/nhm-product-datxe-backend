@@ -19,7 +19,7 @@ final class SetSurgePricingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'vehicle_type' => ['required', 'integer'],
+            'vehicle_type_id' => ['required', 'integer', 'min:1'],
             'conditions'   => ['required', 'array', 'min:1'], // Alternative Flow A2
             'multiplier'   => ['required', 'numeric', 'gt:1'], // Alternative Flow A3
             'start_time'   => ['nullable', 'date_format:H:i'],
@@ -31,7 +31,8 @@ final class SetSurgePricingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'vehicle_type.required' => 'Vui lòng chọn loại xe.',
+            'vehicle_type_id.required' => 'Vui lòng chọn loại xe.',
+            'vehicle_type_id.min' => 'Loại xe không hợp lệ.',
             'conditions.required'   => 'Vui lòng chọn ít nhất một điều kiện áp dụng.',
             'conditions.min'        => 'Vui lòng chọn ít nhất một điều kiện áp dụng.',
             'multiplier.required'   => 'Hệ số tăng giá không hợp lệ.',

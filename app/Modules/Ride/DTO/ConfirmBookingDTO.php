@@ -35,7 +35,7 @@ final class ConfirmBookingDTO
             destinationAddress: $request->string('destination_address')->toString(),
             destinationLat:     (float)  $request->input('destination_lat'),
             destinationLng:     (float)  $request->input('destination_lng'),
-            vehicleType:        (int)    $request->input('vehicle_type'),
+            vehicleType:        (int)    $request->input('vehicle_type_id', $request->input('vehicle_type')),
             expectedPrice:      (float)  $request->input('expected_price'),
             voucherCode:        $request->input('voucher_code') ? $request->string('voucher_code')->toString() : null,
         );

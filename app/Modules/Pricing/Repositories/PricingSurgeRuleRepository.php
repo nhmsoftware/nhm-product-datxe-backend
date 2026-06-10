@@ -19,7 +19,7 @@ final class PricingSurgeRuleRepository extends BaseRepository implements Pricing
     public function getActiveRules(int $vehicleType): Collection
     {
         return $this->getQuery()
-            ->where('vehicle_type', $vehicleType)
+            ->where('vehicle_type_id', $vehicleType)
             ->where('is_active', true)
             ->get();
     }

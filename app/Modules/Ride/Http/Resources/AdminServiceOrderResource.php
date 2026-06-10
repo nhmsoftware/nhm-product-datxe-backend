@@ -24,6 +24,9 @@ class AdminServiceOrderResource extends JsonResource
     public function toArray(Request $request): array
     {
         /** @var \App\Modules\Ride\Model\Ride $this */
+        $vehicleTypeRef = $this->relationLoaded('vehicleTypeRef') ? $this->vehicleTypeRef : null;
+        $vehicleTypeId = $this->vehicle_type !== null ? (int) $this->vehicle_type : null;
+        $vehicleTypeName = $vehicleTypeRef?->name_vi ?? ($vehicleTypeId !== null ? ('Loại xe #' . $vehicleTypeId) : '');
 
         $statusMap = [
             RideStatus::PENDING->value   => 'waiting',
@@ -61,8 +64,8 @@ class AdminServiceOrderResource extends JsonResource
             'destination_address'    => $this->destination_address,
             'destination_lat'        => (float) $this->destination_lat,
             'destination_lng'        => (float) $this->destination_lng,
-            'vehicle_type'           => $this->vehicle_type?->value,
-            'vehicle_type_name'      => $this->vehicle_type?->getLabel() ?? '',
+            'vehicle_type'           => $vehicleTypeId,
+            'vehicle_type_name'      => $vehicleTypeName,
             'total_amount'           => (float) $this->total_price,
             'final_fare'             => (float) $this->total_price,
             'base_price'             => (float) $this->base_price,

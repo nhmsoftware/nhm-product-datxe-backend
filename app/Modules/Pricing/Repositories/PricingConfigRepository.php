@@ -16,14 +16,34 @@ final class PricingConfigRepository extends BaseRepository implements PricingCon
         return PricingConfig::class;
     }
 
-    public function findByVehicleType(int $vehicleType): ?PricingConfig
+    public function findActiveByVehicleTypeId(int $vehicleTypeId): ?PricingConfig
     {
         /** @var PricingConfig|null */
-        return $this->getQuery()->where('vehicle_type', $vehicleType)->first();
+        return $this->getQuery()
+            ->where('vehicle_type_id', $vehicleTypeId)
+            ->where('is_active', true)
+            ->latest('updated_at')
+            ->first();
+    }
+
+    public function findLatestByVehicleTypeId(int $vehicleTypeId): ?PricingConfig
+    {
+        /** @var PricingConfig|null */
+        return $this->getQuery()
+            ->where('vehicle_type_id', $vehicleTypeId)
+            ->latest('updated_at')
+            ->first();
     }
 
     public function getAllConfigs(): Collection
     {
-        return $this->getQuery()->get();
+        return $this->getQuery()->with('vehicleTypeRef')->latest('updated_at')->get();
+    }
+
+    public function getAllLatestConfigs(): Collection
+    {
+        return $this->getAllConfigs()
+            ->unique('vehicle_type_id')
+            ->values();
     }
 }

@@ -39,7 +39,7 @@ final class AdminUpdateRideBookingDTO
             destinationAddress: $request->string('destination_address')->toString(),
             destinationLat: $request->filled('destination_lat') ? (float) $request->input('destination_lat') : null,
             destinationLng: $request->filled('destination_lng') ? (float) $request->input('destination_lng') : null,
-            vehicleType: (int) $request->input('vehicle_type'),
+            vehicleType: (int) $request->input('vehicle_type_id', $request->input('vehicle_type')),
             totalPrice: (float) $request->input('total_price'),
             distanceKm: $request->filled('distance_km') ? (float) $request->input('distance_km') : null,
             durationMinutes: $request->filled('duration_minutes') ? (int) $request->input('duration_minutes') : null,

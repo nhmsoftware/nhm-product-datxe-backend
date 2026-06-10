@@ -36,7 +36,7 @@ class CreateIntercityRideRequest extends FormRequest
             'destination_lng'     => 'required|numeric|between:-180,180',
             'travel_date'         => 'required|date|after_or_equal:today',
             'travel_time'         => 'required|string|regex:/^\d{2}:\d{2}$/',
-            'vehicle_type'        => 'required|integer|in:2,3,4,5', // 2: CAR_4_SEATS, 3: CAR_7_SEATS, 4: CAR_9_SEATS, 5: CAR_SHARED
+            'vehicle_type_id'     => 'required|integer|min:1',
             'voucher_code'        => 'nullable|string|max:50',
         ];
     }
@@ -49,8 +49,8 @@ class CreateIntercityRideRequest extends FormRequest
             'travel_date.required'         => 'Vui lòng chọn ngày đi.',
             'travel_date.after_or_equal'   => 'Ngày đi không thể ở quá khứ.',
             'travel_time.required'         => 'Vui lòng chọn giờ đón.',
-            'vehicle_type.required'        => 'Vui lòng chọn loại xe.',
-            'vehicle_type.in'              => 'Loại xe không hợp lệ cho chuyến đi tỉnh.',
+            'vehicle_type_id.required'     => 'Vui lòng chọn loại xe.',
+            'vehicle_type_id.min'          => 'Loại xe không hợp lệ cho chuyến đi tỉnh.',
         ];
     }
 

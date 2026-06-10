@@ -18,6 +18,9 @@ class AdminScheduledRideResource extends JsonResource
     public function toArray(Request $request): array
     {
         /** @var \App\Modules\Ride\Model\Ride $this */
+        $vehicleTypeRef = $this->relationLoaded('vehicleTypeRef') ? $this->vehicleTypeRef : null;
+        $vehicleTypeId = $this->vehicle_type !== null ? (int) $this->vehicle_type : null;
+        $vehicleTypeName = $vehicleTypeRef?->name_vi ?? ($vehicleTypeId !== null ? ('Loại xe #' . $vehicleTypeId) : '');
         
         $statusMap = [
             RideStatus::PENDING->value   => 'waiting',
@@ -48,8 +51,8 @@ class AdminScheduledRideResource extends JsonResource
             'travel_time'            => $this->travel_time,
             'pickup_time_formatted'  => $this->travel_date ? $this->travel_date->format('d/m/Y') : '',
             'pickup_hour'            => $this->travel_time ? substr($this->travel_time, 0, 5) : '',
-            'vehicle_type'           => $this->vehicle_type?->value,
-            'vehicle_type_name'      => $this->vehicle_type?->getLabel() ?? '',
+            'vehicle_type'           => $vehicleTypeId,
+            'vehicle_type_name'      => $vehicleTypeName,
             'final_fare'             => (float) $this->total_price,
             'base_price'             => (float) $this->base_price,
             'distance_price'         => (float) $this->distance_price,

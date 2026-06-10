@@ -11,6 +11,7 @@ use App\Modules\Operation\Jobs\PriorityDispatchFallbackJob;
 use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Model\Enums\ScheduledDispatchMode;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
+use App\Modules\Ride\Services\VehicleTypeCatalogService;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use App\Modules\User\Model\Enums\DriverGroupType;
@@ -32,11 +33,13 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
         private readonly CreditWalletConfigRepositoryInterface $walletConfigRepository,
         private readonly WalletRepositoryInterface $walletRepository,
         private readonly PricingGlobalSettingRepositoryInterface $pricingGlobalSettingRepository,
+        private readonly VehicleTypeCatalogService $vehicleTypeCatalogService,
     ) {
     }
 
     /**
      * @inheritDoc
+     * Phát đơn giao hàng cho tài xế theo cơ chế ưu tiên vòng 1 (2km) chỉ nội bộ, vòng 2 (3km) mới có đối tác.
      */
     public function initiateDispatch(string $rideId): void
     {
@@ -63,7 +66,7 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
 
             $eligibleDrivers = $this->driverProfileRepository->findEligibleDrivers(
                 userIds: $nearbyDriverIds,
-                vehicleType: (int) $ride->vehicle_type->value,
+                vehicleType: (int) $ride->vehicle_type,
                 groupType: $groupType
             );
 
@@ -82,7 +85,7 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
 
             Log::info("PriorityDispatch [Vong 1]: Bat dau phat song cho chuyen {$rideId}", [
                 'che_do'           => $modeLabel,
-                'loai_xe'          => $ride->vehicle_type->name,
+                'loai_xe'          => $this->vehicleTypeCatalogService->getCodeById((int) $ride->vehicle_type),
                 'ban_kinh_km'      => self::ROUND_1_RADIUS_KM,
                 'tai_xe_gan_do'    => count($nearbyDriverIds),
                 'tai_xe_du_dieu_kien' => $eligibleDrivers->count(),
@@ -123,7 +126,7 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
 
             $eligibleDrivers = $this->driverProfileRepository->findEligibleDrivers(
                 userIds: $nearbyDriverIds,
-                vehicleType: (int) $ride->vehicle_type->value,
+                vehicleType: (int) $ride->vehicle_type,
                 groupType: $groupType
             );
 
@@ -157,7 +160,7 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
 
             Log::info("PriorityDispatch [Vong 2 - Du phong]: Hoan tat phat song cho chuyen {$rideId}", [
                 'che_do'              => $modeLabel,
-                'loai_xe'             => $ride->vehicle_type->name,
+                'loai_xe'             => $this->vehicleTypeCatalogService->getCodeById((int) $ride->vehicle_type),
                 'ban_kinh_km'         => self::ROUND_2_RADIUS_KM,
                 'tai_xe_gan_do'       => count($nearbyDriverIds),
                 'tai_xe_du_dieu_kien' => $eligibleDrivers->count(),
@@ -211,7 +214,8 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
             'destination_address'  => $ride->destination_address,
             'distance_km'          => round($ride->distance / 1000, 2),
             'total_price'          => (float) $ride->total_price,
-            'vehicle_type'         => $ride->vehicle_type->name,
+            'vehicle_type_id'      => (int) $ride->vehicle_type,
+            'vehicle_type'         => $this->vehicleTypeCatalogService->getCodeById((int) $ride->vehicle_type),
             'occurred_at'          => now()->toIso8601String(),
         ];
 

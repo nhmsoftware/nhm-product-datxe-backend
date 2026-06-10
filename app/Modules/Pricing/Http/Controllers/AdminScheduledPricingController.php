@@ -80,7 +80,7 @@ final class AdminScheduledPricingController extends BaseController
                             properties: [
                                 new OA\Property(property: 'service_type', type: 'integer', example: 6),
                                 new OA\Property(property: 'ride_mode', type: 'string', example: 'shared'),
-                                new OA\Property(property: 'vehicle_type', type: 'integer', example: 2),
+                                new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 2),
                                 new OA\Property(property: 'airport_id', type: 'string', nullable: true),
                                 new OA\Property(
                                     property: 'ranges',

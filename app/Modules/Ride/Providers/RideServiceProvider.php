@@ -13,9 +13,11 @@ use App\Modules\Ride\Interfaces\RideCommunicationServiceInterface;
 use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface;
+use App\Modules\Ride\Interfaces\VehicleTypeRepositoryInterface;
 use App\Modules\Ride\Repositories\RideCallLogRepository;
 use App\Modules\Ride\Repositories\RideChatMessageRepository;
 use App\Modules\Ride\Repositories\RideRepository;
+use App\Modules\Ride\Repositories\VehicleTypeRepository;
 use App\Modules\Ride\Interfaces\AirportRepositoryInterface;
 use App\Modules\Ride\Repositories\AirportRepository;
 use App\Modules\Ride\Services\GoongMapService;
@@ -23,6 +25,7 @@ use App\Modules\Ride\Services\RedisRideCommunicationRealtimeService;
 use App\Modules\Ride\Services\RideCommunicationService;
 use App\Modules\Ride\Services\RedisRideTrackingRealtimeService;
 use App\Modules\Ride\Services\RideService;
+use App\Modules\Ride\Services\VehicleTypeCatalogService;
 use App\Modules\Ride\Events\RideCanceled;
 use App\Modules\Ride\Events\RideCancellationRequested;
 use App\Modules\Ride\Events\RideCancellationResponded;
@@ -59,6 +62,7 @@ class RideServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(RideChatMessageRepositoryInterface::class, RideChatMessageRepository::class);
         $this->app->singleton(RideCallLogRepositoryInterface::class, RideCallLogRepository::class);
         $this->app->singleton(AirportRepositoryInterface::class, AirportRepository::class);
+        $this->app->singleton(VehicleTypeRepositoryInterface::class, VehicleTypeRepository::class);
 
         // ── Services ──────
         $this->app->singleton(RideServiceInterface::class, RideService::class);
@@ -66,6 +70,7 @@ class RideServiceProvider extends BaseModuleServiceProvider
         $this->app->singleton(MapServiceInterface::class, GoongMapService::class);
         $this->app->singleton(RideTrackingRealtimeInterface::class, RedisRideTrackingRealtimeService::class);
         $this->app->singleton(RideCommunicationRealtimeInterface::class, RedisRideCommunicationRealtimeService::class);
+        $this->app->singleton(VehicleTypeCatalogService::class, VehicleTypeCatalogService::class);
     }
 
     public function boot(): void

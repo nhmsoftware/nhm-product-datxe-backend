@@ -29,8 +29,8 @@ class CreateDeliveryOrderRequest extends FormRequest
             'destination_lat'     => ['required', 'numeric', 'between:-90,90'],
             'destination_lng'     => ['required', 'numeric', 'between:-180,180'],
 
-            // Loại xe (1: Xe máy, 2: 4 chỗ)
-            'vehicle_type'        => ['required', 'integer', 'in:1,2'],
+            // Loại xe giao hàng từ catalog động
+            'vehicle_type_id'     => ['required', 'integer', 'min:1'],
 
             // Người gửi (A3)
             'sender_name'         => ['required', 'string', 'max:100'],
@@ -56,7 +56,8 @@ class CreateDeliveryOrderRequest extends FormRequest
         return [
             'pickup_address.required'      => 'Vui lòng nhập điểm lấy hàng.',
             'destination_address.required' => 'Vui lòng nhập điểm giao hàng.',
-            'vehicle_type.in'              => 'Loại xe không hợp lệ. Chỉ hỗ trợ Xe Máy (1) hoặc Ô Tô 4 Chỗ (2).',
+            'vehicle_type_id.required'     => 'Vui lòng chọn loại xe.',
+            'vehicle_type_id.min'          => 'Loại xe không hợp lệ.',
             'sender_name.required'         => 'Thông tin người gửi không hợp lệ: thiếu tên.',
             'sender_phone.required'        => 'Thông tin người gửi không hợp lệ: thiếu số điện thoại.',
             'sender_phone.regex'           => 'Thông tin người gửi không hợp lệ: sai định dạng SĐT.',

@@ -36,7 +36,7 @@ class CreateAirportRideRequest extends FormRequest
             'destination_lng'     => 'required|numeric|between:-180,180',
             'travel_date'         => 'required|date|after_or_equal:today',
             'travel_time'         => 'required|string|regex:/^\d{2}:\d{2}$/',
-            'vehicle_type'        => 'required|integer|in:1,2,3,4', // BIKE, CAR_4_SEATS, CAR_7_SEATS, CAR_9_SEATS
+            'vehicle_type_id'     => 'required|integer|min:1',
             'airport_id'          => 'required|integer|exists:airports,id',
             'airport_direction'   => 'required|integer|in:1,2', // 1: To Airport, 2: From Airport
             'voucher_code'        => 'nullable|string|max:50',
@@ -46,6 +46,8 @@ class CreateAirportRideRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'vehicle_type_id.required' => 'Vui lòng chọn loại xe.',
+            'vehicle_type_id.min' => 'Loại xe không hợp lệ.',
             'airport_id.exists' => 'Sân bay không hợp lệ hoặc không được hỗ trợ.',
             'travel_date.after_or_equal' => 'Ngày đi không thể ở quá khứ.',
             'airport_direction.in' => 'Chiều đi không hợp lệ.',

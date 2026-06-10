@@ -24,7 +24,6 @@ use App\Modules\User\Interfaces\DriverGroupRepositoryInterface;
 use App\Modules\User\Model\Enums\DriverGroupType;
 use App\Modules\User\Model\Enums\DriverStatus;
 use App\Modules\User\Model\Enums\UserRole;
-use App\Modules\User\Model\Enums\VehicleType;
 use App\Modules\User\Model\Enums\VehicleColor;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
@@ -82,7 +81,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
                 'full_name'      => $dto->fullName,
                 'phone'          => $dto->phone,
                 'citizen_id'     => $dto->citizenId,
-                'vehicle_type'   => $dto->vehicleType->value,
+                'vehicle_type'   => $dto->vehicleType,
                 'vehicle_name'   => $dto->vehicleName,
                 'vehicle_color'  => $dto->vehicleColor->value,
                 'vehicle_number' => $dto->vehicleNumber,
@@ -172,7 +171,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
                 'full_name'         => $snapshotData['full_name'] ?? 'Driver ' . $userId,
                 'driver_group_id'   => $dto->driverGroupId,
                 'driver_group_type' => $driverGroupType->value,
-                'vehicle_type'      => VehicleType::tryFrom((int)($snapshotData['vehicle_type'] ?? 1))?->value ?? VehicleType::BIKE->value,
+                'vehicle_type'      => (int) ($snapshotData['vehicle_type'] ?? 1),
                 'vehicle_name'      => $snapshotData['vehicle_name'] ?? 'N/A',
                 'vehicle_color'     => VehicleColor::tryFrom((int)($snapshotData['vehicle_color'] ?? 0))?->value ?? VehicleColor::Unknown->value,
                 'vehicle_number'    => $snapshotData['vehicle_number'] ?? 'N/A',
@@ -309,9 +308,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
     {
         return $this->execute(function () use ($vehicleTypeId) {
             if ($vehicleTypeId !== null) {
-                // Validate vehicle type hợp lệ
-                $vehicleType = \App\Modules\User\Model\Enums\VehicleType::tryFrom($vehicleTypeId);
-                if ($vehicleType === null || $vehicleType === \App\Modules\User\Model\Enums\VehicleType::Unknown) {
+                if (!in_array($vehicleTypeId, [1, 2, 3, 4, 5, 6], true)) {
                     $this->throw('Loại xe không hợp lệ.', 422);
                 }
 

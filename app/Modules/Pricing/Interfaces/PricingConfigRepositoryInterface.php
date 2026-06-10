@@ -16,7 +16,9 @@ interface PricingConfigRepositoryInterface extends BaseRepositoryInterface
      * @param int $vehicleType
      * @return PricingConfig|null
      */
-    public function findByVehicleType(int $vehicleType): ?PricingConfig;
+    public function findActiveByVehicleTypeId(int $vehicleTypeId): ?PricingConfig;
+
+    public function findLatestByVehicleTypeId(int $vehicleTypeId): ?PricingConfig;
 
     /**
      * Get all configs.
@@ -24,4 +26,6 @@ interface PricingConfigRepositoryInterface extends BaseRepositoryInterface
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function getAllConfigs(): \Illuminate\Database\Eloquent\Collection;
+
+    public function getAllLatestConfigs(): \Illuminate\Database\Eloquent\Collection;
 }

@@ -19,10 +19,10 @@ final class PricingConfigHistoryRepository extends BaseRepository implements Pri
     /**
      * @inheritDoc
      */
-    public function getByVehicleType(int $vehicleType): Collection
+    public function getByVehicleTypeId(int $vehicleTypeId): Collection
     {
         return $this->getQuery()
-            ->where('vehicle_type', $vehicleType)
+            ->where('vehicle_type_id', $vehicleTypeId)
             ->orderByDesc('created_at')
             ->get();
     }

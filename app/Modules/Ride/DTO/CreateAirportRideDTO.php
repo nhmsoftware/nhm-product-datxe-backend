@@ -40,7 +40,7 @@ final readonly class CreateAirportRideDTO
             destinationLng: (float) $request->input('destination_lng'),
             travelDate: $request->input('travel_date'),
             travelTime: $request->input('travel_time'),
-            vehicleType: (int) $request->input('vehicle_type'),
+            vehicleType: (int) $request->input('vehicle_type_id', $request->input('vehicle_type')),
             airportId: (int) $request->input('airport_id'),
             airportDirection: (int) $request->input('airport_direction'),
             voucherCode: $request->input('voucher_code')

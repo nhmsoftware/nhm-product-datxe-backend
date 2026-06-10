@@ -19,20 +19,22 @@ final class ConfigurePricingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'vehicle_type'     => ['required', 'integer'],
+            'vehicle_type_id'  => ['required', 'integer', 'min:1'],
             'base_price'       => ['required', 'numeric', 'gt:0'],
             'distance_rate'    => ['required', 'numeric', 'min:0'],
             'time_rate'        => ['required', 'numeric', 'min:0'],
             'min_fare'         => ['required', 'numeric', 'min:0', 'gte:base_price'],
             'surge_multiplier' => ['nullable', 'numeric', 'min:0'],
             'commission_rate'  => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'is_active'        => ['nullable', 'boolean'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'vehicle_type.required' => 'Vui lòng chọn loại xe.',
+            'vehicle_type_id.required' => 'Vui lòng chọn loại xe.',
+            'vehicle_type_id.min' => 'Loại xe không hợp lệ.',
             'base_price.required'   => 'Giá mở cửa không hợp lệ.',
             'base_price.numeric'    => 'Giá mở cửa không hợp lệ.',
             'base_price.gt'         => 'Giá mở cửa không được dưới 0 đ.',

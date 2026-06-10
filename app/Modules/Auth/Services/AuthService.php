@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Modules\Auth\Services;
 
 use App\Core\Services\BaseService;
-use App\Core\Services\ServiceException;
 use App\Core\Services\ServiceReturn;
 use App\Modules\Auth\DTO\AppleLoginDTO;
 use App\Modules\Auth\DTO\ForgotPasswordDTO;

@@ -8,8 +8,8 @@ use App\Core\Traits\HasBigIntId;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideType;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
-use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\Ride\Model\DeliveryOrder;
+use App\Modules\Ride\Model\VehicleTypeRef;
 use App\Modules\User\Model\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,7 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property numeric $destination_lng
  * @property int $distance Distance in meters
  * @property int $duration Duration in seconds
- * @property VehicleType $vehicle_type
+ * @property int $vehicle_type
  * @property RideType $ride_type
  * @property string|null $travel_date
  * @property string|null $travel_time
@@ -145,7 +145,7 @@ class Ride extends Model
         'destination_lng' => 'decimal:7',
         'distance' => 'integer',
         'duration' => 'integer',
-        'vehicle_type' => VehicleType::class,
+        'vehicle_type' => 'integer',
         'ride_type' => RideType::class,
         'travel_date' => 'date',
         'travel_time' => 'string',
@@ -207,5 +207,10 @@ class Ride extends Model
     public function deliveryOrder(): HasOne
     {
         return $this->hasOne(DeliveryOrder::class, 'ride_id', 'id');
+    }
+
+    public function vehicleTypeRef(): BelongsTo
+    {
+        return $this->belongsTo(VehicleTypeRef::class, 'vehicle_type', 'id');
     }
 }

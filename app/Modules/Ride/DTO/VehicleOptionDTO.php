@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\Ride\DTO;
 
-use App\Modules\Ride\Model\Enums\VehicleType;
-
 /**
  * DTO đại diện cho một loại xe trong danh sách lựa chọn (UC-09).
  * Chứa thông tin hiển thị cho khách hàng.
@@ -43,18 +41,22 @@ final class VehicleOptionDTO
         );
     }
 
-    /**
-     * Khởi tạo từ VehicleType enum và giá đã tính toán.
-     */
-    public static function fromVehicleType(VehicleType $type, float $estimatedFare): self
+    public static function fromMetadata(
+        int $vehicleType,
+        string $name,
+        string $description,
+        int $capacity,
+        string $estimatedWaitTime,
+        float $estimatedFare
+    ): self
     {
         return new self(
-            vehicleType:       $type->value,
-            name:              $type->getLabel(),
-            description:       $type->getDescription(),
-            capacity:          $type->getCapacity(),
+            vehicleType:       $vehicleType,
+            name:              $name,
+            description:       $description,
+            capacity:          $capacity,
             estimatedFare:     $estimatedFare,
-            estimatedWaitTime: $type->getEstimatedWaitTime(),
+            estimatedWaitTime: $estimatedWaitTime,
             isAvailable:       true,
         );
     }

@@ -18,12 +18,15 @@ final class PricingConfigHistory extends Model
 
     protected $fillable = [
         'vehicle_type',
+        'vehicle_type_id',
         'old_config',
         'new_config',
         'admin_id',
     ];
 
     protected $casts = [
+        'vehicle_type' => 'integer',
+        'vehicle_type_id' => 'integer',
         'old_config' => 'array',
         'new_config' => 'array',
     ];

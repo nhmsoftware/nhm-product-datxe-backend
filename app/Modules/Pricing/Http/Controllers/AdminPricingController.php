@@ -43,7 +43,7 @@ final class AdminPricingController extends BaseController
             required: true,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'vehicle_type', type: 'integer'),
+                    new OA\Property(property: 'vehicle_type_id', type: 'integer'),
                     new OA\Property(property: 'conditions', type: 'array', items: new OA\Items(type: 'string')),
                     new OA\Property(property: 'multiplier', type: 'number'),
                     new OA\Property(property: 'start_time', type: 'string', format: 'H:i'),
@@ -102,13 +102,14 @@ final class AdminPricingController extends BaseController
             required: true,
             content: new OA\JsonContent(
                 properties: [
-                    new OA\Property(property: 'vehicle_type', type: 'integer', example: 6, description: '1: Bike, 2: Car4, 3: Car7, 4: Car9, 6: Chauffeur'),
+                    new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 6, description: 'ID loại xe trong catalog'),
                     new OA\Property(property: 'base_price', type: 'number', example: 50000),
                     new OA\Property(property: 'distance_rate', type: 'number', example: 15000),
                     new OA\Property(property: 'time_rate', type: 'number', example: 1000),
                     new OA\Property(property: 'min_fare', type: 'number', example: 60000),
                     new OA\Property(property: 'surge_multiplier', type: 'number', example: 1.0),
                     new OA\Property(property: 'commission_rate', type: 'number', example: 25.0),
+                    new OA\Property(property: 'is_active', type: 'boolean', example: true),
                 ]
             )
         ),
@@ -161,5 +162,15 @@ final class AdminPricingController extends BaseController
             return $this->sendError($result->getMessage(), $result->getCode());
         }
         return $this->sendSuccess($result->getData(), 'Đặt lại cấu hình giá mặc định thành công.');
+    }
+
+    public function archiveConfig(int $vehicleTypeId): JsonResponse
+    {
+        $result = $this->pricingService->archiveConfig($vehicleTypeId);
+        if ($result->isError()) {
+            return $this->sendError($result->getMessage(), $result->getCode());
+        }
+
+        return $this->sendSuccess($result->getData(), 'Đã lưu trữ cấu hình giá thành công.');
     }
 }

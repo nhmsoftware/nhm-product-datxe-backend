@@ -40,6 +40,10 @@ final class ScheduledPricingRepository implements ScheduledPricingRepositoryInte
                 $rangesData = $ruleData['ranges'] ?? [];
                 unset($ruleData['ranges']);
 
+                if (isset($ruleData['vehicle_type_id']) && !isset($ruleData['vehicle_type'])) {
+                    $ruleData['vehicle_type'] = $ruleData['vehicle_type_id'];
+                }
+
                 $ruleData['is_active'] = true;
                 $rule = ScheduledPricingRule::create($ruleData);
 
