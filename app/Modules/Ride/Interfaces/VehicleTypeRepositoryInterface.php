@@ -17,4 +17,6 @@ interface VehicleTypeRepositoryInterface extends BaseRepositoryInterface
     public function getAllVehicleTypes(): Collection;
 
     public function getBookableVehicleTypesForService(?string $serviceType = null): Collection;
+
+    public function findByName(string $name): ?VehicleTypeRef;
 }

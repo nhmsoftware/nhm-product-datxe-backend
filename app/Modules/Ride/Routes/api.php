@@ -54,6 +54,9 @@ Route::prefix('v1/meta')->group(function () {
 
 Route::prefix('v1/admin/meta')->middleware(['auth:sanctum'])->group(function () {
     Route::get('vehicle-types', [VehicleTypeController::class, 'listAll'])->name('admin.meta.vehicle_types.index');
+    Route::post('vehicle-types', [VehicleTypeController::class, 'store'])->name('admin.meta.vehicle_types.store');
+    Route::put('vehicle-types/{id}', [VehicleTypeController::class, 'update'])->name('admin.meta.vehicle_types.update');
+    Route::delete('vehicle-types/{id}', [VehicleTypeController::class, 'destroy'])->name('admin.meta.vehicle_types.destroy');
 });
 
 /**

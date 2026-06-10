@@ -38,6 +38,12 @@ final class VehicleTypeRepository extends BaseRepository implements VehicleTypeR
         return $this->getQuery()->where('code', $code)->first();
     }
 
+    public function findByName(string $name): ?VehicleTypeRef
+    {
+        /** @var VehicleTypeRef|null */
+        return $this->getQuery()->whereRaw('LOWER(name_vi) = ?', [mb_strtolower($name)])->first();
+    }
+
     public function getBookableVehicleTypesForService(?string $serviceType = null): Collection
     {
         $types = $this->getQuery()

@@ -93,6 +93,98 @@ final class VehicleTypeCatalogService
         private readonly VehicleTypeRepositoryInterface $vehicleTypeRepository
     ) {}
 
+    public function create(array $data): array
+    {
+        $name = trim((string) ($data['name_vi'] ?? ''));
+        if ($name === '') {
+            throw new \InvalidArgumentException('Tên phương tiện là bắt buộc.');
+        }
+
+        if ($this->vehicleTypeRepository->findByName($name) !== null) {
+            throw new \InvalidArgumentException('Tên phương tiện đã tồn tại.');
+        }
+
+        $code = trim((string) ($data['code'] ?? ''));
+        if ($code === '') {
+            $code = $this->slugifyCode($name);
+        }
+
+        if ($this->vehicleTypeRepository->findByCode($code) !== null) {
+            $code = $this->resolveUniqueCode($code);
+        }
+
+        $nextId = max(array_column($this->listAll(), 'id')) + 1;
+
+        $type = $this->vehicleTypeRepository->create([
+            'id' => $nextId,
+            'code' => $code,
+            'name_vi' => $name,
+            'description_vi' => $data['description_vi'] ?? null,
+            'capacity' => (int) ($data['capacity'] ?? 1),
+            'estimated_wait_time' => $data['estimated_wait_time'] ?? null,
+            'service_scopes' => array_values(array_unique($data['service_scopes'] ?? [])),
+            'is_bookable' => (bool) ($data['is_bookable'] ?? true),
+            'is_active' => (bool) ($data['is_active'] ?? true),
+            'sort_order' => (int) ($data['sort_order'] ?? $nextId),
+        ]);
+
+        return $this->normalizeType($type);
+    }
+
+    public function update(int $id, array $data): array
+    {
+        $type = $this->vehicleTypeRepository->findById($id);
+        if ($type === null) {
+            throw new \InvalidArgumentException('Không tìm thấy loại phương tiện.');
+        }
+
+        $name = trim((string) ($data['name_vi'] ?? $type->name_vi));
+        if ($name === '') {
+            throw new \InvalidArgumentException('Tên phương tiện là bắt buộc.');
+        }
+
+        $existingByName = $this->vehicleTypeRepository->findByName($name);
+        if ($existingByName !== null && (int) $existingByName->id !== $id) {
+            throw new \InvalidArgumentException('Tên phương tiện đã tồn tại.');
+        }
+
+        $rawCode = trim((string) ($data['code'] ?? $type->code));
+        $code = $rawCode !== '' ? $rawCode : $this->slugifyCode($name);
+        $existingByCode = $this->vehicleTypeRepository->findByCode($code);
+        if ($existingByCode !== null && (int) $existingByCode->id !== $id) {
+            throw new \InvalidArgumentException('Mã phương tiện đã tồn tại.');
+        }
+
+        $updated = $this->vehicleTypeRepository->updateById($id, [
+            'code' => $code,
+            'name_vi' => $name,
+            'description_vi' => $data['description_vi'] ?? $type->description_vi,
+            'capacity' => isset($data['capacity']) ? (int) $data['capacity'] : (int) $type->capacity,
+            'estimated_wait_time' => $data['estimated_wait_time'] ?? $type->estimated_wait_time,
+            'service_scopes' => array_values(array_unique($data['service_scopes'] ?? ($type->service_scopes ?? []))),
+            'is_bookable' => isset($data['is_bookable']) ? (bool) $data['is_bookable'] : (bool) $type->is_bookable,
+            'is_active' => isset($data['is_active']) ? (bool) $data['is_active'] : (bool) $type->is_active,
+            'sort_order' => isset($data['sort_order']) ? (int) $data['sort_order'] : (int) $type->sort_order,
+        ]);
+
+        return $this->normalizeType($updated ?? $type);
+    }
+
+    public function archive(int $id): array
+    {
+        $type = $this->vehicleTypeRepository->findById($id);
+        if ($type === null) {
+            throw new \InvalidArgumentException('Không tìm thấy loại phương tiện.');
+        }
+
+        $updated = $this->vehicleTypeRepository->updateById($id, [
+            'is_active' => false,
+            'is_bookable' => false,
+        ]);
+
+        return $this->normalizeType($updated ?? $type);
+    }
+
     public function listActive(): array
     {
         try {
@@ -224,5 +316,27 @@ final class VehicleTypeCatalogService
             'is_active' => (bool) $type->is_active,
             'sort_order' => (int) $type->sort_order,
         ];
+    }
+
+    private function slugifyCode(string $name): string
+    {
+        $value = mb_strtolower(trim($name));
+        $value = preg_replace('/[^a-z0-9]+/u', '_', $value) ?? '';
+        $value = trim($value, '_');
+
+        return $value !== '' ? $value : 'vehicle_type';
+    }
+
+    private function resolveUniqueCode(string $baseCode): string
+    {
+        $suffix = 2;
+        $candidate = $baseCode;
+
+        while ($this->vehicleTypeRepository->findByCode($candidate) !== null) {
+            $candidate = $baseCode . '_' . $suffix;
+            $suffix++;
+        }
+
+        return $candidate;
     }
 }

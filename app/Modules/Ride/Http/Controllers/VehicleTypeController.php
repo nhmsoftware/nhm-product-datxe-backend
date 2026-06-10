@@ -38,4 +38,34 @@ final class VehicleTypeController extends BaseController
             'Lấy danh mục loại xe thành công.'
         );
     }
+
+    public function store(\Illuminate\Http\Request $request): JsonResponse
+    {
+        try {
+            $type = $this->vehicleTypeCatalogService->create($request->all());
+            return $this->sendSuccess($type, 'Tạo phương tiện thành công.', 201);
+        } catch (\InvalidArgumentException $e) {
+            return $this->sendError($e->getMessage(), 422);
+        }
+    }
+
+    public function update(\Illuminate\Http\Request $request, int $id): JsonResponse
+    {
+        try {
+            $type = $this->vehicleTypeCatalogService->update($id, $request->all());
+            return $this->sendSuccess($type, 'Cập nhật phương tiện thành công.');
+        } catch (\InvalidArgumentException $e) {
+            return $this->sendError($e->getMessage(), 422);
+        }
+    }
+
+    public function destroy(int $id): JsonResponse
+    {
+        try {
+            $type = $this->vehicleTypeCatalogService->archive($id);
+            return $this->sendSuccess($type, 'Lưu trữ phương tiện thành công.');
+        } catch (\InvalidArgumentException $e) {
+            return $this->sendError($e->getMessage(), 422);
+        }
+    }
 }
