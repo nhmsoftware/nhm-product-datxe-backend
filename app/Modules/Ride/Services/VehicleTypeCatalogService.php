@@ -95,6 +95,8 @@ final class VehicleTypeCatalogService
 
     public function create(array $data): array
     {
+        $this->ensurePersistedLegacyCatalog();
+
         $name = trim((string) ($data['name_vi'] ?? ''));
         if ($name === '') {
             throw new \InvalidArgumentException('Tên phương tiện là bắt buộc.');
@@ -133,6 +135,8 @@ final class VehicleTypeCatalogService
 
     public function update(int $id, array $data): array
     {
+        $this->ensurePersistedLegacyCatalog();
+
         $type = $this->vehicleTypeRepository->findById($id);
         if ($type === null) {
             throw new \InvalidArgumentException('Không tìm thấy loại phương tiện.');
@@ -172,6 +176,8 @@ final class VehicleTypeCatalogService
 
     public function archive(int $id): array
     {
+        $this->ensurePersistedLegacyCatalog();
+
         $type = $this->vehicleTypeRepository->findById($id);
         if ($type === null) {
             throw new \InvalidArgumentException('Không tìm thấy loại phương tiện.');
@@ -187,6 +193,8 @@ final class VehicleTypeCatalogService
 
     public function listActive(): array
     {
+        $this->ensurePersistedLegacyCatalog();
+
         try {
             $items = $this->vehicleTypeRepository->getActiveVehicleTypes()
                 ->map(fn ($type) => $this->normalizeType($type))
@@ -201,6 +209,8 @@ final class VehicleTypeCatalogService
 
     public function listAll(): array
     {
+        $this->ensurePersistedLegacyCatalog();
+
         try {
             $items = $this->vehicleTypeRepository->getAllVehicleTypes()
                 ->map(fn ($type) => $this->normalizeType($type))
@@ -215,6 +225,8 @@ final class VehicleTypeCatalogService
 
     public function listBookableByService(?string $serviceType = null): array
     {
+        $this->ensurePersistedLegacyCatalog();
+
         try {
             $items = $this->vehicleTypeRepository->getBookableVehicleTypesForService($serviceType)
                 ->map(fn ($type) => $this->normalizeType($type))
@@ -246,6 +258,8 @@ final class VehicleTypeCatalogService
 
     public function getMetadataById(int $id): ?array
     {
+        $this->ensurePersistedLegacyCatalog();
+
         try {
             $type = $this->vehicleTypeRepository->findById($id);
         } catch (Throwable) {
@@ -316,6 +330,32 @@ final class VehicleTypeCatalogService
             'is_active' => (bool) $type->is_active,
             'sort_order' => (int) $type->sort_order,
         ];
+    }
+
+    private function ensurePersistedLegacyCatalog(): void
+    {
+        try {
+            $model = $this->vehicleTypeRepository->getModelInstance();
+
+            foreach (self::LEGACY_METADATA as $id => $type) {
+                $model->newQuery()->updateOrCreate(
+                    ['id' => $id],
+                    [
+                        'code' => $type['code'],
+                        'name_vi' => $type['name_vi'],
+                        'description_vi' => $type['description_vi'],
+                        'capacity' => $type['capacity'],
+                        'estimated_wait_time' => $type['estimated_wait_time'],
+                        'service_scopes' => $type['service_scopes'],
+                        'is_bookable' => $type['is_bookable'],
+                        'is_active' => $type['is_active'],
+                        'sort_order' => $type['sort_order'],
+                    ]
+                );
+            }
+        } catch (Throwable) {
+            // Ignore bootstrap failures in mocked/unit-test paths and fall back to in-memory metadata.
+        }
     }
 
     private function slugifyCode(string $name): string

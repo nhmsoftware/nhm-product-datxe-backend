@@ -20,12 +20,12 @@ final class ConfigurePricingRequest extends FormRequest
     {
         return [
             'vehicle_type_id'  => ['required', 'integer', 'min:1'],
-            'base_price'       => ['required', 'numeric', 'gt:0'],
-            'distance_rate'    => ['required', 'numeric', 'min:0'],
-            'time_rate'        => ['required', 'numeric', 'min:0'],
-            'min_fare'         => ['required', 'numeric', 'min:0', 'gte:base_price'],
+            'base_price'       => ['required', 'numeric', 'min:0'],
+            'distance_rate'    => ['required', 'numeric', 'gt:0'],
+            'time_rate'        => ['required', 'numeric', 'gt:0'],
+            'min_fare'         => ['required', 'numeric', 'gt:0', 'gte:base_price'],
             'surge_multiplier' => ['nullable', 'numeric', 'min:0'],
-            'commission_rate'  => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'commission_rate'  => ['required', 'numeric', 'gt:0', 'max:100'],
             'is_active'        => ['nullable', 'boolean'],
         ];
     }
@@ -37,20 +37,20 @@ final class ConfigurePricingRequest extends FormRequest
             'vehicle_type_id.min' => 'Loại xe không hợp lệ.',
             'base_price.required'   => 'Giá mở cửa không hợp lệ.',
             'base_price.numeric'    => 'Giá mở cửa không hợp lệ.',
-            'base_price.gt'         => 'Giá mở cửa không được dưới 0 đ.',
+            'base_price.min'        => 'Giá mở cửa không được nhỏ hơn 0 đ.',
             'min_fare.required'     => 'Giá tối thiểu không hợp lệ.',
             'min_fare.numeric'      => 'Giá tối thiểu không hợp lệ.',
-            'min_fare.min'          => 'Giá tối thiểu không hợp lệ.',
+            'min_fare.gt'           => 'Giá tối thiểu phải lớn hơn 0 đ.',
             'min_fare.gte'          => 'Giá tối thiểu phải lớn hơn hoặc bằng giá mở cửa.',
             'distance_rate.required' => 'Giá theo kilomet không hợp lệ.',
             'distance_rate.numeric'  => 'Giá theo kilomet không hợp lệ.',
-            'distance_rate.min'      => 'Giá theo kilomet không hợp lệ.',
+            'distance_rate.gt'       => 'Giá theo kilomet phải lớn hơn 0 đ.',
             'time_rate.required'     => 'Giá theo phút không hợp lệ.',
             'time_rate.numeric'      => 'Giá theo phút không hợp lệ.',
-            'time_rate.min'          => 'Giá theo phút không hợp lệ.',
+            'time_rate.gt'           => 'Giá theo phút phải lớn hơn 0 đ.',
             'commission_rate.required' => 'Tỷ lệ hoa hồng không hợp lệ.',
             'commission_rate.numeric'  => 'Tỷ lệ hoa hồng không hợp lệ.',
-            'commission_rate.min'      => 'Tỷ lệ hoa hồng không hợp lệ.',
+            'commission_rate.gt'       => 'Tỷ lệ hoa hồng phải lớn hơn 0%.',
             'commission_rate.max'      => 'Tỷ lệ hoa hồng không hợp lệ.',
         ];
     }
