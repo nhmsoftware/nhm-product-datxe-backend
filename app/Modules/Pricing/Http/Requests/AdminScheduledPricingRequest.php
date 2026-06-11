@@ -42,7 +42,18 @@ final class AdminScheduledPricingRequest extends FormRequest
         return [
             'rules.*.ranges.*.end_km.gt' => 'Khoảng KM không hợp lệ. start_km phải nhỏ hơn end_km.',
             'dispatch_mode.in'           => 'Chế độ phân phối không hợp lệ.',
-            'rules.*.ranges.min'         => 'Vui lòng nhập giá cho khoảng KM.',
+            'rules.*.ranges.required'    => 'Vui lòng thêm ít nhất một khoảng KM cho bảng giá.',
+            'rules.*.ranges.array'       => 'Danh sách khoảng KM không hợp lệ.',
+            'rules.*.ranges.min'         => 'Vui lòng thêm ít nhất một khoảng KM cho bảng giá.',
+            'rules.*.ranges.*.start_km.required' => 'Vui lòng nhập KM bắt đầu.',
+            'rules.*.ranges.*.start_km.numeric'  => 'KM bắt đầu không hợp lệ.',
+            'rules.*.ranges.*.start_km.min'      => 'KM bắt đầu không được âm.',
+            'rules.*.ranges.*.end_km.required'   => 'Vui lòng nhập KM kết thúc.',
+            'rules.*.ranges.*.end_km.numeric'    => 'KM kết thúc không hợp lệ.',
+            'rules.*.ranges.*.price.required'    => 'Vui lòng nhập giá cho khoảng KM.',
+            'rules.*.ranges.*.price.numeric'     => 'Giá cho khoảng KM không hợp lệ.',
+            'rules.*.ranges.*.price.min'         => 'Giá cho khoảng KM không được âm.',
+            'rules.*.ranges.*.unit.required'     => 'Vui lòng chọn đơn vị tính cho khoảng KM.',
             'rules.*.vehicle_type_id.min' => 'Loại xe không hợp lệ.',
             'rules.*.vehicle_type.min'    => 'Loại xe không hợp lệ.',
         ];
@@ -85,6 +96,13 @@ final class AdminScheduledPricingRequest extends FormRequest
                 }
 
                 $ranges = $rule['ranges'] ?? [];
+                if (!is_array($ranges) || count($ranges) === 0) {
+                    $validator->errors()->add(
+                        "rules.{$ruleIndex}.ranges",
+                        'Vui lòng thêm ít nhất một khoảng KM cho bảng giá.'
+                    );
+                    continue;
+                }
                 
                 // Sort ranges by start_km
                 usort($ranges, fn($a, $b) => $a['start_km'] <=> $b['start_km']);
