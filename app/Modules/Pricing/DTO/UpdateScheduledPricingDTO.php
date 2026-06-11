@@ -21,6 +21,18 @@ final class UpdateScheduledPricingDTO
 
     public static function fromRequest(Request $request): self
     {
+        $rules = collect((array) $request->input('rules', []))
+            ->map(function ($rule) {
+                if (!is_array($rule)) {
+                    return $rule;
+                }
+
+                $rule['vehicle_type_id'] = (int) ($rule['vehicle_type_id'] ?? $rule['vehicle_type'] ?? 0);
+
+                return $rule;
+            })
+            ->all();
+
         return new self(
             preBookSurcharge: (float) $request->input('pre_book_surcharge', 0),
             nightSurcharge:   (float) $request->input('night_surcharge', 0),
@@ -28,7 +40,7 @@ final class UpdateScheduledPricingDTO
             waitingSurcharge: (float) $request->input('waiting_surcharge', 0),
             tollSurcharge:    (float) $request->input('toll_surcharge', 0),
             dispatchMode:     (int) $request->input('dispatch_mode', 1),
-            rules:            (array) $request->input('rules', []),
+            rules:            $rules,
         );
     }
 
