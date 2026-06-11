@@ -23,6 +23,14 @@ use App\Modules\Driver\DTO\StartRideDTO;
 use App\Modules\Driver\DTO\CompleteRideDTO;
 use App\Modules\Order\Events\FoodOrderStatusUpdated;
 use App\Modules\Driver\Interfaces\DriverOperationServiceInterface;
+use App\Modules\Finance\Interfaces\CommissionRuleServiceInterface;
+use App\Modules\Finance\Interfaces\DriverSubscriptionRepositoryInterface;
+use App\Modules\Finance\Interfaces\FinanceRealtimeInterface;
+use App\Modules\Finance\Interfaces\WalletRepositoryInterface;
+use App\Modules\Finance\Interfaces\WalletTransactionRepositoryInterface;
+use App\Modules\Finance\Model\Enums\CommissionServiceType;
+use App\Modules\Finance\Model\Enums\CommissionTargetType;
+use App\Modules\Finance\Model\Enums\WalletTransactionType;
 use App\Modules\Food\Interfaces\FoodOrderRepositoryInterface;
 use App\Modules\Food\Model\Enums\FoodOrderStatus;
 use App\Modules\Operation\Interfaces\LocationRepositoryInterface;
@@ -60,6 +68,11 @@ final class DriverOperationService extends BaseService implements DriverOperatio
         private readonly VoucherServiceInterface $voucherService,
         private readonly RideTrackingRealtimeInterface $rideTrackingRealtime,
         private readonly FoodOrderRepositoryInterface $foodOrderRepository,
+        private readonly CommissionRuleServiceInterface $commissionRuleService,
+        private readonly DriverSubscriptionRepositoryInterface $driverSubscriptionRepository,
+        private readonly WalletRepositoryInterface $walletRepository,
+        private readonly WalletTransactionRepositoryInterface $walletTransactionRepository,
+        private readonly FinanceRealtimeInterface $financeRealtimeService,
     ) {}
 
     /**
@@ -247,9 +260,13 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 $this->throw('Bạn chưa đủ gần điểm đến để hoàn thành chuyến đi.', 422);
             }
 
-            // Tính toán chi tiết thu nhập (Rule: Phí dịch vụ 20%)
+            // Tính toán chi tiết thu nhập theo cấu hình hoa hồng + giảm phí từ gói thành viên nếu có
             $finalFare = (float) $ride->total_price;
-            $serviceFee = round($finalFare * 0.2, 2);
+            $commissionRate = $this->resolveCommissionRateForRide($ride);
+            $serviceFeeReductionPercent = $this->resolveServiceFeeReductionPercent((string) $dto->userId);
+            $effectiveCommissionRate = max(0, round($commissionRate * ((100 - $serviceFeeReductionPercent) / 100), 4));
+
+            $serviceFee = round($finalFare * ($effectiveCommissionRate / 100), 2);
             $driverEarnings = round($finalFare - $serviceFee, 2);
 
             $updated = $this->rideRepository->completeTrip(
@@ -259,6 +276,36 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                 $driverEarnings
             );
             $this->validate($updated, 'Không thể hoàn thành chuyến xe. Vui lòng thử lại.', 500);
+
+            $wallet = $this->walletRepository->firstOrCreateForUser((string) $dto->userId);
+            $balanceBefore = (float) $wallet->balance;
+            $balanceAfter = round($balanceBefore + $driverEarnings, 2);
+            $totalEarnedAfter = round((float) $wallet->total_earned + $driverEarnings, 2);
+
+            $this->walletRepository->updateById($wallet->id, [
+                'balance' => $balanceAfter,
+                'total_earned' => $totalEarnedAfter,
+            ]);
+
+            $this->walletTransactionRepository->create([
+                'wallet_id' => $wallet->id,
+                'type' => WalletTransactionType::EARNINGS,
+                'amount' => $driverEarnings,
+                'balance_before' => $balanceBefore,
+                'balance_after' => $balanceAfter,
+                'description' => 'Thu nhập từ chuyến đi #' . $ride->id,
+                'reference_type' => Ride::class,
+                'reference_id' => (string) $ride->id,
+            ]);
+
+            $this->financeRealtimeService->publishWalletEvent([
+                'event' => 'wallet.updated',
+                'user_id' => (string) $dto->userId,
+                'balance' => $balanceAfter,
+                'total_earned' => $totalEarnedAfter,
+                'type' => 'ride_earnings',
+                'reference_id' => (string) $ride->id,
+            ]);
 
             // [Đồng bộ FoodOrder] Nếu đây là chuyến giao đồ ăn, tự động cập nhật trạng thái FoodOrder → DELIVERED
             if ($ride->ride_type === RideType::FOOD_DELIVERY) {
@@ -283,8 +330,10 @@ final class DriverOperationService extends BaseService implements DriverOperatio
                     'ride_id' => $ride->id,
                     'status' => RideStatus::COMPLETED->value,
                     'final_fare' => $finalFare,
+                    'commission_rate' => $effectiveCommissionRate,
                     'service_fee' => $serviceFee,
-                    'driver_earnings' => $driverEarnings
+                    'driver_earnings' => $driverEarnings,
+                    'wallet_balance' => $balanceAfter,
                 ],
                 message: 'Chuyến đi đã hoàn thành. Vui lòng xem tóm tắt thu nhập.'
             );
@@ -609,5 +658,38 @@ final class DriverOperationService extends BaseService implements DriverOperatio
             sin($dLng / 2) * sin($dLng / 2);
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
         return $earthRadius * $c;
+    }
+
+    private function resolveCommissionRateForRide(\App\Modules\Ride\Model\Ride $ride): float
+    {
+        $serviceType = match ($ride->ride_type) {
+            RideType::CITY => CommissionServiceType::RIDE,
+            RideType::DELIVERY, RideType::CHAUFFEUR => CommissionServiceType::DELIVERY,
+            RideType::INTERCITY => CommissionServiceType::INTERCITY,
+            RideType::AIRPORT => CommissionServiceType::AIRPORT,
+            RideType::FOOD_DELIVERY => CommissionServiceType::FOOD,
+        };
+
+        $commissionResult = $this->commissionRuleService->getApplicableCommission(
+            CommissionTargetType::DRIVER,
+            $serviceType
+        );
+
+        if ($commissionResult->isSuccess()) {
+            $rule = $commissionResult->getData();
+            return (float) ($rule['commission_rate'] ?? 20.0);
+        }
+
+        return 20.0;
+    }
+
+    private function resolveServiceFeeReductionPercent(string $driverId): float
+    {
+        $subscription = $this->driverSubscriptionRepository->getActiveByDriverId($driverId);
+        if ($subscription?->package === null) {
+            return 0.0;
+        }
+
+        return min(100.0, max(0.0, (float) $subscription->package->service_fee_reduction_percent));
     }
 }
