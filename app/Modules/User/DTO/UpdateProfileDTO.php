@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\User\DTO;
 
 use App\Modules\User\Http\Requests\EditProfileRequest;
+use Illuminate\Http\UploadedFile;
 
 /**
  * DTO cho request cập nhật profile (UC-05).
@@ -15,6 +16,7 @@ final class UpdateProfileDTO
     public function __construct(
         public readonly string $userId,
         public readonly array $data,
+        public readonly ?UploadedFile $avatar = null,
     ) {
     }
 
@@ -22,7 +24,8 @@ final class UpdateProfileDTO
     {
         return new self(
             userId: (string) $request->user()->id,
-            data:   $request->validated(),
+            data:   $request->safe()->except(['avatar']),
+            avatar: $request->file('avatar'),
         );
     }
 }

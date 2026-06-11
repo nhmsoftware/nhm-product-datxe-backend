@@ -97,8 +97,10 @@ final class ProfileController extends BaseController
         requestBody: new OA\RequestBody(
             description: 'Các trường thông tin cần cập nhật. Chỉ cần gửi những trường muốn thay đổi.',
             required: true,
-            content: new OA\JsonContent(
-                properties: [
+            content: new OA\MediaType(
+                mediaType: 'multipart/form-data',
+                schema: new OA\Schema(
+                    properties: [
                     // --- Common Fields ---
                     new OA\Property(property: 'full_name', type: 'string', example: 'Nguyễn Văn B'),
                     new OA\Property(property: 'email', type: 'string', format: 'email', example: 'new.email@example.com'),
@@ -110,7 +112,7 @@ final class ProfileController extends BaseController
                         example: 1
                     ),
                     new OA\Property(property: 'birthday', description: 'Ngày (YYYY-MM-DD)', type: 'string', format: 'date', example: '1995-08-15'),
-                    new OA\Property(property: 'avatar', description: 'URL ảnh đại diện mới', type: 'string', example: 'https://example.com/avatar.jpg'),
+                    new OA\Property(property: 'avatar', description: 'Ảnh đại diện upload mới', type: 'string', format: 'binary'),
 
                     // --- Driver-Specific Fields ---
                     new OA\Property(property: 'address', description: '(Driver) thường trú', example: '123 Đường ABC, Quận 1, TP. HCM'),
@@ -129,6 +131,7 @@ final class ProfileController extends BaseController
                     new OA\Property(property: 'tax_code', description: '(Merchant) Mã số thuế', type: 'string', example: '0312345678'),
                 ],
                 type: 'object'
+                )
             )
         ),
         tags: ['User Profile'],

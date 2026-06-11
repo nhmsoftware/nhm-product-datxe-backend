@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Services;
 
+use App\Core\Helpers\FileHelper;
 use App\Core\Services\BaseService;
 use App\Core\Services\ServiceReturn;
 use App\Modules\User\DTO\UpdateProfileDTO;
@@ -54,6 +55,16 @@ final class ProfileService extends BaseService implements ProfileServiceInterfac
             }
 
             $data = $dto->data;
+
+            if ($dto->avatar !== null) {
+                $newAvatarPath = FileHelper::uploadToPrivate($dto->avatar, 'users/avatars');
+
+                if (!empty($user->getRawOriginal('avatar'))) {
+                    FileHelper::deleteFromPrivate($user->getRawOriginal('avatar'));
+                }
+
+                $data['avatar'] = $newAvatarPath;
+            }
 
             // 1. Tách dữ liệu sensitive / non-sensitive
             $sensitiveData    = array_intersect_key($data, array_flip(self::SENSITIVE_FIELDS));

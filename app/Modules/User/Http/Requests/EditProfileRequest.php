@@ -28,7 +28,7 @@ class EditProfileRequest extends FormRequest
     {
         return [
             // Thông tin cơ bản (chung cho tất cả vai trò)
-            'avatar' => 'nullable|string|max:500',
+            'avatar' => 'nullable|file|image|mimes:jpeg,jpg,png,webp|max:5120',
             'full_name' => 'required|string|max:100',
             'gender' => 'nullable|integer|in:1,2,3',
             'address' => 'nullable|string|max:500',
@@ -97,6 +97,9 @@ class EditProfileRequest extends FormRequest
 
             // gender
             'gender.in' => 'Giới tính không hợp lệ.',
+            'avatar.image' => 'Ảnh đại diện phải là file hình ảnh hợp lệ.',
+            'avatar.mimes' => 'Ảnh đại diện chỉ chấp nhận: JPEG, JPG, PNG, WEBP.',
+            'avatar.max' => 'Ảnh đại diện không được vượt quá 5MB.',
         ];
     }
 
