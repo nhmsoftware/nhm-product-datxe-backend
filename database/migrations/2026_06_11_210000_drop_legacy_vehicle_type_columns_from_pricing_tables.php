@@ -68,6 +68,13 @@ return new class extends Migration
 
     private function dropLegacyPricingIndexes(): void
     {
+        $driver = Schema::getConnection()->getDriverName();
+
+        if ($driver === 'pgsql') {
+            DB::statement('ALTER TABLE pricing_configs DROP CONSTRAINT IF EXISTS pricing_configs_vehicle_type_unique');
+            return;
+        }
+
         DB::statement('DROP INDEX IF EXISTS pricing_configs_vehicle_type_unique');
     }
 };
