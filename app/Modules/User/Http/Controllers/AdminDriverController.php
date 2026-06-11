@@ -78,7 +78,7 @@ final class AdminDriverController extends BaseController
                     new OA\Property(property: 'birthday', type: 'string', format: 'date', example: '1995-04-12'),
                     new OA\Property(property: 'address', type: 'string', example: '12 Cach Mang Thang 8, Q3, TP.HCM'),
                     new OA\Property(property: 'driver_group_type', type: 'integer', example: 1, description: '1: Xe nha, 2: Doi tac'),
-                    new OA\Property(property: 'vehicle_type', type: 'integer', example: 1),
+                    new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 1),
                     new OA\Property(property: 'vehicle_color', type: 'integer', example: 1),
                     new OA\Property(property: 'vehicle_name', type: 'string', example: 'Honda Vision'),
                     new OA\Property(property: 'vehicle_number', type: 'string', example: '59A1-12345'),
@@ -228,7 +228,7 @@ final class AdminDriverController extends BaseController
                     new OA\Property(property: 'birthday', type: 'string', format: 'date', example: '1995-04-12'),
                     new OA\Property(property: 'address', type: 'string', example: '12 Cach Mang Thang 8, Q3, TP.HCM'),
                     new OA\Property(property: 'driver_group_type', type: 'integer', example: 1),
-                    new OA\Property(property: 'vehicle_type', type: 'integer', example: 1),
+                    new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 1),
                     new OA\Property(property: 'vehicle_color', type: 'integer', example: 1),
                     new OA\Property(property: 'vehicle_name', type: 'string', example: 'Honda Vision'),
                     new OA\Property(property: 'vehicle_number', type: 'string', example: '59A1-12345'),
@@ -427,4 +427,3 @@ final class AdminDriverController extends BaseController
         ]);
     }
 }
-

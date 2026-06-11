@@ -20,9 +20,9 @@ use App\Modules\Ride\Interfaces\RideRepositoryInterface;
 use App\Modules\Ride\Interfaces\RideServiceInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideType;
-use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\Ride\DTO\AssignInternalDriverDTO;
 use App\Modules\Ride\DTO\BulkPushToPoolDTO;
+use App\Modules\Ride\Services\VehicleTypeCatalogService;
 use App\Modules\Order\Model\Enums\OrderType;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 use App\Modules\User\Model\Enums\UserRole;
@@ -42,7 +42,8 @@ final class AdminOrderService extends BaseService implements AdminOrderServiceIn
         private readonly MenuItemRepositoryInterface $menuItemRepository,
         private readonly UserRepositoryInterface $userRepository,
         private readonly RideRepositoryInterface $rideRepository,
-        private readonly RideServiceInterface $rideService
+        private readonly RideServiceInterface $rideService,
+        private readonly VehicleTypeCatalogService $vehicleTypeCatalogService,
     ) {}
 
     /**
@@ -351,6 +352,9 @@ final class AdminOrderService extends BaseService implements AdminOrderServiceIn
     public function assignDriver(string $orderId, string $driverId): ServiceReturn
     {
         return $this->execute(function () use ($orderId, $driverId) {
+            $bikeVehicleTypeId = $this->vehicleTypeCatalogService->getIdByCode('bike');
+            $this->validate($bikeVehicleTypeId !== null, 'Không tìm thấy loại xe giao đồ ăn.', 500);
+
             // Check if it is a Food Order
             $foodOrder = $this->foodOrderRepository->findById($orderId);
             if ($foodOrder) {
@@ -366,7 +370,7 @@ final class AdminOrderService extends BaseService implements AdminOrderServiceIn
                         'destination_lng'     => $foodOrder->delivery_lng ?? 0,
                         'distance'            => 0,
                         'duration'            => 0,
-                        'vehicle_type'        => VehicleType::BIKE->value,
+                        'vehicle_type'        => $bikeVehicleTypeId,
                         'ride_type'           => RideType::FOOD_DELIVERY->value,
                         'status'              => RideStatus::PENDING->value,
                         'base_price'          => $foodOrder->delivery_fee,
@@ -403,6 +407,9 @@ final class AdminOrderService extends BaseService implements AdminOrderServiceIn
     public function pushToPool(array $orderIds): ServiceReturn
     {
         return $this->execute(function () use ($orderIds) {
+            $bikeVehicleTypeId = $this->vehicleTypeCatalogService->getIdByCode('bike');
+            $this->validate($bikeVehicleTypeId !== null, 'Không tìm thấy loại xe giao đồ ăn.', 500);
+
             $rideIds = [];
 
             foreach ($orderIds as $orderId) {
@@ -420,7 +427,7 @@ final class AdminOrderService extends BaseService implements AdminOrderServiceIn
                             'destination_lng'     => $foodOrder->delivery_lng ?? 0,
                             'distance'            => 0,
                             'duration'            => 0,
-                            'vehicle_type'        => VehicleType::BIKE->value,
+                            'vehicle_type'        => $bikeVehicleTypeId,
                             'ride_type'           => RideType::FOOD_DELIVERY->value,
                             'status'              => RideStatus::PENDING->value,
                             'base_price'          => $foodOrder->delivery_fee,

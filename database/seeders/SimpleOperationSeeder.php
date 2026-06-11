@@ -12,7 +12,6 @@ use App\Modules\Ride\Model\Ride;
 use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideType;
-use App\Modules\Ride\Model\Enums\VehicleType;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -80,7 +79,7 @@ class SimpleOperationSeeder extends Seeder
                 'destination_lng' => 106.722,
                 'distance' => 5000,
                 'duration' => 900,
-                'vehicle_type' => VehicleType::CAR_4_SEATS,
+                'vehicle_type' => 2,
                 'ride_type' => RideType::NORMAL,
                 'status' => RideStatus::COMPLETED,
                 'base_price' => 50000,

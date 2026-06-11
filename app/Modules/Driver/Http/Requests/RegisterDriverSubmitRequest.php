@@ -36,7 +36,7 @@ class RegisterDriverSubmitRequest extends FormRequest
             'citizen_id'   => ['required', 'string', 'regex:/^[0-9]{12}$/'],
 
             // Thông tin phương tiện
-            'vehicle_type'   => 'required|integer|in:1,2,3,4',
+            'vehicle_type_id' => 'required|integer|min:1',
             'vehicle_name'   => 'required|string|max:255',
             'vehicle_color'  => 'required|integer|in:0,1,2,3,4,5,6,7,8,9',
             'vehicle_number' => 'required|string|max:20',
@@ -66,8 +66,8 @@ class RegisterDriverSubmitRequest extends FormRequest
             'phone.regex'           => 'Số điện thoại không đúng định dạng.',
             'citizen_id.required'   => 'Vui lòng nhập số CCCD.',
             'citizen_id.regex'      => 'CCCD phải gồm đúng 12 chữ số.',
-            'vehicle_type.required' => 'Vui lòng chọn loại xe.',
-            'vehicle_type.in'       => 'Loại xe không hợp lệ.',
+            'vehicle_type_id.required' => 'Vui lòng chọn loại xe.',
+            'vehicle_type_id.min'      => 'Loại xe không hợp lệ.',
             'vehicle_name.required' => 'Vui lòng nhập tên xe.',
             'vehicle_color.in'      => 'Màu xe không hợp lệ.',
             'vehicle_number.required' => 'Vui lòng nhập biển số xe.',

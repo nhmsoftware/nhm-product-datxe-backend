@@ -38,7 +38,7 @@ Dùng để hiển thị các lựa chọn xe (Bike, Car 4, Car 7...) kèm giá 
         "duration_minutes": 24,
         "vehicle_options": [
             {
-                "vehicle_type": 1,
+                "vehicle_type_id": 1,
                 "name": "Xe Máy",
                 "description": "Nhanh, tiết kiệm — phù hợp đường ngắn",
                 "capacity": 1,
@@ -47,7 +47,7 @@ Dùng để hiển thị các lựa chọn xe (Bike, Car 4, Car 7...) kèm giá 
                 "is_available": true
             },
             {
-                "vehicle_type": 2,
+                "vehicle_type_id": 2,
                 "name": "Ô Tô 4 Chỗ",
                 "description": "Thoải mái cho 1–3 hành khách",
                 "capacity": 3,
@@ -79,7 +79,7 @@ Tạo chuyến xe chính thức và bắt đầu tìm kiếm tài xế.
     "destination_address": "Vincom Mega Mall Ocean Park",
     "destination_lat": 20.9944,
     "destination_lng": 105.9458,
-    "vehicle_type": 2,
+    "vehicle_type_id": 2,
     "expected_price": 45000,
     "voucher_code": "GIAM20K",
     "note": "Đón ở sảnh A"

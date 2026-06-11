@@ -215,7 +215,7 @@ final class DispatchService extends BaseService implements DispatchServiceInterf
             'distance_km'          => round($ride->distance / 1000, 2),
             'total_price'          => (float) $ride->total_price,
             'vehicle_type_id'      => (int) $ride->vehicle_type,
-            'vehicle_type'         => $this->vehicleTypeCatalogService->getCodeById((int) $ride->vehicle_type),
+            'vehicle_type_label'   => $this->vehicleTypeCatalogService->getLabelById((int) $ride->vehicle_type),
             'occurred_at'          => now()->toIso8601String(),
         ];
 

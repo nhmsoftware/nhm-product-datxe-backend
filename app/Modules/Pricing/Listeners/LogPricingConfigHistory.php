@@ -23,7 +23,6 @@ final class LogPricingConfigHistory implements ShouldQueue
     public function handle(PricingConfigUpdated $event): void
     {
         $this->pricingConfigHistoryRepository->create([
-            'vehicle_type' => $event->vehicleTypeId,
             'vehicle_type_id' => $event->vehicleTypeId,
             'old_config'   => $event->oldConfig,
             'new_config'   => $event->newConfig,

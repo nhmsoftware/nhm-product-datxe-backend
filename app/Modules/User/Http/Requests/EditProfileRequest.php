@@ -46,7 +46,7 @@ class EditProfileRequest extends FormRequest
 
             // Driver-specific fields
             'vehicle_name' => 'nullable|string|max:255',
-            'vehicle_type' => 'nullable|integer|min:1',
+            'vehicle_type_id' => 'nullable|integer|min:1',
             'vehicle_color' => 'nullable|integer|min:1',
             'vehicle_number' => 'nullable|string|max:20',
             'license_number' => 'nullable|string|max:50',

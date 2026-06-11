@@ -8,7 +8,7 @@ Nghiệp vụ tính giá dựa trên Use Case **UC-10** trong tài liệu đặc
 - **Tham số đầu vào:**
     - `distance`: Khoảng cách di chuyển (đơn vị: km).
     - `duration`: Thời gian di chuyển ước tính (đơn vị: phút).
-    - `vehicle_type`: Loại phương tiện (Bike, Car 4/7/9 seats).
+    - `vehicle_type_id`: ID loại phương tiện trong catalog `vehicle_types`.
     - `surge_multiplier`: Hệ số nhân (mặc định 1.0, dùng cho cao điểm/thời tiết).
 - **Công thức tính:** 
     `Tổng tiền = (Giá khởi điểm + Giá quãng đường vượt mức + Giá thời gian) * Hệ số nhân`

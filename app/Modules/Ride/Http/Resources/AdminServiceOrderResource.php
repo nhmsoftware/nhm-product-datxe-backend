@@ -64,7 +64,7 @@ class AdminServiceOrderResource extends JsonResource
             'destination_address'    => $this->destination_address,
             'destination_lat'        => (float) $this->destination_lat,
             'destination_lng'        => (float) $this->destination_lng,
-            'vehicle_type'           => $vehicleTypeId,
+            'vehicle_type_id'        => $vehicleTypeId,
             'vehicle_type_name'      => $vehicleTypeName,
             'total_amount'           => (float) $this->total_price,
             'final_fare'             => (float) $this->total_price,

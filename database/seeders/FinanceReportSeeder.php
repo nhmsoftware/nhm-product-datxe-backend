@@ -10,7 +10,6 @@ use App\Modules\Finance\Model\Enums\CommissionTargetType;
 use App\Modules\Finance\Model\SubscriptionPackage;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideType;
-use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\Ride\Model\Ride;
 use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\User;
@@ -188,7 +187,7 @@ class FinanceReportSeeder extends Seeder
             ['pickup' => '8 Lê Thái Tổ, Hoàn Kiếm, Hà Nội', 'dest' => 'Big C Thăng Long, Nam Từ Liêm'],
         ];
 
-        $vehicleTypes = [VehicleType::BIKE, VehicleType::CAR_4_SEATS, VehicleType::CAR_7_SEATS];
+        $vehicleTypes = [1, 2, 3];
 
         // Tạo config GMV theo tháng (12 tháng gần nhất, tháng xa nhất ít hơn)
         $monthlyConfig = [

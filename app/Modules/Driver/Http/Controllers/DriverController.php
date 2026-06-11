@@ -146,15 +146,15 @@ DESC,
             content: new OA\MediaType(
                 mediaType: 'multipart/form-data',
                 schema: new OA\Schema(
-                    required: ['full_name', 'phone', 'citizen_id', 'vehicle_type', 'vehicle_name', 'vehicle_color', 'vehicle_number', 'vehicle_year', 'services', 'cccd_front', 'cccd_back', 'driver_license', 'vehicle_reg', 'criminal_record', 'health_cert', 'portrait', 'insurance'],
+                    required: ['full_name', 'phone', 'citizen_id', 'vehicle_type_id', 'vehicle_name', 'vehicle_color', 'vehicle_number', 'vehicle_year', 'services', 'cccd_front', 'cccd_back', 'driver_license', 'vehicle_reg', 'criminal_record', 'health_cert', 'portrait', 'insurance'],
                     properties: [
                         new OA\Property(property: 'full_name', description: 'Họ và tên', type: 'string', example: 'Nguyễn Văn A'),
                         new OA\Property(property: 'phone', description: 'Số điện thoại', type: 'string', example: '0901234567'),
                         new OA\Property(property: 'citizen_id', description: 'Số CMND', type: 'string', example: '001234567890'),
                         new OA\Property(
-                            property: 'vehicle_type', 
-                            description: 'Loại phương tiện. 1: Xe Máy (Bike), 2: Ô Tô 4 Chỗ (Car 4 Seats), 3: Ô Tô 7 Chỗ (Car 7 Seats), 4: Ô Tô 9 Chỗ (Car 9 Seats)', 
-                            type: 'integer', 
+                            property: 'vehicle_type_id',
+                            description: 'ID loại phương tiện trong catalog vehicle_types',
+                            type: 'integer',
                             example: 1
                         ),
                         new OA\Property(property: 'vehicle_name', description: 'Tên phương tiện', type: 'string', example: 'Honda Wave Alpha'),

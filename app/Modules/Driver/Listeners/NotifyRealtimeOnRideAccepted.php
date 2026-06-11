@@ -7,6 +7,7 @@ namespace App\Modules\Driver\Listeners;
 use App\Modules\Driver\Events\RideAccepted;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
+use App\Modules\Ride\Services\VehicleTypeCatalogService;
 use App\Modules\User\Interfaces\DriverProfileRepositoryInterface;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Redis;
@@ -15,7 +16,8 @@ use Illuminate\Support\Facades\Log;
 final class NotifyRealtimeOnRideAccepted implements ShouldQueue
 {
     public function __construct(
-        private readonly DriverProfileRepositoryInterface $driverProfileRepository
+        private readonly DriverProfileRepositoryInterface $driverProfileRepository,
+        private readonly VehicleTypeCatalogService $vehicleTypeCatalogService,
     ) {}
 
     public function handle(RideAccepted $event): void
@@ -41,7 +43,8 @@ final class NotifyRealtimeOnRideAccepted implements ShouldQueue
                     'full_name'      => $driverProfile->full_name,
                     'vehicle_name'   => $driverProfile->vehicle_name,
                     'vehicle_number' => $driverProfile->vehicle_number,
-                    'vehicle_type'   => $driverProfile->vehicle_type,
+                    'vehicle_type_id'   => $driverProfile->vehicle_type,
+                    'vehicle_type_label' => $this->vehicleTypeCatalogService->getLabelById((int) $driverProfile->vehicle_type),
                     'current_lat'    => (float) $driverProfile->current_lat,
                     'current_lng'    => (float) $driverProfile->current_lng,
                 ],

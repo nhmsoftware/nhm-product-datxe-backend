@@ -73,11 +73,13 @@ class ProfileResource extends JsonResource
      */
     private function buildDriverSpecific($driver): array
     {
+        $vehicleTypeId = $driver->vehicle_type !== null ? (int) $driver->vehicle_type : null;
+
         return [
             'full_name' => $this->formatOptionalField($driver->full_name, 'full_name'),
             'vehicle_info' => [
                 'name' => $this->formatOptionalField($driver->vehicle_name, 'vehicle_name'),
-                'type' => $this->formatOptionalField($driver->vehicle_type, 'vehicle_type'),
+                'vehicle_type_id' => $this->formatOptionalField($vehicleTypeId, 'vehicle_type_id'),
                 'color' => $this->formatOptionalField($driver->vehicle_color, 'vehicle_color'),
                 'number' => $this->formatOptionalField($driver->vehicle_number, 'vehicle_number'),
             ],

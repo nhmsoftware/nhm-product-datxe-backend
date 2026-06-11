@@ -64,7 +64,7 @@ final class VehicleOptionDTO
     public function toArray(): array
     {
         return [
-            'vehicle_type'        => $this->vehicleType,
+            'vehicle_type_id'     => $this->vehicleType,
             'name'                => $this->name,
             'description'         => $this->description,
             'capacity'            => $this->capacity,

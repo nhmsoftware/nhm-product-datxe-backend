@@ -510,7 +510,7 @@ final class RideController extends BaseController
             required: [
                 'pickup_address', 'pickup_lat', 'pickup_lng',
                 'destination_address', 'destination_lat', 'destination_lng',
-                'vehicle_type',
+                'vehicle_type_id',
                 'sender_name', 'sender_phone',
                 'receiver_name', 'receiver_phone',
                 'goods_type', 'goods_weight',
@@ -523,7 +523,7 @@ final class RideController extends BaseController
                 new OA\Property(property: 'destination_lat',     type: 'number',  format: 'float', example: 21.0334),
                 new OA\Property(property: 'destination_lng',     type: 'number',  format: 'float', example: 105.7833),
                 new OA\Property(
-                    property: 'vehicle_type',
+                    property: 'vehicle_type_id',
                     type: 'integer',
                     example: 1,
                     description: '1 = Xe Máy, 2 = Ô Tô 4 Chỗ'

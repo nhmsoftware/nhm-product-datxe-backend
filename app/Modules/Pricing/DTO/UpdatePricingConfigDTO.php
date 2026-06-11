@@ -23,7 +23,7 @@ final class UpdatePricingConfigDTO
     public static function fromRequest(Request $request): self
     {
         return new self(
-            vehicleTypeId:   (int) $request->input('vehicle_type_id', $request->input('vehicle_type')),
+            vehicleTypeId:   (int) $request->input('vehicle_type_id'),
             basePrice:       (float) $request->input('base_price'),
             distanceRate:    (float) $request->input('distance_rate'),
             timeRate:        (float) $request->input('time_rate'),

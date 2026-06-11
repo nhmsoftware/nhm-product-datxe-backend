@@ -27,7 +27,8 @@ class RealtimeSchemas
             new OA\Property(property: 'destination_address', type: 'string', example: '456 Đường XYZ'),
             new OA\Property(property: 'distance_km', type: 'number', format: 'float', example: 12.5),
             new OA\Property(property: 'total_price', type: 'number', format: 'float', example: 85000),
-            new OA\Property(property: 'vehicle_type', type: 'string', example: 'Xe Máy'),
+            new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 1),
+            new OA\Property(property: 'vehicle_type_label', type: 'string', example: 'Xe Máy'),
             new OA\Property(property: 'occurred_at', type: 'string', format: 'date-time')
         ]
     )]
@@ -47,7 +48,8 @@ class RealtimeSchemas
                     new OA\Property(property: 'full_name', type: 'string'),
                     new OA\Property(property: 'vehicle_name', type: 'string'),
                     new OA\Property(property: 'vehicle_number', type: 'string'),
-                    new OA\Property(property: 'vehicle_type', type: 'string'),
+                    new OA\Property(property: 'vehicle_type_id', type: 'integer', example: 1),
+                    new OA\Property(property: 'vehicle_type_label', type: 'string'),
                     new OA\Property(property: 'current_lat', type: 'number', format: 'float', example: 10.762622),
                     new OA\Property(property: 'current_lng', type: 'number', format: 'float', example: 106.660172),
                 ]

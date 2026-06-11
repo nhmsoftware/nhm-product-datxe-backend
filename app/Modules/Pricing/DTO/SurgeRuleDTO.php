@@ -21,7 +21,7 @@ final class SurgeRuleDTO
     public static function fromRequest(Request $request): self
     {
         return new self(
-            vehicleTypeId: (int) $request->input('vehicle_type_id', $request->input('vehicle_type')),
+            vehicleTypeId: (int) $request->input('vehicle_type_id'),
             conditions:  $request->input('conditions'),
             multiplier:  (float) $request->input('multiplier'),
             startTime:   $request->input('start_time'),
@@ -34,7 +34,6 @@ final class SurgeRuleDTO
     public function toArray(): array
     {
         return [
-            'vehicle_type' => $this->vehicleTypeId,
             'vehicle_type_id' => $this->vehicleTypeId,
             'conditions'   => $this->conditions,
             'multiplier'   => $this->multiplier,

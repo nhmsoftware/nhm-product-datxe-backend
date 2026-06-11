@@ -16,7 +16,6 @@ final class PricingConfig extends Model
     protected $table = 'pricing_configs';
 
     protected $fillable = [
-        'vehicle_type',
         'vehicle_type_id',
         'base_price',
         'distance_rate',
@@ -29,7 +28,6 @@ final class PricingConfig extends Model
 
     protected $casts = [
         'id'               => 'string',
-        'vehicle_type'     => 'integer',
         'vehicle_type_id'  => 'integer',
         'base_price'       => 'float',
         'distance_rate'    => 'float',

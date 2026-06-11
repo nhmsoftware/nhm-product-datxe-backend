@@ -62,7 +62,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 $latestKyc = $user->userReviewApplications->first();
                 $snapshot = is_array($latestKyc?->snapshot_data) ? $latestKyc->snapshot_data : [];
                 $driverGroupType = $user->driverProfile?->driver_group_type ?? ($snapshot['driver_group_type'] ?? null);
-                $vehicleTypeValue = $user->driverProfile?->getRawOriginal('vehicle_type') ?? ($snapshot['vehicle_type'] ?? null);
+                $vehicleTypeValue = $user->driverProfile?->getRawOriginal('vehicle_type') ?? ($snapshot['vehicle_type_id'] ?? $snapshot['vehicle_type'] ?? null);
                 $vehicleTypeLabel = $vehicleTypeValue ? $this->vehicleTypeCatalogService->getLabelById((int) $vehicleTypeValue) : null;
                 return [
                     'id'                => $user->id,
@@ -74,7 +74,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                     'lock_expired_at'   => $user->lock_expired_at?->toIso8601String(),
                     'driver_group_type' => $driverGroupType,
                     'group_label'       => $driverGroupType === 1 ? 'Xe nhà' : ($driverGroupType === 2 ? 'Đối tác' : 'Chưa gán'),
-                    'vehicle_type'      => $vehicleTypeValue,
+                    'vehicle_type_id'   => $vehicleTypeValue,
                     'vehicle_type_label'=> $vehicleTypeLabel,
                     'vehicle_name'      => $user->driverProfile?->vehicle_name ?? ($snapshot['vehicle_name'] ?? null),
                     'vehicle_number'    => $user->driverProfile?->vehicle_number ?? ($snapshot['vehicle_number'] ?? null),
@@ -260,19 +260,24 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 $avatar = $kycPhotos['portrait_url'];
             }
 
-            $vehicleTypeValue = $driverProfile?->getRawOriginal('vehicle_type') ?? ($snapshot['vehicle_type'] ?? null);
+            $vehicleTypeValue = $driverProfile?->getRawOriginal('vehicle_type') ?? ($snapshot['vehicle_type_id'] ?? $snapshot['vehicle_type'] ?? null);
             $vehicleTypeLabel = $vehicleTypeValue ? $this->vehicleTypeCatalogService->getLabelById((int) $vehicleTypeValue) : null;
             $vehicleColorValue = $driverProfile?->vehicle_color?->value ?? ($snapshot['vehicle_color'] ?? null);
             $vehicleColorLabel = $driverProfile?->vehicle_color?->label()
                 ?? ($vehicleColorValue ? \App\Modules\User\Model\Enums\VehicleColor::tryFrom((int) $vehicleColorValue)?->label() : null);
             $driverGroupType = $driverProfile?->driver_group_type ?? ($snapshot['driver_group_type'] ?? null);
+            $serviceLabelMap = collect(\App\Modules\Driver\Model\Enums\DriverServiceType::cases())
+                ->mapWithKeys(fn($service) => [$service->value => $service->getLabel()]);
             $serviceRegistrations = collect($snapshot['services'] ?? [])
-                ->map(fn($id) => \App\Modules\Driver\Model\Enums\DriverServiceType::tryFrom((int) $id))
+                ->map(function ($id) use ($serviceLabelMap) {
+                    $serviceId = (int) $id;
+                    $label = $serviceLabelMap->get($serviceId);
+                    return $label ? [
+                        'id' => $serviceId,
+                        'label' => $label,
+                    ] : null;
+                })
                 ->filter()
-                ->map(fn($service) => [
-                    'id' => $service->value,
-                    'label' => $service->getLabel(),
-                ])
                 ->values()
                 ->toArray();
 
@@ -300,7 +305,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 'address'            => $user->address,
                 'avatar'             => $avatar,
                 'vehicle_info'       => [
-                    'vehicle_type'   => $vehicleTypeValue,
+                    'vehicle_type_id'   => $vehicleTypeValue,
                     'vehicle_type_label' => $vehicleTypeLabel,
                     'vehicle_name'   => $driverProfile?->vehicle_name ?? ($snapshot['vehicle_name'] ?? null),
                     'vehicle_number' => $driverProfile?->vehicle_number ?? ($snapshot['vehicle_number'] ?? null),
@@ -395,7 +400,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 $driverProfileData = [
                     'full_name' => $dto->fullName,
                     'driver_group_type' => $dto->driverGroupType?->value ?? $user->driverProfile->driver_group_type,
-                    'vehicle_type' => $dto->vehicleType ?? $user->driverProfile?->getRawOriginal('vehicle_type'),
+                    'vehicle_type' => $dto->vehicleTypeId ?? $user->driverProfile?->getRawOriginal('vehicle_type'),
                     'vehicle_color' => $dto->vehicleColor?->value ?? $user->driverProfile->vehicle_color?->value,
                     'vehicle_name' => $dto->vehicleName ?? $user->driverProfile->vehicle_name,
                     'vehicle_number' => $dto->vehicleNumber ?? $user->driverProfile->vehicle_number,
@@ -434,7 +439,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
                 'is_active' => $freshUser?->is_active,
                 'driver_group_type' => $freshUser?->driverProfile?->driver_group_type,
                 'group_label' => $freshUser?->driverProfile?->driver_group_type === 1 ? 'Xe nhà' : ($freshUser?->driverProfile?->driver_group_type === 2 ? 'Đối tác' : 'Chưa gán'),
-                'vehicle_type' => $freshUser?->driverProfile?->getRawOriginal('vehicle_type'),
+                'vehicle_type_id' => $freshUser?->driverProfile?->getRawOriginal('vehicle_type'),
                 'vehicle_name' => $freshUser?->driverProfile?->vehicle_name,
                 'vehicle_number' => $freshUser?->driverProfile?->vehicle_number,
                 'kyc_status' => $latestKyc?->kyc_status?->value ?? KycStatus::NotSubmitted->value,
@@ -695,7 +700,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
     private function upsertDriverDraftApplication(string|int $userId, UpdateDriverDTO $dto): void
     {
         $hasKycPayload = $dto->driverGroupType !== null
-            || $dto->vehicleType !== null
+            || $dto->vehicleTypeId !== null
             || $dto->vehicleColor !== null
             || !empty($dto->vehicleName)
             || !empty($dto->vehicleNumber)
@@ -714,7 +719,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
             'birthday' => $dto->birthday,
             'address' => $dto->address,
             'driver_group_type' => $dto->driverGroupType?->value,
-            'vehicle_type' => $dto->vehicleType?->value,
+            'vehicle_type_id' => $dto->vehicleTypeId,
             'vehicle_color' => $dto->vehicleColor?->value,
             'vehicle_name' => $dto->vehicleName,
             'vehicle_number' => $dto->vehicleNumber,
@@ -755,7 +760,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
 
     private function materializeDriverProfile($user, UpdateDriverDTO $dto): void
     {
-        $this->validate($dto->vehicleType !== null, 'Chưa thể duyệt hồ sơ khi chưa có loại xe.', 400);
+        $this->validate($dto->vehicleTypeId !== null, 'Chưa thể duyệt hồ sơ khi chưa có loại xe.', 400);
         $this->validate($dto->vehicleColor !== null, 'Chưa thể duyệt hồ sơ khi chưa có màu xe.', 400);
         $this->validate(!empty($dto->vehicleName), 'Chưa thể duyệt hồ sơ khi chưa có tên xe.', 400);
         $this->validate(!empty($dto->vehicleNumber), 'Chưa thể duyệt hồ sơ khi chưa có biển số xe.', 400);
@@ -764,7 +769,7 @@ final class AdminDriverService extends BaseService implements AdminDriverService
             'full_name' => $dto->fullName,
             'driver_group_id' => null,
             'driver_group_type' => $dto->driverGroupType?->value ?? \App\Modules\User\Model\Enums\DriverGroupType::PARTNER->value,
-            'vehicle_type' => $dto->vehicleType,
+            'vehicle_type' => $dto->vehicleTypeId,
             'vehicle_name' => $dto->vehicleName,
             'vehicle_color' => $dto->vehicleColor->value,
             'vehicle_number' => $dto->vehicleNumber,

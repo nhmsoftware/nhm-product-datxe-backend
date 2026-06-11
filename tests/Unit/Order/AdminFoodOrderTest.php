@@ -13,7 +13,6 @@ use App\Modules\Merchant\Model\MenuItem;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideTrackingStatus;
 use App\Modules\Ride\Model\Enums\RideType;
-use App\Modules\Ride\Model\Enums\VehicleType;
 use App\Modules\Ride\Model\Ride;
 use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\MerchantProfile;
@@ -104,7 +103,8 @@ it('rejects unavailable food item', function () {
         $menuRepository,
         $userRepository,
         \Mockery::mock(\App\Modules\Ride\Interfaces\RideRepositoryInterface::class),
-        \Mockery::mock(\App\Modules\Ride\Interfaces\RideServiceInterface::class)
+        \Mockery::mock(\App\Modules\Ride\Interfaces\RideServiceInterface::class),
+        new \App\Modules\Ride\Services\VehicleTypeCatalogService(\Mockery::mock(\App\Modules\Ride\Interfaces\VehicleTypeRepositoryInterface::class))
     );
 
     $dto = new AdminCreateFoodOrderDTO(

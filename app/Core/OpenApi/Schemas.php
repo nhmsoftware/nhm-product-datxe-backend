@@ -351,7 +351,7 @@ class Schemas
     #[OA\Schema(
         schema: 'RideResponse',
         description: 'Thông tin chi tiết chuyến xe',
-        required: ['id', 'status', 'vehicle_type', 'pickup_address', 'destination_address'],
+        required: ['id', 'status', 'vehicle_type_id', 'pickup_address', 'destination_address'],
         properties: [
             new OA\Property(property: 'id', type: 'string', example: '1'),
             new OA\Property(
@@ -362,8 +362,8 @@ class Schemas
             ),
             new OA\Property(property: 'status_label', type: 'string', example: 'Đang tìm tài xế'),
             new OA\Property(
-                property: 'vehicle_type', 
-                description: 'Loại xe. 1: Xe Máy, 2: Ô Tô 4 Chỗ, 3: Ô Tô 7 Chỗ, 4: Ô Tô 9 Chỗ', 
+                property: 'vehicle_type_id',
+                description: 'ID loại xe trong catalog vehicle_types',
                 type: 'integer', 
                 example: 1
             ),

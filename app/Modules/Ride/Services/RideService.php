@@ -104,9 +104,10 @@ final class RideService extends BaseService implements RideServiceInterface
                 $dto->destinationLng
             );
 
-            $vehicleTypeIds = $dto->serviceType === 'intercity'
-                ? [2, 3, 4, 5]
-                : [1, 2, 3, 4];
+            $vehicleTypeIds = array_map(
+                static fn (array $type) => (int) $type['id'],
+                $this->vehicleTypeCatalogService->listBookableByService($dto->serviceType ?? 'city')
+            );
 
             $vehicleOptions = array_values(array_filter(array_map(
                 function (int $vehicleTypeId) use ($matrix): ?array {
@@ -485,6 +486,28 @@ final class RideService extends BaseService implements RideServiceInterface
         return $this->pricingService->calculatePrice($pricingRequest);
     }
 
+    private function calculateScheduledPriceFor(
+        int $distanceMeters,
+        int $durationSeconds,
+        int $vehicleTypeId,
+        int $serviceType,
+        string $rideMode = 'private',
+        ?string $airportId = null
+    ): ServiceReturn {
+        $pricingRequest = PricingRequestDTO::create(
+            distance: $distanceMeters / 1000,
+            duration: $durationSeconds / 60,
+            vehicleType: $vehicleTypeId,
+            surgeMultiplier: 1.0,
+            serviceType: $serviceType,
+            rideMode: $rideMode,
+            airportId: $airportId,
+            allowLegacyFallback: true
+        );
+
+        return $this->pricingService->calculatePrice($pricingRequest);
+    }
+
     private function resolveVoucherDiscount(string $customerId, string $code, float $currentFare): ?float
     {
         $result = $this->voucherService->validateAndCalculateDiscount($customerId, $code, $currentFare, 'ride');
@@ -564,7 +587,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'phone' => $driver->phone,
                 'vehicle_number' => $driverProfile?->vehicle_number,
                 'vehicle_name' => $driverProfile?->vehicle_name,
-                'vehicle_type' => $this->getVehicleTypeId($ride->vehicle_type),
+                'vehicle_type_id' => $this->getVehicleTypeId($ride->vehicle_type),
                 'vehicle_type_label' => $this->getVehicleTypeLabel($ride->vehicle_type),
                 'rating' => $driverProfile?->average_rating !== null ? (float) $driverProfile->average_rating : null,
             ],
@@ -748,7 +771,13 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // 2. Tính giá cước
             $vehicleTypeId = $this->requireVehicleTypeId($dto->vehicleType);
-            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleTypeId);
+            $pricingResult = $this->calculateScheduledPriceFor(
+                $distanceMeters,
+                $durationSeconds,
+                $vehicleTypeId,
+                serviceType: 6,
+                rideMode: 'private',
+            );
             if ($pricingResult->isError()) {
                 $this->throw($pricingResult->getMessage());
             }
@@ -820,7 +849,14 @@ final class RideService extends BaseService implements RideServiceInterface
 
             // 2. Tính giá cước
             $vehicleTypeId = $this->requireVehicleTypeId($dto->vehicleType);
-            $pricingResult = $this->calculatePriceFor($distanceMeters, $durationSeconds, $vehicleTypeId);
+            $pricingResult = $this->calculateScheduledPriceFor(
+                $distanceMeters,
+                $durationSeconds,
+                $vehicleTypeId,
+                serviceType: 7,
+                rideMode: 'private',
+                airportId: (string) $dto->airportId,
+            );
             if ($pricingResult->isError()) {
                 $this->throw($pricingResult->getMessage());
             }
@@ -1049,7 +1085,7 @@ final class RideService extends BaseService implements RideServiceInterface
                     'destination_address' => $ride->destination_address,
                     'travel_date'         => $ride->travel_date ? $ride->travel_date->format('Y-m-d') : null,
                     'travel_time'         => $ride->travel_time,
-                    'vehicle_type'        => $this->getVehicleTypeId($ride->vehicle_type),
+                    'vehicle_type_id'     => $this->getVehicleTypeId($ride->vehicle_type),
                     'vehicle_type_label'  => $this->getVehicleTypeLabel($ride->vehicle_type),
                     'ride_type'           => $ride->ride_type->value,
                     'ride_type_label'     => $ride->ride_type->getLabel(),
@@ -1097,7 +1133,7 @@ final class RideService extends BaseService implements RideServiceInterface
                 'duration'            => $ride->duration,
                 'travel_date'         => $ride->travel_date ? $ride->travel_date->format('Y-m-d') : null,
                 'travel_time'         => $ride->travel_time,
-                'vehicle_type'        => $this->getVehicleTypeId($ride->vehicle_type),
+                'vehicle_type_id'     => $this->getVehicleTypeId($ride->vehicle_type),
                 'vehicle_type_label'  => $this->getVehicleTypeLabel($ride->vehicle_type),
                 'ride_type'           => $ride->ride_type->value,
                 'ride_type_label'     => $ride->ride_type->getLabel(),

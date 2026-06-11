@@ -25,6 +25,7 @@ use App\Modules\User\Model\Enums\DriverGroupType;
 use App\Modules\User\Model\Enums\DriverStatus;
 use App\Modules\User\Model\Enums\UserRole;
 use App\Modules\User\Model\Enums\VehicleColor;
+use App\Modules\Ride\Services\VehicleTypeCatalogService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
@@ -38,6 +39,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
         private readonly UserRepositoryInterface               $userRepository,
         private readonly DriverProfileRepositoryInterface       $driverProfileRepository,
         private readonly DriverGroupRepositoryInterface         $driverGroupRepository,
+        private readonly VehicleTypeCatalogService              $vehicleTypeCatalogService,
     ) {}
 
     /**
@@ -76,12 +78,19 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
                 422
             );
 
+            $vehicleMetadata = $this->vehicleTypeCatalogService->getMetadataById($dto->vehicleTypeId);
+            $this->validate(
+                $vehicleMetadata !== null && (bool) ($vehicleMetadata['is_active'] ?? false),
+                'Loại xe không hợp lệ.',
+                422
+            );
+
             // 3. Tạo snapshot — đóng băng dữ liệu tại thời điểm nộp
             $snapshotData = [
                 'full_name'      => $dto->fullName,
                 'phone'          => $dto->phone,
                 'citizen_id'     => $dto->citizenId,
-                'vehicle_type'   => $dto->vehicleType,
+                'vehicle_type_id' => $dto->vehicleTypeId,
                 'vehicle_name'   => $dto->vehicleName,
                 'vehicle_color'  => $dto->vehicleColor->value,
                 'vehicle_number' => $dto->vehicleNumber,
@@ -126,7 +135,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
             fullName: $dto->fullName,
             phone: $dto->phone,
             citizenId: $dto->citizenId,
-            vehicleType: $dto->vehicleType,
+            vehicleTypeId: $dto->vehicleTypeId,
             vehicleName: $dto->vehicleName,
             vehicleColor: $dto->vehicleColor,
             vehicleNumber: $dto->vehicleNumber,
@@ -171,7 +180,7 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
                 'full_name'         => $snapshotData['full_name'] ?? 'Driver ' . $userId,
                 'driver_group_id'   => $dto->driverGroupId,
                 'driver_group_type' => $driverGroupType->value,
-                'vehicle_type'      => (int) ($snapshotData['vehicle_type'] ?? 1),
+                'vehicle_type'      => (int) ($snapshotData['vehicle_type_id'] ?? $snapshotData['vehicle_type'] ?? 1),
                 'vehicle_name'      => $snapshotData['vehicle_name'] ?? 'N/A',
                 'vehicle_color'     => VehicleColor::tryFrom((int)($snapshotData['vehicle_color'] ?? 0))?->value ?? VehicleColor::Unknown->value,
                 'vehicle_number'    => $snapshotData['vehicle_number'] ?? 'N/A',
@@ -308,14 +317,63 @@ final class DriverRegistrationService extends BaseService implements DriverRegis
     {
         return $this->execute(function () use ($vehicleTypeId) {
             if ($vehicleTypeId !== null) {
-                if (!in_array($vehicleTypeId, [1, 2, 3, 4, 5, 6], true)) {
+                $metadata = $this->vehicleTypeCatalogService->getMetadataById($vehicleTypeId);
+                if ($metadata === null || !($metadata['is_active'] ?? false)) {
                     $this->throw('Loại xe không hợp lệ.', 422);
                 }
 
-                return \App\Modules\Driver\Model\Enums\DriverServiceType::getListByVehicleType($vehicleTypeId);
+                return array_values(array_filter(array_map(
+                    function (\App\Modules\Driver\Model\Enums\DriverServiceType $service) use ($metadata) {
+                        $scopes = $metadata['service_scopes'] ?? [];
+                        if (!is_array($scopes) || $scopes === []) {
+                            return null;
+                        }
+
+                        foreach ($service->getServiceScopes() as $scope) {
+                            if (in_array($scope, $scopes, true)) {
+                                return [
+                                    'id' => $service->value,
+                                    'label' => $service->getLabel(),
+                                ];
+                            }
+                        }
+
+                        return null;
+                    },
+                    \App\Modules\Driver\Model\Enums\DriverServiceType::cases()
+                )));
             }
 
-            return \App\Modules\Driver\Model\Enums\DriverServiceType::getList();
+            $allVehicleTypes = $this->vehicleTypeCatalogService->listAll();
+
+            return array_map(function (\App\Modules\Driver\Model\Enums\DriverServiceType $service) use ($allVehicleTypes) {
+                $supportedVehicleTypes = array_values(array_filter(array_map(
+                    function (array $type) use ($service) {
+                        $scopes = $type['service_scopes'] ?? [];
+                        if (!is_array($scopes) || $scopes === []) {
+                            return null;
+                        }
+
+                        foreach ($service->getServiceScopes() as $scope) {
+                            if (in_array($scope, $scopes, true)) {
+                                return [
+                                    'id' => (int) $type['id'],
+                                    'label' => (string) $type['name_vi'],
+                                ];
+                            }
+                        }
+
+                        return null;
+                    },
+                    $allVehicleTypes
+                )));
+
+                return [
+                    'id' => $service->value,
+                    'label' => $service->getLabel(),
+                    'supported_vehicle_types' => $supportedVehicleTypes,
+                ];
+            }, \App\Modules\Driver\Model\Enums\DriverServiceType::cases());
         });
     }
 }

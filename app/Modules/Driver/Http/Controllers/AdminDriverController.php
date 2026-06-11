@@ -144,12 +144,12 @@ final class AdminDriverController extends BaseController
             content: new OA\MediaType(
                 mediaType: 'multipart/form-data',
                 schema: new OA\Schema(
-                    required: ['full_name', 'phone', 'citizen_id', 'vehicle_type', 'vehicle_name', 'vehicle_color', 'vehicle_number', 'vehicle_year', 'services', 'cccd_front', 'cccd_back', 'driver_license', 'vehicle_reg', 'criminal_record', 'health_cert', 'portrait', 'insurance'],
+                    required: ['full_name', 'phone', 'citizen_id', 'vehicle_type_id', 'vehicle_name', 'vehicle_color', 'vehicle_number', 'vehicle_year', 'services', 'cccd_front', 'cccd_back', 'driver_license', 'vehicle_reg', 'criminal_record', 'health_cert', 'portrait', 'insurance'],
                     properties: [
                         new OA\Property(property: 'full_name', type: 'string'),
                         new OA\Property(property: 'phone', type: 'string'),
                         new OA\Property(property: 'citizen_id', type: 'string'),
-                        new OA\Property(property: 'vehicle_type', type: 'integer'),
+                        new OA\Property(property: 'vehicle_type_id', type: 'integer'),
                         new OA\Property(property: 'vehicle_name', type: 'string'),
                         new OA\Property(property: 'vehicle_color', type: 'integer'),
                         new OA\Property(property: 'vehicle_number', type: 'string'),

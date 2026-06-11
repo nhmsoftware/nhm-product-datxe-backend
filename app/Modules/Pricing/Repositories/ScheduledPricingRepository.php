@@ -7,7 +7,6 @@ namespace App\Modules\Pricing\Repositories;
 use App\Modules\Pricing\Interfaces\ScheduledPricingRepositoryInterface;
 use App\Modules\Pricing\Model\ScheduledPricingSurcharge;
 use App\Modules\Pricing\Model\ScheduledPricingRule;
-use App\Modules\Pricing\Model\ScheduledPricingRange;
 use Illuminate\Support\Facades\DB;
 
 final class ScheduledPricingRepository implements ScheduledPricingRepositoryInterface
@@ -40,10 +39,6 @@ final class ScheduledPricingRepository implements ScheduledPricingRepositoryInte
                 $rangesData = $ruleData['ranges'] ?? [];
                 unset($ruleData['ranges']);
 
-                if (isset($ruleData['vehicle_type_id']) && !isset($ruleData['vehicle_type'])) {
-                    $ruleData['vehicle_type'] = $ruleData['vehicle_type_id'];
-                }
-
                 $ruleData['is_active'] = true;
                 $rule = ScheduledPricingRule::create($ruleData);
 
@@ -63,5 +58,34 @@ final class ScheduledPricingRepository implements ScheduledPricingRepositoryInte
                 'rules'      => $rules,
             ];
         });
+    }
+
+    public function findMatchingRule(
+        int $serviceType,
+        string $rideMode,
+        int $vehicleTypeId,
+        ?string $airportId = null
+    ): ?ScheduledPricingRule {
+        $query = ScheduledPricingRule::with('ranges')
+            ->where('is_active', true)
+            ->where('service_type', $serviceType)
+            ->where('ride_mode', $rideMode)
+            ->where('vehicle_type_id', $vehicleTypeId);
+
+        if ($airportId !== null && $airportId !== '') {
+            $query->where(function ($inner) use ($airportId) {
+                $inner->where('airport_id', $airportId)
+                    ->orWhereNull('airport_id')
+                    ->orWhere('airport_id', '');
+            })->orderByRaw("CASE WHEN airport_id = ? THEN 0 ELSE 1 END", [$airportId]);
+        } else {
+            $query->where(function ($inner) {
+                $inner->whereNull('airport_id')
+                    ->orWhere('airport_id', '');
+            });
+        }
+
+        /** @var ScheduledPricingRule|null */
+        return $query->first();
     }
 }

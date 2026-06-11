@@ -19,6 +19,7 @@ use App\Modules\Pricing\Interfaces\PricingConfigHistoryRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingGlobalSettingRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingSurgeRuleRepositoryInterface;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
+use App\Modules\Pricing\Interfaces\ScheduledPricingRepositoryInterface;
 use App\Modules\Finance\Interfaces\CommissionRuleServiceInterface;
 use App\Modules\Finance\Model\Enums\CommissionServiceType;
 use App\Modules\Finance\Model\Enums\CommissionTargetType;
@@ -32,6 +33,7 @@ final class PricingService extends BaseService implements PricingServiceInterfac
         private readonly PricingConfigHistoryRepositoryInterface $pricingConfigHistoryRepository,
         private readonly PricingGlobalSettingRepositoryInterface $pricingGlobalSettingRepository,
         private readonly PricingSurgeRuleRepositoryInterface $pricingSurgeRuleRepository,
+        private readonly ScheduledPricingRepositoryInterface $scheduledPricingRepository,
         private readonly CommissionRuleServiceInterface $commissionRuleService,
         private readonly VehicleTypeCatalogService $vehicleTypeCatalogService,
     ) {}
@@ -96,7 +98,7 @@ final class PricingService extends BaseService implements PricingServiceInterfac
                 );
             }
 
-            $config = $this->getConfigForVehicleType((int) $dto->vehicleType);
+            $config = $this->resolvePricingConfig($dto);
             $this->validate($config !== null, 'Loại xe này chưa có cấu hình giá đang hoạt động.', 422);
 
             $baseFare     = (float) $config['base_fare'];
@@ -207,7 +209,6 @@ final class PricingService extends BaseService implements PricingServiceInterfac
 
                 $finalConfigs[] = [
                     'config_id'          => $dto?->id,
-                    'vehicle_type'       => (int) $type['id'],
                     'vehicle_type_id'    => (int) $type['id'],
                     'vehicle_code'       => $type['code'],
                     'vehicle_label'      => $type['name_vi'],
@@ -246,7 +247,6 @@ final class PricingService extends BaseService implements PricingServiceInterfac
             $config = $this->pricingConfigRepository->findLatestByVehicleTypeId($dto->vehicleTypeId);
 
             $data = [
-                'vehicle_type'     => $dto->vehicleTypeId,
                 'vehicle_type_id'  => $dto->vehicleTypeId,
                 'base_price'       => $dto->basePrice,
                 'distance_rate'    => $dto->distanceRate,
@@ -375,5 +375,85 @@ final class PricingService extends BaseService implements PricingServiceInterfac
         }
 
         return self::LEGACY_RATE_CONFIG[$vehicleType] ?? null;
+    }
+
+    private function resolvePricingConfig(PricingRequestDTO $dto): ?array
+    {
+        $scheduledConfig = $this->getScheduledRuleConfig($dto);
+        if ($scheduledConfig !== null) {
+            return $scheduledConfig;
+        }
+
+        $vehicleTypeId = (int) $dto->vehicleType;
+        $metadata = $this->vehicleTypeCatalogService->getMetadataById($vehicleTypeId);
+        if ($metadata === null || !($metadata['is_active'] ?? false) || !($metadata['is_bookable'] ?? false)) {
+            return null;
+        }
+
+        $dbConfig = $this->pricingConfigRepository->findActiveByVehicleTypeId($vehicleTypeId);
+        if ($dbConfig) {
+            return [
+                'base_fare'        => (float) $dbConfig->base_price,
+                'min_fare'         => (float) $dbConfig->min_fare,
+                'distance_rate'    => (float) $dbConfig->distance_rate,
+                'time_rate'        => (float) $dbConfig->time_rate,
+                'surge_multiplier' => (float) $dbConfig->surge_multiplier,
+                'commission_rate'  => (float) $dbConfig->commission_rate,
+            ];
+        }
+
+        if (!$dto->allowLegacyFallback) {
+            return null;
+        }
+
+        return self::LEGACY_RATE_CONFIG[$vehicleTypeId] ?? null;
+    }
+
+    private function getScheduledRuleConfig(PricingRequestDTO $dto): ?array
+    {
+        if ($dto->serviceType === null || $dto->rideMode === null) {
+            return null;
+        }
+
+        $rule = $this->scheduledPricingRepository->findMatchingRule(
+            serviceType: $dto->serviceType,
+            rideMode: $dto->rideMode,
+            vehicleTypeId: (int) $dto->vehicleType,
+            airportId: $dto->airportId,
+        );
+
+        if ($rule === null) {
+            return null;
+        }
+
+        $distanceKm = (float) $dto->distance;
+        $matchedRange = $rule->ranges
+            ->where('is_active', true)
+            ->sortBy('start_km')
+            ->first(function ($range) use ($distanceKm) {
+                $startKm = (float) $range->start_km;
+                $endKm = (float) $range->end_km;
+
+                if ($distanceKm < $startKm) {
+                    return false;
+                }
+
+                return $endKm <= 0 || $distanceKm <= $endKm;
+            });
+
+        if ($matchedRange === null) {
+            return null;
+        }
+
+        $fixedFare = (float) $matchedRange->price;
+
+        return [
+            'base_fare' => $fixedFare,
+            'min_fare' => $fixedFare,
+            'distance_rate' => 0.0,
+            'time_rate' => 0.0,
+            'surge_multiplier' => 1.0,
+            'commission_rate' => 20.0,
+        ];
     }
 }

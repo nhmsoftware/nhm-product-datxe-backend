@@ -33,7 +33,7 @@ final class UpdateDriverRequest extends FormRequest
             ],
             'address' => 'nullable|string|max:500',
             'driver_group_type' => 'nullable|integer|in:1,2',
-            'vehicle_type' => 'nullable|integer|in:0,1,2,3,4,5',
+            'vehicle_type_id' => 'nullable|integer|min:1',
             'vehicle_color' => 'nullable|integer|in:0,1,2,3,4,5',
             'vehicle_name' => 'nullable|string|max:255',
             'vehicle_number' => 'nullable|string|max:255',
@@ -54,7 +54,7 @@ final class UpdateDriverRequest extends FormRequest
             'birthday.before' => 'Ngày sinh phải trước ngày hôm nay.',
             'birthday.after' => 'Tuổi không được vượt quá 100 tuổi.',
             'driver_group_type.in' => 'Nhóm tài xế không hợp lệ.',
-            'vehicle_type.in' => 'Loại xe không hợp lệ.',
+            'vehicle_type_id.min' => 'Loại xe không hợp lệ.',
             'vehicle_color.in' => 'Màu xe không hợp lệ.',
             'kyc_status.in' => 'Trạng thái KYC không hợp lệ.',
         ];

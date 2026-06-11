@@ -25,9 +25,9 @@ final class PricingConfigDTO
     {
         return new self(
             id:              $model->id,
-            vehicleType:     (int) ($model->vehicle_type_id ?? $model->vehicle_type),
-            vehicleCode:     $model->vehicleTypeRef?->code ?? ('vehicle_' . ($model->vehicle_type_id ?? $model->vehicle_type)),
-            vehicleLabel:    $model->vehicleTypeRef?->name_vi ?? ('Loại xe #' . ($model->vehicle_type_id ?? $model->vehicle_type)),
+            vehicleType:     (int) $model->vehicle_type_id,
+            vehicleCode:     $model->vehicleTypeRef?->code ?? ('vehicle_' . $model->vehicle_type_id),
+            vehicleLabel:    $model->vehicleTypeRef?->name_vi ?? ('Loại xe #' . $model->vehicle_type_id),
             isActive:        (bool) ($model->is_active ?? true),
             basePrice:       (float) $model->base_price,
             distanceRate:    (float) $model->distance_rate,

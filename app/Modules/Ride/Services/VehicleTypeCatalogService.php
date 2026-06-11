@@ -283,6 +283,19 @@ final class VehicleTypeCatalogService
         return $this->getMetadataById($id)['code'] ?? null;
     }
 
+    public function getIdByCode(string $code): ?int
+    {
+        $this->ensurePersistedLegacyCatalog();
+
+        try {
+            $type = $this->vehicleTypeRepository->findByCode($code);
+        } catch (Throwable) {
+            $type = null;
+        }
+
+        return $type ? (int) $type->id : null;
+    }
+
     public function getCapacityById(int $id): ?int
     {
         return $this->getMetadataById($id)['capacity'] ?? null;

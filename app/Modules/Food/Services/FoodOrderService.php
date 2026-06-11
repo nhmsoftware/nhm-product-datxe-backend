@@ -17,7 +17,7 @@ use App\Modules\Merchant\Interfaces\MenuItemRepositoryInterface;
 use App\Modules\Pricing\DTO\PricingRequestDTO;
 use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Ride\Interfaces\MapServiceInterface;
-use App\Modules\Ride\Model\Enums\VehicleType;
+use App\Modules\Ride\Services\VehicleTypeCatalogService;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 
 final class FoodOrderService extends BaseService implements FoodOrderServiceInterface
@@ -29,6 +29,7 @@ final class FoodOrderService extends BaseService implements FoodOrderServiceInte
         private readonly UserRepositoryInterface $userRepository,
         private readonly MapServiceInterface $mapService,
         private readonly PricingServiceInterface $pricingService,
+        private readonly VehicleTypeCatalogService $vehicleTypeCatalogService,
         private readonly VoucherServiceInterface $voucherService,
     ) {}
 
@@ -143,11 +144,13 @@ final class FoodOrderService extends BaseService implements FoodOrderServiceInte
             $dto->deliveryLng
         );
 
-        // Assume BIKE for food delivery pricing
+        $bikeVehicleTypeId = $this->vehicleTypeCatalogService->getIdByCode('bike');
+        $this->validate($bikeVehicleTypeId !== null, 'Không tìm thấy cấu hình loại xe giao đồ ăn.', 500);
+
         $pricingResult = $this->pricingService->calculatePrice(PricingRequestDTO::create(
             distance: $matrix->distance / 1000,
             duration: $matrix->duration / 60,
-            vehicleType: VehicleType::BIKE->value,
+            vehicleType: $bikeVehicleTypeId,
             surgeMultiplier: 1.0
         ));
 

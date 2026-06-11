@@ -16,7 +16,7 @@ use App\Modules\Pricing\Interfaces\PricingServiceInterface;
 use App\Modules\Ride\Interfaces\MapServiceInterface;
 use App\Modules\Ride\Model\Enums\RideStatus;
 use App\Modules\Ride\Model\Enums\RideType;
-use App\Modules\Ride\Model\Enums\VehicleType;
+use App\Modules\Ride\Services\VehicleTypeCatalogService;
 use App\Modules\User\Interfaces\UserRepositoryInterface;
 
 /**
@@ -30,6 +30,7 @@ final class ChauffeurService extends BaseService implements ChauffeurServiceInte
         private readonly PricingServiceInterface      $pricingService,
         private readonly VoucherServiceInterface      $voucherService,
         private readonly UserRepositoryInterface      $userRepository,
+        private readonly VehicleTypeCatalogService    $vehicleTypeCatalogService,
         private readonly \App\Modules\Ride\Interfaces\RideTrackingRealtimeInterface $rideTrackingRealtime
     ) {
     }
@@ -53,11 +54,14 @@ final class ChauffeurService extends BaseService implements ChauffeurServiceInte
                 $dto->destinationLng
             );
 
+            $chauffeurVehicleTypeId = $this->vehicleTypeCatalogService->getIdByCode('chauffeur');
+            $this->validate($chauffeurVehicleTypeId !== null, 'Không tìm thấy cấu hình loại xe lái hộ.', 500);
+
             // 3. Tính giá cước (Sử dụng cấu hình riêng cho Chauffeur)
             $pricingRequest = PricingRequestDTO::create(
                 distance:        (float) $matrix->distance / 1000,
                 duration:        (float) $matrix->duration / 60,
-                vehicleType:     VehicleType::CHAUFFEUR->value,
+                vehicleType:     $chauffeurVehicleTypeId,
                 surgeMultiplier: 1.0
             );
 
@@ -94,7 +98,7 @@ final class ChauffeurService extends BaseService implements ChauffeurServiceInte
                 'destination_lng'         => $dto->destinationLng,
                 'distance'                => $matrix->distance,
                 'duration'                => $matrix->duration,
-                'vehicle_type'            => VehicleType::CHAUFFEUR->value,
+                'vehicle_type'            => $chauffeurVehicleTypeId,
                 'ride_type'               => RideType::CHAUFFEUR->value,
                 'status'                  => RideStatus::PENDING->value,
                 'base_price'              => $pricingData->baseFare,

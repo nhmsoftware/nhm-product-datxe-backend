@@ -18,4 +18,14 @@ interface ScheduledPricingRepositoryInterface
      * Lưu cấu hình giá mới
      */
     public function saveConfig(array $surchargeData, array $rulesData): array;
+
+    /**
+     * Tìm rule giá đặt trước phù hợp theo ngữ cảnh runtime.
+     */
+    public function findMatchingRule(
+        int $serviceType,
+        string $rideMode,
+        int $vehicleTypeId,
+        ?string $airportId = null
+    ): ?\App\Modules\Pricing\Model\ScheduledPricingRule;
 }
