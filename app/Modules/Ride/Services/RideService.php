@@ -110,12 +110,28 @@ final class RideService extends BaseService implements RideServiceInterface
             );
 
             $vehicleOptions = array_values(array_filter(array_map(
-                function (int $vehicleTypeId) use ($matrix): ?array {
-                    $pricingResult = $this->calculatePriceFor(
-                        distanceMeters: $matrix->distance,
-                        durationSeconds: $matrix->duration,
-                        vehicleTypeId: $vehicleTypeId
-                    );
+                function (int $vehicleTypeId) use ($matrix, $dto): ?array {
+                    $pricingResult = match ($dto->serviceType) {
+                        'intercity' => $this->calculateScheduledPriceFor(
+                            distanceMeters: $matrix->distance,
+                            durationSeconds: $matrix->duration,
+                            vehicleTypeId: $vehicleTypeId,
+                            serviceType: 6,
+                            rideMode: 'private',
+                        ),
+                        'airport' => $this->calculateScheduledPriceFor(
+                            distanceMeters: $matrix->distance,
+                            durationSeconds: $matrix->duration,
+                            vehicleTypeId: $vehicleTypeId,
+                            serviceType: 7,
+                            rideMode: 'private',
+                        ),
+                        default => $this->calculatePriceFor(
+                            distanceMeters: $matrix->distance,
+                            durationSeconds: $matrix->duration,
+                            vehicleTypeId: $vehicleTypeId
+                        ),
+                    };
 
                     if ($pricingResult->isError()) {
                         return null;
