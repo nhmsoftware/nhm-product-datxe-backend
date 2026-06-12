@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\User\Http\Resources;
 
+use App\Core\Helpers\FileHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -28,13 +29,14 @@ class ProfileResource extends JsonResource
     private function buildProfileData(): array
     {
         $user = $this->resource;
+        $avatarUrl = FileHelper::serveUrl($user->avatar);
 
         $data = [
             // Thông tin cơ bản (chung cho tất cả vai trò)
             'id' => $user->id,
             'role' => $user->role->value,
             'role_label' => $user->role->label(),
-            'avatar' => $this->formatOptionalField($user->avatar, 'avatar'),
+            'avatar' => $this->formatOptionalField($avatarUrl, 'avatar'),
             'full_name' => $this->formatOptionalField($user->full_name, 'full_name'),
             'birthday' => $user->customerProfile?->birthday?->toDateString(),
             'phone' => $user->phone ?? null,
