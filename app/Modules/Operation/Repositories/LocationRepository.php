@@ -25,7 +25,7 @@ final class LocationRepository implements LocationRepositoryInterface
     {
         // 1. Ghi vào Redis (Instant)
         $key = "location:driver:{$userId}";
-        Redis::hset($key, [
+        Redis::hmset($key, [
             'lat' => $lat,
             'lng' => $lng,
             'updated_at' => now()->toDateTimeString(),
@@ -47,7 +47,7 @@ final class LocationRepository implements LocationRepositoryInterface
     {
         // 1. Ghi vào Redis (Instant)
         $key = "location:customer:{$userId}";
-        Redis::hset($key, [
+        Redis::hmset($key, [
             'lat' => $lat,
             'lng' => $lng,
             'updated_at' => now()->toDateTimeString(),
